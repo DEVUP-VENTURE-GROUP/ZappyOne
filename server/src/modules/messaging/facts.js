@@ -79,6 +79,8 @@ async function jobFacts(kind, doc) {
     id,
     reference: doc.reference || id.slice(-8).toUpperCase(),
     service: await serviceName(kind, doc),
+    // Who comes, in the service's own word (a class has a teacher): onboarding/workspace terms.
+    noun: kind === 'repair' && doc.vertical ? (await require('../onboarding/workspace').termsForVertical(doc.vertical).catch(() => null))?.pro || null : null,
     at: when(doc.scheduledAt || doc.checkInAt || null),
     bookedAt: when(doc.createdAt),
     address: where?.address || '',

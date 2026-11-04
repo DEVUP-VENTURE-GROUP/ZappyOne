@@ -148,13 +148,16 @@ export const KINDS = {
     noun: 'technician',
     stageOf: repairStage,
     /** data = GET /repair/bookings/:id → { booking, provider, quotes, canCancel } */
-    toJob: (data, { statusLabel } = {}) => {
+    // terms: the service's words (repairBasket termsOf); without them it reads as a repair, as before.
+    toJob: (data, { statusLabel, terms } = {}) => {
       const b = data.booking;
       const s = b.priceSnapshot || {};
+      const t = terms || { job: 'repair', pro: 'technician', warranty: true };
       return finish({
-        kind: 'repair', id: b._id, reference: b.reference, noun: 'technician',
-        service: `${human(b.vertical)} repair`,
-        subtitle: deviceName(b.brandCode, b.modelCode), subtitleLabel: 'Device',
+        kind: 'repair', id: b._id, reference: b.reference, noun: t.pro,
+        service: t.packaged ? (t.name || human(b.vertical)) : `${human(b.vertical)} ${t.job}`,
+        subtitle: t.packaged ? human(b.repairCode || '') : deviceName(b.brandCode, b.modelCode),
+        subtitleLabel: t.packaged ? t.job.charAt(0).toUpperCase() + t.job.slice(1) : 'Device',
         status: repairStage(b.status) || 'in_progress', statusLabel, rawStatus: b.status,
         provider: cardOf(data.provider),
         place: pointOf(b.location),
@@ -164,7 +167,7 @@ export const KINDS = {
           lines: withCarried(repairLines(s, (data.quotes || []).filter((q) => q.status === 'approved').sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]), b),
           totalPaise: plusCarried(s.totalPaise ?? null, b), method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           isEstimate: !!s.isEstimate,
-          note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),
+          note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (t.warranty && s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),
         },
         proofs: b.completionPhotos || [],
         trip: tripOf('repair', b),

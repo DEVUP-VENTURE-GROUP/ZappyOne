@@ -5,10 +5,11 @@
 /* eslint-disable */
 import { useMemo } from 'react';
 import {
-  useListOrdersQuery, useMyRepairBookingsQuery, useMyPetBookingsQuery, useMyHelpingTasksQuery,
+  useListOrdersQuery, useMyRepairBookingsQuery, useMyPetBookingsQuery, useMyHelpingTasksQuery, useRepairVerticalsQuery,
 } from '../api/hooks';
 import { serviceNameKey } from './translations';
 import { rebookPath } from './helpModes';
+import { termsOf } from './repairBasket';
 
 /**
  * Everything the customer has booked — orders, repairs, pet bookings and
@@ -140,19 +141,23 @@ function fromOrder(o) {
   };
 }
 
-function fromRepair(b) {
+// A packaged service (a dance class) is named by the service and what was booked; a repair by its device.
+const titleOf = (b, t) => (t?.packaged
+  ? [t.name, String(b.repairCode || '').replace(/[-_]+/g, ' ')].filter(Boolean).join(' · ')
+  : [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair');
+
+function fromRepair(b, verticals = []) {
+  const t = termsOf(b.vertical, verticals);
   return {
     kind: 'repair',
     id: b._id,
     reference: b.reference,
-    title: [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair',
+    title: titleOf(b, t),
     stage: REPAIR_STAGE[b.status] || b.status,
     statusKey: `repairStatus.${b.status}`,
     // No entry exists for a device name today; `t` falls back to the name
     // itself, and a translated one can be added later without a code change.
-    titleKey: serviceNameKey(
-      [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Device repair',
-    ),
+    titleKey: serviceNameKey(titleOf(b, t)),
     status: b.status,
     active: !REPAIR_CLOSED.has(b.status),
     // The one state that should pull a customer back into the app.
@@ -282,6 +287,7 @@ function fromHelping(t) {
 export function useMyJobs({ page = 1, skip = false } = {}) {
   const orders = useListOrdersQuery(page, { skip });
   const repairs = useMyRepairBookingsQuery(page, { skip });
+  const verticals = useRepairVerticalsQuery(undefined, { skip });
   const pets = useMyPetBookingsQuery({ page }, { skip });
   const helping = useMyHelpingTasksQuery({ page }, { skip });
   const sources = [orders, repairs, pets, helping];
@@ -289,14 +295,14 @@ export function useMyJobs({ page = 1, skip = false } = {}) {
   const jobs = useMemo(() => {
     const merged = [
       ...(orders.data?.orders || []).map(fromOrder),
-      ...(repairs.data?.bookings || []).map(fromRepair),
+      ...(repairs.data?.bookings || []).map((b) => fromRepair(b, verticals.data?.items)),
       ...(pets.data?.bookings || []).map(fromPet),
       // A draft was never placed; it isn't a booking yet.
       ...(helping.data?.tasks || []).filter((t) => t.status !== 'DRAFT').map(fromHelping),
     ];
     // Newest first, whichever collection it came from.
     return merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [orders.data, repairs.data, pets.data, helping.data]);
+  }, [orders.data, repairs.data, pets.data, helping.data, verticals.data]);
 
   const active = useMemo(() => jobs.filter((j) => j.active), [jobs]);
 

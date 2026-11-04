@@ -12,7 +12,8 @@ import { useAppSelector } from '@zappy/core/store/hooks';
 import { rememberReturn } from '@zappy/ui/app/AppRoot';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { useCreateRepairBookingMutation } from '@zappy/core/api';
+import { useCreateRepairBookingMutation, useRepairVerticalsQuery } from '@zappy/core/api';
+import { bookedRows, termsOf } from '@zappy/core/shared/repairBasket';
 import { doorAddress } from '@zappy/core/shared/doorAddress';
 import { Button, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -55,6 +56,8 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   const chosen = chosenPrice(provider, qualityCode);
   const price = inspectionOnly ? inspectionFeePaise : chosen.pricePaise;
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: price, skip: price == null });
+  const { data: verticals } = useRepairVerticalsQuery(undefined);
+  const terms = termsOf(vertical, (verticals as { items?: unknown[] } | undefined)?.items);
 
   async function book() {
     // Anyone can browse to here; signing in is asked only to confirm, and the flow's draft brings them straight back.
@@ -85,10 +88,10 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   }
 
   const rows: [string, string][] = [
-    ['Device', deviceName(brand, model)],
-    ...(configuration ? [['Build', configuration.name] as [string, string]] : []),
-    ['Problem', problem.name],
-    ['Repair', inspectionOnly ? 'Decided after inspection' : diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis'],
+    ...(bookedRows(terms, {
+      device: deviceName(brand, model), option: model?.name, build: configuration?.name, problem: problem.name,
+      repair: inspectionOnly ? 'Decided after inspection' : diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis',
+    }) as [string, string][]),
     ['Provider', provider?.name || 'Assigned for you'],
     ['Service', MODE_LABEL[serviceMode] || serviceMode],
     ['When', scheduledAt ? slotLabel(scheduledAt) : 'As soon as possible'],
@@ -97,7 +100,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
   return (
     <Shell>
       <View style={[flow.card, styles.rows]}>
-        <Text variant="caption" weight="bold" color={ink[500]}>{inspectionOnly ? 'YOUR INSPECTION' : 'YOUR REPAIR'}</Text>
+        <Text variant="caption" weight="bold" color={ink[500]}>{inspectionOnly ? 'YOUR INSPECTION' : `YOUR ${terms.job.toUpperCase()}`}</Text>
         {rows.map(([k, v]) => (
           <View key={k} style={styles.row}>
             <Text variant="caption" color={ink[500]}>{k}</Text>

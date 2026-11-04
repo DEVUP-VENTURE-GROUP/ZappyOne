@@ -38,7 +38,7 @@ import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
 import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
-import { groupItems, itemFrom, typeWordOf } from '@shared/customer/repairBasket';
+import { groupItems, itemFrom, typeWordOf, termsOf, bookedRows } from '@shared/customer/repairBasket';
 import StorefrontStrip from '../providers/StorefrontStrip';
 import { useRepairBasket } from './basket/useRepairBasket';
 import BasketBar from './basket/BasketBar';
@@ -1642,6 +1642,8 @@ function ConfirmStep({
   const chosen = chosenPrice(provider, qualityCode);
   const priceBase = serviceMode === 'diagnosis_only' ? inspectionFeePaise : chosen.pricePaise;
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: priceBase, skip: priceBase == null });
+  const { data: verticals } = useRepairVerticalsQuery();
+  const terms = termsOf(vertical, verticals?.items);
   // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
   const [tip, setTip] = useState(0);
 
@@ -1721,15 +1723,13 @@ function ConfirmStep({
     <Shell>
       <div className="card space-y-3">
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-          {inspectionOnly ? 'Your inspection' : 'Your repair'}
+          {inspectionOnly ? 'Your inspection' : `Your ${terms.job}`}
         </p>
         {[
-          ['Device', deviceName(brand, model)],
-          ...(configuration ? [['Build', configuration.name]] : []),
-          ['Problem', problem.name],
-          ['Repair', inspectionOnly
-            ? 'Decided after inspection'
-            : (diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis')],
+          ...bookedRows(terms, {
+            device: deviceName(brand, model), option: model?.name, build: configuration?.name, problem: problem.name,
+            repair: inspectionOnly ? 'Decided after inspection' : (diagnosis?.recommendations?.[0]?.name || 'To be confirmed after diagnosis'),
+          }),
           ['Provider', provider?.name || 'Assigned for you'],
           ['Service', MODE_LABEL[serviceMode] || serviceMode],
           ['When', scheduledAt ? slotLabel(scheduledAt) : 'As soon as possible'],

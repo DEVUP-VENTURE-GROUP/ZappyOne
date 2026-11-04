@@ -6,7 +6,7 @@ import {
   Loader2, Check, X, ShieldCheck, FileText, MessageSquare, Star, Download,
 } from 'lucide-react';
 import {
-  useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation,
+  useGetRepairBookingQuery, useRespondRepairQuoteMutation, useCancelRepairBookingMutation, useRepairVerticalsQuery,
 } from '@shared/services/api';
 import toast from 'react-hot-toast';
 import { useRepairHandoverCodeQuery } from '@shared/services/api';
@@ -16,6 +16,8 @@ import JobTrackingPage from '../tracking/JobTrackingPage';
 import RepairWarrantyCard from './RepairWarrantyCard';
 import { repairRebookHref } from '@shared/customer/useMyJobs';
 import { KINDS } from '@shared/customer/jobKinds';
+import { repairStatus } from '@shared/customer/repairStatus';
+import { termsOf } from '@shared/customer/repairBasket';
 import { useJobSOS } from '../tracking/useJobSOS';
 import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
 import { PayNowButton } from '@shared/components/common/PayMethodPicker';
@@ -34,30 +36,6 @@ import { useLivePoll } from '@shared/hooks/useSocket';
  * on an un-approved quote, so this screen is a hard gate, not a notification.
  */
 
-const STATUS_COPY = {
-  PENDING: { label: 'Booking placed', tone: 'slate', hint: 'Waiting for confirmation.' },
-  CONFIRMED: { label: 'Confirmed', tone: 'blue', hint: 'Finding a technician for you.' },
-  PROVIDER_ASSIGNED: { label: 'Technician assigned', tone: 'blue', hint: 'Waiting for them to accept.' },
-  WORKER_ACCEPTED: { label: 'Technician accepted', tone: 'blue', hint: 'They will be on their way shortly.' },
-  ON_THE_WAY: { label: 'On the way', tone: 'indigo', hint: 'Your technician is travelling to you.' },
-  ARRIVED: { label: 'Arrived', tone: 'indigo', hint: 'Your technician has arrived.' },
-  DIAGNOSING: { label: 'Diagnosing', tone: 'amber', hint: 'Inspecting your device.' },
-  QUOTE_PENDING: { label: 'Preparing quote', tone: 'amber', hint: 'Your technician is writing up the quote.' },
-  CUSTOMER_APPROVAL_PENDING: { label: 'Your approval needed', tone: 'amber', hint: 'Review the quote below to continue.' },
-  APPROVED: { label: 'Quote approved', tone: 'emerald', hint: 'Work can now begin.' },
-  PICKUP_SCHEDULED: { label: 'Pickup scheduled', tone: 'indigo', hint: 'We will collect your device.' },
-  DEVICE_PICKED_UP: { label: 'Device collected', tone: 'indigo', hint: 'On its way to the workshop.' },
-  AT_WORKSHOP: { label: 'At workshop', tone: 'indigo', hint: 'Your device has arrived at the workshop.' },
-  REPAIR_IN_PROGRESS: { label: 'Repair in progress', tone: 'indigo', hint: 'Work is underway.' },
-  QA_PENDING: { label: 'Quality checks', tone: 'amber', hint: 'Running post-repair tests.' },
-  READY_FOR_RETURN: { label: 'Ready for return', tone: 'emerald', hint: 'Repaired and ready to come back.' },
-  OUT_FOR_RETURN: { label: 'Out for return', tone: 'indigo', hint: 'On its way back to you.' },
-  COMPLETED: { label: 'Completed', tone: 'emerald', hint: 'Repair finished.' },
-  CANCELLED: { label: 'Cancelled', tone: 'slate', hint: '' },
-  REJECTED: { label: 'Quote rejected', tone: 'red', hint: 'No work was carried out.' },
-  EXPIRED: { label: 'Expired', tone: 'slate', hint: '' },
-  FAILED: { label: 'Could not complete', tone: 'red', hint: '' },
-};
 
 const rupees = formatPaise;
 
@@ -407,6 +385,7 @@ export default function RepairBookingPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(30000) });
+  const { data: verticals } = useRepairVerticalsQuery();
   const [cancel] = useCancelRepairBookingMutation();
   const sos = useJobSOS(id);
 
@@ -423,7 +402,9 @@ export default function RepairBookingPage() {
 
   const quotes = data?.quotes || [];
   const pendingQuote = quotes.find((q) => q.status === 'sent' || q.status === 'clarification_requested');
-  const job = KINDS.repair.toJob(data, { statusLabel: STATUS_COPY[booking.status]?.label });
+  const terms = termsOf(booking.vertical, verticals?.items);
+  const copy = repairStatus(booking.status, terms);
+  const job = KINDS.repair.toJob(data, { statusLabel: copy.label, terms });
 
   async function doCancel(reason) {
     try {
@@ -448,14 +429,14 @@ export default function RepairBookingPage() {
         extras={(
           <>
             <HandoverCode booking={booking} />
-            {STATUS_COPY[booking.status]?.hint && (
-              <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{STATUS_COPY[booking.status].hint}</p>
+            {copy.hint && (
+              <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{copy.hint}</p>
             )}
             {pendingQuote && <QuoteCard quote={pendingQuote} onDecided={refetch} />}
             <RefundStatus source="repair" id={booking._id} />
             <ServiceReport booking={booking} />
             <RateRepair booking={booking} />
-            <RepairWarrantyCard booking={booking} />
+            {terms.warranty && <RepairWarrantyCard booking={booking} />}
             <PaymentNote booking={booking} />
             {quotes.length > 0 && (
               <div className="rounded-card bg-white p-[18px] ring-1 ring-slate-100">

@@ -26,9 +26,13 @@ async function listVerticals(req, res, next) {
   try {
     const { ServiceLine } = require('../../onboarding/onboarding.model');
     const rows = await ServiceLine.find({ repairVertical: { $nin: [null, ''] }, isArchived: { $ne: true }, isActive: { $ne: false } })
-      .select('code name repairVertical customerPath typeWord thing icon status domainCode').sort({ displayOrder: 1, name: 1 }).lean();
+      .select('code name repairVertical customerPath typeWord thing icon status domainCode packageDef.types').sort({ displayOrder: 1, name: 1 }).lean();
+    // Each service's words (onboarding/workspace terms), so every screen says class and teacher for a dance class, not repair and technician.
+    const { ServiceDomain } = require('../../onboarding/onboarding.model');
+    const { lineTerms } = require('../../onboarding/workspace');
+    const domains = new Map((await ServiceDomain.find({ code: { $in: [...new Set(rows.map((r) => r.domainCode))] } }).select('code dashboard').lean()).map((d) => [d.code, d]));
     res.set('Cache-Control', 'public, max-age=300');
-    res.json({ items: rows.map((r) => ({ vertical: r.repairVertical, line: r.code, name: r.name, path: r.customerPath || `/repair/${r.repairVertical.replace(/_/g, '-')}`, typeWord: r.typeWord || '', thing: r.thing || '', icon: r.icon || '', status: r.status, domainCode: r.domainCode })) });
+    res.json({ items: rows.map((r) => ({ vertical: r.repairVertical, line: r.code, name: r.name, path: r.customerPath || `/repair/${r.repairVertical.replace(/_/g, '-')}`, typeWord: r.typeWord || '', thing: r.thing || '', icon: r.icon || '', status: r.status, domainCode: r.domainCode, terms: lineTerms(r, domains.get(r.domainCode)) })) });
   } catch (err) { next(err); }
 }
 

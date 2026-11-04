@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AlertTriangle, ArrowLeft, FileText } from 'lucide-react-native';
 import {
-  useGetRepairBookingQuery,
+  useGetRepairBookingQuery, useRepairVerticalsQuery,
   useTransitionRepairBookingMutation,
   useCollectRepairCashMutation,
   useVerifyRepairHandoverCodeMutation,
@@ -63,12 +63,14 @@ import { QAPanel } from '../components/repair/QAPanel';
 import { rupees, QuoteBuilder } from '../components/repair/QuoteBuilder';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 import { stageLabel } from '@zappy/core/shared/useProviderJobs';
+import { termsOf, capWord } from '@zappy/core/shared/repairBasket';
 
 export function WorkerRepairJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
+  const { data: verticals } = useRepairVerticalsQuery(undefined);
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
   const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();
@@ -141,12 +143,16 @@ export function WorkerRepairJobPage() {
     } catch (err) { toast.error(errText(err, 'Could not update this job')); }
   }
 
+  const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
+  // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
   const details: [string, string | undefined][] = [
-    ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
-    ...(booking.fuelType ? [['Fuel', booking.fuelType] as [string, string]] : []),
-    ...(booking.configurationLabel ? [['Build', booking.configurationLabel] as [string, string]] : []),
-    ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'],
-    ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
+    ...(terms.packaged ? [[capWord(terms.job), booking.repairCode?.replace(/_/g, ' ') || '-'] as [string, string]] : [
+      ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`] as [string, string],
+      ...(booking.fuelType ? [['Fuel', booking.fuelType] as [string, string]] : []),
+      ...(booking.configurationLabel ? [['Build', booking.configurationLabel] as [string, string]] : []),
+      ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'] as [string, string],
+      ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'] as [string, string],
+    ]),
     ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
     ['Address', booking.location?.address],
   ];

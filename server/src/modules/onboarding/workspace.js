@@ -7,17 +7,52 @@ const OPTIONAL = ['pricereq', 'plans', 'insights'];
 const HOMES = ['workshop', 'visits', 'appointments', 'tasks'];
 
 const DEFAULTS = {
-  electronics: { home: 'workshop', modules: ['pricereq', 'insights'], labels: { orders: 'Repairs', work: 'Repairs & prices', team: 'Technicians', shop: 'Shop & hours' } },
-  vehicles: { home: 'workshop', modules: ['pricereq', 'plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Mechanics', shop: 'Garage & hours' } },
-  home_services: { home: 'visits', modules: ['plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Technicians', shop: 'Business & hours' } },
-  home_daily_help: { home: 'visits', modules: ['plans'], labels: { orders: 'Visits', work: 'Services & prices', team: 'Helpers', shop: 'Business & hours' } },
-  beauty_care: { home: 'appointments', modules: ['plans'], labels: { orders: 'Appointments', work: 'Menu & prices', team: 'Stylists', shop: 'Salon & hours' } },
-  errands_pickup: { home: 'tasks', modules: [], labels: { orders: 'Tasks', work: 'Services & prices', team: 'Runners', shop: 'Business & hours' } },
-  family_assist: { home: 'visits', modules: ['plans'], labels: { orders: 'Visits', work: 'Services & prices', team: 'Helpers', shop: 'Business & hours' } },
-  specialist_home: { home: 'visits', modules: ['plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Crew', shop: 'Business & hours' } },
-  local_pros: { home: 'appointments', modules: ['plans'], labels: { orders: 'Sessions', work: 'Classes & prices', team: 'Teachers', shop: 'Profile & hours' } },
-  pet_services: { home: 'visits', modules: ['plans'], labels: { orders: 'Bookings', work: 'Services & prices', team: 'Groomers', shop: 'Business & hours' } },
+  electronics: { home: 'workshop', modules: ['pricereq', 'insights'], labels: { orders: 'Repairs', work: 'Repairs & prices', team: 'Technicians', shop: 'Shop & hours' }, terms: { job: 'repair', pro: 'technician', warranty: true } },
+  vehicles: { home: 'workshop', modules: ['pricereq', 'plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Mechanics', shop: 'Garage & hours' }, terms: { job: 'service', pro: 'mechanic', warranty: true } },
+  home_services: { home: 'visits', modules: ['plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Technicians', shop: 'Business & hours' }, terms: { job: 'service', pro: 'technician', warranty: true } },
+  home_daily_help: { home: 'visits', modules: ['plans'], labels: { orders: 'Visits', work: 'Services & prices', team: 'Helpers', shop: 'Business & hours' }, terms: { job: 'visit', pro: 'helper', warranty: false } },
+  beauty_care: { home: 'appointments', modules: ['plans'], labels: { orders: 'Appointments', work: 'Menu & prices', team: 'Stylists', shop: 'Salon & hours' }, terms: { job: 'appointment', pro: 'stylist', warranty: false } },
+  errands_pickup: { home: 'tasks', modules: [], labels: { orders: 'Tasks', work: 'Services & prices', team: 'Runners', shop: 'Business & hours' }, terms: { job: 'task', pro: 'runner', warranty: false } },
+  family_assist: { home: 'visits', modules: ['plans'], labels: { orders: 'Visits', work: 'Services & prices', team: 'Helpers', shop: 'Business & hours' }, terms: { job: 'visit', pro: 'helper', warranty: false } },
+  specialist_home: { home: 'visits', modules: ['plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Crew', shop: 'Business & hours' }, terms: { job: 'job', pro: 'specialist', warranty: true } },
+  local_pros: { home: 'appointments', modules: ['plans'], labels: { orders: 'Sessions', work: 'Classes & prices', team: 'Teachers', shop: 'Profile & hours' }, terms: { job: 'class', pro: 'teacher', warranty: false } },
+  pet_services: { home: 'visits', modules: ['plans'], labels: { orders: 'Bookings', work: 'Services & prices', team: 'Groomers', shop: 'Business & hours' }, terms: { job: 'booking', pro: 'pet pro', warranty: false } },
 };
+
+// How customers read a booking in this trade (jobKinds, confirm, messages): what it is called, who comes, and whether a warranty applies. Repair words when nothing says otherwise.
+const REPAIR_TERMS = { job: 'repair', pro: 'technician', warranty: true };
+const TERM_KEYS = ['job', 'pro', 'warranty'];
+function termsOf(domain) {
+  const own = domain?.dashboard?.labels?.terms || {};
+  const base = { ...REPAIR_TERMS, ...(DEFAULTS[domain?.code]?.terms || {}) };
+  for (const k of TERM_KEYS) if (own[k] !== undefined && own[k] !== '') base[k] = k === 'warranty' ? !!own[k] : String(own[k]).toLowerCase();
+  return base;
+}
+
+// A service line's words: its trade's, plus what a package service (one priced menu, no real device) changes.
+function lineTerms(line, domain) {
+  const types = line?.packageDef?.types || [];
+  return {
+    ...termsOf(domain),
+    packaged: !!line?.packageDef,
+    singleType: types.length <= 1,
+    typeWord: line?.typeWord || '',
+    name: line?.name || '',
+  };
+}
+
+// For one repair vertical, from its line; repair words for a vertical with no line. Kept a minute: domains and lines change rarely.
+const termCache = new Map();
+async function termsForVertical(vertical) {
+  const hit = termCache.get(vertical);
+  if (hit && hit.at > Date.now() - 60000) return hit.terms;
+  const line = await ServiceLine.findOne({ repairVertical: vertical }).select('name domainCode typeWord packageDef.types').lean();
+  const domain = line ? await ServiceDomain.findOne({ code: line.domainCode }).select('code dashboard').lean() : null;
+  const terms = line ? lineTerms(line, domain) : { ...REPAIR_TERMS, packaged: false, singleType: false, typeWord: '', name: '' };
+  if (termCache.size > 500) termCache.clear();
+  termCache.set(vertical, { at: Date.now(), terms });
+  return terms;
+}
 
 const configOf = (domain) => ({
   home: [domain.dashboard?.home, DEFAULTS[domain.code]?.home].find((h) => HOMES.includes(h)) || 'workshop',
@@ -43,4 +78,4 @@ async function workspaceFor(owner) {
   };
 }
 
-module.exports = { workspaceFor, configOf, DEFAULTS, OPTIONAL, HOMES };
+module.exports = { workspaceFor, configOf, termsOf, lineTerms, termsForVertical, REPAIR_TERMS, DEFAULTS, OPTIONAL, HOMES };

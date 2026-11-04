@@ -6,7 +6,7 @@
  */
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCancelRepairBookingMutation, useGetRepairBookingQuery } from '@zappy/core/api';
+import { useCancelRepairBookingMutation, useGetRepairBookingQuery, useRepairVerticalsQuery } from '@zappy/core/api';
 import { KINDS } from '@zappy/core/shared/jobKinds';
 import { formatPaise } from '@zappy/core/shared/money';
 import { repairRebookHref } from '@zappy/core/shared/useMyJobs';
@@ -24,7 +24,8 @@ import { PaymentNote } from './booking/PaymentNote';
 import { QuoteCard, type Quote } from './booking/QuoteCard';
 import { QuoteHistory } from './booking/QuoteHistory';
 import { RateRepair } from './booking/RateRepair';
-import { REPAIR_STATUS } from './booking/repairStatusCopy';
+import { repairStatus } from '@zappy/core/shared/repairStatus';
+import { termsOf } from '@zappy/core/shared/repairBasket';
 import { RepairWarrantyCard } from './booking/RepairWarrantyCard';
 import { ServiceReport } from './booking/ServiceReport';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
@@ -33,6 +34,7 @@ export function RepairBookingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(30000) });
+  const { data: verticals } = useRepairVerticalsQuery(undefined);
   const [cancel] = useCancelRepairBookingMutation();
   const sos = useJobSOS(id);
 
@@ -42,8 +44,9 @@ export function RepairBookingPage() {
 
   const quotes: Quote[] = data.quotes || [];
   const pendingQuote = quotes.find((q) => q.status === 'sent' || q.status === 'clarification_requested');
-  const job = KINDS.repair.toJob(data, { statusLabel: REPAIR_STATUS[booking.status]?.label }) as TrackedJob;
-  const hint = REPAIR_STATUS[booking.status]?.hint;
+  const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
+  const { label, hint } = repairStatus(booking.status, terms);
+  const job = KINDS.repair.toJob(data, { statusLabel: label, terms }) as TrackedJob;
 
   async function doCancel(reason: string) {
     try {
@@ -62,7 +65,7 @@ export function RepairBookingPage() {
           {pendingQuote ? <QuoteCard quote={pendingQuote} onDecided={refetch} /> : null}
           <ServiceReport booking={booking} />
           <RateRepair booking={booking} />
-          <RepairWarrantyCard booking={booking} />
+          {terms.warranty ? <RepairWarrantyCard booking={booking} /> : null}
           <PaymentNote booking={booking} />
           <QuoteHistory quotes={quotes} />
         </>

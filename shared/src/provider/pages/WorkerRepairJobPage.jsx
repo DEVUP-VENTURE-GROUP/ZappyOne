@@ -12,7 +12,7 @@ import {
   AlertTriangle, FileText, Wrench, ShieldCheck,
 } from 'lucide-react';
 import {
-  useGetRepairBookingQuery, useTransitionRepairBookingMutation, useCollectRepairCashMutation,
+  useGetRepairBookingQuery, useTransitionRepairBookingMutation, useCollectRepairCashMutation, useRepairVerticalsQuery,
   useSubmitRepairQuoteMutation, useRepairQaChecklistQuery, useSubmitRepairQaMutation,
 } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -39,6 +39,7 @@ import {
 } from '../jobFlows';
 import { useLivePoll } from '../../hooks/useSocket';
 import { stageLabel } from '../useProviderJobs';
+import { termsOf, capWord } from '../../customer/repairBasket';
 
 /**
  * Worker's repair job screen.
@@ -343,6 +344,7 @@ export default function WorkerRepairJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
+  const { data: verticals } = useRepairVerticalsQuery();
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
   const checkedIn = useCheckInThen();
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();
@@ -559,6 +561,8 @@ export default function WorkerRepairJobPage() {
         <div className="card space-y-2.5">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job</p>
           {[
+            // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
+            ...(termsOf(booking.vertical, verticals?.items).packaged ? [[capWord(termsOf(booking.vertical, verticals?.items).job), booking.repairCode?.replace(/_/g, ' ') || '-']] : [
             ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
             /*
              * The powertrain, where the vertical has one.
@@ -572,6 +576,7 @@ export default function WorkerRepairJobPage() {
             ...(booking.configurationLabel ? [['Build', booking.configurationLabel]] : []),
             ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'],
             ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
+            ]),
             ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
             ['Address', booking.location?.address],
           ].map(([k, v]) => (

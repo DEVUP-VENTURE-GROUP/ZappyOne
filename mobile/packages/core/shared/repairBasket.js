@@ -84,3 +84,20 @@ export const STAGE_LABEL = {
   searching: 'Finding your pro', assigned: 'Pro confirmed', on_the_way: 'On the way', arrived: 'Arrived',
   in_progress: 'In progress', completed: 'Done', cancelled: 'Cancelled', failed: 'Could not be done',
 };
+
+// A service's words from GET /repair/verticals (server onboarding/workspace lineTerms); repair words for a vertical not in the list.
+const REPAIR_TERMS = { job: 'repair', pro: 'technician', warranty: true, packaged: false, singleType: false, typeWord: '', name: '' };
+export const termsOf = (vertical, items = []) => ({ ...REPAIR_TERMS, ...(items.find((i) => i.vertical === vertical)?.terms || {}) });
+
+export const capWord = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
+/** The "Your booking" rows before confirming: a packaged service (a dance class) shows what was booked once; a device repair shows device, problem and repair. */
+export function bookedRows(terms, { device, option, build, problem, repair }) {
+  if (terms.packaged) {
+    return [
+      ...(terms.singleType || !option ? [] : [[terms.typeWord || 'Option', option]]),
+      [capWord(terms.job), problem],
+    ];
+  }
+  return [['Device', device], ...(build ? [['Build', build]] : []), ['Problem', problem], ['Repair', repair]];
+}

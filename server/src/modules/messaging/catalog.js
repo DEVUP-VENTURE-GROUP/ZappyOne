@@ -18,8 +18,9 @@ const { rupees } = require('./facts');
 const first = (name) => String(name || '').trim().split(/\s+/)[0] || 'there';
 // A partner's own portal: ServicePro for a shop, Rakshak for a pro.
 const home = (kind) => (kind === 'shop' ? '/shop' : '/worker');
-const noun = (kind) => ({ repair: 'technician', pet: 'pet pro', helping: 'helper' }[kind] || 'provider');
-const prov = (f) => f.provider?.name || `your ${noun(f.kind)}`;
+// The service's own word for who comes (facts.noun, from onboarding/workspace terms), else the kind's.
+const noun = (f) => f?.noun || ({ repair: 'technician', pet: 'pet pro', helping: 'helper' }[f?.kind] || 'provider');
+const prov = (f) => f.provider?.name || `your ${noun(f)}`;
 
 const SAMPLE_JOB = {
   kind: 'repair', id: 'sample', reference: 'RP7K2Q9M', service: 'Display assembly replacement',
@@ -33,7 +34,7 @@ const sampleJob = (over = {}) => ({ f: { ...SAMPLE_JOB, ...over }, name: 'Aarav'
 /** Rows every booking email shows. */
 const bookingRows = (f) => [
   ['Booking', f.reference], ['Service', f.service], ['When', f.at || 'As soon as possible'], ['Where', f.address],
-  ...(f.provider ? [[noun(f.kind)[0].toUpperCase() + noun(f.kind).slice(1), f.provider.name]] : []),
+  ...(f.provider ? [[noun(f)[0].toUpperCase() + noun(f).slice(1), f.provider.name]] : []),
 ];
 
 const CATALOG = {
@@ -42,12 +43,12 @@ const CATALOG = {
     audience: 'customer', type: 'order_placed', channels: ['push', 'email'], label: 'Booking confirmed',
     sample: () => sampleJob({ provider: null }),
     build: ({ f, name, s, url }) => ({
-      push: { title: 'Booking confirmed', body: `${f.service}. We are finding the best ${noun(f.kind)} near you.`, link: f.link },
+      push: { title: 'Booking confirmed', body: `${f.service}. We are finding the best ${noun(f)} near you.`, link: f.link },
       email: {
         subject: `Booking confirmed, ${f.service}, ${f.reference}`,
-        preheader: `We are finding the best ${noun(f.kind)} near you.`,
+        preheader: `We are finding the best ${noun(f)} near you.`,
         heading: 'Your booking is confirmed',
-        intro: [`Hi ${first(name)}, thanks for booking with ${s.brandName}. We are finding the best ${noun(f.kind)} near you and will let you know the moment someone accepts.`],
+        intro: [`Hi ${first(name)}, thanks for booking with ${s.brandName}. We are finding the best ${noun(f)} near you and will let you know the moment someone accepts.`],
         rows: bookingRows(f), items: f.lines, total: ['Total', f.total],
         button: { label: 'Track your booking', url: url(f.link) },
         note: f.method === 'Cash' ? 'Pay in cash once the job is done. No charge until then.' : '',
@@ -95,7 +96,7 @@ const CATALOG = {
   'booking.provider_changed': {
     audience: 'customer', type: 'order_reassigned', channels: ['push'], urgent: true, label: 'Provider could not make it',
     sample: () => sampleJob(),
-    build: ({ f }) => ({ push: { title: 'Finding you someone else', body: `Your ${noun(f.kind)} could not make it. We are finding the next one now; you can also cancel free.`, link: f.link } }),
+    build: ({ f }) => ({ push: { title: 'Finding you someone else', body: `Your ${noun(f)} could not make it. We are finding the next one now; you can also cancel free.`, link: f.link } }),
   },
   'booking.slow': {
     audience: 'customer', type: 'order_delayed', channels: ['push'], label: 'No pro free yet (2 min; jobs/fast-assign)',
