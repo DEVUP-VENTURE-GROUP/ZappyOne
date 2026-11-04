@@ -79,3 +79,28 @@ test('admin sets the words of a domain on the Domains form; the service list say
   expect(body.items.find((i) => i.vertical === 'dance_001').terms).toMatchObject({ job: 'session', pro: 'coach', warranty: false });
   expect((await ServiceDomain.findById(d._id).lean()).dashboard).toMatchObject({ home: 'appointments', labels: { team: 'Teachers' } });
 });
+
+test('the bill says how far the pro is and whether the visit is free, in the words of the service', () => {
+  const shared = path.join(__dirname, '../../shared/src/customer').replace(/\\/g, '/');
+  const code = `
+    import { visitNote, billWords } from 'file:///${shared}/repairBill.js';
+    const cls = { job: 'appointment', pro: 'stylist', packaged: true };
+    console.log(JSON.stringify({
+      near: visitNote({ distanceKm: 2.43, travelPaise: 0 }, 'doorstep', 'stylist'),
+      far: visitNote({ distanceKm: 7, travelPaise: 1900 }, 'doorstep'),
+      close: visitNote({ distanceKm: 0.4, travelPaise: 0 }, 'doorstep', 'teacher'),
+      workshop: visitNote({ distanceKm: 3, travelPaise: 0 }, 'workshop'),
+      none: visitNote({ travelPaise: 0 }, 'doorstep'),
+      cls: billWords(cls), cash: billWords(cls).cash(false), phone: billWords({}).cash(true),
+    }));`;
+  const out = JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', code]).toString());
+  expect(out.near).toBe('Your stylist is 2.4 km away. The visit is free.');
+  expect(out.far).toBe('Your pro is 7.0 km away. Their travel is in the fee above.');
+  expect(out.close).toBe('Your teacher is less than 1 km away. The visit is free.');
+  expect(out.workshop).toBeNull();
+  expect(out.none).toBeNull();
+  expect(out.cls.base).toBe('for the appointment, plus:');
+  expect(out.cls.includes).not.toMatch(/parts|labour/);
+  expect(out.cash).toBe('Pay the stylist directly once the appointment is done.');
+  expect(out.phone).toBe('Pay the technician directly once the inspection is done.');
+});

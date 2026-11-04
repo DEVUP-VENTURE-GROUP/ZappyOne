@@ -8,12 +8,12 @@ import { deviceName } from '@zappy/core/shared/deviceName';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRepairBrandsQuery, useRepairModelsQuery, useRepairPricePreviewQuery, useRepairProductTypesQuery } from '@zappy/core/api';
+import { useRepairBrandsQuery, useRepairModelsQuery, useRepairPricePreviewQuery, useRepairProductTypesQuery, useRepairVerticalsQuery } from '@zappy/core/api';
 import { clearDraft } from '@zappy/core/lib/drafts';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { chosenPrice, totalOf } from '@zappy/core/shared/repairBill';
 import { useCheckoutDraft } from '@zappy/core/shared/useCheckoutDraft';
-import { groupItems, itemFrom } from '@zappy/core/shared/repairBasket';
+import { groupItems, itemFrom, termsOf } from '@zappy/core/shared/repairBasket';
 import { WhenChooser, slotLabel } from '@zappy/ui/components/booking/SlotPicker';
 import { BasketBar } from './basket/BasketBar';
 import { GroupCheckout } from './basket/GroupCheckout';
@@ -167,13 +167,16 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
     else next('provider');
   };
 
+  const { data: flowVerticals } = useRepairVerticalsQuery(undefined);
+  const flowTerms = termsOf(vertical, (flowVerticals as { items?: unknown[] } | undefined)?.items);
   if (typesLoading) return <View style={styles.page}><Spinner /></View>;
   const titles = stepTitles(vertical, brand?.name, serviceMode);
-  const deviceLabel = deviceName(brand, model);
+  // A one-option packaged service has no device: the header names the service, not "Standard".
+  const deviceLabel = flowTerms.packaged && flowTerms.singleType ? flowTerms.name : deviceName(brand, model);
 
   return (
     <View style={styles.page}>
-      <StepHeader steps={steps} step={step} skipped={skipped} onBack={back} title={titles[step]} subtitle={configuration?.name || deviceLabel || brand?.name} />
+      <StepHeader steps={steps} step={step} skipped={skipped} onBack={back} title={titles[step]} subtitle={configuration?.name || deviceLabel || (flowTerms.packaged ? '' : brand?.name)} />
       {resumed ? <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} /> : null}
       {step === 'brand' ? <BrandStep vertical={vertical} onPick={(b) => { setBrand(b); next('brand'); }} onAuto={(b) => { setBrand(b); skip('brand'); }} /> : null}
       {step === 'type' ? <DeviceTypeStep vertical={vertical} brand={brand} onPick={(t) => { setProductType(t); next('type'); }} onAuto={(t) => { setProductType(t); skip('type'); }} /> : null}

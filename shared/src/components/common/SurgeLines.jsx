@@ -40,14 +40,6 @@ export function useSurge({ kind, line, vertical, serviceMode, loc, basePaise, sk
 
 export default function SurgeLines({ quote, className = '' }) {
   const [open, setOpen] = useState(null);
-  const [left, setLeft] = useState(null);
-  useEffect(() => {
-    if (!quote?.expiresAt) return undefined;
-    const tick = () => setLeft(Math.max(0, Math.round((new Date(quote.expiresAt).getTime() - Date.now()) / 1000)));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [quote?.expiresAt]);
   if (!quote?.lines?.length) return null;
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -65,9 +57,6 @@ export default function SurgeLines({ quote, className = '' }) {
           </div>
         );
       })}
-      {left != null && left > 0 && (
-        <p className="text-[11px] text-slate-400">Price held for {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</p>
-      )}
     </div>
   );
 }

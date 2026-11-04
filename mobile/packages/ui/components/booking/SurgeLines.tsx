@@ -53,14 +53,6 @@ export function surgeChanged(err: unknown, refetch?: () => unknown): boolean {
 
 export function SurgeLines({ quote }: { quote?: SurgeQuote | null }) {
   const [open, setOpen] = useState<string | null>(null);
-  const [left, setLeft] = useState<number | null>(null);
-  useEffect(() => {
-    if (!quote?.expiresAt) return undefined;
-    const tick = () => setLeft(Math.max(0, Math.round((new Date(quote.expiresAt!).getTime() - Date.now()) / 1000)));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [quote?.expiresAt]);
   if (!quote?.lines?.length) return null;
   return (
     <View style={styles.wrap}>
@@ -77,7 +69,6 @@ export function SurgeLines({ quote }: { quote?: SurgeQuote | null }) {
           </View>
         );
       })}
-      {left != null && left > 0 ? <Text variant="caption" color={ink[400]}>Price held for {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</Text> : null}
     </View>
   );
 }

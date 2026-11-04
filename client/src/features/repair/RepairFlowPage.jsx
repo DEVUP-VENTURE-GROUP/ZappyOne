@@ -36,7 +36,7 @@ import BrandLogo from '@shared/components/common/BrandLogo';
 import { categoryPhoto, problemPhoto } from '@shared/components/home/problemArt';
 import { ProblemLayout } from './ProblemCard';
 import { usePayBooking } from '@shared/hooks/usePayBooking';
-import { billExtras, chosenPrice, freeVisit, totalOf } from '@shared/customer/repairBill';
+import { billExtras, chosenPrice, freeVisit, totalOf, visitNote, billWords } from '@shared/customer/repairBill';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
 import { groupItems, itemFrom, typeWordOf, termsOf, bookedRows } from '@shared/customer/repairBasket';
 import StorefrontStrip from '../providers/StorefrontStrip';
@@ -1761,13 +1761,12 @@ function ConfirmStep({
               <span className="text-sm font-bold text-[#0F172A]">Total</span>
               <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise + tip * 100)}</span>
             </div>
-            {(extras.length > 0 || surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(chosen.pricePaise)} for the repair, plus:</p>}
+            {(extras.length > 0 || surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(chosen.pricePaise)} {billWords(terms).base}</p>}
             {extras.map((l) => <p key={l.label} className="mt-1 flex justify-between text-[12.5px] font-semibold text-slate-600"><span>{l.label}</span><span>+{formatPaise(l.paise)}</span></p>)}
             <SurgeLines quote={surge.quote} className="mt-1.5" />
             {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
-            <p className="text-[11px] text-slate-400 mt-1">
-              Includes parts, labour and taxes. This is the price you pay - nothing is added later without your approval.
-            </p>
+            {visitNote(chosen.bill, serviceMode, terms.pro) && <p className="mt-1.5 text-[12px] font-semibold text-slate-600">{visitNote(chosen.bill, serviceMode, terms.pro)}</p>}
+            <p className="text-[11px] text-slate-400 mt-1">{billWords(terms).includes}</p>
             {serviceMode === 'pickup_repair' && extras.some((l) => l.label.startsWith('Pickup')) && (
               <p className="text-[11px] text-slate-500 mt-1">
                 Pickup and return are included in this total.
@@ -1793,9 +1792,7 @@ function ConfirmStep({
         value={paymentMethod}
         onChange={setPaymentMethod}
         onlineAllowed={onlineEnabled}
-        cashNote={inspectionOnly
-          ? 'Pay the technician directly once the inspection is done.'
-          : 'Pay the technician directly once the repair is done.'}
+        cashNote={billWords(terms).cash(inspectionOnly)}
       />
 
       <button onClick={book} disabled={isLoading || paying} className="btn-primary w-full">
@@ -2015,7 +2012,10 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
     else if (modelFuels.length === 0) { setFuelType(null); skip('fuel'); }
   }, [step, modelFuels, skip]);
 
-  const deviceLabel = deviceName(brand, model);
+  const { data: flowVerticals } = useRepairVerticalsQuery();
+  const flowTerms = termsOf(vertical, flowVerticals?.items);
+  // A one-option packaged service has no device: the header names the service, not "Standard".
+  const deviceLabel = flowTerms.packaged && flowTerms.singleType ? flowTerms.name : deviceName(brand, model);
 
   const noun = NOUNS[vertical] || DEFAULT_NOUNS;
 
@@ -2040,7 +2040,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <StepHeader steps={steps} step={step} skipped={skipped} onBack={back} title={titles[step]}
-        subtitle={configuration?.name || deviceLabel || brand?.name} />
+        subtitle={configuration?.name || deviceLabel || (flowTerms.packaged ? '' : brand?.name)} />
       {resumed && <ResumeBanner onStartOver={onStartOver} onDismiss={() => setResumed(false)} />}
 
       {step === 'brand' && (

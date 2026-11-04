@@ -14,6 +14,7 @@ import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useCreateRepairBookingMutation, useRepairVerticalsQuery } from '@zappy/core/api';
 import { bookedRows, termsOf } from '@zappy/core/shared/repairBasket';
+import { billWords } from '@zappy/core/shared/repairBill';
 import { doorAddress } from '@zappy/core/shared/doorAddress';
 import { Button, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -108,11 +109,11 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
           </View>
         ))}
       </View>
-      <RepairPriceCard inspectionOnly={inspectionOnly} price={price} bill={inspectionOnly ? null : chosen.bill} surgeQuote={surge.quote} surgePaise={surge.totalPaise} tip={tip} />
+      <RepairPriceCard inspectionOnly={inspectionOnly} price={price} bill={inspectionOnly ? null : chosen.bill} surgeQuote={surge.quote} surgePaise={surge.totalPaise} tip={tip} serviceMode={serviceMode} terms={terms} />
       {price != null ? <TipAtCheckout value={tip} onChange={setTip} /> : null}
       <SomeoneElse onChange={setOnSite} />
       <PendingFeeNotice />
-      <PayMethodPicker cashNote={inspectionOnly ? 'Pay the technician directly once the inspection is done.' : 'Pay the technician directly once the repair is done.'} />
+      <PayMethodPicker cashNote={billWords(terms).cash(inspectionOnly)} />
       <Button label={inspectionOnly ? 'Book inspection' : 'Confirm booking'} icon={<Check size={16} color="#fff" />} loading={isLoading} onPress={book} fullWidth />
     </Shell>
   );

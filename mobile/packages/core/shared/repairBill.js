@@ -48,3 +48,25 @@ export function feeLabel(b = {}) {
 
 /** Nearby enough that the visit costs nothing: worth saying ("Free visit"). */
 export const freeVisit = (bill, serviceMode) => !!bill && ['doorstep', 'roadside'].includes(serviceMode) && !bill.travelPaise;
+
+/** How far the pro is and what the visit costs, when the distance shaped the price ("Your pro is 2.4 km away. The visit is free."). */
+export function visitNote(bill, serviceMode, pro = 'pro') {
+  if (!bill || bill.distanceKm == null || !['doorstep', 'roadside'].includes(serviceMode)) return null;
+  const km = Number(bill.distanceKm);
+  if (!Number.isFinite(km)) return null;
+  const away = km < 1 ? 'less than 1 km away' : `${km.toFixed(1)} km away`;
+  return `Your ${pro} is ${away}. ${bill.travelPaise > 0 ? 'Their travel is in the fee above.' : 'The visit is free.'}`;
+}
+
+/** The bill's words in the service's own terms (repairBasket termsOf): a class is not a repair and has no parts. */
+export function billWords(terms = {}) {
+  const job = terms.job || 'repair';
+  const pro = terms.pro || 'technician';
+  return {
+    base: `for the ${job}, plus:`,
+    includes: terms.packaged
+      ? 'Includes taxes. This is the price you pay - nothing is added later without your approval.'
+      : 'Includes parts, labour and taxes. This is the price you pay - nothing is added later without your approval.',
+    cash: (inspection) => `Pay the ${pro} directly once the ${inspection ? 'inspection' : job} is done.`,
+  };
+}
