@@ -111,7 +111,7 @@ function ensureLocPickStyles() {
 function makeScooterEl() {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'width:30px;height:30px;pointer-events:none;';
-  wrap.innerHTML = `<div style="width:30px;height:30px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">${scooterSvg()}</div>`;
+  wrap.innerHTML = `<div style="width:38px;height:38px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">${scooterSvg(38)}</div>`;
   return wrap;
 }
 

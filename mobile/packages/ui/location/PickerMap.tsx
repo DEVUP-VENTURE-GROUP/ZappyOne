@@ -150,7 +150,7 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
       >
         {pros.map((p) => (
           <Marker key={p.key} coordinate={{ latitude: p.lat, longitude: p.lng }} anchor={{ x: 0.5, y: 0.5 }} flat rotation={p.heading} tracksViewChanges={false}>
-            <Scooter />
+            <Scooter size={44} />
           </Marker>
         ))}
         <Marker

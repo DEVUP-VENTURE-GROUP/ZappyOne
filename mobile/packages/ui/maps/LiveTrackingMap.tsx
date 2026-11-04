@@ -207,7 +207,7 @@ function LiveTrackingMapBase({
               // biggest cause of jank on Android maps.
               tracksViewChanges={false}
             >
-              <Scooter size={38} />
+              <Scooter size={48} />
             </Marker>
 
             <Polyline

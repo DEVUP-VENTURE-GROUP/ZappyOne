@@ -48,9 +48,9 @@ function makeProEl(label) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
   wrap.innerHTML = `
-    <div style="position:relative;width:40px;height:40px">
+    <div style="position:relative;width:44px;height:44px">
       <div style="position:absolute;inset:4px;border-radius:50%;background:${BRAND};animation:lt3-pulse 2.4s ease-out infinite"></div>
-      <div class="lt3-pro-rider" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform .6s ease;filter:drop-shadow(0 2px 3px rgba(16,24,40,.35))">${scooterSvg().replace('width="30" height="30"', 'width="40" height="40"')}</div>
+      <div class="lt3-pro-rider" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform .6s ease;filter:drop-shadow(0 2px 3px rgba(16,24,40,.35))">${scooterSvg(44)}</div>
     </div>
     ${label ? chip(label, BRAND, '#fff') : ''}`;
   wrap._setBearing = (b) => {
