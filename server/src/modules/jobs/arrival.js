@@ -62,11 +62,26 @@ async function travel(a, b, { google = true } = {}) {
 }
 
 /** Where a provider sets off from, or null when we do not know. */
-async function originOf({ kind, id }) {
+const freshAt = (at) => at && Date.now() - new Date(at).getTime() < FRESH_MS;
+
+// A shop's trip starts from whoever would go and is nearest the door: the owner's phone or an online technician, live; else the shop, with time to set off.
+async function originOf({ kind, id }, to = null) {
   if (kind === 'shop') {
-    const s = await require('../shop/shop.model').findById(id).select('address.location').lean();
+    const [s, team] = await Promise.all([
+      require('../shop/shop.model').findById(id).select('address.location ownerLocation').lean(),
+      require('../worker/worker.model').find({ shopId: id, isOnline: true, 'currentLocation.coordinates.0': { $exists: true } }).select('currentLocation').limit(20).lean(),
+    ]);
+    const live = [
+      ...(freshAt(s?.ownerLocation?.at) && s.ownerLocation.coordinates?.length === 2 ? [s.ownerLocation.coordinates] : []),
+      ...team.filter((w) => freshAt(w.currentLocation?.updatedAt)).map((w) => w.currentLocation.coordinates),
+    ].filter((c) => c?.length === 2 && (c[0] || c[1]));
     const c = s?.address?.location?.coordinates;
-    return c?.length === 2 ? { lat: c[1], lng: c[0], prep: SHOP_PREP_MIN } : null;
+    const shopPin = c?.length === 2 ? { lat: c[1], lng: c[0], prep: SHOP_PREP_MIN } : null;
+    if (!live.length || !to) return shopPin;
+    // Someone can also set off from the shop: a live owner far from the customer never makes the shop look out of reach.
+    const near = live.map((p) => ({ lat: p[1], lng: p[0], prep: 0, live: true, km: haversineKm(p[1], p[0], to.lat, to.lng) })).sort((x, y) => x.km - y.km)[0];
+    if (shopPin && haversineKm(shopPin.lat, shopPin.lng, to.lat, to.lng) < near.km) return shopPin;
+    return { lat: near.lat, lng: near.lng, prep: 0, live: true };
   }
   const w = await require('../worker/worker.model').findById(id).select('currentLocation isOnline').lean();
   const c = w?.currentLocation?.coordinates;
@@ -84,7 +99,7 @@ async function forProviders(items, to) {
   if (!to || typeof to.lat !== 'number') return out;
   const located = [];
   await Promise.all(items.map(async (p) => {
-    const from = await originOf(p).catch(() => null);
+    const from = await originOf(p, to).catch(() => null);
     if (from) located.push({ p, from, km: haversineKm(from.lat, from.lng, to.lat, to.lng) });
   }));
   located.sort((a, b) => a.km - b.km);

@@ -264,6 +264,8 @@ shopSchema.plugin(require('../account/account.plugin'));
 // What is bookable where changes with this (onboarding/coverage-version): caches refresh on the next request.
 // The shop's hexagon (core/geo/hex), kept with its address pin: the index customers' searches read.
 shopSchema.add({ addressHex: { type: String, default: null, index: true } });
+// Where the owner is while ServicePro is open (shops/me/location): arrival times start here when it is fresh and nearer than the shop.
+shopSchema.add({ ownerLocation: { coordinates: { type: [Number], default: undefined }, at: { type: Date, default: null } } });
 require('../../core/geo/hex').indexOn(shopSchema, { path: 'address.location', field: 'addressHex' });
 require('../onboarding/coverage-version').watch(shopSchema, { fields: ['hours', 'isActive', 'isBlocked', 'address'] });
 module.exports = mongoose.model('Shop', shopSchema);

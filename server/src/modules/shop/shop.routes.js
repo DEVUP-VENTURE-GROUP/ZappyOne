@@ -124,6 +124,17 @@ router.get('/me/statement', async (req, res, next) => {
     res.set('Content-Disposition', `attachment; filename="zappyone-statement-${out.month}.csv"`).type('text/csv').send(st.toCsv(out));
   } catch (err) { next(err); }
 });
+// The owner's phone while ServicePro is open; only for arrival times (jobs/arrival), never shown to anyone.
+router.post('/me/location',
+  require('../../middlewares/rateLimit').makeLimiter({ windowMs: 60_000, max: 6, prefix: 'shoploc' }),
+  validate(Joi.object({ lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() })),
+  async (req, res, next) => {
+    try {
+      await require('./shop.model').updateOne({ _id: req.auth.sub }, { $set: { ownerLocation: { coordinates: [req.body.lng, req.body.lat], at: new Date() } } });
+      res.status(204).end();
+    } catch (err) { next(err); }
+  });
+
 router.get('/me/dues', async (req, res, next) => {
   try {
     const [d, lastPaid] = await Promise.all([require('./shop-dues').duesOf(req.auth.sub), require('../wallet/dues-overview').lastPaidOf({ kind: 'shop', id: req.auth.sub })]);

@@ -10,6 +10,7 @@ import React from 'react';
 import { useGetWorkerMeQuery } from '@zappy/core/api';
 import { useJobRealtime } from '@zappy/core/hooks/useJobRealtime';
 import { useOnlinePresence } from '@zappy/core/hooks/useOnlinePresence';
+import { useShopPresence } from '@zappy/core/hooks/useShopPresence';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { toast } from '../components/Toast';
 import { ConnectionBanner } from '../components/common/ConnectionBanner';
@@ -33,6 +34,7 @@ export function WorkerFrame({ kinds }: { kinds: string[] }) {
       refetch();
     },
   });
+  useShopPresence({ active: signedIn && role === 'shop' });
   useJobRealtime({
     enabled: signedIn,
     onTip: (tip) => toast.success(`₹${Math.round(tip / 100)} tip from your customer. It is all yours.`, { duration: 6000 }),
