@@ -1644,6 +1644,8 @@ function ConfirmStep({
   const surge = useSurge({ kind: 'repair', vertical, serviceMode, loc: location, basePaise: priceBase, skip: priceBase == null });
   const { data: verticals } = useRepairVerticalsQuery();
   const terms = termsOf(vertical, verticals?.items);
+  // The total up front; how it is made up (fees, late-night, distance) one tap away.
+  const [details, setDetails] = useState(false);
   // An optional tip, in the total before paying (jobs/boost-tip tipAtBooking). Rupees.
   const [tip, setTip] = useState(0);
 
@@ -1761,11 +1763,20 @@ function ConfirmStep({
               <span className="text-sm font-bold text-[#0F172A]">Total</span>
               <span className="text-2xl font-black text-[#0F172A]">{formatPaise(price + surge.totalPaise + tip * 100)}</span>
             </div>
-            {(extras.length > 0 || surge.totalPaise > 0 || tip > 0) && <p className="mt-0.5 text-[11px] text-slate-500">{formatPaise(chosen.pricePaise)} {billWords(terms).base}</p>}
-            {extras.map((l) => <p key={l.label} className="mt-1 flex justify-between text-[12.5px] font-semibold text-slate-600"><span>{l.label}</span><span>+{formatPaise(l.paise)}</span></p>)}
-            <SurgeLines quote={surge.quote} className="mt-1.5" />
-            {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
-            {visitNote(chosen.bill, serviceMode, terms.pro) && <p className="mt-1.5 text-[12px] font-semibold text-slate-600">{visitNote(chosen.bill, serviceMode, terms.pro)}</p>}
+            {(extras.length > 0 || surge.totalPaise > 0 || tip > 0) && (
+              <button type="button" onClick={() => setDetails((v) => !v)} aria-expanded={details} className="mt-1 text-[12px] font-semibold text-zappy-700 underline">
+                {details ? 'Hide price details' : 'See price details'}
+              </button>
+            )}
+            {details && (
+              <div className="mt-1.5 rounded-lg bg-slate-50 p-2.5">
+                <p className="flex justify-between text-[12.5px] font-semibold text-slate-600"><span>{formatPaise(chosen.pricePaise)} {billWords(terms).base.replace(', plus:', '')}</span></p>
+                {extras.map((l) => <p key={l.label} className="mt-1 flex justify-between text-[12.5px] font-semibold text-slate-600"><span>{l.label}</span><span>+{formatPaise(l.paise)}</span></p>)}
+                <SurgeLines quote={surge.quote} className="mt-1.5" />
+                {tip > 0 && <p className="mt-1 flex justify-between text-[12.5px] font-semibold text-rose-600"><span>Tip for your pro</span><span>+₹{tip}</span></p>}
+                {visitNote(chosen.bill, serviceMode, terms.pro) && <p className="mt-1.5 text-[12px] text-slate-600">{visitNote(chosen.bill, serviceMode, terms.pro)}</p>}
+              </div>
+            )}
             <p className="text-[11px] text-slate-400 mt-1">{billWords(terms).includes}</p>
             {serviceMode === 'pickup_repair' && extras.some((l) => l.label.startsWith('Pickup')) && (
               <p className="text-[11px] text-slate-500 mt-1">
