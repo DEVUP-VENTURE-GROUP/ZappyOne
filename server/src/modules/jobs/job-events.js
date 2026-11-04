@@ -121,7 +121,7 @@ async function announce(kind, doc, status) {
   // Cancellations reach the provider only when someone else made them.
   if (forProvider && provider && (forProvider[2] === 'always' || lastActor(doc) === 'user')) {
     await push(provider, {
-      title: forProvider[0], body: forProvider[1], deepLink: k.providerLink(id), data: { kind, id, status },
+      title: forProvider[0], body: forProvider[1], deepLink: k.providerLink(id), data: { kind, id, status, ...(k.offer?.status === status && { channel: 'offers' }) },
     });
   }
 

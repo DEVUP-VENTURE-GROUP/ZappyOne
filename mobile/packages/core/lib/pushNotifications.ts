@@ -28,11 +28,14 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { createLogger } from './logger';
+import { APP_ID } from '../config/env';
 
 const log = createLogger('push');
 
 /** Must match `android.notification.channelId` in the server's FCM payload. */
 export const ANDROID_CHANNEL_ID = 'zappy_alerts';
+/** Job offers ring loud on their own channel (server data.channel 'offers'); only ServicePro ships the ringtone. */
+export const OFFER_CHANNEL_ID = 'zappy_offers';
 
 export type PushPlatform = 'ios' | 'android';
 export interface DeviceToken {
@@ -77,6 +80,17 @@ export async function ensureAndroidChannel(): Promise<void> {
       vibrationPattern: [0, 250, 250, 250],
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
+    if (APP_ID === 'servicepro') {
+      await Notifications.setNotificationChannelAsync(OFFER_CHANNEL_ID, {
+        name: 'Job offers',
+        description: 'New jobs offered to you. Rings like a call so you never miss one.',
+        importance: Notifications.AndroidImportance.MAX,
+        sound: 'zappy_ring.wav',
+        vibrationPattern: [0, 600, 300, 600, 300, 600],
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        enableVibrate: true,
+      });
+    }
   } catch (err) {
     // A missing channel degrades delivery; it must not break startup.
     log.warn('could not create the Android notification channel', err);

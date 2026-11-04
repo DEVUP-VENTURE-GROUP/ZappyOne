@@ -1,9 +1,12 @@
 import '../global.css';
+// Registers the background location task at load, before any screen (expo-task-manager needs it there).
+import '../src/captain/backgroundLocation';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
 import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
 import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { isPublic, resolveRoute } from '../routes';
 import { homeFor } from '../src/menus';
+import { CaptainMode } from '../src/captain/CaptainMode';
 
 /** Shops and their technicians, and event partners, as on the web. */
 const ROLES = ['shop', 'worker', 'event_partner'] as const;
@@ -16,6 +19,7 @@ export default function RootLayout() {
       <AccountSetupGate roles={ROLES} appName="ServicePro">
         <AppStack />
         <WorkerFrame kinds={KINDS} />
+        <CaptainMode />
       </AccountSetupGate>
     </AppRoot>
   );

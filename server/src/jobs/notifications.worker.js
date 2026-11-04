@@ -62,6 +62,10 @@ function getFirebaseApp() {
 
 /* FCM */
 
+// Job offers ring on ServicePro's own loud channel with the ZappyOne ringtone (mobile core/lib/pushNotifications OFFER_CHANNEL_ID).
+const OFFER_KEYS = new Set(['provider.job_nearby', 'provider.job_waiting']);
+const isOffer = (data) => data?.channel === 'offers' || OFFER_KEYS.has(data?.key);
+
 async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
   if (!tokens?.length) return { skipped: true, reason: 'no_tokens' };
 
@@ -99,7 +103,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
         data: stringData,
         android: {
           priority: 'high',
-          notification: { sound: 'default', channelId: 'zappy_alerts' },
+          notification: isOffer(data) ? { sound: 'zappy_ring', channelId: 'zappy_offers', defaultVibrateTimings: false, visibility: 'public' } : { sound: 'default', channelId: 'zappy_alerts' },
         },
         apns: {
           headers: { 'apns-priority': '10' },
@@ -228,9 +232,9 @@ async function processJob(job) {
 
     return sendFcm({
       tokens: worker.deviceTokens,
-      title: '🔔 New Job Offer',
+      title: 'New job offer',
       body: `${order.service.replace(/_/g, ' ')}, ₹${order.pricing.total}, ${order.pickupLocation.address?.slice(0, 60)}`,
-      data: { type: 'new_job_request', orderId: String(orderId) },
+      data: { type: 'new_job_request', orderId: String(orderId), channel: 'offers' },
     });
   }
 
@@ -382,4 +386,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { processJob };
+module.exports = { processJob, isOffer };
