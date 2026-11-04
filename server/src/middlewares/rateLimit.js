@@ -2,6 +2,9 @@ const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis').default;
 const { redis } = require('../config/redis');
 
+// Signed in: one count per person; a Jio/Airtel shared address or one office Wi-Fi is thousands of people.
+const limitKey = (req) => (req.auth?.sub ? `u:${req.auth.sub}` : req.ip);
+
 function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false, skipSuccessfulRequests = false, keyGenerator }) {
   return rateLimit({
     windowMs,
@@ -10,7 +13,7 @@ function makeLimiter({ windowMs, max, prefix, skipFailedRequests = false, skipSu
     legacyHeaders: false,
     skipFailedRequests,
     skipSuccessfulRequests,
-    ...(keyGenerator ? { keyGenerator } : {}),
+    keyGenerator: keyGenerator || limitKey,
     store: new RedisStore({
       sendCommand: (...args) => redis.call(...args),
       prefix: `rl:${prefix}:`,
@@ -116,5 +119,5 @@ module.exports = {
   globalLimiter, authLimiter, refreshLimiter, adminAuthLimiter, otpPhoneLimiter, orderLimiter, workerOnlineLimiter,
   cancelLimiter, topupLimiter, ratingLimiter,
   quoteLimiter, nearbyLimiter, disputeLimiter, telemetryLimiter, lensLimiter,
-  makeLimiter, codeAttemptLimiter, storefrontLimiter,
+  makeLimiter, codeAttemptLimiter, storefrontLimiter, limitKey,
 };
