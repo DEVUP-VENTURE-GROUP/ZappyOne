@@ -580,7 +580,6 @@ async function reportWorker(req, res, next) {
     const notifService = require('../notification/notification.service');
     // Notify admin ops for safety concerns
     if (isSafety) {
-      const { redis } = require('../../config/redis');
       await require('../admin/ops-alerts').raise({
         type: 'worker_safety_complaint',
         title: `⚠️ Safety complaint: ${worker?.name || 'Worker'}`,

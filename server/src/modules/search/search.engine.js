@@ -108,11 +108,6 @@ function editDistance(a, b, max = 2) {
   return prev[bl];
 }
 
-// True when `token` fuzzily matches `term` (short words need exactness).
-function fuzzyEq(token, term) {
-  return fuzzyTier(token, term) > 0;
-}
-
 // Graded fuzzy match: closer edits score higher so `punctr`→puncture clearly
 // beats an incidental 2-edit collision. Returns a 0..0.7 tier (0 = no match).
 function fuzzyTier(token, term) {
@@ -122,66 +117,6 @@ function fuzzyTier(token, term) {
   const d = editDistance(token, term, maxDist);
   if (d > maxDist) return 0;
   return d === 1 ? 0.6 : 0.4;                                    // 1-edit strong, 2-edit weaker
-}
-
-/**
- * Expand a raw phrase into a de-duped keyword set: meaningful tokens + their
- * synonyms + naive singular + any triggered intent keywords.
- */
-function expandQuery(raw) {
-  const toks = tokenize(raw).filter((t) => !STOPWORDS.has(t));
-  const out = new Set();
-  for (const t of toks) {
-    out.add(t);
-    if (SYNONYMS[t]) out.add(SYNONYMS[t]);
-    if (t.length > 3 && t.endsWith('s')) {
-      const sing = t.slice(0, -1);
-      out.add(sing);
-      if (SYNONYMS[sing]) out.add(SYNONYMS[sing]);
-    }
-  }
-  const lower = String(raw || '').toLowerCase();
-  for (const intent of INTENTS) {
-    if (intent.phrases.some((p) => lower.includes(p))) {
-      intent.keywords.forEach((k) => out.add(k));
-    }
-  }
-  return { keywords: [...out], tokens: toks };
-}
-
-/**
- * Tiered text score for one corpus entry against the expanded keywords.
- * Returns { text, matched } where text is 0..1-ish tier weight (pre-ranking).
- */
-function textScore(entry, keywords, tokens) {
-  const name = entry._name;                     // lowercased once at build time
-  const code = entry._code;
-  const nameTerms = entry._nameTerms || entry._terms; // strong signal (title/code)
-  const terms = entry._terms;                   // recall signal (desc/skills/aliases)
-  let best = 0;
-  let matched = false;
-
-  // Whole-query prefix/substring against the display name (strongest signal).
-  const joined = tokens.join(' ');
-  if (joined) {
-    if (name === joined) { best = Math.max(best, 1.0); matched = true; }
-    else if (name.startsWith(joined)) { best = Math.max(best, 0.9); matched = true; }
-    else if (name.includes(joined)) { best = Math.max(best, 0.75); matched = true; }
-  }
-
-  for (const k of keywords) {
-    if (!k) continue;
-    if (nameTerms.has(k)) { best = Math.max(best, 0.95); matched = true; continue; } // exact in NAME
-    if (name.includes(k) || code.includes(k)) { best = Math.max(best, 0.8); matched = true; continue; }
-    if (terms.has(k)) { best = Math.max(best, 0.6); matched = true; continue; }       // exact in peripheral
-    // fuzzy (typo tolerance): a name-term match dominates a peripheral one.
-    let fz = 0;
-    for (const t of nameTerms) { const v = fuzzyTier(k, t); if (v > fz) fz = v; }
-    if (fz > 0) { best = Math.max(best, fz); matched = true; continue; }
-    for (const t of terms) { const v = fuzzyTier(k, t); if (v > fz) fz = v; }
-    if (fz > 0) { best = Math.max(best, fz * 0.5); matched = true; }                   // peripheral fuzzy halved
-  }
-  return { text: best, matched };
 }
 
 /**
@@ -275,6 +210,6 @@ function scoreEntry(entry, query) {
 }
 
 module.exports = {
-  tokenize, editDistance, fuzzyEq, expandQuery, textScore, parseQuery, scoreEntry, conceptsForLine,
+  tokenize, editDistance, parseQuery, scoreEntry, conceptsForLine,
   SYNONYMS, STOPWORDS, INTENTS, LINE_CONCEPTS,
 };

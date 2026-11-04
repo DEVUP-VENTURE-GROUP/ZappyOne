@@ -153,21 +153,6 @@ async function assertBookableLocation(location) {
 }
 
 /**
- * Apply a zone's pricingMultiplier to a base price (in paise).
- * Returns { adjustedPaise, zoneId, zoneName, multiplier }.
- * If no zone contains the point, the price is unchanged.
- */
-async function applyZonePricing(basePricePaise, lng, lat) {
-  const base = Math.round(Number(basePricePaise) || 0);
-  const zone = await getZoneForPoint(lng, lat);
-  if (!zone || !zone.pricingMultiplier || zone.pricingMultiplier === 1) {
-    return { adjustedPaise: base, zoneId: zone?._id || null, zoneName: zone?.name || null, multiplier: zone?.pricingMultiplier || 1 };
-  }
-  const adjustedPaise = Math.round(base * zone.pricingMultiplier);
-  return { adjustedPaise, zoneId: zone._id, zoneName: zone.name, multiplier: zone.pricingMultiplier };
-}
-
-/**
  * Stats for one zone: online worker count + recent (7d) order count inside it.
  */
 async function getZoneStats(id) {
@@ -203,7 +188,6 @@ module.exports = {
   getActiveZoneForPoint,
   zonesEnforced,
   assertBookableLocation,
-  applyZonePricing,
   getZoneStats,
   notifyLaunchInterest,
 };

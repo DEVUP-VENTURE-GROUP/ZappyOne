@@ -68,9 +68,6 @@ function _scheduleReconnect(delayMs) {
   }, delayMs);
 }
 
-/** Returns false when Mongo is disconnected — used by health check and middleware. */
-function isMongoConnected() { return _isConnected; }
-
 /**
  * Express middleware: returns 503 immediately if Mongo is down.
  * Prevents requests from hanging indefinitely.
@@ -90,4 +87,4 @@ function requireMongo(req, res, next) {
   next();
 }
 
-module.exports = { connectMongo, isMongoConnected, requireMongo };
+module.exports = { connectMongo, requireMongo };

@@ -14,55 +14,11 @@
 const JobAuction = require('./auction.model');
 const Order      = require('./order.model');
 const Worker     = require('../worker/worker.model');
-const geoService = require('../worker/geo.service');
 const { redis }  = require('../../config/redis');
 const logger     = require('../../core/logger');
 
 const AUCTION_THRESHOLD = 1500;  // orders > ₹1500 qualify
-const AUCTION_TTL_MS    = 15 * 60 * 1000;  // 15 min window for bids
 const MAX_BIDS          = 5;
-
-async function createAuction(order) {
-  if (order.pricing?.total < AUCTION_THRESHOLD) return null;
-
-  const existing = await JobAuction.findOne({ orderId: order._id }).lean();
-  if (existing) return existing;
-
-  const expiresAt = new Date(Date.now() + AUCTION_TTL_MS);
-  const auction   = await JobAuction.create({
-    orderId:   order._id,
-    bids:      [],
-    expiresAt,
-    status:    'open',
-    basePrice: order.pricing.total,
-  });
-
-  /* Notify nearby workers about the auction */
-  const [lng, lat] = order.pickupLocation.coordinates;
-  const candidates = await geoService.findCandidates({
-    lng, lat, skill: order.service, excludeIds: [], radiusKm: 5,
-  });
-
-  const workerIds = candidates.slice(0, 10);
-  for (const wId of workerIds) {
-    await redis.publish('worker:offer', JSON.stringify({
-      workerId: String(wId),
-      order: {
-        _id:          String(order._id),
-        service:      order.service,
-        pickupAddress: order.pickupLocation.address,
-        pickupCoords:  order.pickupLocation.coordinates,
-        price:         order.pricing.total,
-        isAuction:     true,
-        auctionId:     String(auction._id),
-        expiresAt:     expiresAt.toISOString(),
-      },
-    }));
-  }
-
-  logger.info({ orderId: order._id, basePrice: order.pricing.total, workers: workerIds.length }, '[Auction] Created');
-  return auction;
-}
 
 async function submitBid({ auctionId, orderId, workerId, proposedPrice, etaMinutes, approach }) {
   const auction = await JobAuction.findOne({ _id: auctionId, orderId, status: 'open' });
@@ -87,7 +43,6 @@ async function submitBid({ auctionId, orderId, workerId, proposedPrice, etaMinut
   await auction.save();
 
   /* Notify customer new bid arrived */
-  const order = await Order.findById(orderId).select('userId').lean();
   await redis.publish('order:event', JSON.stringify({
     orderId: String(orderId),
     event:   'auction.bid',
@@ -158,4 +113,4 @@ async function getAuction(orderId) {
   return JobAuction.findOne({ orderId }).lean();
 }
 
-module.exports = { createAuction, submitBid, selectBid, getAuction, AUCTION_THRESHOLD };
+module.exports = { submitBid, selectBid, getAuction, AUCTION_THRESHOLD };

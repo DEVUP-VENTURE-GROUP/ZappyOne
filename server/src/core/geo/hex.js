@@ -59,4 +59,4 @@ function indexOn(schema, { path, field }) {
   });
 }
 
-module.exports = { RES, STEP_KM, cellOf, cellsWithin, ringsFor, indexOn, gridDistance: (a, b) => { try { return h3.gridDistance(a, b); } catch { return null; } } };
+module.exports = { RES, STEP_KM, cellOf, cellsWithin, ringsFor, indexOn };

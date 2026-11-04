@@ -193,15 +193,6 @@ async function onOrderCompleted({ workerId, lat, lng, earningsPaise }) {
   return { bonusCredited };
 }
 
-/* Check if worker has committed to this hour — used by dispatch for priority */
-async function isCommittedNow({ workerId, lat, lng }) {
-  const bucket  = geoBucket(lat, lng);
-  const nowHour = new Date().getUTCHours() + 5; // approx IST
-  const key     = COMMITTED_KEY(bucket, nowHour);
-  const member  = await redis.sismember(key, String(workerId));
-  return member === 1;
-}
-
 /* Projected earnings for a planned slot — shown before commitment */
 async function previewShift({ startHour, endHour, lat, lng }) {
   const bonus = await computeSlotBonus({ startHour, endHour, lat, lng });
@@ -229,7 +220,6 @@ module.exports = {
   getShifts,
   getTodayShifts,
   onOrderCompleted,
-  isCommittedNow,
   previewShift,
   computeSlotBonus,
 };

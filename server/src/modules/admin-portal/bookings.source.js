@@ -287,45 +287,6 @@ async function findBookingBySource(source, id) {
   return Model.findById(id).lean();
 }
 
-/**
- * Aggregate totals across every engine for a window — the number Overview,
- * Analytics and BusinessIntelligence all actually want, computed once.
- *
- * Commission and GMV are summed only from COMPLETED bookings — an active or
- * cancelled booking has not earned anything yet, and counting it would
- * overstate revenue on any day with bookings still in flight.
- */
-async function aggregateTotals({ from, to } = {}) {
-  const { rows } = await listBookings({ from, to, limit: Number.MAX_SAFE_INTEGER, perSourceLimit: 100000 });
-
-  const completed = rows.filter((r) => r.statusBucket === 'completed');
-  const bySource = {};
-  for (const s of SOURCES) {
-    const own = rows.filter((r) => r.source === s);
-    const ownCompleted = own.filter((r) => r.statusBucket === 'completed');
-    bySource[s] = {
-      total: own.length,
-      completed: ownCompleted.length,
-      cancelled: own.filter((r) => r.statusBucket === 'cancelled').length,
-      gmvPaise: ownCompleted.reduce((sum, r) => sum + (r.totalPaise || 0), 0),
-      commissionPaise: ownCompleted.reduce((sum, r) => sum + (r.commissionPaise || 0), 0),
-      platformFeePaise: ownCompleted.reduce((sum, r) => sum + (r.platformFeePaise || 0), 0),
-    };
-  }
-
-  return {
-    totalBookings: rows.length,
-    completedBookings: completed.length,
-    cancelledBookings: rows.filter((r) => r.statusBucket === 'cancelled').length,
-    activeBookings: rows.filter((r) => r.statusBucket === 'active').length,
-    gmvPaise: completed.reduce((sum, r) => sum + (r.totalPaise || 0), 0),
-    commissionPaise: completed.reduce((sum, r) => sum + (r.commissionPaise || 0), 0),
-    platformFeePaise: completed.reduce((sum, r) => sum + (r.platformFeePaise || 0), 0),
-    bySource,
-  };
-}
-
 module.exports = {
   SOURCES, VERTICAL_LABEL, HELPING_LABEL, PET_LABEL, NORMALISERS,
-  bucketFor, listBookings, findBookingBySource, aggregateTotals,
-};
+  bucketFor, listBookings, findBookingBySource, };

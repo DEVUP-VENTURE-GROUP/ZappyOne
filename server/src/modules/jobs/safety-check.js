@@ -80,7 +80,6 @@ async function sweep({ now = Date.now() } = {}) {
       await require('../worker/sos.service').triggerSOS({ workerId: row.providerId, jobId: row.jobId, message, type: 'safety_check_missed' })
         .catch((e) => logger.error({ err: e.message, jobId: String(row.jobId) }, '[safety-check] SOS not raised'));
     } else {
-      const { redis } = require('../../config/redis');
       require('../admin/ops-alerts').raise({ type: 'safety_check_missed', title: 'Safety check not answered', body: message, data: { kind: row.kind, id: String(row.jobId) }, urgent: true }).catch(() => {});
     }
   }

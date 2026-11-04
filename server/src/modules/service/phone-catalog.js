@@ -356,72 +356,9 @@ function lookupPrice({ brand, seriesName, service, tier = 'Compatible' }) {
   };
 }
 
-/**
- * Get all available brands for frontend dropdown.
- */
-function getBrands() {
-  return PHONE_BRANDS.map(b => ({ id: b, label: PHONE_CATALOG[b]?.label || b }));
-}
-
-/**
- * Get series list for a brand.
- */
-function getSeriesForBrand(brand) {
-  const brandData = PHONE_CATALOG[brand];
-  if (!brandData) return [];
-  return Object.entries(brandData.series).map(([name, data]) => ({
-    name,
-    models: data.models,
-  }));
-}
-
-/**
- * Get all pricing tiers for a brand+series+service.
- */
-function getTieredPricing({ brand, seriesName, service }) {
-  const tiers = Object.keys(QUALITY_TIERS).map(tier => {
-    const result = lookupPrice({ brand, seriesName, service, tier });
-    return {
-      tier,
-      ...QUALITY_TIERS[tier],
-      paise:       result?.paise || null,
-      rupees:      result?.paise ? Math.round(result.paise / 100) : null,
-      warrantyDays: result?.warrantyDays || 7,
-    };
-  });
-  return tiers.filter(t => t.paise !== null);
-}
-
-/**
- * Compute total repair quote including inspection, labor, and parts.
- */
-function computeRepairQuote({ brand, seriesName, service, tier, inspectionFeePaise = 15000, urgentSurchargePaise = 0 }) {
-  const partsCost = lookupPrice({ brand, seriesName, service, tier });
-  if (!partsCost) return null;
-
-  const laborPaise = Math.round(partsCost.paise * 0.30); // 30% labor markup on parts cost
-  const total = inspectionFeePaise + partsCost.paise + laborPaise + urgentSurchargePaise;
-
-  return {
-    inspectionFeePaise,
-    partsPaise:         partsCost.paise,
-    laborPaise,
-    urgentSurchargePaise,
-    totalPaise:         total,
-    warrantyDays:       partsCost.warrantyDays,
-    tier,
-    brand,
-    series: seriesName,
-  };
-}
-
 module.exports = {
   PHONE_CATALOG,
   PHONE_BRANDS,
   QUALITY_TIERS,
-  getBrands,
-  getSeriesForBrand,
-  getTieredPricing,
   lookupPrice,
-  computeRepairQuote,
 };

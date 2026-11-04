@@ -107,14 +107,7 @@ async function recordProviderEvent({ sessionId, event, providerCallId, durationS
   return session;
 }
 
-async function endCall({ sessionId }) {
-  await CallSession.updateOne({ _id: sessionId, active: true }, {
-    $set: { active: false, endedAt: new Date() },
-  });
-}
-
 module.exports = {
   startCall,
   recordProviderEvent,
-  endCall,
 };

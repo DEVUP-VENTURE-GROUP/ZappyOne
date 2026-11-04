@@ -28,7 +28,6 @@ const Payout = require('./payout.model');
 const Transaction = require('../payment/transaction.model');
 const walletService = require('../wallet/wallet.service');
 const notificationService = require('../notification/notification.service');
-const logger = require('../../core/logger');
 
 const MIN_PAYOUT_PAISE = 5000;     // ₹50
 const MAX_PAYOUT_PAISE = 2500000;  // ₹25,000
@@ -164,38 +163,6 @@ async function processPayout({ payoutId }) {
   return payout;
 }
 
-/**
- * Reverse a failed payout — credit the wallet back, mark payout `failed`.
- * Idempotent on `payout:reversal:<payoutId>`.
- */
-async function reversePayout({ payout, reason }) {
-  await walletService.apply({
-    kind: 'worker',
-    id: payout.workerId,
-    type: 'credit',
-    amountPaise: payout.amountPaise,
-    reason: Transaction.REASONS.ADMIN_ADJUSTMENT_CREDIT,
-    idempotencyKey: `payout:reversal:${payout._id}`,
-    description: `Payout reversed - ${reason}`,
-    metadata: { payoutId: String(payout._id) },
-  });
-
-  payout.status = 'failed';
-  payout.failureReason = reason;
-  payout.events.push({ event: 'failed', at: new Date(), meta: { reason } });
-  await payout.save();
-
-  await notificationService.notify({
-    recipient: { kind: 'worker', id: payout.workerId },
-    type: 'wallet_credited',
-    title: '⚠️ Payout failed',
-    body: `Your ₹${payout.amountPaise / 100} has been returned to your wallet. Reason: ${reason}`,
-    deepLink: '/wallet',
-  }).catch(() => {});
-
-  return payout;
-}
-
 async function rejectPayout({ payoutId, adminId, reason }) {
   const payout = await Payout.findById(payoutId);
   if (!payout) throw Object.assign(new Error('Payout not found'), { status: 404 });
@@ -261,7 +228,6 @@ module.exports = {
   approvePayout,
   processPayout,
   rejectPayout,
-  reversePayout,
   markPaidManually,
   listForWorker,
   MIN_PAYOUT_PAISE,

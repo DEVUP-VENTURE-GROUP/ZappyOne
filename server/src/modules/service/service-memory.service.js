@@ -91,31 +91,4 @@ async function recordServiceCompletion({ order, workerName, notes, photos = [] }
   }
 }
 
-async function getUserMemories(userId) {
-  return ServiceMemory.find({ userId }).sort({ lastServiceAt: -1 }).lean();
-}
-
-async function getMemory(memoryId, userId) {
-  const mem = await ServiceMemory.findById(memoryId).lean();
-  if (!mem || String(mem.userId) !== String(userId)) return null;
-  return mem;
-}
-
-async function labelMemory({ memoryId, userId, label, preferredWorkerId }) {
-  return ServiceMemory.findOneAndUpdate(
-    { _id: memoryId, userId },
-    { $set: { label, ...(preferredWorkerId ? { preferredWorkerId } : {}) } },
-    { new: true }
-  );
-}
-
-async function getDueReminders(userId) {
-  const now     = new Date();
-  const in7days = new Date(now.getTime() + 7 * 86400000);
-  return ServiceMemory.find({
-    userId,
-    nextReminderAt: { $lte: in7days, $gte: now },
-  }).lean();
-}
-
-module.exports = { recordServiceCompletion, getUserMemories, getMemory, labelMemory, getDueReminders, computeNextReminder };
+module.exports = { recordServiceCompletion, computeNextReminder };

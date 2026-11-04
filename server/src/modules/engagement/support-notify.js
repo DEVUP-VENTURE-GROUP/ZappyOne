@@ -6,7 +6,6 @@ const WHO = { user: 'Customer', worker: 'Pro', shop: 'Partner', event_partner: '
 const short = (text) => (String(text || '').length > 120 ? `${String(text).slice(0, 117)}…` : String(text || ''));
 
 function toAdmin(ticket, text, { isNew = false } = {}) {
-  const { redis } = require('../../config/redis');
   require('../admin/ops-alerts').raise({
     type: 'support_message',
     title: `${WHO[ticket.raisedBy.kind] || 'Someone'} ${isNew ? 'opened' : 'wrote on'}: ${ticket.subject}`,

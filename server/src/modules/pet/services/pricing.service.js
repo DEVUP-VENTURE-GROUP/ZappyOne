@@ -26,7 +26,6 @@ const { Breed, PetServiceVariant, PetServiceAddon, PetServicePackage } = require
 const { kmBetween } = require('../../../core/geo/distance');
 const { httpError } = require('../../../core/errors');
 
-
 const ruleCache = new Map();
 const CACHE_MS = 30000;
 
@@ -415,27 +414,6 @@ async function quote({
   };
 }
 
-/**
- * Is a provider's own price acceptable? (§29 guardrails)
- *
- * A marketplace where one groomer charges ₹400 and the next ₹4,000 for the
- * same job is one customers stop trusting. The band is configuration, so an
- * operator decides how wide "acceptable" is.
- */
-async function checkProviderPrice({ categoryCode, variantCode, species, cityCode, pricePaise }) {
-  const rule = await resolveRule({ categoryCode, variantCode, species, cityCode });
-  const min = rule.minPaise || 0;
-  const max = rule.maxPaise || 0;
-
-  if (min && pricePaise < min) {
-    return { allowed: false, reason: 'below_floor', minPaise: min, maxPaise: max };
-  }
-  if (max && pricePaise > max) {
-    return { allowed: false, reason: 'above_ceiling', minPaise: min, maxPaise: max };
-  }
-  return { allowed: true, minPaise: min, maxPaise: max };
-}
-
 // A quote at one provider's own prices; ZappyOne's own staff keep the rules.
 async function quoteFor(args, capability) {
   const staff = capability?.workerId && await require('../../workforce/staff').isStaff(capability.workerId);
@@ -463,6 +441,5 @@ module.exports = {
   priceOnePet,
   resolveRule,
   invalidateRuleCache,
-  checkProviderPrice,
   nightsBetween,
 };

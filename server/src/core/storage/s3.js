@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { v4: uuid } = require('uuid');
 const config = require('../../config');
@@ -209,14 +209,9 @@ async function streamToResponse(key, res) {
   obj.Body.pipe(res);
 }
 
-async function deleteObject(key) {
-  await s3.send(new DeleteObjectCommand({ Bucket: config.aws.bucket, Key: key }));
-}
-
 module.exports = {
   isConfigured, getUploadUrl, getViewUrl, getDownloadUrl,
   signMedia, signMediaList, signDocMedia, signDocsMedia,
   keyFromMedia, normalizeDocMedia,
   MEDIA_FIELDS, MEDIA_LIST_FIELDS,
-  streamToResponse, deleteObject,
-};
+  streamToResponse, };

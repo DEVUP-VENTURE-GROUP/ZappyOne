@@ -12,8 +12,6 @@ const Order   = require('./order.model');
 const { redis } = require('../../config/redis');
 const logger  = require('../../core/logger');
 
-const TIP_PRESETS_PAISE = [2000, 5000, 10000, 20000]; // ₹20, ₹50, ₹100, ₹200
-
 /**
  * Live boost during searching phase — updates offer price and re-broadcasts
  * to all workers who received the offer so they see the higher amount.
@@ -178,4 +176,4 @@ async function getTip(orderId) {
   return Tip.findOne({ orderId }).lean();
 }
 
-module.exports = { sendTip, getTip, TIP_PRESETS_PAISE };
+module.exports = { sendTip, getTip };

@@ -207,22 +207,6 @@ async function cancelBooking(req, res, next) {
   } catch (e) { next(e); }
 }
 
-// Partner streams their own KYC docs
-async function streamOwnKycDoc(req, res, next) {
-  try {
-    const partner = await EventPartner.findById(req.params.id).select('kyc').lean();
-    if (!partner) return res.status(404).json({ error: 'Not found' });
-    const idx = Number(req.params.idx);
-    const key = partner.kyc?.documents?.[idx];
-    if (!key) return res.status(404).json({ error: 'Document not found' });
-    const s3Service = require('../../core/storage/s3');
-    await s3Service.streamToResponse(key, res);
-  } catch (e) {
-    if (e?.name === 'NoSuchKey') return res.status(404).json({ error: 'File not found in storage' });
-    next(e);
-  }
-}
-
 async function blockPartner(req, res, next) {
   try {
     const { block = true, reason } = req.body;
@@ -239,6 +223,6 @@ async function blockPartner(req, res, next) {
 module.exports = {
   listThemes, updateThemeStatus, listBookings, cancelBooking,
   listPartners, getPartner, createPartner, updatePartner,
-  approvePartnerKyc, rejectPartnerKyc, clarifyPartnerKyc, streamPartnerKycDoc, streamPartnerKycField, streamOwnKycDoc, blockPartner,
+  approvePartnerKyc, rejectPartnerKyc, clarifyPartnerKyc, streamPartnerKycDoc, streamPartnerKycField, blockPartner,
   getConfig, updateConfig, getAnalytics, listCategories, upsertCategory, deleteCategory,
 };

@@ -449,13 +449,6 @@ const DIAGNOSIS_FLOWS = {
   ],
 };
 
-/* Urgency-based priority mapping */
-const URGENCY_TO_PRIORITY = {
-  urgent: 'emergency',
-  high:   'normal',
-  normal: 'normal',
-};
-
 /* Get flow for a service */
 function getDiagnosisFlow(service) {
   return DIAGNOSIS_FLOWS[service] || null;
@@ -522,5 +515,4 @@ module.exports = {
   computeUrgencyFromAnswers,
   computeToolsFromAnswers,
   computeQuantityMultiplier,
-  URGENCY_TO_PRIORITY,
 };

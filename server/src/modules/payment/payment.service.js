@@ -385,7 +385,6 @@ async function capturePayment({ cfOrderId, cfPaymentId, amountPaise, eventName, 
       }
     ).catch(() => {});
 
-    const { redis: r } = require('../../config/redis');
     require('../admin/ops-alerts').raise({
       type: 'payment_reconciliation_required',
       title: '⚠️ Payment needs reconciliation',
@@ -565,7 +564,6 @@ async function refundIntent(intent, { amountPaise, reason, label, ref }) {
         reconciliationRequired: true, reconciliationReason: `refund failed: ${err.message}`, reconciliationAt: new Date(),
       },
     });
-    const { redis: r } = require('../../config/redis');
     require('../admin/ops-alerts').raise({
       type: 'refund_manual_required',
       title: 'Refund needs manual action',

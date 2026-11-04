@@ -16,8 +16,6 @@ const mongoose = require('mongoose');
  * never an edit of the earlier one.
  */
 
-const CONDITION_ITEMS = ['screen', 'body', 'back', 'camera', 'buttons', 'ports', 'water_indicator'];
-
 const inspectionPhotoSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
@@ -167,4 +165,4 @@ const DeviceInspection = mongoose.model('DeviceInspection', deviceInspectionSche
 const DeviceHandover = mongoose.model('DeviceHandover', deviceHandoverSchema);
 const QAInspection = mongoose.model('QAInspection', qaInspectionSchema);
 
-module.exports = { DeviceInspection, DeviceHandover, QAInspection, CONDITION_ITEMS };
+module.exports = { DeviceInspection, DeviceHandover, QAInspection };

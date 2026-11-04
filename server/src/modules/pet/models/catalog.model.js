@@ -22,17 +22,6 @@ const mongoose = require('mongoose');
 const { SPECIES, PET_SIZES } = require('../../service/pet-passport.model');
 const { pointField, stripEmptyPoints } = require('../../../core/geo/point');
 
-/** The seven customer-facing categories (§2). Fixed at launch by product. */
-const CATEGORY_CODES = [
-  'pet_grooming',
-  'pet_boarding',
-  'pet_walk',
-  'pet_home_care',
-  'pet_transport',
-  'pet_vet_assist',
-  'pet_check',
-];
-
 /**
  * How a service physically happens (§23). A variant declares which of these
  * it supports, and the booking flow offers only those.
@@ -301,7 +290,6 @@ module.exports = {
   PetServiceAddon,
   PetServicePackage,
   PetServiceArea,
-  CATEGORY_CODES,
   SERVICE_MODES,
   PRICING_UNITS,
 };

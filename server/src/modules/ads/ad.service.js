@@ -147,21 +147,6 @@ async function recordClick(adId, { userId, ip, ua, placement, meta } = {}) {
   }
 }
 
-async function recordLead(adId, { userId, meta } = {}) {
-  try {
-    await Ad.updateOne({ _id: adId }, { $inc: { 'stats.leads': 1 } });
-    const ad = await Ad.findById(adId).select('billing advertiser').lean();
-    let costPaise = 0;
-    if (ad?.billing?.model === 'cpl' && ad.billing.rate > 0) {
-      costPaise = ad.billing.rate;
-      if (ad.advertiser?.id) await _chargeWallet(ad.advertiser.id, adId, costPaise);
-    }
-    await AdEvent.create({ adId, type: 'lead', userId, meta, costPaise }).catch(() => {});
-  } catch (err) {
-    logger.warn({ err: err.message, adId }, '[ADS] Lead record failed');
-  }
-}
-
 // Wallet
 
 async function _chargeWallet(advertiserId, adId, costPaise) {
@@ -276,15 +261,6 @@ async function resetDailyCaps() {
   return result.modifiedCount;
 }
 
-async function sweepExpired() {
-  const now    = new Date();
-  const result = await Ad.updateMany(
-    { status: 'active', 'schedule.endAt': { $lt: now } },
-    { $set: { status: 'completed' } }
-  );
-  return result.modifiedCount;
-}
-
 async function _checkBudget(adId) {
   const ad = await Ad.findById(adId).select('billing stats').lean();
   if (!ad) return;
@@ -364,14 +340,12 @@ module.exports = {
   // Serving
   getAdsByPlacement, getActiveAds,
   // Tracking
-  recordImpression, recordClick, recordLead,
-  // Wallet
+  recordImpression, recordClick, // Wallet
   topUpWallet, getWallet,
   // Analytics
   getCampaignAnalytics,
   // Maintenance
-  resetDailyCaps, sweepExpired,
-  // Self-serve
+  resetDailyCaps, // Self-serve
   advertiserCreate, advertiserList, advertiserUpdate,
   // Admin
   listAll, create, update, remove, adminApprove, adminReject,

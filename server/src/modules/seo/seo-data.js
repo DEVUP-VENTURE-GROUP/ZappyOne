@@ -75,8 +75,7 @@ const CATEGORIES = [
   { slug: 'event-decoration', name: 'Event and party decoration', short: 'Event decoration', spaPath: '/events', what: 'Birthday, anniversary and festive decoration at home or a venue.' },
 ];
 
-const CITY_MAP = Object.fromEntries(CITIES.map((c) => [c.slug, c]));
 const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.slug, c]));
 const STATE_LIST = STATES.map(([state]) => ({ name: state, slug: slugify(state) }));
 
-module.exports = { CITIES, CATEGORIES, CITY_MAP, CATEGORY_MAP, STATE_LIST, slugify };
+module.exports = { CITIES, CATEGORIES, CATEGORY_MAP, STATE_LIST, slugify };

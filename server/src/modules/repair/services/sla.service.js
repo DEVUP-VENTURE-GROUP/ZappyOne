@@ -143,14 +143,6 @@ function progressOf(booking) {
   };
 }
 
-/** Minutes elapsed since the booking was placed, excluding customer wait time. */
-function activeMinutes(booking) {
-  const started = new Date(booking.createdAt).getTime();
-  const ended = booking.completedAt ? new Date(booking.completedAt).getTime() : Date.now();
-  const paused = booking.slaPausedMs || 0;
-  return Math.max(0, Math.round((ended - started - paused) / 60000));
-}
-
 module.exports = {
   STAGE_FOR_STATUS,
   WAITING_ON_CUSTOMER,
@@ -159,5 +151,4 @@ module.exports = {
   slaFor,
   deadlineFor,
   progressOf,
-  activeMinutes,
 };
