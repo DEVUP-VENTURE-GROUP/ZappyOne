@@ -1,3 +1,4 @@
+import { cleanDetail, detailHelp, detailRule, fixLine, missingLine } from '../detailRules';
 import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import MyServiceRequests from '../components/MyServiceRequests';
 import { useState, useMemo } from 'react';
@@ -546,8 +547,8 @@ function VerifyStep({ lineCode, onDone }) {
       }).unwrap();
       await refetch();
       toast.success(meta ? 'Photo captured' : 'Uploaded');
-    } catch {
-      toast.error('Upload failed - please try again');
+    } catch (err) {
+      toast.error(err?.data?.error || err?.message || 'The photo did not upload. Check your internet and try again.');
     } finally {
       setUploading(null);
       setCapturing(null);
@@ -572,10 +573,10 @@ function VerifyStep({ lineCode, onDone }) {
       const body = err?.data;
       if (body?.code === 'INCOMPLETE') {
         setMissing(body.missing || []);
-        toast.error('Some required items are still missing');
+        toast.error(missingLine(body.missing || []));
       } else if (body?.code === 'BAD_FORMAT') {
         setMissing((body.fields || []).map((f) => ({ ...f, kind: 'field' })));
-        toast.error('Check the highlighted details');
+        toast.error(fixLine(body.fields || []));
       } else {
         toast.error(body?.error || 'Could not submit');
       }
@@ -703,9 +704,14 @@ function VerifyStep({ lineCode, onDone }) {
                 className={`input text-sm w-full mt-1.5 ${missingCodes.has(f.code) ? '!ring-2 !ring-red-200' : ''}`}
                 value={fields[f.code] ?? savedFields[f.code] ?? ''}
                 disabled={decided || !!redo}
-                onChange={(e) => setFields((s) => ({ ...s, [f.code]: e.target.value }))}
+                maxLength={detailRule(f.code)?.max}
+                inputMode={detailRule(f.code)?.numeric ? 'numeric' : undefined}
+                aria-invalid={missingCodes.has(f.code) || undefined}
+                onChange={(e) => { const v = cleanDetail(f.code, e.target.value); setFields((s) => ({ ...s, [f.code]: v })); if (missingCodes.has(f.code)) setMissing((m) => m.filter((x) => x.code !== f.code)); }}
               />
-              {f.hint && <p className="text-[11px] text-slate-400 mt-1">{f.hint}</p>}
+              {missingCodes.has(f.code)
+                ? <p className="text-[12px] font-semibold text-red-600 mt-1">{detailHelp(f)}</p>
+                : f.hint && <p className="text-[11px] text-slate-400 mt-1">{f.hint}</p>}
             </div>
           ))}
         </>

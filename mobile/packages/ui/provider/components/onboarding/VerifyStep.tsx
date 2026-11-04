@@ -16,6 +16,7 @@ import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
 import { Button, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { errText, type ApiErr } from '../../../lib/feedback';
+import { cleanDetail, detailHelp, detailRule, fixLine, missingLine } from '@zappy/core/shared/detailRules';
 import { InstantIdCheck } from '../../InstantIdCheck';
 import { accent, colors, danger, ink, success, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
@@ -87,7 +88,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       await save({ id: enrolment._id, documents: [{ code: doc.code, url: key, ...(meta ? { captureMethod: meta.captureMethod, capturedAt: meta.capturedAt, lat: meta.lat, lng: meta.lng } : {}) }] }).unwrap();
       await refetch();
       toast.success(meta ? 'Photo captured' : 'Uploaded');
-    } catch { toast.error('Upload failed. Please try again.'); }
+    } catch (err) { toast.error(errText(err, 'The photo did not upload. Check your internet and try again.')); }
     finally { setUploading(null); }
   }
 
@@ -105,8 +106,8 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       onDone();
     } catch (err) {
       const body = (err as ApiErr & { data?: { missing?: Missing[]; fields?: Missing[] } })?.data;
-      if (body?.code === 'INCOMPLETE') { setMissing(body.missing || []); toast.error('Some required items are still missing'); }
-      else if (body?.code === 'BAD_FORMAT') { setMissing((body.fields || []).map((f) => ({ ...f, kind: 'field' }))); toast.error('Check the highlighted details'); }
+      if (body?.code === 'INCOMPLETE') { setMissing(body.missing || []); toast.error(missingLine(body.missing || [])); }
+      else if (body?.code === 'BAD_FORMAT') { setMissing((body.fields || []).map((f) => ({ ...f, kind: 'field' }))); toast.error(fixLine(body.fields || [])); }
       else toast.error(errText(err, 'Could not submit'));
     }
   }
@@ -162,9 +163,13 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       {reqs.fields.map((f) => (
         <View key={f.code} style={ob.card}>
           <Text variant="caption" weight="semibold" color={ink[700]}>{f.label}{!f.required ? <Text variant="caption" color={ink[400]}>, optional</Text> : null}</Text>
-          <TextInput value={fields[f.code] ?? savedFields[f.code] ?? ''} editable={!decided && !redo} onChangeText={(v) => setFields((s) => ({ ...s, [f.code]: v }))}
+          <TextInput value={fields[f.code] ?? savedFields[f.code] ?? ''} editable={!decided && !redo}
+            onChangeText={(v) => { setFields((s) => ({ ...s, [f.code]: cleanDetail(f.code, v) })); if (missingCodes.has(f.code)) setMissing((m) => m.filter((x) => x.code !== f.code)); }}
+            autoCapitalize={detailRule(f.code)?.caps ? 'characters' : 'sentences'} keyboardType={detailRule(f.code)?.numeric ? 'number-pad' : 'default'} maxLength={detailRule(f.code)?.max}
             accessibilityLabel={f.label} style={[styles.input, missingCodes.has(f.code) && styles.inputBad, (decided || !!redo) && styles.inputOff]} />
-          {f.hint ? <Text variant="caption" color={ink[400]}>{f.hint}</Text> : null}
+          {missingCodes.has(f.code)
+            ? <Text variant="caption" weight="semibold" color={danger[600]}>{detailHelp(f)}</Text>
+            : f.hint ? <Text variant="caption" color={ink[400]}>{f.hint}</Text> : null}
         </View>
       ))}
 

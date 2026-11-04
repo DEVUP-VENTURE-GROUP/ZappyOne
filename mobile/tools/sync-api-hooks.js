@@ -74,6 +74,7 @@ const LOGIC = [
   { from: 'events/partnerBookings.js', to: 'shared/partnerBookings.js', imports: {} },
   { from: 'constants/telanganaPlaces.js', to: 'shared/telanganaPlaces.js', imports: {} },
   { from: 'provider/bankRules.js', to: 'shared/bankRules.js', imports: {} },
+  { from: 'provider/detailRules.js', to: 'shared/detailRules.js', imports: {} },
   { from: 'provider/useProviderJobs.js', to: 'shared/useProviderJobs.js', imports: { react: 'react', '../services/api': '../api/hooks' } },
 ];
 
