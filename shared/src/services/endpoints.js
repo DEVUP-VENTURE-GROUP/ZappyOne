@@ -434,7 +434,8 @@ export function endpoints(b, { adminApiPath }) {
       invalidatesTags: (r, e, a) => ['Order', { type: 'Order', id: a.id }],
     }),
     getNearbyWorkers: b.query({
-      query: ({ lat, lng }) => `/workers/nearby?lat=${lat}&lng=${lng}`,
+      // vertical: only pros who may do that service, plus shop owners out live (worker duty getNearbyWorkers).
+      query: ({ lat, lng, vertical }) => ({ url: '/workers/nearby', params: { lat, lng, ...(vertical && { vertical }) } }),
     }),
 
     // --- KYC ---

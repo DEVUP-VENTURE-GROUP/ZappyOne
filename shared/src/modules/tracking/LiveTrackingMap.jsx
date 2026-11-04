@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { AlertCircle, LocateFixed, MapPin } from 'lucide-react';
+import { bearingOf, scooterSvg } from '../../customer/mapArt';
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 const ROUTE_COOLDOWN = 8000;
@@ -41,36 +42,22 @@ function makeDoorEl(label) {
   return wrap;
 }
 
-// The pro: a white disc with a brand arrow that turns to their heading, and one soft pulse so it reads as live.
-const BIKE = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${BRAND}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>`;
-
-function makeProEl(label, vehicle) {
+// The pro: the ZappyOne rider seen from above (customer/mapArt), turned to their heading, with one soft pulse so it reads as live.
+function makeProEl(label) {
   ensureStyles();
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
   wrap.innerHTML = `
-    <div style="position:relative;width:36px;height:36px">
-      <div style="position:absolute;inset:0;border-radius:50%;background:${BRAND};animation:lt3-pulse 2.4s ease-out infinite"></div>
-      <div style="position:absolute;inset:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(16,24,40,.3);display:flex;align-items:center;justify-content:center">
-        ${vehicle === 'bike' ? BIKE : `<svg class="lt3-pro-arrow" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2 20 21 12 16.5 4 21Z" fill="${BRAND}"/></svg>`}
-      </div>
+    <div style="position:relative;width:40px;height:40px">
+      <div style="position:absolute;inset:4px;border-radius:50%;background:${BRAND};animation:lt3-pulse 2.4s ease-out infinite"></div>
+      <div class="lt3-pro-rider" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform .6s ease;filter:drop-shadow(0 2px 3px rgba(16,24,40,.35))">${scooterSvg().replace('width="30" height="30"', 'width="40" height="40"')}</div>
     </div>
     ${label ? chip(label, BRAND, '#fff') : ''}`;
   wrap._setBearing = (b) => {
-    const el = wrap.querySelector('.lt3-pro-arrow');
+    const el = wrap.querySelector('.lt3-pro-rider');
     if (el) el.style.transform = `rotate(${b}deg)`;
   };
   return wrap;
-}
-
-function calcBearing(from, to) {
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLng = toRad(to.lng - from.lng);
-  const lat1 = toRad(from.lat);
-  const lat2 = toRad(to.lat);
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
 function metresBetween(a, b) {
@@ -84,7 +71,7 @@ function metresBetween(a, b) {
 
 function animateMarkerTo(marker, from, to) {
   const moved = metresBetween(from, to) > 3;
-  if (moved) marker.getElement()._setBearing?.(to.hdg ?? calcBearing(from, to));
+  if (moved) marker.getElement()._setBearing?.(to.hdg ?? (bearingOf(from, to) + 360) % 360);
   let startTs = null;
   function frame(now) {
     if (!startTs) startTs = now;
@@ -142,7 +129,7 @@ async function fetchRoute(map, st, from, to) {
 }
 
 // Live map of a pro heading to a door: follows them, zooms in as they near, and gives the camera back to the viewer when they move it.
-export default function LiveTrackingMap({ pickup, workerLocation, status, height = '60vh', pickupLabel = 'Your location', workerLabel = 'Your pro', vehicle = 'arrow' }) {
+export default function LiveTrackingMap({ pickup, workerLocation, status, height = '60vh', pickupLabel = 'Your location', workerLabel = 'Your pro' }) {
   const containerRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState(false);
@@ -199,7 +186,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, status, height
       const p = st.pendingPro;
       if (d) st.doorMarker = new mapboxgl.Marker({ element: makeDoorEl(pickupLabel), anchor: 'bottom' }).setLngLat([d.lng, d.lat]).addTo(map);
       if (p) {
-        st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel, vehicle), anchor: 'top', offset: [0, -18] }).setLngLat([p.lng, p.lat]).addTo(map);
+        st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel), anchor: 'top', offset: [0, -18] }).setLngLat([p.lng, p.lat]).addTo(map);
         st.prevPro = p;
       }
       follow(map, d, p);
@@ -231,7 +218,7 @@ export default function LiveTrackingMap({ pickup, workerLocation, status, height
     st.pendingPro = workerLocation || null;
     if (!st.map || !st.ready || !workerLocation) return;
     if (st.proMarker) animateMarkerTo(st.proMarker, st.prevPro || workerLocation, workerLocation);
-    else st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel, vehicle), anchor: 'top', offset: [0, -18] }).setLngLat([workerLocation.lng, workerLocation.lat]).addTo(st.map);
+    else st.proMarker = new mapboxgl.Marker({ element: makeProEl(workerLabel), anchor: 'top', offset: [0, -18] }).setLngLat([workerLocation.lng, workerLocation.lat]).addTo(st.map);
     st.prevPro = workerLocation;
 
     const d = st.pendingDoor;

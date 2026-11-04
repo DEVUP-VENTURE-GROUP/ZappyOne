@@ -81,6 +81,35 @@ function publicPosition(w) {
   };
 }
 
+// Approved providers per service line, kept a minute: every customer's map asks every few seconds and the list changes rarely.
+const approvedCache = new Map();
+async function approvedFor(lineCode) {
+  const hit = approvedCache.get(lineCode);
+  if (hit && hit.at > Date.now() - 60000) return hit.set;
+  const rows = await require('../../onboarding/eligibility').approvedProviders(lineCode);
+  const set = { workers: new Set(rows.filter((r) => r.kind === 'worker').map((r) => r.id)), shops: new Set(rows.filter((r) => r.kind === 'shop').map((r) => r.id)) };
+  if (approvedCache.size > 200) approvedCache.clear();
+  approvedCache.set(lineCode, { at: Date.now(), set });
+  return set;
+}
+
+async function forService(found, lineCode, at) {
+  const ok = await approvedFor(lineCode);
+  const team = new Map((await require('../worker.model').find({ _id: { $in: found.map((f) => f.id) } }).select('shopId').lean()).map((w) => [String(w._id), w.shopId ? String(w.shopId) : null]));
+  const pros = found.filter((f) => ok.workers.has(f.id) || (team.get(f.id) && ok.shops.has(team.get(f.id))));
+  if (ok.shops.size && pros.length < 25) {
+    const { haversineKm } = require('../../../core/geo/distance');
+    const since = new Date(Date.now() - 15 * 60000);
+    const shops = await require('../../shop/shop.model').find({ _id: { $in: [...ok.shops].slice(0, 500) }, 'ownerLocation.at': { $gte: since } }).select('_id ownerLocation').lean();
+    for (const s of shops) {
+      const c = s.ownerLocation?.coordinates;
+      const km = c?.length === 2 ? haversineKm(at.lat, at.lng, c[1], c[0]) : Infinity;
+      if (km <= 5) pros.push({ id: `shop:${s._id}`, lat: c[1], lng: c[0], distanceKm: km });
+    }
+  }
+  return pros.sort((x, y) => x.distanceKm - y.distanceKm).slice(0, 25);
+}
+
 async function getNearbyWorkers(req, res, next) {
   try {
     const lat = parseFloat(req.query.lat);
@@ -89,7 +118,11 @@ async function getNearbyWorkers(req, res, next) {
       return res.status(400).json({ error: 'lat and lng required' });
     }
     const geoService = require('../geo.service');
-    const found = await geoService.findNearbyWorkers({ lat, lng, radiusKm: 5, limit: 25 });
+    let found = await geoService.findNearbyWorkers({ lat, lng, radiusKm: 5, limit: 25 });
+    // For one service: only pros who may do it, and shop owners out with ServicePro open (shops/me/location).
+    const vertical = String(req.query.vertical || '').slice(0, 40);
+    const lineCode = vertical ? await require('../../jobs/kinds').KINDS.repair.line({ vertical }).catch(() => null) : null;
+    if (lineCode) found = await forService(found, lineCode, { lat, lng });
     res.json({ workers: found.map(publicPosition), count: found.length });
   } catch (err) { next(err); }
 }

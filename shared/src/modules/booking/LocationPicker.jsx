@@ -511,7 +511,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
     if (authRole && !isCustomer) return;
     nearbyLocRef.current = loc;
     try {
-      const res = await fetchNearby({ lat: loc.lat, lng: loc.lng }).unwrap();
+      const res = await fetchNearby({ lat: loc.lat, lng: loc.lng, ...(typeof service === 'string' && service && { vertical: service }) }).unwrap();
       const workers = res?.workers || [];
       setNearbyCount(workers.length);
       setNearbyInfo(deriveNearbyInfo(loc, workers));

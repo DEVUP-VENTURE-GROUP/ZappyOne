@@ -82,7 +82,7 @@ export default function MyAreaChip({ coordinates, label = null, live = false, cl
                   <button type="button" onClick={() => setOpen(false)} aria-label="Close map" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100"><X size={18} /></button>
                 </div>
                 <Suspense fallback={<div className="flex h-[55vh] items-center justify-center bg-slate-50"><Loader2 size={20} className="animate-spin text-slate-300" /></div>}>
-                  <LiveTrackingMap workerLocation={{ lat, lng }} workerLabel="You" vehicle="bike" height="55vh" />
+                  <LiveTrackingMap workerLocation={{ lat, lng }} workerLabel="You" height="55vh" />
                 </Suspense>
               </motion.div>
             </motion.div>

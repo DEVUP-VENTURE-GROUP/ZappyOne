@@ -60,13 +60,14 @@ const ZOOM_DELTA = 0.0032;
 type Part = any;
 type Pro = { key: string; lat: number; lng: number; heading: number };
 
-function Scooter() {
+/** A pro on the map: the ZappyOne rider seen from above (core/shared/mapArt), the same on the website. */
+export function Scooter({ size = SCOOTER_BOX }: { size?: number }) {
   return (
-    <Svg width={SCOOTER_BOX} height={SCOOTER_BOX} viewBox={`0 0 ${SCOOTER_BOX} ${SCOOTER_BOX}`}>
+    <Svg width={size} height={size} viewBox={`0 0 ${SCOOTER_BOX} ${SCOOTER_BOX}`}>
       {SCOOTER.map((p: Part, i: number) => (p.t === 'rect'
-        ? <Rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.r} fill={p.fill} />
+        ? <Rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.r} fill={p.fill} stroke={p.stroke} strokeWidth={p.sw} />
         : p.t === 'ellipse'
-          ? <Ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry} fill={p.fill} />
+          ? <Ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry} fill={p.fill} stroke={p.stroke} strokeWidth={p.sw} />
           : <Path key={i} d={p.d} fill={p.fill} stroke={p.stroke} strokeWidth={p.sw} />))}
     </Svg>
   );
