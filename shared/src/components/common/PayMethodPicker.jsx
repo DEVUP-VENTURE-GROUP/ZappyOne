@@ -16,8 +16,8 @@ export function PayMethodPicker({ value, onChange, onlineAllowed = true, cashNot
         <div className="flex items-start gap-2.5">
           <Banknote size={16} className="mt-0.5 shrink-0 text-emerald-700" />
           <div className="min-w-0">
-            <p className="text-[12.5px] font-bold text-emerald-900">Pay in cash</p>
-            <p className="mt-0.5 text-[11.5px] leading-relaxed text-emerald-700">{cashNote} Nothing is charged now.</p>
+            <p className="text-[12.5px] font-bold text-emerald-900">Pay after the job: UPI or cash</p>
+            <p className="mt-0.5 text-[11.5px] leading-relaxed text-emerald-700">{cashNote} By UPI to their own UPI ID, or in cash. Nothing is charged now.</p>
           </div>
         </div>
       </div>

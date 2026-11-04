@@ -98,8 +98,8 @@ export function PayMethodPicker({ cashNote = 'Pay the provider directly once the
       <View style={[styles.row, styles.top]}>
         <Banknote size={16} color={success[700]} />
         <View style={styles.flex}>
-          <Text variant="bodySmall" weight="bold" color={success[700]}>Pay in cash</Text>
-          <Text variant="caption" color={success[700]}>{cashNote} Nothing is charged now.</Text>
+          <Text variant="bodySmall" weight="bold" color={success[700]}>Pay after the job: UPI or cash</Text>
+          <Text variant="caption" color={success[700]}>{cashNote} By UPI to their own UPI ID, or in cash. Nothing is charged now.</Text>
         </View>
       </View>
     </View>
