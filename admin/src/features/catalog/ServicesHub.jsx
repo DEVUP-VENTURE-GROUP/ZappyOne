@@ -230,14 +230,34 @@ function DomainForm({ initial, onClose, onSaved }) {
     name: initial.name || '', description: initial.description || '', imageUrl: initial.imageKey || '',
     displayOrder: initial.displayOrder ?? 0, isActive: initial.isActive !== false,
   });
+  // How customers read a booking in this domain (server onboarding/workspace termsOf); blank keeps the built-in words.
+  const own = initial.dashboard?.labels?.terms || {};
+  const [t, setT] = useState({ job: own.job || '', pro: own.pro || '', warranty: own.warranty === undefined ? '' : own.warranty ? 'yes' : 'no' });
   const [save, busy] = useSave('domains', initial, onSaved);
+  const terms = Object.fromEntries([['job', t.job.trim().toLowerCase()], ['pro', t.pro.trim().toLowerCase()], ['warranty', t.warranty === '' ? '' : t.warranty === 'yes']].filter(([, v]) => v !== ''));
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e?.target ? e.target.value : e }));
   return (
     <Modal title={initial._id ? `Edit ${initial.name}` : 'Add domain'} onClose={onClose}>
-      <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save({ ...f, ...(initial._id ? {} : { code: slug(f.name) }) }); }}>
+      <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save({ ...f, dashboard: { ...(initial.dashboard || {}), labels: { ...(initial.dashboard?.labels || {}), terms } }, ...(initial._id ? {} : { code: slug(f.name) }) }); }}>
         <Field label="Name"><input className={inputCls} value={f.name} onChange={set('name')} required /></Field>
         <Field label="Description"><input className={inputCls} value={f.description} onChange={set('description')} /></Field>
         <Field label="Photo"><ImageUploadField value={f.imageUrl} onChange={set('imageUrl')} folder="service-domains" /></Field>
+        <fieldset className="space-y-2 rounded-lg border border-slate-200 p-3">
+          <legend className="px-1 text-xs font-bold text-slate-600">How customers read a booking</legend>
+          <div className="flex flex-wrap gap-3">
+            <Field label="A booking is a" hint="e.g. class, appointment, visit. Blank: built-in word.">
+              <input className={inputCls} value={t.job} maxLength={20} onChange={(e) => setT((x) => ({ ...x, job: e.target.value }))} placeholder="repair" />
+            </Field>
+            <Field label="Who comes" hint="e.g. teacher, stylist, helper.">
+              <input className={inputCls} value={t.pro} maxLength={20} onChange={(e) => setT((x) => ({ ...x, pro: e.target.value }))} placeholder="technician" />
+            </Field>
+            <Field label="Warranty">
+              <select className={inputCls} value={t.warranty} onChange={(e) => setT((x) => ({ ...x, warranty: e.target.value }))}>
+                <option value="">Built-in</option><option value="yes">Show warranty</option><option value="no">No warranty</option>
+              </select>
+            </Field>
+          </div>
+        </fieldset>
         <div className="flex gap-3">
           <Field label="Order"><input type="number" className={inputCls} value={f.displayOrder} onChange={(e) => setF((x) => ({ ...x, displayOrder: Number(e.target.value) }))} /></Field>
           <Field label="Visible">

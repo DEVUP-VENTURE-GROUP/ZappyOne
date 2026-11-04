@@ -1026,6 +1026,7 @@ export function endpoints(b, { adminApiPath }) {
     }),
     // What is waiting on a person (admin/todo.service), for the sidebar bell.
     adminTodo: b.query({ query: () => adminApiPath('/todo'), providesTags: ['AdminTodo'] }),
+    adminIssues: b.query({ query: (params = {}) => ({ url: adminApiPath('/issues'), params }), providesTags: ['AdminTodo'] }),
     adminOpsAlertDone: b.mutation({ query: ({ id, note }) => ({ url: adminApiPath(`/ops-alerts/${id}/done`), method: 'POST', body: { note: note || '' } }), invalidatesTags: ['AdminTodo'] }),
     adminBookingHealth: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/booking-health'), params: { days } }) }),
 
@@ -2300,7 +2301,7 @@ export function endpoints(b, { adminApiPath }) {
     }),
     adminBookingDetail: b.query({
       query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}`),
-      providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }],
+      providesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }, 'AdminTodo'],
     }),
     adminCancelPetBooking: b.mutation({
       query: ({ id, reason }) => ({ url: adminApiPath(`/pet/bookings/${id}/cancel`), method: 'POST', body: { reason } }),

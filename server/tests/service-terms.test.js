@@ -65,3 +65,17 @@ test('screens: a dance class shows the class once, the teacher, no warranty; a p
   expect(out.phoneConfirmed.hint).toBe('Finding a technician for you.');
   expect(out.phoneChecks.hint).toBe('Running post-repair tests.');
 });
+
+test('admin sets the words of a domain on the Domains form; the service list says them', async () => {
+  const Admin = require('../src/modules/admin/admin.model');
+  const admin = await Admin.create({ email: `words-${Date.now()}@z.test`, name: 'Ops', passwordHash: 'x', role: 'super_admin' });
+  const token = require('../src/modules/auth/token.service').signAccessToken({ sub: String(admin._id), role: 'admin', email: admin.email });
+  const d = await ServiceDomain.findOne({ code: 'local_pros' }).lean();
+  const r = await request(app).patch(`/api/${process.env.ADMIN_LOGIN_SLUG}/onboarding/domains/${d._id}`)
+    .set('Authorization', `Bearer ${token}`).set('Origin', process.env.ADMIN_ORIGIN || 'http://localhost:5174')
+    .send({ dashboard: { home: 'appointments', labels: { team: 'Teachers', terms: { job: 'session', pro: 'coach', warranty: false } } } });
+  expect(r.status).toBe(200);
+  const { body } = await request(app).get('/api/repair/verticals');
+  expect(body.items.find((i) => i.vertical === 'dance_001').terms).toMatchObject({ job: 'session', pro: 'coach', warranty: false });
+  expect((await ServiceDomain.findById(d._id).lean()).dashboard).toMatchObject({ home: 'appointments', labels: { team: 'Teachers' } });
+});

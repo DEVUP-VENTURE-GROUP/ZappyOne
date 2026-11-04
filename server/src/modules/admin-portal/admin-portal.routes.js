@@ -110,7 +110,8 @@ router.get('/bookings/:source/:id', async (req, res, next) => {
     }));
     const address = raw.location?.address || raw.pickupLocation?.address || raw.serviceLocation?.address
       || [raw.address?.line1, raw.address?.city].filter(Boolean).join(', ') || '';
-    res.json({ booking: row, history, address, actions: actionsFor(source, raw) });
+    const issues = await require('./booking-issues').issuesFor(source, raw);
+    res.json({ booking: row, history, address, actions: actionsFor(source, raw), issues });
   } catch (err) { next(err); }
 });
 
@@ -164,6 +165,11 @@ router.post('/bookings/:source/:id/notes',
   });
 
 /* Bookings → Needs intervention: stuck jobs and jobs still waiting for a provider */
+
+// Bookings -> Issues: every alert raised on a booking (admin/ops-alerts), open or done.
+router.get('/issues', validate(Joi.object({ state: Joi.string().valid('open', 'done', 'all').default('open'), type: Joi.string().max(60).allow(''), before: Joi.date().iso(), limit: Joi.number().integer().min(1).max(100).default(50) }), 'query'), async (req, res, next) => {
+  try { res.json(await require('./booking-issues').listIssues(req.query)); } catch (err) { next(err); }
+});
 
 router.get('/bookings/attention', async (req, res, next) => {
   try { res.json(await require('../jobs/ops.service').attention()); } catch (err) { next(err); }

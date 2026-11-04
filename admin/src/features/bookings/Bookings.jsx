@@ -4,13 +4,14 @@ import toast from 'react-hot-toast';
 import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin } from 'lucide-react';
 import {
   useAdminBookingAttentionQuery,
-  useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation,
+  useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation, useAdminIssuesQuery,
   useCancelRepairBookingMutation, useAdminCancelPetBookingMutation, useAdminCancelHelpingTaskMutation,
   useAdminRefundOrderMutation, useAdminCancelEventBookingMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, EmptyState, Pagination, fmt, fmtDate } from '../../ui/kit';
 import { InterventionPanel, NotesPanel } from './InterventionPanel';
 import InterventionQueue from './InterventionQueue';
+import IssuesList, { BookingIssues } from './IssuesList';
 
 const SOURCES = [
   { id: '', label: 'All' },
@@ -45,8 +46,9 @@ export default function Bookings() {
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(null);
   // Two views: every booking, or only what needs a person now.
-  const [view, setView] = useState(params.get('view') === 'attention' ? 'attention' : 'all');
+  const [view, setView] = useState(['attention', 'issues'].includes(params.get('view')) ? params.get('view') : 'all');
   const { data: attention } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
+  const { data: issues } = useAdminIssuesQuery({ state: 'open', limit: 1 }, { pollingInterval: 30000 });
   const query = { page, limit: 25, ...(source && { source }), ...(bucket && { bucket }), ...(q.trim() && { q: q.trim() }) };
   const { data, isFetching } = useAdminBookingsQuery(query);
   const rows = data?.rows || [];
@@ -54,10 +56,10 @@ export default function Bookings() {
   const reset = (fn) => (v) => { fn(v); setPage(1); };
   return (
     <div className="space-y-4">
-      <SectionHeader title="Bookings" subtitle={view === 'attention' ? 'Jobs that need a person now' : data ? `${data.total} matching` : 'Repair, pet, helping and legacy orders in one place'} />
+      <SectionHeader title="Bookings" subtitle={view === 'attention' ? 'Jobs that need a person now' : view === 'issues' ? 'Everything raised on a booking: payments, reports, SOS' : data ? `${data.total} matching` : 'Repair, pet, helping and legacy orders in one place'} />
 
       <div className="flex gap-1 border-b border-slate-200" role="tablist">
-        {[['all', 'All bookings', null], ['attention', 'Needs intervention', attention?.count]].map(([id, text, n]) => (
+        {[['all', 'All bookings', null], ['attention', 'Needs intervention', attention?.count], ['issues', 'Issues', issues?.open]].map(([id, text, n]) => (
           <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}
             className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition ${view === id ? 'border-zappy-600 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
             {text}
@@ -66,7 +68,7 @@ export default function Bookings() {
         ))}
       </div>
 
-      {view === 'attention' ? <InterventionQueue /> : (<>
+      {view === 'attention' ? <InterventionQueue /> : view === 'issues' ? <IssuesList onOpenBooking={(s, id) => setOpen({ source: s, id })} /> : (<>
       <div className="flex flex-wrap items-center gap-2">
         {SOURCES.map((s) => (
           <button key={s.id} onClick={() => reset(setSource)(s.id)}
@@ -176,6 +178,8 @@ export function BookingDrawer({ source, id, onClose }) {
               {b.itemMoneyPaise > 0 && <Row k="Items bought (customer's money)" v={fmt(b.itemMoneyPaise)} />}
               <Row k="Payment" v={`${label(b.paymentMethod || 'unknown')}, ${label(b.paymentStatus || 'pending')}`} />
             </div>
+
+            <BookingIssues issues={data.issues} />
 
             <div>
               <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">Timeline</p>

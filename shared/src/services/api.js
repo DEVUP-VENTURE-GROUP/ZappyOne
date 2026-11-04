@@ -336,6 +336,7 @@ export const {
   useAdminAlertsQuery,
   useAdminTodoQuery,
   useAdminOpsAlertDoneMutation,
+  useAdminIssuesQuery,
   useHelpLineQuery,
   useAdminBookingHealthQuery,
   useAdminSupportTicketsQuery,
