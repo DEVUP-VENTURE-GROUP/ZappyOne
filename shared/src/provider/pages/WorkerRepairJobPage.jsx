@@ -38,6 +38,7 @@ import {
   qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
 } from '../jobFlows';
 import { useLivePoll } from '../../hooks/useSocket';
+import { stageLabel } from '../useProviderJobs';
 
 /**
  * Worker's repair job screen.
@@ -527,7 +528,7 @@ export default function WorkerRepairJobPage() {
         )}
         <div className="card">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</p>
-          <p className="font-bold text-[#0F172A] mt-1 capitalize">{booking.status.replace(/_/g, ' ').toLowerCase()}</p>
+          <p className="font-bold text-[#0F172A] mt-1 capitalize">{stageLabel('repair', booking.status)}</p>
         </div>
 
         {/*

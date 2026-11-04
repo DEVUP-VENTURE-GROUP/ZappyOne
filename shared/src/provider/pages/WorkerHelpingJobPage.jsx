@@ -29,6 +29,7 @@ import {
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
 import { useLivePoll } from '../../hooks/useSocket';
+import { stageLabel } from '../useProviderJobs';
 
 /**
  * Worker execution — §10, §11, §12, §13, §27, §28, §29.
@@ -115,7 +116,7 @@ export default function WorkerHelpingJobPage() {
         <button type="button" onClick={() => nav(-1)} className="p-1 -ml-1"><ArrowLeft size={20} /></button>
         <div className="min-w-0">
           <h1 className="text-lg font-black text-[#0F172A] truncate">{task.title || task.reference}</h1>
-          <p className="text-xs text-slate-400">{task.status.replace(/_/g, ' ')}</p>
+          <p className="text-xs text-slate-400">{stageLabel('helping', task.status)}</p>
         </div>
         <JobChatButton jobId={task._id} className="ml-auto shrink-0" />
       </div>

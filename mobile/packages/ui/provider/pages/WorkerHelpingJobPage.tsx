@@ -52,6 +52,7 @@ import { ReturnExecution } from '../components/helping/ReturnExecution';
 import { ShoppingExecution } from '../components/helping/ShoppingExecution';
 import type { Task } from '../components/helping/types';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
+import { stageLabel } from '@zappy/core/shared/useProviderJobs';
 
 export function WorkerHelpingJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -104,7 +105,7 @@ export function WorkerHelpingJobPage() {
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/worker/work' as never))} accessibilityLabel="Back" hitSlop={8} style={styles.back}><ArrowLeft size={20} color={ink[900]} /></Pressable>
         <View style={styles.flex}>
           <Text variant="body" weight="bold" numberOfLines={1}>{task.title || task.reference}</Text>
-          <Text variant="caption" color={ink[400]}>{task.status.replace(/_/g, ' ')}</Text>
+          <Text variant="caption" color={ink[400]}>{stageLabel('helping', task.status)}</Text>
         </View>
         <JobChatButton jobId={task._id} />
       </View>

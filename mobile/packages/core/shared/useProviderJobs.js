@@ -47,8 +47,13 @@ const STAGE = {
   },
 };
 
+const plain = (s) => { const t = nameOf(s).toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); };
+
+/** A job's status in the provider's words ("Quality check", never QA_PENDING). */
+export const stageLabel = (kind, status) => (STAGE[kind]?.[status] || [plain(status)])[0];
+
 function stage(kind, status) {
-  const [label, attention = false] = STAGE[kind]?.[status] || [nameOf(status)];
+  const [label, attention = false] = STAGE[kind]?.[status] || [plain(status)];
   return { status: label, attention };
 }
 

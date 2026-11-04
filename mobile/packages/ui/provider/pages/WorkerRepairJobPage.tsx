@@ -62,6 +62,7 @@ import { AssignTechnician } from '../components/AssignTechnician';
 import { QAPanel } from '../components/repair/QAPanel';
 import { rupees, QuoteBuilder } from '../components/repair/QuoteBuilder';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
+import { stageLabel } from '@zappy/core/shared/useProviderJobs';
 
 export function WorkerRepairJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -180,7 +181,7 @@ export function WorkerRepairJobPage() {
 
         <JobCard>
           <Eyebrow>STATUS</Eyebrow>
-          <Text variant="body" weight="bold" style={styles.capitalize}>{booking.status.replace(/_/g, ' ').toLowerCase()}</Text>
+          <Text variant="body" weight="bold" style={styles.capitalize}>{stageLabel('repair', booking.status)}</Text>
         </JobCard>
 
         {booking.status === 'COMPLETED' ? <JobEarningsCard jobId={booking._id} /> : null}
