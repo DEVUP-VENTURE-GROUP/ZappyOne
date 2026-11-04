@@ -60,33 +60,10 @@ async function assignWorker({ bookingId, shopId, workerId }) {
   return { booking, worker };
 }
 
-/**
- * Straight-line kilometres from a provider's base to the customer.
- *
- * Returns null when either end is unknown, so the fee falls back to the flat
- * rate rather than being computed from a guess.
- */
+// The quote's own measure (matching distanceFor), so the visit fee booked is the one quoted.
 async function providerDistanceKm({ shopId, workerId, coordinates }) {
   if (!Array.isArray(coordinates) || coordinates.length !== 2) return null;
-  if (!shopId && !workerId) return null;
-
-  const { ProviderServiceArea } = require('../../models/config.model');
-  const area = await ProviderServiceArea.findOne({
-    ...(shopId ? { shopId } : { workerId }),
-    isActive: true,
-    'center.coordinates.0': { $exists: true },
-  }).select('center').lean();
-
-  const from = area?.center?.coordinates;
-  if (!Array.isArray(from) || from.length !== 2) return null;
-
-  const R = 6371;
-  const dLat = ((coordinates[1] - from[1]) * Math.PI) / 180;
-  const dLng = ((coordinates[0] - from[0]) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos((from[1] * Math.PI) / 180) * Math.cos((coordinates[1] * Math.PI) / 180)
-    * Math.sin(dLng / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+  return require('../matching.service').distanceFor({ shopId, workerId, lat: coordinates[1], lng: coordinates[0] });
 }
 
 /**

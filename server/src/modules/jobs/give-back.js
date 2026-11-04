@@ -401,6 +401,16 @@ async function reportCashRefused({ kind, id, actor, note = '' }) {
   await JobGiveBack.create({ kind, jobId: doc._id, providerKind: provider.kind, providerId: provider.id, userId: doc.userId, type: 'cash_refused', reason: 'cash_refused', note: String(note).slice(0, 300), status: doc.status });
   // The customer already said they paid: two different stories about money, so a person decides; no strike on the customer yet.
   const disputed = !!doc.payClaim?.at;
+  // A pro who often says a referenced UPI payment never came: flagged once it happens 3 times in 30 days.
+  if (disputed && doc.payClaim.utr) {
+    const since = new Date(Date.now() - 30 * 86400000);
+    const ids = (await JobGiveBack.find({ providerId: provider.id, type: 'cash_refused', createdAt: { $gte: since } }).select('jobId kind').lean());
+    if (ids.length >= 3) {
+      await require('../admin/ops-alerts').raise({ type: 'pro_disputes_often', key: `pro-disputes:${provider.id}`, urgent: false,
+        title: 'A pro often reports referenced UPI payments as not received', body: `${ids.length} reports in 30 days, the latest on ${doc.reference || 'a job'}. Check their UPI statements before holding more customers.`,
+        data: { kind, id: String(doc._id), reference: doc.reference || null, providerId: String(provider.id) } });
+    }
+  }
   if (!disputed) await require('../user/user.model').updateOne({ _id: doc.userId }, { $inc: { 'abuse.cashRefused': 1 } }).catch(() => {});
   const rupees = `₹${Math.round((doc.payClaim?.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
   require('./job-events').push({ kind: 'user', id: doc.userId }, disputed

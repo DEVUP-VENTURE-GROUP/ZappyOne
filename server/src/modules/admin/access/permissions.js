@@ -79,7 +79,7 @@ const AREA_RULES = [
   [/^\/service-plans(\/|$)/, 'catalog'],
   [/^\/(repair|pet|helping|verticals|pricing|pricing-config|toggles|dispatch)(\/|$)/, 'catalog'],
   [/^\/users(\/|$)/, 'customers'],
-  [/^\/(bookings|orders|sos)(\/|$)/, 'bookings'],
+  [/^\/(bookings|orders|sos|issues|ops-alerts)(\/|$)/, 'bookings'],
   [/^\/(support|disputes|reviews)(\/|$)/, 'support'],
   [/^\/(workers|kyc|shops|worker|worker-ops|incentives)(\/|$)/, 'providers'],
   [/^\/events(\/|$)/, 'events'],

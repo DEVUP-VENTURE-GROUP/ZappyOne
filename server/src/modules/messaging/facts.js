@@ -37,7 +37,9 @@ function bill(kind, doc) {
   const tip = doc.tip?.method === 'with_payment' ? doc.tip.paise || 0 : 0;
   if (tip) lines.push(['Tip for your provider', tip]);
   // Busy area, rain, night: each its own line, as the customer saw them (jobs/surge).
-  const surgeLines = doc.surge?.paise > 0 ? doc.surge.lines || [] : [];
+  // A surge saved without its lines (older bookings) is still billed (payment/payables): one line for all of it, as the customer's screen shows.
+  const saved = doc.surge?.paise > 0 ? (doc.surge.lines || []).filter((l) => l.paise > 0) : [];
+  const surgeLines = doc.surge?.paise > 0 && !saved.length ? [{ label: 'Busy-time fee', paise: doc.surge.paise }] : saved;
   for (const l of surgeLines) lines.push([l.label, l.paise]);
   const surge = surgeLines.reduce((a, l) => a + (l.paise || 0), 0);
   total += boost + carried + tip + surge;

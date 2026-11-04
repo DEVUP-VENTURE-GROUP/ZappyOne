@@ -25,7 +25,8 @@ async function forAdmin(admin) {
   const counts = await Promise.all(mine.map((q) => Promise.resolve().then(q.count).catch(() => null)));
   const items = mine.map((q, i) => ({ key: q.key, label: q.label, tab: q.tab, count: counts[i] })).filter((x) => x.count > 0);
   // Urgent alerts (admin/ops-alerts) are for whoever is on duty, whatever their area.
-  const alerts = (await require('./ops-alerts').open(20).catch(() => [])).map((a) => ({
+  // Alert details carry names and addresses (an SOS): only for admins who work bookings.
+  const alerts = (can(admin, 'bookings', 'read') ? await require('./ops-alerts').open(20).catch(() => []) : []).map((a) => ({
     id: String(a._id), type: a.type, title: a.title, body: a.body, urgent: a.urgent, at: a.updatedAt, reference: a.data?.reference || null,
   }));
   return { items, alerts, total: items.reduce((s, x) => s + x.count, 0) + alerts.length };

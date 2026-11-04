@@ -105,6 +105,27 @@ async function claim({ id, userId, method, utr = null }) {
 }
 
 const minutesAgo = (m, now) => new Date(now - m * 60000);
+
+// A UPI reference starts with its date: the year's last digit and the day of the year (YDDD), in India time. A made-up number almost never matches the day it was claimed.
+function refDatedNear(ref, at, days = 2) {
+  if (!UPI_REF.test(String(ref || ''))) return false;
+  const y = Number(ref[0]); const ddd = Number(ref.slice(1, 4));
+  for (let d = -days; d <= days; d += 1) {
+    const t = new Date(new Date(at).getTime() + 330 * 60000 + d * 86400000);
+    const start = Date.UTC(t.getUTCFullYear(), 0, 0);
+    if (t.getUTCFullYear() % 10 === y && Math.floor((t.getTime() - start) / 86400000) === ddd) return true;
+  }
+  return false;
+}
+
+// Counted as received unanswered only when nothing says otherwise: a reference dated the day it was claimed, and a customer with no unpaid report.
+async function mayAutoReceive(doc) {
+  if (doc.payClaim?.method !== 'upi' || !refDatedNear(doc.payClaim.utr, doc.payClaim.at)) return false;
+  const { JobGiveBack } = require('./give-back');
+  if (await JobGiveBack.exists({ userId: doc.userId, type: 'cash_refused', resolvedAt: null })) return false;
+  const u = await require('../user/user.model').findById(doc.userId).select('abuse.cashRefused').lean();
+  return !(u?.abuse?.cashRefused > 0);
+}
 const providerOf = (doc) => (doc.shopId && !doc.workerId ? { kind: 'shop', id: doc.shopId } : doc.workerId ? { kind: 'worker', id: doc.workerId } : null);
 
 // Records the payment exactly as the pro's own Received button does, per kind, acting as the job's holder.
@@ -141,7 +162,9 @@ async function sweepClaims({ now = Date.now(), limit = 50 } = {}) {
       const age = (now - new Date(c.at).getTime()) / 60000;
       const paid = PAYABLES[kind]?.isPaid(doc);
       const answered = paid || await JobGiveBack.exists({ jobId: doc._id, type: 'cash_refused' });
-      const step = answered ? 'closed' : age >= auto && c.method === 'upi' && c.utr ? 'auto' : age >= again && c.remindedAt ? 'again' : 'first';
+      const step = answered ? 'closed' : age >= auto && c.method === 'upi' && c.utr ? (await mayAutoReceive(doc) ? 'auto' : c.remindedAgainAt ? 'hold' : 'again') : age >= again && c.remindedAt ? 'again' : 'first';
+      // Not safe to count as received: reminded twice, the pro must answer. Parked so the sweep stops picking it up.
+      if (step === 'hold') { await Model.updateOne({ _id: doc._id, 'payClaim.autoReceivedAt': null }, { $set: { 'payClaim.autoReceivedAt': new Date(0) } }); continue; }
       const set = step === 'closed' ? { 'payClaim.remindedAt': c.remindedAt || new Date(now), 'payClaim.remindedAgainAt': c.remindedAgainAt || new Date(now), 'payClaim.autoReceivedAt': c.autoReceivedAt || new Date(0) }
         : step === 'auto' ? { 'payClaim.autoReceivedAt': new Date(now) }
           : step === 'again' ? { 'payClaim.remindedAgainAt': new Date(now) } : { 'payClaim.remindedAt': new Date(now) };
@@ -183,4 +206,4 @@ async function sweepClaims({ now = Date.now(), limit = 50 } = {}) {
   return out;
 }
 
-module.exports = { view, claim, payee, sweepClaims, helpLine, DUE_AT, UPI_ID, UPI_REF };
+module.exports = { view, claim, payee, sweepClaims, helpLine, refDatedNear, DUE_AT, UPI_ID, UPI_REF };

@@ -38,6 +38,12 @@ async function job(claimAgoMin, extra = {}) {
   if (Object.keys(nested).length) await PetBooking.collection.updateOne({ _id: insertedId }, { $set: nested });
   return { id: insertedId, workerId: w };
 }
+// A real-looking reference dated today (India time): the year's last digit, the day of the year, then any 8 digits.
+function datedRef(tail) {
+  const t = new Date(Date.now() + 330 * 60000);
+  const ddd = Math.floor((t.getTime() - Date.UTC(t.getUTCFullYear(), 0, 0)) / 86400000);
+  return `${t.getUTCFullYear() % 10}${String(ddd).padStart(3, '0')}${String(tail).padStart(8, '0').slice(-8)}`;
+}
 const openFor = async (id) => alerts.OpsAlert.find({ 'data.id': String(id), doneAt: null }).lean();
 
 test('pro silent: reminded at 5 and 10 min; a UPI payment with its reference counts as received at 30; each step once', async () => {
@@ -45,7 +51,7 @@ test('pro silent: reminded at 5 and 10 min; a UPI payment with its reference cou
   const first = await job(6);
   const again = await job(11, { 'payClaim.remindedAt': new Date(Date.now() - 5 * MIN) });
   const auto = await job(31, { 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
-  for (const j of [fresh, first, again, auto]) await PetBooking.collection.updateOne({ _id: j.id }, { $set: { 'payClaim.utr': `43129876${String(j.id).slice(-4).replace(/\D/g, '0').padStart(4, '0')}` } });
+  for (const [k, j] of [fresh, first, again, auto].entries()) await PetBooking.collection.updateOne({ _id: j.id }, { $set: { 'payClaim.utr': datedRef(1000 + k) } });
   const out = await payDirect.sweepClaims();
   expect(out).toMatchObject({ reminded: 2, autoReceived: 1 });
 
@@ -133,4 +139,38 @@ test('nothing sends to the old ops channel nobody listened to', () => {
     }
   })(path.join(__dirname, '../src'));
   expect(hits).toEqual([]);
+});
+
+test('scams: a made-up reference, or a customer with an unpaid report, is never counted as received', async () => {
+  const fake = await job(40, { 'payClaim.utr': '123456789012', 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
+  const User = require('../src/modules/user/user.model');
+  const repeat = await job(40, { 'payClaim.utr': datedRef(2001), 'payClaim.remindedAt': new Date(), 'payClaim.remindedAgainAt': new Date() });
+  const other = new mongoose.Types.ObjectId();
+  await PetBooking.collection.updateOne({ _id: repeat.id }, { $set: { userId: other } });
+  await User.collection.insertOne({ _id: other, name: 'Repeat', phone: '9000099077', abuse: { cashRefused: 1 }, createdAt: new Date() });
+  await payDirect.sweepClaims();
+  for (const j of [fake, repeat]) {
+    const b = await PetBooking.findById(j.id).lean();
+    expect(b.paymentStatus).toBe('unpaid');
+    expect(b.payClaim.autoReceivedAt.getTime()).toBe(0);
+  }
+  expect(await payDirect.sweepClaims()).toMatchObject({ autoReceived: 0 });
+});
+
+test('a UPI reference is dated: today passes, another year or a random number does not', () => {
+  const now = new Date();
+  expect(payDirect.refDatedNear(datedRef(42), now)).toBe(true);
+  expect(payDirect.refDatedNear('431298765012', now)).toBe(false);
+  expect(payDirect.refDatedNear('999999999999', now)).toBe(false);
+  expect(payDirect.refDatedNear('12345', now)).toBe(false);
+});
+
+test('a pro who keeps saying referenced UPI payments never came is flagged after the third', async () => {
+  const proId = new mongoose.Types.ObjectId();
+  const pro = { Authorization: `Bearer ${sign({ sub: String(proId), role: 'worker' })}` };
+  for (let i = 0; i < 3; i++) {
+    const j = await job(1, { workerId: proId, 'payClaim.utr': datedRef(3000 + i) });
+    expect((await request(app).post(`/api/jobs/${j.id}/cash-refused`).set(pro).send({})).status).toBe(200);
+  }
+  expect(await alerts.OpsAlert.countDocuments({ type: 'pro_disputes_often', 'data.providerId': String(proId) })).toBe(1);
 });

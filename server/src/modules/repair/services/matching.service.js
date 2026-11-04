@@ -98,6 +98,21 @@ async function withBase(areas) {
   });
 }
 
+/**
+ * How far one provider is from a point, exactly as the quote measures it: from each active area's base (a shop's
+ * address, else the area centre), the nearest area that covers the point, else the nearest; unrounded. The booking
+ * prices its visit fee with this, so the booked price is the quoted one.
+ */
+async function distanceFor({ shopId = null, workerId = null, lat, lng }) {
+  if (!shopId && !workerId) return null;
+  const { ProviderServiceArea } = require('../models/config.model');
+  const rows = await ProviderServiceArea.find({ ...(shopId ? { shopId } : { workerId }), isActive: true }).select('shopId workerId center radiusKm').lean();
+  const dists = (await withBase(rows)).filter((a) => a.base?.length === 2).map((a) => ({ km: haversineKm(lat, lng, a.base[1], a.base[0]), covers: haversineKm(lat, lng, a.base[1], a.base[0]) <= (a.radiusKm || 0) }));
+  if (!dists.length) return null;
+  const pool = dists.some((d) => d.covers) ? dists.filter((d) => d.covers) : dists;
+  return Math.min(...pool.map((d) => d.km));
+}
+
 /** Service areas that could cover a point: centred within the widest radius, a shop whose address is, or listing its pincode. */
 async function candidateAreas({ lat, lng, pincode = null, extra = {} }) {
   const maxKm = Math.max(await maxAreaRadiusKm(), MAX_REACH_KM);
@@ -679,6 +694,7 @@ async function inspectorsWithin(args, maxFeePaise) {
 }
 
 module.exports = {
+  distanceFor,
   poolStaff,
   candidateAreas,
   findProviders,
