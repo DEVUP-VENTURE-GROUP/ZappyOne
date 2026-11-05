@@ -87,10 +87,14 @@ async function maxAreaRadiusKm() {
  * address pin (the point the card's distance and arrival time use), else the
  * area's centre. One base for coverage and matching, so they never disagree.
  */
-async function withBase(areas) {
+// A shop that is Live with a fresh position (the owner's phone) is matched from where the owner is, not the shop's address.
+const LIVE_FRESH_MS = 15 * 60000;
+const livePin = (s) => (s.takingOrders !== false && s.ownerLocation?.at && Date.now() - new Date(s.ownerLocation.at).getTime() < LIVE_FRESH_MS && s.ownerLocation.coordinates?.length === 2 ? s.ownerLocation.coordinates : null);
+
+async function withBase(areas, { live = true } = {}) {
   const ids = [...new Set(areas.filter((a) => a.shopId).map((a) => String(a.shopId)))];
   const pins = ids.length
-    ? new Map((await Shop.find({ _id: { $in: ids } }).select('address.location').lean()).map((s) => [String(s._id), s.address?.location?.coordinates]))
+    ? new Map((await Shop.find({ _id: { $in: ids } }).select('address.location ownerLocation takingOrders').lean()).map((s) => [String(s._id), (live && livePin(s)) || s.address?.location?.coordinates]))
     : new Map();
   return areas.map((a) => {
     const pin = a.shopId && pins.get(String(a.shopId));
@@ -107,7 +111,8 @@ async function distanceFor({ shopId = null, workerId = null, lat, lng }) {
   if (!shopId && !workerId) return null;
   const { ProviderServiceArea } = require('../models/config.model');
   const rows = await ProviderServiceArea.find({ ...(shopId ? { shopId } : { workerId }), isActive: true }).select('shopId workerId center radiusKm').lean();
-  const dists = (await withBase(rows)).filter((a) => a.base?.length === 2).map((a) => ({ km: haversineKm(lat, lng, a.base[1], a.base[0]), covers: haversineKm(lat, lng, a.base[1], a.base[0]) <= (a.radiusKm || 0) }));
+  // Priced from the shop's own base, not where the owner happens to be, so the booked price is the quoted one.
+  const dists = (await withBase(rows, { live: false })).filter((a) => a.base?.length === 2).map((a) => ({ km: haversineKm(lat, lng, a.base[1], a.base[0]), covers: haversineKm(lat, lng, a.base[1], a.base[0]) <= (a.radiusKm || 0) }));
   if (!dists.length) return null;
   const pool = dists.some((d) => d.covers) ? dists.filter((d) => d.covers) : dists;
   return Math.min(...pool.map((d) => d.km));
@@ -120,7 +125,11 @@ async function candidateAreas({ lat, lng, pincode = null, extra = {} }) {
   const cells = hex.cellsWithin(Number(lng), Number(lat), maxKm);
   const circle = { $centerSphere: [[Number(lng), Number(lat)], maxKm / EARTH_RADIUS_KM] };
   const nearShops = await Shop.find({
-    $or: [{ addressHex: { $in: cells } }, { addressHex: null, 'address.location': { $geoWithin: circle } }],
+    $or: [
+      { addressHex: { $in: cells } }, { addressHex: null, 'address.location': { $geoWithin: circle } },
+      // Live with the owner out near the customer, wherever the shop itself is.
+      { takingOrders: { $ne: false }, 'ownerLocation.at': { $gte: new Date(Date.now() - LIVE_FRESH_MS) }, livePoint: { $geoWithin: circle } },
+    ],
   }).distinct('_id');
   const areas = await ProviderServiceArea.find({
     isActive: true,
@@ -374,7 +383,7 @@ async function findProviders({
      */
     const profile = s.shopId
       ? await Shop.findById(s.shopId)
-        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl address.location services hours dispatchStats')
+        .select('businessName rating reviewCount completedJobs isActive isBlocked kyc coverImageUrl address.location services hours takingOrders dispatchStats')
         .lean()
       : await Worker.findById(s.workerId)
         .select('name rating reviewCount completedJobs penalties isBlocked kyc isOnline wallet profilePhotoKey workHours dispatchStats')
@@ -655,7 +664,7 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
       $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }],
     }).select('workerId shopId').lean(),
     Worker.find({ _id: { $in: workerIds } }).select('isBlocked kyc rating').lean(),
-    Shop.find({ _id: { $in: shopIds } }).select('isBlocked isActive kyc rating address.location services hours').lean(),
+    Shop.find({ _id: { $in: shopIds } }).select('isBlocked isActive kyc rating address.location services hours takingOrders').lean(),
     require('../../jobs/kinds').KINDS.repair.line({ vertical }),
   ]);
   const can = new Set(caps.map((c) => String(c.workerId || c.shopId)));

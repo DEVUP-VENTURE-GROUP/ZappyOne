@@ -256,7 +256,7 @@ async function findProviders({
     if (own.some((x) => x == null)) { reject('no_price'); continue; }
 
     const provider = cap.shopId
-      ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount isActive isBlocked kyc.status address.location services hours').lean()
+      ? await Shop.findById(cap.shopId).select('businessName phone rating reviewCount isActive isBlocked kyc.status address.location services hours takingOrders').lean()
       : await Worker.findById(cap.workerId).select('name phone rating reviewCount completedJobs acceptanceRate workHours').lean();
 
     if (!provider) { reject('profile_missing'); continue; }

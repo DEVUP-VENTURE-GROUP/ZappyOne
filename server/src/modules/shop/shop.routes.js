@@ -130,11 +130,23 @@ router.post('/me/location',
   validate(Joi.object({ lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() })),
   async (req, res, next) => {
     try {
-      await require('./shop.model').updateOne({ _id: req.auth.sub }, { $set: { ownerLocation: { coordinates: [req.body.lng, req.body.lat], at: new Date() } } });
+      await require('./shop.model').updateOne({ _id: req.auth.sub }, { $set: { ownerLocation: { coordinates: [req.body.lng, req.body.lat], at: new Date() }, livePoint: { type: 'Point', coordinates: [req.body.lng, req.body.lat] } } });
       // On the way to a job themselves: the customer watches them come, screen on or off.
       const trip = await require('../worker/active-trip').activeShopTrip(req.auth.sub).catch(() => null);
       if (trip) await require('../worker/worker.service').broadcastTrip(trip, { workerId: `shop:${req.auth.sub}`, lat: req.body.lat, lng: req.body.lng }).catch(() => {});
       res.status(204).end();
+    } catch (err) { next(err); }
+  });
+
+// The dashboard's Live switch: ON starts from where the owner is now; OFF takes no new orders.
+router.put('/me/live',
+  validate(Joi.object({ on: Joi.boolean().required(), lat: Joi.number().min(-90).max(90), lng: Joi.number().min(-180).max(180) }).and('lat', 'lng')),
+  async (req, res, next) => {
+    try {
+      if (req.body.on && req.body.lat == null) return res.status(400).json({ error: 'Turn on your location to go live.', code: 'LOCATION_NEEDED' });
+      const at = req.body.on ? { ownerLocation: { coordinates: [req.body.lng, req.body.lat], at: new Date() }, livePoint: { type: 'Point', coordinates: [req.body.lng, req.body.lat] } } : {};
+      await require('./shop.model').updateOne({ _id: req.auth.sub }, { $set: { takingOrders: !!req.body.on, ...at } });
+      res.json({ takingOrders: !!req.body.on, message: req.body.on ? 'You are live. New orders near you will come to you.' : 'You are off. No new orders until you go live again.' });
     } catch (err) { next(err); }
   });
 

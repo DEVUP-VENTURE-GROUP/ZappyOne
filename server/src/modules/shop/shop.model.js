@@ -266,6 +266,11 @@ shopSchema.plugin(require('../account/account.plugin'));
 shopSchema.add({ addressHex: { type: String, default: null, index: true } });
 // Where the owner is while ServicePro is open (shops/me/location): arrival times start here when it is fresh and nearer than the shop.
 shopSchema.add({ ownerLocation: { coordinates: { type: [Number], default: undefined }, at: { type: Date, default: null } } });
+// The dashboard's Live switch (ON by default, as shops always were): OFF takes no new orders, even in opening hours.
+shopSchema.add({ takingOrders: { type: Boolean, default: true } });
+// The same live position as a GeoJSON point, so shops can be found by where their owner is (matching candidateAreas).
+shopSchema.add({ livePoint: { type: { type: String, enum: ['Point'] }, coordinates: { type: [Number], default: undefined } } });
+shopSchema.index({ livePoint: '2dsphere' }, { sparse: true });
 require('../../core/geo/hex').indexOn(shopSchema, { path: 'address.location', field: 'addressHex' });
-require('../onboarding/coverage-version').watch(shopSchema, { fields: ['hours', 'isActive', 'isBlocked', 'address'] });
+require('../onboarding/coverage-version').watch(shopSchema, { fields: ['hours', 'isActive', 'isBlocked', 'address', 'takingOrders'] });
 module.exports = mongoose.model('Shop', shopSchema);

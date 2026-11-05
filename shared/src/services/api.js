@@ -338,6 +338,7 @@ export const {
   useAdminOpsAlertDoneMutation,
   useAdminIssuesQuery,
   useHelpLineQuery,
+  useSetShopLiveMutation,
   useAdminBookingHealthQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,

@@ -1,7 +1,7 @@
 // On while a pro is online, or while a shop owner is signed in: the shop takes jobs all day. New offers are also read out while the app is open.
 import { AppState } from 'react-native';
 import * as Speech from 'expo-speech';
-import { useGetWorkerMeQuery } from '@zappy/core/api';
+import { useGetWorkerMeQuery, useShopMeQuery } from '@zappy/core/api';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { useCaptainMode } from './useCaptainMode';
@@ -20,8 +20,11 @@ export function CaptainMode() {
   const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
   const role = useAppSelector((s) => s.auth.role);
   const isWorker = signedIn && role === 'worker';
+  const isShop = signedIn && role === 'shop';
   const { data } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
-  const online = isWorker ? !!(data as { worker?: { isOnline?: boolean } } | undefined)?.worker?.isOnline : signedIn && role === 'shop';
+  const { data: shopMe } = useShopMeQuery(undefined, { skip: !isShop });
+  // A shop is online while its Live switch is ON (shops/me/live).
+  const online = isWorker ? !!(data as { worker?: { isOnline?: boolean } } | undefined)?.worker?.isOnline : isShop && (shopMe as { shop?: { takingOrders?: boolean } } | undefined)?.shop?.takingOrders !== false;
   useCaptainMode({ on: online, role });
 
   useSocketEvent('repair.offer', (p) => say(['New job on ZappyOne', words(p?.repairCode) || words(p?.device), rupees((p?.totalPaise || 0) + (p?.boostPaise || 0) + (p?.surgePaise || 0))]), online);

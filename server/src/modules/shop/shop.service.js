@@ -63,9 +63,11 @@ function withOpenState(shop) {
  * stated = open). A shop that reads "Not live" gets no offers.
  * Needs: isActive isBlocked kyc.status address.location services hours.
  */
-const LIVE_FIELDS = 'isActive isBlocked kyc.status address.location services hours';
+const LIVE_FIELDS = 'isActive isBlocked kyc.status address.location services hours takingOrders';
 function isLive(shop) {
   if (!shop || shop.isActive === false || shop.isBlocked) return false;
+  // Live switched OFF on the dashboard.
+  if (shop.takingOrders === false) return false;
   if (shop.kyc?.status !== 'approved') return false;
   if (shop.address?.location?.coordinates?.length !== 2) return false;
   if (!Array.isArray(shop.services) || !shop.services.length) return false;

@@ -191,6 +191,7 @@ export const useAdminTodoQuery = h.useAdminTodoQuery;
 export const useAdminOpsAlertDoneMutation = h.useAdminOpsAlertDoneMutation;
 export const useAdminIssuesQuery = h.useAdminIssuesQuery;
 export const useHelpLineQuery = h.useHelpLineQuery;
+export const useSetShopLiveMutation = h.useSetShopLiveMutation;
 export const useAdminBookingHealthQuery = h.useAdminBookingHealthQuery;
 export const useAdminSupportTicketsQuery = h.useAdminSupportTicketsQuery;
 export const useAdminReplyTicketMutation = h.useAdminReplyTicketMutation;

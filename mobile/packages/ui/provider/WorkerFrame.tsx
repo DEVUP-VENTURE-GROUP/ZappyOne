@@ -7,7 +7,7 @@
  *   - a banner while the live connection is down
  */
 import React from 'react';
-import { useGetWorkerMeQuery } from '@zappy/core/api';
+import { useGetWorkerMeQuery, useShopMeQuery } from '@zappy/core/api';
 import { useJobRealtime } from '@zappy/core/hooks/useJobRealtime';
 import { useOnlinePresence } from '@zappy/core/hooks/useOnlinePresence';
 import { useShopPresence } from '@zappy/core/hooks/useShopPresence';
@@ -34,7 +34,9 @@ export function WorkerFrame({ kinds }: { kinds: string[] }) {
       refetch();
     },
   });
-  useShopPresence({ active: signedIn && role === 'shop' });
+  const { data: shopMe } = useShopMeQuery(undefined, { skip: !(signedIn && role === 'shop') });
+  // The owner's position is shared only while the shop's Live switch is ON.
+  useShopPresence({ active: signedIn && role === 'shop' && (shopMe as { shop?: { takingOrders?: boolean } } | undefined)?.shop?.takingOrders !== false });
   useJobRealtime({
     enabled: signedIn,
     onTip: (tip) => toast.success(`₹${Math.round(tip / 100)} tip from your customer. It is all yours.`, { duration: 6000 }),

@@ -29,6 +29,7 @@ import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { ShareStorefront } from '../components/ShareStorefront';
 import { SetupJourney } from '../components/SetupJourney';
 import { TradeToday } from '../components/TradeToday';
+import { LiveSwitch } from '../components/LiveSwitch';
 import { ShopHeader } from '../components/ShopHeader';
 import { ZappyWordmark } from '@zappy/ui/components/ZappyLogo';
 import { TeamPanel, type TeamWorker } from '../components/TeamPanel';
@@ -152,6 +153,7 @@ export function ShopDashboard() {
 
         <SetupJourney />
         {liveNow ? <ShareStorefront /> : null}
+        <LiveSwitch />
         <TradeToday home={workspace?.home} kinds={SHOP_KINDS} />
         <PartnerTermsCard />
         <PartnerDuesCard />
