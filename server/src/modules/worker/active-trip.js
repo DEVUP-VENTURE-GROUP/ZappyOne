@@ -68,6 +68,22 @@ async function activeTrip(workerId, { hintId = null, fresh = false } = {}) {
   return trip;
 }
 
+/** A shop owner going to the job themselves (no technician on it): the trip their phone's position belongs to. */
+async function activeShopTrip(shopId) {
+  if (!shopId) return null;
+  const key = cacheKey(`shop:${shopId}`);
+  const cached = await redis.get(key).catch(() => null);
+  if (cached) return cached === 'none' ? null : JSON.parse(cached);
+  let trip = null;
+  for (const k of ALL.filter((x) => x.trip)) {
+    const doc = await k.model().findOne({ shopId, workerId: null, status: { $in: k.trip.travelling } }).sort({ updatedAt: -1 }).select(k.trip.fields).lean().catch(() => null);
+    trip = tripFrom(k, doc);
+    if (trip) break;
+  }
+  redis.set(key, trip ? JSON.stringify(trip) : 'none', 'EX', CACHE_TTL_S).catch(() => {});
+  return trip;
+}
+
 /** Forget the cached trip, so a status change is reflected on the next ping. */
 function clearActiveTrip(workerId) {
   if (workerId) redis.del(cacheKey(workerId)).catch(() => {});
@@ -89,4 +105,4 @@ async function canWatchJob(jobId, { id, role }) {
   return false;
 }
 
-module.exports = { activeTrip, clearActiveTrip, canWatchJob, tripFrom };
+module.exports = { activeTrip, activeShopTrip, clearActiveTrip, canWatchJob, tripFrom };

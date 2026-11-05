@@ -347,4 +347,4 @@ async function getEarnings({ workerId, range = 'today' }) {
   };
 }
 
-module.exports = { goOnline, goOffline, updateLocation, getEarnings, LOCATION_MAX_M };
+module.exports = { goOnline, goOffline, updateLocation, getEarnings, broadcastTrip, LOCATION_MAX_M };

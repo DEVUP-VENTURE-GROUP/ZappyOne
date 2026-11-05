@@ -131,6 +131,9 @@ router.post('/me/location',
   async (req, res, next) => {
     try {
       await require('./shop.model').updateOne({ _id: req.auth.sub }, { $set: { ownerLocation: { coordinates: [req.body.lng, req.body.lat], at: new Date() } } });
+      // On the way to a job themselves: the customer watches them come, screen on or off.
+      const trip = await require('../worker/active-trip').activeShopTrip(req.auth.sub).catch(() => null);
+      if (trip) await require('../worker/worker.service').broadcastTrip(trip, { workerId: `shop:${req.auth.sub}`, lat: req.body.lat, lng: req.body.lng }).catch(() => {});
       res.status(204).end();
     } catch (err) { next(err); }
   });

@@ -61,3 +61,18 @@ test('only the shop itself can say where its owner is, with a real position', as
   const asShop = sign({ sub: String(s._id), role: 'shop' });
   expect((await request(app).post('/api/shops/me/location').set('Authorization', `Bearer ${asShop}`).send({ lat: 200, lng: 78.3 })).status).toBe(400);
 });
+
+test('a shop owner on the way to their own job: their phone position reaches the customer watching, not the shop address', async () => {
+  const s = await shop();
+  const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+  const b = await RepairBooking.collection.insertOne({ reference: 'RB-LIVE1', userId: new mongoose.Types.ObjectId(), shopId: s._id, workerId: null, status: 'ON_THE_WAY', vertical: 'mobile', serviceMode: 'doorstep',
+    location: { type: 'Point', coordinates: [DOOR.lng, DOOR.lat], address: 'Gachibowli' }, statusHistory: [], createdAt: new Date(), updatedAt: new Date() });
+  const { redis } = require('../src/config/redis');
+  const sent = [];
+  const spy = jest.spyOn(redis, 'publish').mockImplementation(async (ch, msg) => { sent.push([ch, JSON.parse(msg)]); return 1; });
+  const r = await request(app).post('/api/shops/me/location').set('Authorization', `Bearer ${sign({ sub: String(s._id), role: 'shop' })}`).send({ lat: NEAR[1], lng: NEAR[0] });
+  spy.mockRestore();
+  expect(r.status).toBe(204);
+  const ping = sent.find(([ch, m]) => ch === 'order:event' && m.event === 'worker.location');
+  expect(ping[1]).toMatchObject({ orderId: String(b.insertedId), payload: { lat: NEAR[1], lng: NEAR[0] } });
+});
