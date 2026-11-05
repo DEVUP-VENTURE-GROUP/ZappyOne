@@ -266,7 +266,8 @@ async function submitForReview({ owner, enrolmentId }) {
   // an admin tightens today applies to the next submission without a deploy.
   const badFormat = [];
   for (const f of set.fields) {
-    if (!f.pattern) continue;
+    // Optional means optional: what is typed there never stops an application; admin sees it as it is.
+    if (!f.pattern || !f.required) continue;
     const given = enrolment.fields.find((x) => x.code === f.code)?.value || '';
     if (!given) continue;
     let re;

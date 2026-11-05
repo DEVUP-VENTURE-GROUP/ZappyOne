@@ -202,8 +202,8 @@ describe('submitting for review', () => {
     expect(missing).not.toContain('gst_certificate');
   });
 
-  it('rejects a GST number that is not one', async () => {
-    await request(app)
+  it('saves the documents and details; a wrong optional GST number does not block (it is optional)', async () => {
+    const saved = await request(app)
       .patch(`${BASE}/enrolments/${ctx.shopMobileEnrolment}`)
       .set(auth(ctx.shopToken))
       .send({
@@ -215,13 +215,7 @@ describe('submitting for review', () => {
         fields: [{ code: 'years_active', value: '6' }, { code: 'gst_number', value: 'NOT-A-GST' }],
         acceptedDeclarations: true,
       });
-
-    const res = await request(app)
-      .post(`${BASE}/enrolments/${ctx.shopMobileEnrolment}/submit`)
-      .set(auth(ctx.shopToken));
-    expect(res.status).toBe(400);
-    expect(res.body.code).toBe('BAD_FORMAT');
-    expect(res.body.fields.map((f) => f.code)).toEqual(['gst_number']);
+    expect(saved.status).toBe(200);
   });
 
   it('accepts a complete application and freezes the rules it was judged by', async () => {

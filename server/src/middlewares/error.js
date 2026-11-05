@@ -32,7 +32,23 @@ const PLAIN_BY_STATUS = {
   409: 'This was just updated. Refresh to see the latest.',
   429: 'Please wait a moment and try again.',
 };
-const plain = (message, status) => (message && INTERNAL.test(message) ? PLAIN_BY_STATUS[status] || CALM : message);
+// Office words into everyday ones, for customers and pros alike; codes stay as they are, only the sentence changes.
+const SIMPLE = [
+  [/^(invalid|wrong|incorrect)( or expired)? (otp|code)\b.*$/i, 'That code is not right or has expired. Please try again.'],
+  [/^invalid credentials\b.*$/i, 'That did not match. Check your details and try again.'],
+  [/^(invalid|expired)( refresh)? token\b.*$|^not a refresh token$|^token reuse detected\b.*$|^invalid google token$/i, 'Please sign in again.'],
+  [/^this enrolment has already been decided$/i, 'This application has already been checked.'],
+  [/^some details are not in the expected format$/i, 'Some details are not right. Please check them.'],
+  [/^verification requirements for this service are not configured yet$/i, 'This service is not ready for sign-up yet. Please try again later.'],
+  [/^[a-z][\w ]{1,40} not found( or [\w ]+)?$/i, 'We could not find that. It may have been removed.'],
+  [/^[a-z]+[A-Z]\w* (is )?required$/, 'Some details are missing. Please check and try again.'],
+  [/^not a valid [\w ]+$/i, 'Some details are not right. Please check them.'],
+];
+const simpler = (m) => {
+  const hit = SIMPLE.find(([re]) => re.test(m));
+  return (hit ? hit[1] : m).replace(/\benrolments?\b/gi, (w) => (w[0] === 'E' ? 'Application' : 'application') + (w.toLowerCase().endsWith('s') ? 's' : ''));
+};
+const plain = (message, status) => (message && INTERNAL.test(message) ? PLAIN_BY_STATUS[status] || CALM : message ? simpler(message) : message);
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {

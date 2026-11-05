@@ -36,3 +36,17 @@ test('a non-HTTP status on an error never crashes the reply', () => {
   const ok = Object.assign(new Error('This job can no longer be passed on'), { status: 409, code: 'TOO_LATE_TO_DECLINE', jobStatus: 'QA_PENDING' });
   expect(run(ok)).toMatchObject({ status: 409, body: { error: 'This job can no longer be passed on', jobStatus: 'QA_PENDING' } });
 });
+
+test('office words become everyday ones; the code a screen checks stays the same', () => {
+  const say = (msg, status = 400, code = 'X') => run(Object.assign(new Error(msg), { status, code })).body;
+  expect(say('Invalid or expired OTP', 400, 'BAD_OTP')).toEqual({ error: 'That code is not right or has expired. Please try again.', code: 'BAD_OTP', requestId: 'req-1' });
+  expect(say('Invalid credentials', 401).error).toBe('That did not match. Check your details and try again.');
+  expect(say('Token reuse detected - please log in again', 401).error).toBe('Please sign in again.');
+  expect(say('Enrolment not found', 404).error).toBe('We could not find that. It may have been removed.');
+  expect(say('This enrolment has already been decided', 409).error).toBe('This application has already been checked.');
+  expect(say('planCode required').error).toBe('Some details are missing. Please check and try again.');
+  expect(say('Not a valid merchant outcome').error).toBe('Some details are not right. Please check them.');
+  // Already plain: untouched.
+  expect(say('Enter the 12-digit UPI reference from your UPI app (it is on the payment receipt).').error).toBe('Enter the 12-digit UPI reference from your UPI app (it is on the payment receipt).');
+  expect(say('You do not owe ZappyOne anything right now.', 409).error).toBe('You do not owe ZappyOne anything right now.');
+});

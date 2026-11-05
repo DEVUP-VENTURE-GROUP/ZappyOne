@@ -27,16 +27,11 @@ beforeAll(async () => {
 });
 afterAll(stopMongo);
 
-test('wrong PAN refused and named; cleared, the application goes through', async () => {
-  await request(app).patch(`${BASE}/enrolments/${id}`).set(auth()).send({ fields: [{ code: 'pan_number', value: 'FE3769HGSJ(' }, { code: 'gst_number', value: '' }] });
-  const bad = await request(app).post(`${BASE}/enrolments/${id}/submit`).set(auth());
-  expect(bad.status).toBe(400);
-  expect(bad.body.code).toBe('BAD_FORMAT');
-  expect(bad.body.fields.map((f) => f.code)).toEqual(['pan_number']);
-
-  // What the app sends when the box is emptied: the field with an empty value.
-  const saved = await request(app).patch(`${BASE}/enrolments/${id}`).set(auth()).send({ fields: [{ code: 'pan_number', value: '' }, { code: 'gst_number', value: '' }, { code: 'years_active', value: '7' }], acceptedDeclarations: true });
-  expect(saved.status).toBe(200);
-  const ok = await request(app).post(`${BASE}/enrolments/${id}/submit`).set(auth());
-  expect(ok.body).toMatchObject({ enrolment: { status: 'pending_review' } });
+test('an optional detail never stops an application, whatever is typed in it', async () => {
+  await request(app).patch(`${BASE}/enrolments/${id}`).set(auth()).send({ fields: [{ code: 'pan_number', value: 'FE3769HGSJ(' }, { code: 'gst_number', value: 'NOT-A-GST' }, { code: 'years_active', value: '7' }], acceptedDeclarations: true });
+  const res = await request(app).post(`${BASE}/enrolments/${id}/submit`).set(auth());
+  expect(res.status).toBe(200);
+  expect(res.body.enrolment.status).toBe('pending_review');
+  const saved = await require('../src/modules/onboarding/onboarding.model').ProviderEnrolment.findById(id).lean();
+  expect(saved.fields.find((f) => f.code === 'pan_number').value).toBe('FE3769HGSJ(');
 });
