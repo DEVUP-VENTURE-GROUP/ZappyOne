@@ -28,6 +28,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import type { Diagnosis, QA } from './DiagnoseStep';
 import { Shell, flow } from './FlowChrome';
 import { RepairPriceCard } from './RepairPriceCard';
+import { PickerMap } from '@zappy/ui/location/PickerMap';
 import { MODE_LABEL, type Provider } from './repairRules';
 import { chosenPrice } from '@zappy/core/shared/repairBill';
 
@@ -98,8 +99,15 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
     ['When', scheduledAt ? slotLabel(scheduledAt) : 'As soon as possible'],
   ];
 
+  // The pros out near the customer, moving, and how soon the chosen one arrives (ride-app style).
+  const eta = (provider as { arrivalMinutes?: number } | null)?.arrivalMinutes;
   return (
     <Shell>
+      {serviceMode !== 'workshop' && typeof location?.lat === 'number' ? (
+        <View style={styles.map}>
+          <PickerMap lat={location.lat} lng={location.lng} readOnly etaLabel={eta != null ? `${Math.max(1, Math.round(eta))} min` : null} />
+        </View>
+      ) : null}
       <View style={[flow.card, styles.rows]}>
         <Text variant="caption" weight="bold" color={ink[500]}>{inspectionOnly ? 'YOUR INSPECTION' : `YOUR ${terms.job.toUpperCase()}`}</Text>
         {rows.map(([k, v]) => (
@@ -120,6 +128,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
 }
 
 const styles = StyleSheet.create({
+  map: { height: 190, borderRadius: 16, overflow: 'hidden' },
   rows: { gap: spacing.md },
   row: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.md },
   value: { flex: 1, textAlign: 'right' },

@@ -36,7 +36,7 @@ import {
 } from '../../hooks/useGeolocation';
 import { useGoogleMaps } from '../../services/maps';
 import { geocodeGoogle, placeSuggestions, pointOf } from '../../services/googlePlaces';
-import { bearingOf, scooterSvg } from '../../customer/mapArt';
+import { syncBikes } from './nearbyBikes';
 import { useT } from '../../i18n/I18nProvider';
 import { setLocation as setReduxLocation, selectLocation, selectHasLocation } from '../../store/locationSlice';
 
@@ -107,13 +107,6 @@ function ensureLocPickStyles() {
   document.head.appendChild(s);
 }
 
-// A pro nearby (customer/mapArt): a scooter that turns to face where it is heading.
-function makeScooterEl() {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'width:30px;height:30px;pointer-events:none;';
-  wrap.innerHTML = `<div style="width:38px;height:38px;transition:transform 1.2s ease;filter:drop-shadow(0 2px 3px rgba(15,23,42,.35))">${scooterSvg(38)}</div>`;
-  return wrap;
-}
 
 function makeUserLocationEl() {
   ensureLocPickStyles();
@@ -515,36 +508,7 @@ export default function LocationPicker({ onConfirm, onCancel, serviceLabel, serv
       const workers = res?.workers || [];
       setNearbyCount(workers.length);
       setNearbyInfo(deriveNearbyInfo(loc, workers));
-      const seen = new Set();
-      workers.forEach((w, i) => {
-        const key = w.key || `i${i}`;
-        seen.add(key);
-        const known = workerMarkers.current.find((m) => m.key === key);
-        if (!known) {
-          const el = makeScooterEl();
-          const marker = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([w.lng, w.lat]).addTo(map);
-          el.firstElementChild.style.transform = `rotate(${(i * 67) % 360}deg)`;
-          workerMarkers.current.push({ key, marker, el, at: { lng: w.lng, lat: w.lat } });
-          return;
-        }
-        const from = known.at; const to = { lng: w.lng, lat: w.lat };
-        if (from.lng === to.lng && from.lat === to.lat) return;
-        known.el.firstElementChild.style.transform = `rotate(${bearingOf(from, to)}deg)`;
-        const start = performance.now();
-        const step = (t) => {
-          const k = Math.min(1, (t - start) / 1600);
-          const e = k < 0.5 ? 2 * k * k : 1 - ((-2 * k + 2) ** 2) / 2;
-          known.marker.setLngLat([from.lng + (to.lng - from.lng) * e, from.lat + (to.lat - from.lat) * e]);
-          if (k < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-        known.at = to;
-      });
-      workerMarkers.current = workerMarkers.current.filter((m) => {
-        if (seen.has(m.key)) return true;
-        m.marker.remove();
-        return false;
-      });
+      workerMarkers.current = syncBikes(map, workerMarkers.current, workers);
     } catch { /* non-critical */ }
   }
 

@@ -45,7 +45,11 @@ export interface PickerMapProps {
    * place one — but it is drawn muted so it doesn't read as a confirmed pin.
    */
   hasPin?: boolean;
-  onMove: (lat: number, lng: number) => void;
+  onMove?: (lat: number, lng: number) => void;
+  /** Just to look at (the confirm step): the pin stays put; the bikes still move. */
+  readOnly?: boolean;
+  /** Over the pin, like a ride app's "4 min". */
+  etaLabel?: string | null;
   /** Shown only when a GPS fix exists to return to. */
   onRecenter?: () => void;
   /** Dims interaction while the parent resolves an address. */
@@ -103,7 +107,7 @@ function useNearbyPros(lat: number, lng: number) {
   return customer ? pros : [];
 }
 
-function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: PickerMapProps) {
+function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy, readOnly = false, etaLabel = null }: PickerMapProps) {
   const mapRef = useRef<MapView>(null);
   const pros = useNearbyPros(lat, lng);
 
@@ -118,7 +122,7 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
   const handleDragEnd = useCallback(
     (event: MarkerDragStartEndEvent) => {
       const { latitude, longitude } = event.nativeEvent.coordinate;
-      onMove(latitude, longitude);
+      onMove?.(latitude, longitude);
     },
     [onMove],
   );
@@ -126,7 +130,7 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
   const handlePress = useCallback(
     (event: MapPressEvent) => {
       const { latitude, longitude } = event.nativeEvent.coordinate;
-      onMove(latitude, longitude);
+      onMove?.(latitude, longitude);
     },
     [onMove],
   );
@@ -142,7 +146,9 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
           latitudeDelta: ZOOM_DELTA,
           longitudeDelta: ZOOM_DELTA,
         }}
-        onPress={handlePress}
+        onPress={readOnly ? undefined : handlePress}
+        scrollEnabled={!readOnly}
+        zoomEnabled={!readOnly}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
@@ -155,13 +161,19 @@ function PickerMapBase({ lat, lng, hasPin = true, onMove, onRecenter, busy }: Pi
         ))}
         <Marker
           coordinate={{ latitude: lat, longitude: lng }}
-          draggable
-          onDragEnd={handleDragEnd}
+          draggable={!readOnly}
+          onDragEnd={readOnly ? undefined : handleDragEnd}
           pinColor={hasPin ? colors.primary : colors.textMuted}
           title={hasPin ? 'Service location' : 'Drag to set your location'}
           description="Drag to adjust, or tap the map"
         />
       </MapView>
+
+      {etaLabel ? (
+        <View pointerEvents="none" style={styles.eta}>
+          <Text variant="caption" weight="bold" color={colors.textInverse}>{etaLabel}</Text>
+        </View>
+      ) : null}
 
       {onRecenter ? (
         <View style={styles.recenter}>
@@ -195,6 +207,7 @@ function PickerMapFallback(_: PickerMapProps) {
 export const PickerMap = memo(mapsAvailable ? PickerMapBase : PickerMapFallback);
 
 const styles = StyleSheet.create({
+  eta: { position: 'absolute', top: '50%', left: '50%', marginTop: -62, marginLeft: -36, minWidth: 72, alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#111827' },
   fallback: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl, backgroundColor: colors.surfaceSecondary },
   root: { flex: 1, overflow: 'hidden', backgroundColor: colors.surfaceTertiary },
   recenter: { position: 'absolute', right: spacing.lg, bottom: spacing.lg },

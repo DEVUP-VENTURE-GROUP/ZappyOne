@@ -5,26 +5,29 @@
 /* eslint-disable */
 // A pro on the customer's map, drawn top-down like Uber's cars, and which way they are heading; websites and apps draw the same.
 export const SCOOTER_BOX = 40;
-// The ZappyOne rider seen from above, front up, rider-first like a delivery app's: thin front tyre, a wide black handlebar,
-// arms spread to it, a round blue helmet, and the big blue ZappyOne box with its white Z; drawn back to front.
+// The ZappyOne rider on a motorbike seen from above, front up, drawn back to front: shadow, tyres, headlight, mirrors,
+// handlebar, the blue tank, seat and tail, exhaust, then the rider (blue jacket, arms to the grips, white helmet with an
+// amber stripe and a blue visor).
 export const SCOOTER = [
-  { t: 'ellipse', cx: 20, cy: 22, rx: 10.5, ry: 16.5, fill: 'rgba(16,24,40,0.16)' },
-  { t: 'rect', x: 18.6, y: 35, w: 2.8, h: 4.2, r: 1.4, fill: '#1F2937' },
-  { t: 'rect', x: 18.6, y: 1, w: 2.8, h: 8, r: 1.4, fill: '#1F2937' },
-  { t: 'rect', x: 8.6, y: 8.6, w: 22.8, h: 2.6, r: 1.3, fill: '#1F2937' },
-  { t: 'rect', x: 7.4, y: 8.2, w: 3.2, h: 3.4, r: 1.3, fill: '#111827' },
-  { t: 'rect', x: 29.4, y: 8.2, w: 3.2, h: 3.4, r: 1.3, fill: '#111827' },
-  { t: 'rect', x: 11.6, y: 22, w: 16.8, h: 14, r: 2.6, fill: '#1F4FD8', stroke: '#0F3AA8', sw: 1 },
-  { t: 'rect', x: 14, y: 24.6, w: 12, h: 8.8, r: 1.6, fill: '#2C5DE5' },
-  { t: 'path', d: 'M16.6 26.4 L23.4 26.4 L16.6 31.6 L23.4 31.6', fill: 'none', stroke: '#FFFFFF', sw: 1.8 },
-  { t: 'path', d: 'M14.8 18.6 L10.4 11 L12.9 10.2 L17.4 16.4 Z', fill: '#1F4FD8', stroke: '#0F3AA8', sw: 0.6 },
-  { t: 'path', d: 'M25.2 18.6 L29.6 11 L27.1 10.2 L22.6 16.4 Z', fill: '#1F4FD8', stroke: '#0F3AA8', sw: 0.6 },
-  { t: 'ellipse', cx: 11.4, cy: 10.4, rx: 1.7, ry: 1.5, fill: '#111827' },
-  { t: 'ellipse', cx: 28.6, cy: 10.4, rx: 1.7, ry: 1.5, fill: '#111827' },
-  { t: 'ellipse', cx: 20, cy: 19, rx: 6.4, ry: 4.6, fill: '#1F4FD8', stroke: '#0F3AA8', sw: 0.8 },
-  { t: 'ellipse', cx: 20, cy: 16.4, rx: 4.6, ry: 4.7, fill: '#1F4FD8', stroke: '#0F3AA8', sw: 0.9 },
-  { t: 'rect', x: 19.4, y: 12, w: 1.2, h: 8.8, r: 0.6, fill: '#F59E0B' },
-  { t: 'ellipse', cx: 18.4, cy: 14.6, rx: 1.4, ry: 1, fill: '#5B83EE' },
+  { t: 'ellipse', cx: 20, cy: 21, rx: 7.5, ry: 18.5, fill: 'rgba(16,24,40,0.16)' },
+  { t: 'rect', x: 18.4, y: 0.8, w: 3.2, h: 8.6, r: 1.6, fill: '#111827' },
+  { t: 'rect', x: 18.4, y: 30.8, w: 3.2, h: 8.6, r: 1.6, fill: '#111827' },
+  { t: 'ellipse', cx: 20, cy: 8.4, rx: 1.9, ry: 1.1, fill: '#FDE68A' },
+  { t: 'ellipse', cx: 12.3, cy: 8.8, rx: 1.3, ry: 0.9, fill: '#1F2937' },
+  { t: 'ellipse', cx: 27.7, cy: 8.8, rx: 1.3, ry: 0.9, fill: '#1F2937' },
+  { t: 'rect', x: 10.6, y: 10.2, w: 18.8, h: 2, r: 1, fill: '#1F2937' },
+  { t: 'rect', x: 9.4, y: 9.8, w: 2.6, h: 2.8, r: 1.1, fill: '#111827' },
+  { t: 'rect', x: 28, y: 9.8, w: 2.6, h: 2.8, r: 1.1, fill: '#111827' },
+  { t: 'path', d: 'M16.4 12.4 Q20 10.6 23.6 12.4 L22.8 18.4 Q20 19.6 17.2 18.4 Z', fill: '#1F4FD8', stroke: '#FFFFFF', sw: 0.8 },
+  { t: 'path', d: 'M17.4 18.2 L22.6 18.2 L23 29.8 Q20 32.6 17 29.8 Z', fill: '#111827' },
+  { t: 'path', d: 'M17.8 26.2 L22.2 26.2 L22.6 30 Q20 31.9 17.4 30 Z', fill: '#1F4FD8' },
+  { t: 'rect', x: 23.6, y: 24, w: 1.8, h: 7.4, r: 0.9, fill: '#9CA3AF' },
+  { t: 'path', d: 'M15.4 20 L10.3 12 L12.5 11 L17.6 18 Z', fill: '#0F3AA8' },
+  { t: 'path', d: 'M24.6 20 L29.7 12 L27.5 11 L22.4 18 Z', fill: '#0F3AA8' },
+  { t: 'ellipse', cx: 20, cy: 21.4, rx: 5.8, ry: 4.3, fill: '#1F4FD8', stroke: '#0F3AA8', sw: 0.8 },
+  { t: 'ellipse', cx: 20, cy: 18.8, rx: 3.9, ry: 4.1, fill: '#FFFFFF', stroke: '#111827', sw: 0.8 },
+  { t: 'rect', x: 19.4, y: 14.8, w: 1.2, h: 8, r: 0.6, fill: '#F59E0B' },
+  { t: 'path', d: 'M17 17.1 Q20 13.8 23 17.1 Q20 16 17 17.1 Z', fill: '#1F4FD8' },
 ];
 
 export function scooterSvg(size = SCOOTER_BOX) {

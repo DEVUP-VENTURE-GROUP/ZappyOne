@@ -1,3 +1,4 @@
+import NearbyBikesMap from '@shared/modules/booking/NearbyBikesMap';
 import { useScrollTopOnChange } from '@shared/components/common/ScrollToTop';
 import { partsQuotedSeparately, PARTS_NOTE } from '@shared/utils/partsRule';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -1723,6 +1724,10 @@ function ConfirmStep({
 
   return (
     <Shell>
+      {/* The pros out near the customer, moving, and how soon the chosen one arrives (ride-app style). */}
+      {serviceMode !== 'workshop' && typeof location?.lat === 'number' && (
+        <NearbyBikesMap lat={location.lat} lng={location.lng} vertical={vertical} etaMinutes={provider?.arrivalMinutes ?? null} />
+      )}
       <div className="card space-y-3">
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
           {inspectionOnly ? 'Your inspection' : `Your ${terms.job}`}
