@@ -10,7 +10,8 @@ const config: ExpoConfig = {
   scheme: 'zappyone',
   // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
   platforms: ['ios', 'android'],
-  version: '1.0.1',
+  // 1.0.2 adds native parts (image shrinking, file upload): its own runtime, so no 1.0.1 phone gets this JS over the air.
+  version: '1.0.2',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'light',
