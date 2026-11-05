@@ -9,19 +9,22 @@ export default function InspectionFeeCard({ vertical }) {
   const [save, { isLoading }] = useSetProviderInspectionFeeMutation();
   const [fee, setFee] = useState('');
   useEffect(() => { if (data) setFee(String(Math.round((data.feePaise || 0) / 100))); }, [data]);
-  const changed = data && Number(fee || 0) * 100 !== (data.feePaise || 0);
+  // Required for every service: until one is saved (₹0 counts, a free inspection), Save stays on.
+  const notSet = !!data && data.set === false;
+  const changed = data && (notSet || Number(fee || 0) * 100 !== (data.feePaise || 0));
 
   async function submit() {
     try { await save({ vertical, feePaise: Math.round(Number(fee || 0) * 100) }).unwrap(); toast.success(Number(fee) > 0 ? 'Inspection fee saved' : 'Your inspections are free'); } catch (e) { toast.error(e?.data?.error || 'Could not save'); }
   }
 
   return (
-    <div className="card mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className={`card mb-4 flex flex-col gap-3 sm:flex-row sm:items-center ${notSet ? '!border-amber-400 !bg-amber-50' : ''}`}>
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-btn bg-zappy-50 text-zappy-700"><Search size={18} /></span>
         <div className="min-w-0">
-          <p className="text-[15px] font-bold text-ink-900">Your inspection fee</p>
-          <p className="mt-0.5 text-[13px] leading-snug text-ink-500 [text-wrap:pretty]">For a visit to look before you quote. Leave 0 for a free inspection. You keep all of it.</p>
+          <p className="text-[15px] font-bold text-ink-900">Your inspection fee{notSet && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">Required</span>}</p>
+          <p className="mt-0.5 text-[13px] leading-snug text-ink-500 [text-wrap:pretty]">What you charge to come and check before you give a price. Write 0 for a free visit. All of it is yours.</p>
+          {notSet && <p className="mt-1 text-[12.5px] font-semibold text-amber-800">Save it to get inspection jobs for this service.</p>}
         </div>
       </div>
       <div className="flex items-center gap-2 sm:shrink-0">

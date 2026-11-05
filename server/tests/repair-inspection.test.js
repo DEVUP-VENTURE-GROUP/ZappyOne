@@ -283,6 +283,8 @@ describe('an inspection reaches a technician', () => {
     });
     // Does phone work at all: that is enough to come and look.
     await ProviderCapability.create({ workerId: nearby, vertical: 'mobile', repairCode: 'battery_replacement', isActive: true });
+    // Every provider chooses an inspection fee before inspection visits reach them (₹0 is a free inspection).
+    await require('../src/modules/repair/models/pricing.model').ProviderInspectionFee.create({ workerId: nearby, vertical: 'mobile', feePaise: 0 });
   });
 
   it('is offered to the nearest technician who does this kind of device, with nobody chosen', async () => {

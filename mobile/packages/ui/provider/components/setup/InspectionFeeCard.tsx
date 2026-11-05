@@ -5,7 +5,7 @@ import { useProviderInspectionFeeQuery, useSetProviderInspectionFeeMutation } fr
 import { Button, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { errText } from '../../../lib/feedback';
-import { colors, ink, zappy } from '../../../theme/colors';
+import { accent, colors, ink, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 
@@ -15,19 +15,22 @@ export function InspectionFeeCard({ vertical }: { vertical: string }) {
   const [save, { isLoading }] = useSetProviderInspectionFeeMutation();
   const [fee, setFee] = useState('');
   useEffect(() => { if (data) setFee(String(Math.round((data.feePaise || 0) / 100))); }, [data]);
-  const changed = !!data && Number(fee || 0) * 100 !== (data.feePaise || 0);
+  // Required for every service: until one is saved (₹0 counts, a free inspection), Save stays on.
+  const notSet = !!data && (data as { set?: boolean }).set === false;
+  const changed = !!data && (notSet || Number(fee || 0) * 100 !== (data.feePaise || 0));
 
   async function submit() {
     try { await save({ vertical, feePaise: Math.round(Number(fee || 0) * 100) }).unwrap(); toast.success(Number(fee) > 0 ? 'Inspection fee saved' : 'Your inspections are free'); } catch (e) { toast.error(errText(e, 'Could not save')); }
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, notSet && styles.cardNeeded]}>
       <View style={styles.row}>
         <View style={styles.icon}><Search size={18} color={zappy[700]} /></View>
         <View style={styles.flex}>
-          <Text variant="bodySmall" weight="bold">Your inspection fee</Text>
-          <Text variant="caption" color={ink[500]}>For a visit to look before you quote. Leave 0 for a free inspection. You keep all of it.</Text>
+          <Text variant="bodySmall" weight="bold">Your inspection fee{notSet ? <Text variant="caption" weight="bold" color={accent[700]}>  Required</Text> : null}</Text>
+          <Text variant="caption" color={ink[500]}>What you charge to come and check before you give a price. Write 0 for a free visit. All of it is yours.</Text>
+          {notSet ? <Text variant="caption" weight="semibold" color={accent[700]}>Save it to get inspection jobs for this service.</Text> : null}
         </View>
       </View>
       <View style={styles.row}>
@@ -43,6 +46,7 @@ export function InspectionFeeCard({ vertical }: { vertical: string }) {
 
 const styles = StyleSheet.create({
   card: { gap: spacing.md, padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  cardNeeded: { borderColor: accent[500], backgroundColor: accent[50] },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   icon: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },

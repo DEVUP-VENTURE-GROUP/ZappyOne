@@ -1519,7 +1519,8 @@ export default function ProviderRepairSetupPage() {
             exit={{ opacity: 0, x: -12 }}
             transition={{ duration: 0.18 }}
           >
-            {step === 'menu' && <MenuEditor vertical={active} onNext={() => go('area')} />}
+            {/* Menu services choose their inspection fee too: every service needs one. */}
+            {step === 'menu' && <><InspectionFeeCard vertical={active} /><MenuEditor vertical={active} onNext={() => go('area')} /></>}
             {step === 'brands' && brandCodes !== null && !work?.menu && (
               <BrandsStep
                 vertical={active}

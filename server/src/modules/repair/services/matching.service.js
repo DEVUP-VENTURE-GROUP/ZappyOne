@@ -666,6 +666,8 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
   const { free, busy } = await require('../../jobs/workload').classify(workerIds);
   const live = await require('../../worker/presence').liveIds(workerIds);
   const profile = new Map([...workers, ...shops].map((p) => [String(p._id), p]));
+  const { ProviderInspectionFee } = require('../models/pricing.model');
+  const feeSet = new Set((await ProviderInspectionFee.find({ vertical, $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }] }).select('workerId shopId').lean()).map((f) => String(f.workerId || f.shopId)));
 
   return areas
     .filter((a) => {
@@ -674,6 +676,8 @@ async function findInspectors({ vertical, lat, lng, cityCode = null, includeOffl
       if (!p || p.isBlocked || p.isActive === false || !can.has(id)) return false;
       if (a.shopId && !require('../../shop/shop.service').isLive(p)) return false;
       if (approved && !approved.has(id)) return false;
+      // No inspection fee chosen yet: no inspection visits (setting one, even ₹0, opens them).
+      if (!feeSet.has(id)) return false;
       if (a.shopId) return true;
       // Offline workers only when asked (the come-online wave), never for an offer.
       return working.has(id) && (free.has(id) || busy.has(id)) && (includeOffline || live.has(id));

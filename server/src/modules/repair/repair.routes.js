@@ -600,7 +600,9 @@ const actorOf = (req) => ({ role: req.auth.role === 'shop' ? 'shop' : 'worker', 
 // A provider's own inspection visit fee for a service; 0 means a free inspection. ZappyOne takes nothing from it.
 router.get('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'), wrap(async (req) => {
   const o = menuSvc.ownerFromAuth(req.auth);
-  return { feePaise: await require('./services/pricing.service').inspectionFeeFor({ vertical: req.query.vertical, shopId: o.shopId, workerId: o.workerId }) };
+  const who = o.shopId ? { shopId: o.shopId } : { workerId: o.workerId };
+  const set = !!(await require('./models/pricing.model').ProviderInspectionFee.exists({ ...who, vertical: req.query.vertical }));
+  return { feePaise: await require('./services/pricing.service').inspectionFeeFor({ vertical: req.query.vertical, shopId: o.shopId, workerId: o.workerId }), set };
 }));
 router.put('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ vertical: menuVertical, feePaise: Joi.number().integer().min(0).max(10000000).required() })), wrap(async (req) => {
   const o = menuSvc.ownerFromAuth(req.auth);

@@ -171,6 +171,12 @@ async function status(req, res, next) {
       approvalStatus: { $in: ['approved', 'auto_approved'] },
     }) > 0;
 
+    // Every approved service needs its inspection fee chosen (₹0 is a choice: a free inspection).
+    const { ProviderInspectionFee } = require('../repair/models/pricing.model');
+    const feesSet = verticals.length
+      ? (await ProviderInspectionFee.find({ ...(owner.kind === 'shop' ? { shopId: owner.id } : { workerId: owner.id }), vertical: { $in: verticals } }).select('vertical').lean()).map((f) => f.vertical)
+      : [];
+
     const storefront = storefrontChecklist({
       profile, kind: owner.kind, approvedCount: approved.length, hasPricing,
     });
@@ -187,7 +193,8 @@ async function status(req, res, next) {
       // Live means a customer can actually find and book them, which needs the
       // storefront as well as the verification.
       isLive: storefront.every((s) => s.done) && !!profile && (owner.kind !== 'shop' || profile.isActive !== false),
-      nextStep: nextStepFor({ profile, enrolments, kind: owner.kind }),
+      inspectionFeesSet: feesSet,
+      nextStep: nextStepFor({ profile, enrolments, kind: owner.kind, feesSet }),
     });
   } catch (err) { next(err); }
 }
@@ -232,7 +239,7 @@ function storefrontChecklist({ profile, kind, approvedCount, hasPricing }) {
 }
 
 /** The single most useful thing this provider should do next. */
-function nextStepFor({ profile, enrolments, kind }) {
+function nextStepFor({ profile, enrolments, kind, feesSet = [] }) {
   if (!profile) return { code: 'PROFILE_MISSING', label: 'Complete your account' };
   if (kind === 'shop' && !profile.address?.text) {
     return { code: 'ADDRESS_REQUIRED', label: 'Add your shop address' };
@@ -254,6 +261,8 @@ function nextStepFor({ profile, enrolments, kind }) {
   if (kind === 'shop' && !(profile.hours || []).length) {
     return { code: 'SET_HOURS', label: 'Set your opening hours' };
   }
+  const noFee = enrolments.find((e) => e.status === 'approved' && e.line?.repairVertical && !feesSet.includes(e.line.repairVertical));
+  if (noFee) return { code: 'SET_INSPECTION_FEE', label: `Set your inspection fee for ${noFee.line?.name || noFee.lineCode}`, vertical: noFee.line.repairVertical };
   return { code: 'READY', label: 'Set up your services and pricing' };
 }
 

@@ -27,6 +27,7 @@ import { AreaStep } from '../components/setup/AreaStep';
 import { BrandsStep } from '../components/setup/BrandsStep';
 import { HoursStep } from '../components/setup/HoursStep';
 import { MenuEditor } from '../components/menu/MenuEditor';
+import { InspectionFeeCard } from '../components/setup/InspectionFeeCard';
 import { PetRateCard } from '../components/setup/PetRateCard';
 import { HelpingRateCard } from '../components/setup/HelpingRateCard';
 import { PricingStep } from '../components/setup/PricingStep';
@@ -140,7 +141,8 @@ export function ProviderRepairSetupPage() {
       <View style={styles.flex}>
         {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} />} /> : !active ? null : (
           <>
-            {step === 'menu' ? <MenuEditor key={active} vertical={active} onNext={() => setStep('area')} /> : null}
+            {/* Menu services choose their inspection fee too: every service needs one. */}
+            {step === 'menu' ? <View style={styles.menuStep}><InspectionFeeCard vertical={active} /><MenuEditor key={active} vertical={active} onNext={() => setStep('area')} /></View> : null}
             {step === 'brands' && brandCodes !== null && !work?.menu ? <BrandsStep key={active} vertical={active} selected={brandCodes} onChange={setBrandCodes} onNext={() => setStep('work')} /> : null}
             {step === 'work' ? <WorkStep key={active} vertical={active} cityCode={cityCode} brandCodes={brandCodes || []} onBack={() => setStep('brands')} onNext={() => setStep('area')} /> : null}
             {step === 'area' ? <AreaStep key={active} vertical={active} profile={onboarding?.profile} onBack={() => setStep(work?.menu ? 'menu' : 'work')} onNext={() => (isShop ? setStep('hours') : work?.menu ? finish() : setStep('pricing'))} onCity={setCityCode} /> : null}
@@ -154,6 +156,7 @@ export function ProviderRepairSetupPage() {
 }
 
 const styles = StyleSheet.create({
+  menuStep: { gap: 12 },
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
