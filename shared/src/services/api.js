@@ -339,6 +339,7 @@ export const {
   useAdminIssuesQuery,
   useHelpLineQuery,
   useSetShopLiveMutation,
+  useSendShopLocationMutation,
   useAdminBookingHealthQuery,
   useAdminSupportTicketsQuery,
   useAdminReplyTicketMutation,

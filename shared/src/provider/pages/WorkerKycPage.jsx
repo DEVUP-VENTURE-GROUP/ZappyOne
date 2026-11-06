@@ -14,6 +14,7 @@ import { selectAuth } from '../../modules/auth/authSlice';
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { prepareImage } from '../../utils/prepareImage';
+import { sendSigned } from '../../utils/sendSigned';
 
 /* Hook: load worker's own doc as blob (no URL expiry) */
 function useMyDoc(docType, token, enabled) {
@@ -147,20 +148,6 @@ export default function WorkerKycPage() {
     } catch (err) { toast.error(err.data?.error || 'Failed'); }
   }
 
-  /* Shared S3 PUT helper */
-  async function uploadToS3(signed, body, contentType) {
-    let putRes;
-    try {
-      putRes = await fetch(signed.uploadUrl, {
-        method: 'PUT',
-        body,
-        headers: { 'Content-Type': contentType },
-      });
-    } catch {
-      throw new Error('Upload failed. Please check your internet connection and try again.');
-    }
-    if (!putRes.ok) throw new Error('Upload failed. Please try again or use a smaller file.');
-  }
 
   /* File upload (Aadhaar / License) */
   async function handleUpload(docKey, picked) {
@@ -169,8 +156,8 @@ export default function WorkerKycPage() {
     if (file.size > 5 * 1024 * 1024) { toast.error('File too large - max 5MB'); return; }
     try {
       setUploading(docKey);
-      const { data: signed } = await presign({ folder: 'kyc', contentType: file.type || 'image/jpeg' });
-      await uploadToS3(signed, file, file.type || 'image/jpeg');
+      const type = file.type || 'image/jpeg';
+      const signed = await sendSigned(() => presign({ folder: 'kyc', contentType: type }).unwrap(), file, type);
       setUrls((prev) => ({ ...prev, [docKey]: signed.key }));
       toast.success('Document uploaded');
     } catch (err) {
@@ -185,8 +172,7 @@ export default function WorkerKycPage() {
     setShowCamera(false);
     try {
       setUploading('selfieUrl');
-      const { data: signed } = await presign({ folder: 'kyc', contentType: 'image/jpeg' });
-      await uploadToS3(signed, blob, 'image/jpeg');
+      const signed = await sendSigned(() => presign({ folder: 'kyc', contentType: 'image/jpeg' }).unwrap(), blob, 'image/jpeg');
       setUrls((prev) => ({ ...prev, selfieUrl: signed.key }));
       setSelfieMetadata(metadata);
       toast.success('Selfie captured ✓');

@@ -9,6 +9,7 @@ import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutati
 import toast from 'react-hot-toast';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import { prepareImage } from '@shared/utils/prepareImage';
+import { sendSigned } from '@shared/utils/sendSigned';
 import MyVerificationPanel from '@shared/provider/MyVerificationPanel';
 
 const DOCS = [
@@ -61,9 +62,8 @@ export default function ShopKycPage() {
     if (file.size > 5 * 1024 * 1024) return toast.error('File too large - max 5MB');
     try {
       setUploading(docKey);
-      const { data: signed } = await presign({ folder: 'kyc', contentType: file.type || 'image/jpeg' });
-      const res = await fetch(signed.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'image/jpeg' } });
-      if (!res.ok) throw new Error('upload failed');
+      const type = file.type || 'image/jpeg';
+      const signed = await sendSigned(() => presign({ folder: 'kyc', contentType: type }).unwrap(), file, type);
       setUrls((prev) => ({ ...prev, [docKey]: signed.key }));
       if (meta) setSelfieMeta(meta);
       toast.success(meta ? 'Selfie saved' : 'Document uploaded');

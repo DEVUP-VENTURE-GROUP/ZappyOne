@@ -23,6 +23,7 @@ import {
 import LiveSelfieCapture from '../../components/kyc/LiveSelfieCapture';
 import toast from 'react-hot-toast';
 import { prepareImage } from '../../utils/prepareImage';
+import { sendSigned } from '../../utils/sendSigned';
 import InstantIdCheck from '../InstantIdCheck';
 import { servicePhoto } from '../../components/home/problemArt';
 import { artFor } from '../../components/home/serviceArt';
@@ -526,11 +527,7 @@ function VerifyStep({ lineCode, onDone }) {
     try {
       setUploading(code);
       const contentType = file.type || 'image/jpeg';
-      const { data: signed } = await presign({ folder: 'kyc', contentType });
-      const res = await fetch(signed.uploadUrl, {
-        method: 'PUT', body: file, headers: { 'Content-Type': contentType },
-      });
-      if (!res.ok) throw new Error('upload failed');
+      const signed = await sendSigned(() => presign({ folder: 'kyc', contentType }).unwrap(), file, contentType);
 
       await save({
         id: enrolment._id,

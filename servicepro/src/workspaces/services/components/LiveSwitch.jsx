@@ -1,7 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, Radio } from 'lucide-react';
-import { useSetShopLiveMutation, useShopMeQuery } from '@shared/services/api';
+import { useSendShopLocationMutation, useSetShopLiveMutation, useShopMeQuery } from '@shared/services/api';
+
+const EVERY_MS = 60 * 1000;
+
+// While live and this tab is open, where the owner is each minute, as the app does; never asks for permission again.
+function useOwnerHeartbeat(on) {
+  const [send] = useSendShopLocationMutation();
+  useEffect(() => {
+    if (!on || !navigator.geolocation) return undefined;
+    let stopped = false;
+    const beat = async () => {
+      if (stopped || document.hidden) return;
+      try {
+        const perm = await navigator.permissions?.query({ name: 'geolocation' });
+        if (perm && perm.state !== 'granted') return;
+      } catch { /* no permissions API: the browser decides */ }
+      navigator.geolocation.getCurrentPosition((pos) => {
+        if (stopped || pos.coords.accuracy > 200) return;
+        send({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }, () => {}, { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 });
+    };
+    const t = setInterval(beat, EVERY_MS);
+    const back = () => { if (!document.hidden) beat(); };
+    document.addEventListener('visibilitychange', back);
+    return () => { stopped = true; clearInterval(t); document.removeEventListener('visibilitychange', back); };
+  }, [on, send]);
+}
 
 // The shop's Live switch, like a driver's: ON goes live from where the owner is now (their location is asked for), OFF takes no new orders.
 export default function LiveSwitch() {
@@ -9,6 +35,7 @@ export default function LiveSwitch() {
   const [setLive, { isLoading }] = useSetShopLiveMutation();
   const [locating, setLocating] = useState(false);
   const on = data?.shop ? data.shop.takingOrders !== false : null;
+  useOwnerHeartbeat(on === true);
   if (on == null) return null;
 
   async function toggle() {

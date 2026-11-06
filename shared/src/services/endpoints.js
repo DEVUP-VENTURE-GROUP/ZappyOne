@@ -1476,6 +1476,7 @@ export function endpoints(b, { adminApiPath }) {
     shopMe: b.query({ query: () => '/shops/me/profile', providesTags: ['Shop'] }),
     // The dashboard's Live switch: ON with where the owner is now, OFF takes no new orders (shops/me/live).
     setShopLive: b.mutation({ query: (body) => ({ url: '/shops/me/live', method: 'PUT', body }), invalidatesTags: ['Shop'] }),
+    sendShopLocation: b.mutation({ query: (body) => ({ url: '/shops/me/location', method: 'POST', body }) }),
     shopShareLink: b.query({ query: () => '/shops/me/share-link' }),
     updateShopMe: b.mutation({
       query: (body) => ({ url: '/shops/me/profile', method: 'PATCH', body }),
