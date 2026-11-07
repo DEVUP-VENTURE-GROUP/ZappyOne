@@ -25,7 +25,8 @@ const s3 = new S3Client({
 /** Storage is optional: with no bucket or keys, uploads are refused politely and photos are skipped. */
 const isConfigured = () => !!(config.aws.bucket && config.aws.accessKeyId && config.aws.secretAccessKey);
 
-async function getUploadUrl({ folder, contentType, userId }) {
+// background: a phone handing the upload to Android's WorkManager on a weak signal needs a link that outlives the wait for internet.
+async function getUploadUrl({ folder, contentType, userId, background = false }) {
   if (!isConfigured()) {
     throw Object.assign(new Error('Photo uploads are not available right now. You can continue without a photo.'), { status: 503, code: 'S3_NOT_CONFIGURED' });
   }
@@ -36,7 +37,7 @@ async function getUploadUrl({ folder, contentType, userId }) {
     ContentType: contentType,
   });
   try {
-    const url = await getSignedUrl(s3, cmd, { expiresIn: 300 });
+    const url = await getSignedUrl(s3, cmd, { expiresIn: background ? 3600 : 300 });
     return { uploadUrl: url, key };
   } catch (err) {
     // S3/network down — surface a clear message instead of a 500

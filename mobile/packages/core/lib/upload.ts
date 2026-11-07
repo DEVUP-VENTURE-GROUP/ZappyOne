@@ -6,6 +6,7 @@
  */
 import * as ImagePicker from 'expo-image-picker';
 import { axiosClient } from '../api/axiosClient';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export interface PickedPhoto { uri: string; mimeType: string; width?: number; height?: number }
 
@@ -49,7 +50,16 @@ async function shrink(photo: PickedPhoto): Promise<PickedPhoto> {
   } catch { return photo; }
 }
 
-/** Upload a picked photo to `folder`; returns its storage key. Small first, streamed from the file, tried again on a weak signal. */
+// Builds with ZappyOne's native code (packages/native) can hand a photo to Android's WorkManager, which finishes it with the app closed.
+const zappyNative = requireOptionalNativeModule<{ enqueueUpload(id: string, fileUri: string, url: string, type: string): boolean }>('ZappyNative');
+
+// A dropped or too-weak line, as opposed to the server or storage refusing the photo (which a later try cannot fix).
+const lineTrouble = (err: unknown) => {
+  const e = err as { response?: unknown; message?: string } | null;
+  return !e?.response && !/(d{3})/.test(String(e?.message || ''));
+};
+
+/** Upload a picked photo to `folder`; returns its storage key. Small first, streamed from the file, tried again on a weak signal, and on a phone that can, finished by Android in the background. */
 export async function uploadPhoto(photo: PickedPhoto, folder: string): Promise<string> {
   const small = await shrink(photo);
   const contentType = ['image/jpeg', 'image/png', 'image/webp'].includes(small.mimeType) ? small.mimeType : 'image/jpeg';
@@ -71,6 +81,13 @@ export async function uploadPhoto(photo: PickedPhoto, folder: string): Promise<s
       last = err;
       if (attempt < TRIES) await wait(1500 * attempt);
     }
+  }
+  // Still no signal after the tries: Android keeps the photo and sends it when the internet is back, so the pro is not stuck on this screen.
+  if (zappyNative && lineTrouble(last)) {
+    try {
+      const { data } = await axiosClient.post('/uploads/presign', { folder, contentType, background: true });
+      if (zappyNative.enqueueUpload(String(data.key).replace(/[^A-Za-z0-9_-]/g, '_'), small.uri, data.uploadUrl, contentType)) return data.key as string;
+    } catch { /* not even the small request got through: tell them below */ }
   }
   throw Object.assign(new Error('The photo did not upload. Your internet looks weak: move to a better signal and try again.'), { cause: last });
 }

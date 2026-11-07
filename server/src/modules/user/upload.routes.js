@@ -70,6 +70,7 @@ router.post(
     contentType: Joi.string().valid(...Object.keys(CONTENT_TYPE_EXTS)).required(),
     // Optional original filename — used for extension validation only; never stored.
     filename: Joi.string().max(260).optional().allow('', null),
+    background: Joi.boolean().optional(),
   })),
   (req, res, next) => {
     const { filename, contentType } = req.body;

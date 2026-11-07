@@ -22,6 +22,11 @@ class ZappyNativeModule : Module() {
       else context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
     }
 
+    // Hands a photo to WorkManager when the signal is too weak to send it now.
+    Function("enqueueUpload") { id: String, fileUri: String, url: String, type: String ->
+      UploadWorker.enqueue(context, id, fileUri, url, type)
+    }
+
     Function("openFullScreenSettings") {
       val intent = if (Build.VERSION.SDK_INT >= 34)
         Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))

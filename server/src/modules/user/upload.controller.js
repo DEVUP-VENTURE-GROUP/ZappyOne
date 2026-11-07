@@ -6,6 +6,7 @@ async function presign(req, res, next) {
       folder: req.body.folder,
       contentType: req.body.contentType,
       userId: req.auth.sub,
+      background: req.body.background === true,
     });
     res.json(result);
   } catch (err) { next(err); }
