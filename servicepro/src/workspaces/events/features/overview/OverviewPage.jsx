@@ -32,15 +32,15 @@ export default function OverviewPage() {
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-amber-50 text-amber-700"><ShieldCheck size={20} /></span>
           <div className="min-w-0 flex-1">
             <p className="text-[15px] font-semibold text-ink-900">
-              {partner?.kyc?.status === 'pending' ? 'Your documents are being reviewed' : 'Verify your business to start taking bookings'}
+              {partner?.kyc?.status === 'pending' ? 'We are checking your documents' : 'Show your business documents to start getting bookings'}
             </p>
             <p className="text-[13px] text-ink-500">
               {partner?.kyc?.status === 'pending'
-                ? 'We usually respond within 24 hours. You can finish your profile meanwhile.'
-                : 'Upload your ID and a live selfie. Packages, bookings and earnings open once you are verified.'}
+                ? 'We reply in about 24 hours. Finish your profile while you wait.'
+                : 'Add your ID and a selfie. After we approve, packages, bookings and earnings open.'}
             </p>
           </div>
-          <Link to="/partner/profile" className="btn-primary">{partner?.kyc?.status === 'pending' ? 'View status' : 'Verify now'}</Link>
+          <Link to="/partner/profile" className="btn-primary">{partner?.kyc?.status === 'pending' ? 'View status' : 'Start now'}</Link>
         </Card>
       )}
 

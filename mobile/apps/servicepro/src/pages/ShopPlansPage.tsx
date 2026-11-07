@@ -48,7 +48,7 @@ function NewPlan({ services, onClose }: { services: Svc[]; onClose: () => void }
       const body = { vertical, name: name.trim(), type, items, pricePaise, weekdays: type === 'pack' ? [] : weekdays,
         ...(type === 'monthly' && { visitsPerMonth: Number(visits) || 1, durations: [{ months: 1, discountPct: 0 }, { months: 3, discountPct: Number(d3) || 0 }, { months: 5, discountPct: Number(d5) || 0 }], pauseDaysPerMonth: Number(pauses) || 0 }) };
       const { plan } = await save(body).unwrap();
-      if (publish) { await submit(plan._id).unwrap(); toast.success('Your plan is live. Customers near you can subscribe now.'); } else toast.success('Saved as a draft');
+      if (publish) { await submit(plan._id).unwrap(); toast.success('Your plan is live. Customers near you can buy it now.'); } else toast.success('Saved as a draft');
       onClose();
     } catch (err) { toast.error(errText(err, 'Could not save the plan')); }
   }
@@ -112,7 +112,7 @@ export function ShopPlansPage() {
         <View style={styles.row}>{[['visits', 'Visits', CalendarDays], ['plans', 'My plans', Repeat], ['customers', 'Customers', Check]].map(([k, l]) => <Chip key={k as string} label={l as string} selected={tab === k} onPress={() => setTab(k as 'visits')} />)}</View>
         {tab === 'visits' ? (
           (visits?.items || []).length ? (visits.items as Visit[]).map((v, i) => <Appear key={v._id} delay={Math.min(i, 8) * 40}><VisitCard v={v} /></Appear>)
-            : visits ? <EmptyState icon={<CalendarDays size={28} color={slate[300]} />} title="No plan visits this week" message="When customers subscribe to your plans, their visits show here." /> : <Skeleton height={90} />
+            : visits ? <EmptyState icon={<CalendarDays size={28} color={slate[300]} />} title="No plan visits this week" message="When customers buy your plans, their visits show here." /> : <Skeleton height={90} />
         ) : null}
         {tab === 'plans' ? (
           <>

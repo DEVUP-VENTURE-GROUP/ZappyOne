@@ -11,9 +11,9 @@ import { useTradeWords } from '../../../shell/useTradeWords';
 
 const KYC_PILL = {
   approved: { label: 'Verified', cls: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
-  pending_review: { label: 'Pending review', cls: 'bg-amber-50 text-amber-700', Icon: Clock },
+  pending_review: { label: 'We are checking', cls: 'bg-amber-50 text-amber-700', Icon: Clock },
   rejected: { label: 'Rejected', cls: 'bg-red-50 text-red-700', Icon: XCircle },
-  not_submitted: { label: 'Not verified yet', cls: 'bg-slate-100 text-slate-500', Icon: Circle },
+  not_submitted: { label: 'Not checked yet', cls: 'bg-slate-100 text-slate-500', Icon: Circle },
 };
 
 export default function ShopWorkersPage() {

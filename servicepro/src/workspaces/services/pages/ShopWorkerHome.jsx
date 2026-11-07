@@ -110,7 +110,7 @@ export default function ShopWorkerHome() {
         )}
         {!kycApproved && !kycWaiting && (
           <button onClick={() => nav('/worker/kyc')} className="flex w-full items-center gap-2 rounded-2xl bg-amber-50 p-3 text-left text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
-            <ShieldCheck size={15} /> Verify your ID to go on duty - Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
+            <ShieldCheck size={15} /> Show your ID to start work - Aadhaar and a selfie, about 2 minutes <ChevronRight size={14} className="ml-auto" />
           </button>
         )}
 

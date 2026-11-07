@@ -55,7 +55,7 @@ export default function ShopWithdrawPage() {
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4 lg:max-w-2xl">
         <section className="rounded-3xl bg-[#0F172A] p-5 text-white">
-          <p className="text-[12px] font-semibold text-white/60">Available to withdraw</p>
+          <p className="text-[12px] font-semibold text-white/60">You can take out</p>
           <p className="mt-1 text-[32px] font-black tabular-nums">{formatPaise(b.availablePaise)}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-[11.5px]">
             <div><p className="text-white/50">Earned online</p><p className="font-bold tabular-nums">{formatPaise(b.earnedPaise)}</p></div>
@@ -91,7 +91,7 @@ export default function ShopWithdrawPage() {
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#0F172A] text-sm font-bold text-white disabled:opacity-40">
                 {sending && <Loader2 size={15} className="animate-spin" />} {b.open ? 'Your money is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`}
               </button>
-              <p className="text-[11.5px] text-slate-500">Reaches your bank within 2 working days. One request at a time.</p>
+              <p className="text-[11.5px] text-slate-500">Comes to your bank in 2 working days. One at a time.</p>
             </>
           )}
         </section>

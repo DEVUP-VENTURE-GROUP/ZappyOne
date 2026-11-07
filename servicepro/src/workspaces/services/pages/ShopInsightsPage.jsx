@@ -33,7 +33,7 @@ export default function ShopInsightsPage() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
               ['Jobs done', data.totals.jobs],
-              ['Value of jobs', formatPaise(data.totals.valuePaise)],
+              ['Money from jobs', formatPaise(data.totals.valuePaise)],
               ['Open now', data.open],
               ['Team', `${data.totals.team}${data.totals.leads ? `, ${data.totals.leads} lead${data.totals.leads === 1 ? '' : 's'}` : ''}`],
             ].map(([label, value]) => (

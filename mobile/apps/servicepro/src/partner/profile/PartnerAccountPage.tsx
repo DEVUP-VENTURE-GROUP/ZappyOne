@@ -72,7 +72,7 @@ export function PartnerAccountPage() {
           <View style={styles.flex}>
             <Text variant="body" weight="bold" numberOfLines={1}>{form.businessName || 'Your business'}</Text>
             <Text variant="caption" color={ink[500]}>{partner.phone}</Text>
-            <Text variant="caption" weight="semibold" color={verified ? '#15803D' : ink[500]}>{verified ? 'Verified partner' : 'Verification pending'}</Text>
+            <Text variant="caption" weight="semibold" color={verified ? '#15803D' : ink[500]}>{verified ? 'Approved' : 'We are checking your documents'}</Text>
           </View>
         </View>
 

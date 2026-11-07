@@ -74,7 +74,7 @@ export default function EarningsPage() {
           </Card>
         </>
       )}
-      <p className="text-[12px] text-ink-400">Payouts to your bank are being set up. Your earnings are recorded against every completed event.</p>
+      <p className="text-[12px] text-ink-400">Sending money to your bank is being set up. Your earnings are recorded against every completed event.</p>
     </div>
   );
 }

@@ -60,7 +60,7 @@ export function ShopWorkerHome() {
 
   async function toggleDuty() {
     if (kycWaiting) { toast('Your ID is being checked. You can go on duty once it is approved.'); return; }
-    if (!kycApproved) { toast.error('Verify your ID first: Aadhaar and a selfie, about 2 minutes'); go('/worker/kyc'); return; }
+    if (!kycApproved) { toast.error('First show your ID: Aadhaar and a selfie. It takes about 2 minutes'); go('/worker/kyc'); return; }
     setToggling(true);
     try {
       if (onDuty) {
@@ -113,7 +113,7 @@ export function ShopWorkerHome() {
           <View style={styles.waiting}><ShieldCheck size={15} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[700]} style={styles.flex}>Your ID is being checked. We will notify you when you can go on duty.</Text></View>
         ) : null}
         {kycStatus && !kycApproved && !kycWaiting ? (
-          <NoticeRow icon={<ShieldCheck size={18} color="#D97706" />} title="Verify your ID to go on duty" body="Aadhaar and a selfie, about 2 minutes" onPress={() => go('/worker/kyc')} />
+          <NoticeRow icon={<ShieldCheck size={18} color="#D97706" />} title="Show your ID to start work" body="Aadhaar and a selfie, about 2 minutes" onPress={() => go('/worker/kyc')} />
         ) : null}
 
         <View style={styles.row}>

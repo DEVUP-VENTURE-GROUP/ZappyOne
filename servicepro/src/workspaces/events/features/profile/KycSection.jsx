@@ -26,7 +26,7 @@ const STATE = {
   approved: { label: 'Verified', tone: 'bg-green-50 text-green-700', Icon: BadgeCheck, text: 'You can publish packages and take bookings.' },
   pending: { label: 'In review', tone: 'bg-amber-50 text-amber-800', Icon: Clock, text: 'We usually respond within 24 hours.' },
   rejected: { label: 'Needs changes', tone: 'bg-red-50 text-red-700', Icon: AlertCircle },
-  not_submitted: { label: 'Not submitted', tone: 'bg-sunken text-ink-700', Icon: ShieldCheck, text: 'Upload the four required documents to get verified.' },
+  not_submitted: { label: 'Not submitted', tone: 'bg-sunken text-ink-700', Icon: ShieldCheck, text: 'Add the 4 documents we need. Then we check them.' },
 };
 
 function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
@@ -71,7 +71,7 @@ function DocRow({ field, storedKey, pendingKey, disabled, token, onUploaded }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[14px] font-semibold text-ink-900">{field.label}{field.required && <span className="text-red-600"> *</span>}</span>
-        <span className="block text-[12px] text-ink-500">{pendingKey ? 'Ready to submit' : storedKey ? 'Uploaded' : field.hint || 'Clear photo, all corners visible'}</span>
+        <span className="block text-[12px] text-ink-500">{pendingKey ? 'Ready to send' : storedKey ? 'Uploaded' : field.hint || 'Clear photo, all corners visible'}</span>
       </span>
       {!disabled && (field.camera ? (
         <button type="button" onClick={() => setCamera(true)} disabled={busy} className="btn-outline min-h-[38px] px-3 text-[13px]">
@@ -116,8 +116,8 @@ export default function KycSection({ partner, token }) {
         panNumber: pan || undefined, gstNumber: gst || undefined,
       }).unwrap();
       setPending({});
-      toast.success('Submitted for review');
-    } catch (e) { toast.error(e?.data?.error || 'Could not submit'); }
+      toast.success('Sent. We will check it');
+    } catch (e) { toast.error(e?.data?.error || 'Could not send. Try again'); }
   }
 
   return (
@@ -169,7 +169,7 @@ export default function KycSection({ partner, token }) {
             </div>
             <button type="button" onClick={submit} disabled={saving || !ready} className="btn-primary mt-4 w-full">
               {saving ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-              {ready ? 'Submit for review' : `Upload ${required.length - doneRequired} more required`}
+              {ready ? 'Send for checking' : `Upload ${required.length - doneRequired} more required`}
             </button>
           </>
         )}

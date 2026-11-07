@@ -30,7 +30,7 @@ export function ShopInsightsPage() {
           <View style={styles.tiles}>
             {([
               ['Jobs done', String(data.totals.jobs)],
-              ['Value of jobs', formatPaise(data.totals.valuePaise)],
+              ['Money from jobs', formatPaise(data.totals.valuePaise)],
               ['Open now', String(data.open)],
               ['Team', `${data.totals.team}${data.totals.leads ? `, ${data.totals.leads} lead${data.totals.leads === 1 ? '' : 's'}` : ''}`],
             ] as [string, string][]).map(([label, value]) => (

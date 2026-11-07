@@ -35,11 +35,11 @@ import { TeamPanel, type TeamWorker } from '../components/TeamPanel';
 import { HeaderBell } from '../components/HeaderBell';
 
 const KYC_META: Record<string, { label: string; bg: string; fg: string; Icon: typeof ShieldCheck }> = {
-  not_submitted: { label: 'Verification pending', bg: slate[100], fg: ink[500], Icon: AlertTriangle },
+  not_submitted: { label: 'We are checking your documents', bg: slate[100], fg: ink[500], Icon: AlertTriangle },
   pending_review: { label: 'Under review', bg: accent[50], fg: accent[700], Icon: Clock },
   approved: { label: 'Verified', bg: success[50], fg: success[700], Icon: ShieldCheck },
-  rejected: { label: 'Verification rejected', bg: danger[50], fg: danger[600], Icon: XCircle },
-  suspended: { label: 'Verification suspended', bg: danger[50], fg: danger[600], Icon: XCircle },
+  rejected: { label: 'Documents not approved', bg: danger[50], fg: danger[600], Icon: XCircle },
+  suspended: { label: 'Paused by ZappyOne', bg: danger[50], fg: danger[600], Icon: XCircle },
 };
 /** Every kind of work a shop can be booked for. */
 const SHOP_KINDS = ['repair', 'pet'];
@@ -124,7 +124,7 @@ export function ShopDashboard() {
               <Text variant="caption" color={ink[500]}>
                 {kycStatus === 'approved' ? 'Your documents are approved. Finish your profile so customers can find you.'
                   : kycStatus === 'pending_review' || verificationInFlight ? "We'll notify you within 24 hours."
-                    : 'Submit your documents to start receiving bookings.'}
+                    : 'Send your documents to start getting bookings.'}
               </Text>
               {kycStatus === 'approved' ? (
                 <View style={styles.gaps}>
@@ -141,10 +141,10 @@ export function ShopDashboard() {
         <View style={styles.stats}>
           <StatTile Icon={IndianRupee} tone="green" label="Today's earnings" value={inr(today?.earningsRupees || 0)} sub="View details" onPress={() => go('/shop/earnings')} />
           <StatTile Icon={Briefcase} tone="amber" label="Today's jobs" value={today?.jobs || 0} sub="View all" onPress={() => go('/shop/earnings')} />
-          <StatTile Icon={Wrench} tone="blue" label="Needs action" value={needsAction.length} sub={needsAction.length ? 'Assign now' : undefined} />
-          <StatTile Icon={Users} tone="violet" label="Technicians" value={workers.length} sub="Manage team" onPress={() => go('/shop/workers')} />
+          <StatTile Icon={Wrench} tone="blue" label="Do this now" value={needsAction.length} sub={needsAction.length ? 'Give to a worker' : undefined} />
+          <StatTile Icon={Users} tone="violet" label="Technicians" value={workers.length} sub="Your team" onPress={() => go('/shop/workers')} />
           <StatTile Icon={Star} tone="cyan" label="Rating" value={rating} sub={`${shop?.reviewCount || 0} reviews`} onPress={() => go('/shop/reviews')} />
-          <StatTile Icon={ShieldCheck} tone="rose" label="Awaiting approval" value={pendingApprovals} sub={pendingApprovals ? 'Skills & prices' : undefined} />
+          <StatTile Icon={ShieldCheck} tone="rose" label="Waiting for approval" value={pendingApprovals} sub={pendingApprovals ? 'Skills & prices' : undefined} />
         </View>
 
         <SetupJourney />

@@ -44,7 +44,7 @@ export function InviteTeamSheet({ onClose }: { onClose: () => void }) {
               <Text variant="caption" weight="bold" color={r.ok ? success[600] : danger[600]}>{r.ok ? (r.isNew ? 'Added' : 'Linked') : r.error}</Text>
             </View>
           ))}
-          <View style={styles.note}><Text variant="caption" color={ink[500]}>Each person signs in to ServicePro as a shop worker with their number and verifies their ID before taking jobs.</Text></View>
+          <View style={styles.note}><Text variant="caption" color={ink[500]}>Each person signs in to ServicePro as a shop worker with their number and shows their ID before taking jobs.</Text></View>
           <Button label="Done" onPress={onClose} fullWidth size="large" />
         </>
       )}

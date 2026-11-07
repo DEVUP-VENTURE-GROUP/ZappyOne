@@ -80,7 +80,7 @@ export function PartnerEarningsPage() {
             </View>
           </>
         )}
-        <Text variant="caption" color={ink[400]}>Payouts to your bank are being set up. Your earnings are recorded against every completed event.</Text>
+        <Text variant="caption" color={ink[400]}>Sending money to your bank is being set up. Your earnings are recorded against every completed event.</Text>
       </ScrollView>
     </View>
   );

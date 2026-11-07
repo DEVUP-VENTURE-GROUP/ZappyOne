@@ -108,7 +108,7 @@ export function VerifyStep({ lineCode, onDone }: { lineCode: string; onDone: () 
       const body = (err as ApiErr & { data?: { missing?: Missing[]; fields?: Missing[] } })?.data;
       if (body?.code === 'INCOMPLETE') { setMissing(body.missing || []); toast.error(missingLine(body.missing || [])); }
       else if (body?.code === 'BAD_FORMAT') { setMissing((body.fields || []).map((f) => ({ ...f, kind: 'field' }))); toast.error(fixLine(body.fields || [])); }
-      else toast.error(errText(err, 'Could not submit'));
+      else toast.error(errText(err, 'Could not send. Try again'));
     }
   }
 

@@ -25,7 +25,7 @@ export default function ProfileGate({ children }) {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card space-y-4">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-zappy-600">{done} of {data.total} done</p>
-          <h1 className="mt-1 text-xl font-extrabold text-[#0F172A]">{t('sp.finish_your_profile_to_open_your_dashboard', 'Finish your profile to open your dashboard')}</h1>
+          <h1 className="mt-1 text-xl font-extrabold text-[#0F172A]">{t('sp.finish_your_profile_to_open_your_dashboard', 'Finish your profile to open your home screen')}</h1>
           <p className="mt-1 text-sm text-slate-500">Customers see these details before they book you, and ZappyOne checks them before you take work.</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-100"><motion.div className="h-full bg-zappy-600" initial={{ width: 0 }} animate={{ width: `${(done / data.total) * 100}%` }} transition={{ duration: 0.6 }} /></div>

@@ -86,7 +86,7 @@ export default function PartnerShell() {
       </span>
       <span className="min-w-0">
         <span className="block truncate text-[13px] font-semibold text-ink-900">{partner.businessName}</span>
-        <span className={`block text-[12px] ${verified ? 'text-green-700' : 'text-amber-700'}`}>{verified ? 'Verified partner' : 'Verification pending'}</span>
+        <span className={`block text-[12px] ${verified ? 'text-green-700' : 'text-amber-700'}`}>{verified ? 'Approved' : 'We are checking your documents'}</span>
       </span>
     </div>
   );

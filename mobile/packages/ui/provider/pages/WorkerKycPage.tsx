@@ -72,7 +72,7 @@ export function WorkerKycPage() {
       <View style={styles.page}>
         <ScreenHeader title="ID check" safeArea />
         <ScrollView contentContainerStyle={styles.body}>
-          <Banner tone="amber" Icon={Clock} title="Under review">Your documents are being verified. We'll notify you within 24 hours.</Banner>
+          <Banner tone="amber" Icon={Clock} title="Under review">Your documents are being checked. We'll notify you within 24 hours.</Banner>
           <MyKycDocuments kycStatus={status} />
         </ScrollView>
       </View>
@@ -133,7 +133,7 @@ export function WorkerKycPage() {
     try {
       const body = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : { ...urls };
       await submitKyc({ ...body, ...(opens('selfieUrl') ? { selfieMetadata: selfieMeta } : {}) }).unwrap();
-      toast.success('Documents submitted for review');
+      toast.success('Documents sent. We will check them');
       refetch();
     } catch (err) { toast.error(errText(err, 'Submission failed')); }
   }

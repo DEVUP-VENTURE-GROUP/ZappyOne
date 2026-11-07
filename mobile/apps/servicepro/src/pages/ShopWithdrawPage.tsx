@@ -61,7 +61,7 @@ export function ShopWithdrawPage() {
       <ScreenHeader title="Take out money" safeArea />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
-          <Text variant="caption" weight="semibold" color={slate[400]}>Available to withdraw</Text>
+          <Text variant="caption" weight="semibold" color={slate[400]}>You can take out</Text>
           <Text variant="display" weight="black" color="#fff">{formatPaise(b.availablePaise)}</Text>
           <View style={styles.split}>
             {([['Earned online', b.earnedPaise, ''], ['Owed to ZappyOne', b.owedPaise, '− '], ['Paid out', b.paidOutPaise, '− ']] as [string, number, string][]).map(([label, v, sign]) => (
@@ -91,7 +91,7 @@ export function ShopWithdrawPage() {
               </View>
               <Button label={b.open ? 'Your money is already on its way' : `Withdraw ${paise ? formatPaise(paise) : ''}`} onPress={submit} loading={sending}
                 disabled={!!b.open || paise < (b.minPaise || 0) || paise > (b.availablePaise || 0)} fullWidth size="large" />
-              <Text variant="caption" color={ink[500]}>Reaches your bank within 2 working days. One request at a time.</Text>
+              <Text variant="caption" color={ink[500]}>Comes to your bank in 2 working days. One at a time.</Text>
             </>
           )}
         </View>

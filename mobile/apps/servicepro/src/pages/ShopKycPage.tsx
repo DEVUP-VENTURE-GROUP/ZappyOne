@@ -31,9 +31,9 @@ const DOCS = [
 ];
 
 const DONE: Record<string, { title: string; body: string; Icon: typeof Clock; bg: string; fg: string }> = {
-  pending_review: { title: 'Under review', body: "Your shop documents are being verified. We'll notify you within 24 hours.", Icon: Clock, bg: accent[50], fg: accent[700] },
-  approved: { title: 'Shop identity verified', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck, bg: success[50], fg: success[700] },
-  suspended: { title: 'Verification suspended', body: 'Talk to ZappyOne if you need help with your shop ID check.', Icon: XCircle, bg: danger[50], fg: danger[600] },
+  pending_review: { title: 'Under review', body: "Your shop documents are being checked. We'll notify you within 24 hours.", Icon: Clock, bg: accent[50], fg: accent[700] },
+  approved: { title: 'Shop documents approved', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck, bg: success[50], fg: success[700] },
+  suspended: { title: 'Paused by ZappyOne', body: 'Talk to ZappyOne if you need help with your shop ID check.', Icon: XCircle, bg: danger[50], fg: danger[600] },
 };
 
 export function ShopKycPage() {
@@ -96,7 +96,7 @@ export function ShopKycPage() {
     try {
       const docs = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : urls;
       await submitKyc({ ...docs, ...(opens('selfieUrl') ? { selfieMetadata: selfieMeta } : {}), gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
-      toast.success('Documents submitted for review');
+      toast.success('Documents sent. We will check them');
       refetch();
     } catch (err) { toast.error(errText(err, 'Submission failed')); }
   }
@@ -122,7 +122,7 @@ export function ShopKycPage() {
         ) : null}
         <View style={[styles.banner, { backgroundColor: zappy[50] }]}>
           <ShieldCheck size={16} color={zappy[600]} />
-          <Text variant="caption" weight="medium" color={zappy[700]} style={styles.flex}>Verifying your shop builds customer trust and unlocks the Nearby Shops listing. Reviewed within 24 hours.</Text>
+          <Text variant="caption" weight="medium" color={zappy[700]} style={styles.flex}>When we approve your shop, customers trust you more and find you in Nearby Shops. We check within 24 hours.</Text>
         </View>
 
         {DOCS.map((d) => (

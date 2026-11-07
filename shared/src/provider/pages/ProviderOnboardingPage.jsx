@@ -575,7 +575,7 @@ function VerifyStep({ lineCode, onDone }) {
         setMissing((body.fields || []).map((f) => ({ ...f, kind: 'field' })));
         toast.error(fixLine(body.fields || []));
       } else {
-        toast.error(body?.error || 'Could not submit');
+        toast.error(body?.error || 'Could not send. Try again');
       }
     }
   }

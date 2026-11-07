@@ -46,7 +46,7 @@ export const ratingLabel = (worker) => (worker?.completedJobs > 0 && worker?.rat
 /** What the verification banner says, by KYC status. */
 export function kycBannerText(status) {
   return status === 'pending_review' ? 'Your verification is under review'
-    : status === 'rejected' ? 'Verification rejected. Tap to resubmit'
+    : status === 'rejected' ? 'Documents not approved. Tap to resubmit'
       : 'Choose a service and get verified to start earning';
 }
 

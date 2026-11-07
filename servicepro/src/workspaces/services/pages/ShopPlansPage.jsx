@@ -34,7 +34,7 @@ function PlanForm({ services, onClose }) {
       const { plan } = await save(body).unwrap();
       if (andSubmit) {
         const r = await submit(plan._id).unwrap();
-        if (r.plan.status === 'live') toast.success('Your plan is live. Customers near you can subscribe now.');
+        if (r.plan.status === 'live') toast.success('Your plan is live. Customers near you can buy it now.');
       } else toast.success('Saved as a draft');
       onClose();
     } catch (e) { toast.error(errOf(e)); }

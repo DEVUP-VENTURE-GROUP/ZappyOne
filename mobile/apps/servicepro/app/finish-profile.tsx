@@ -23,7 +23,7 @@ export default function FinishProfile() {
   return (
     <ScrollView contentContainerStyle={[styles.body, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl }]}>
       <Text variant="caption" weight="bold" color={zappy[600]}>{done} OF {data?.total || 0} DONE</Text>
-      <Text variant="pageTitle" weight="bold">Finish your profile to open your dashboard</Text>
+      <Text variant="pageTitle" weight="bold">Finish your profile to open your home screen</Text>
       <Text variant="bodySmall" color={ink[500]}>Customers see these details before they book you, and ZappyOne checks them before you take work.</Text>
       <View style={styles.track}><View style={[styles.fill, { width: `${data?.total ? (done / data.total) * 100 : 0}%` }]} /></View>
       {steps.map((m, i) => (
@@ -44,7 +44,7 @@ export default function FinishProfile() {
           )}
         </Appear>
       ))}
-      <Button label={data?.complete ? 'Open my dashboard' : 'I have filled these in'} variant={data?.complete ? 'primary' : 'outline'} loading={isFetching}
+      <Button label={data?.complete ? 'Open my home screen' : 'I have filled these in'} variant={data?.complete ? 'primary' : 'outline'} loading={isFetching}
         onPress={() => (data?.complete ? router.replace('/' as never) : refetch())} fullWidth />
     </ScrollView>
   );

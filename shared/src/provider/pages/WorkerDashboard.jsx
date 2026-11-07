@@ -135,7 +135,7 @@ export default function WorkerDashboard() {
     const socket = getSocket(token);
     const onRejected = ({ reason }) => {
       dispatch(setOnline(false));
-      toast.error(reason ? `Verification rejected: ${reason}` : 'ZappyOne could not approve your documents. Please send them again.', { duration: 8000 });
+      toast.error(reason ? `Documents not approved: ${reason}` : 'ZappyOne could not approve your documents. Please send them again.', { duration: 8000 });
       refetchMe?.();
     };
     socket.on('kyc.rejected', onRejected);
@@ -160,7 +160,7 @@ export default function WorkerDashboard() {
   if (meData && !me?.onboardingComplete) return <WorkerOnboarding onComplete={refetchMe} />;
 
   async function toggleOnline() {
-    if (!kycApproved) { toast.error('Get verified for a service before going online'); nav('/provider/onboarding'); return; }
+    if (!kycApproved) { toast.error('Get approved for a service first, then go online'); nav('/provider/onboarding'); return; }
     setToggling(true);
     try {
       if (isOnline) {
@@ -171,7 +171,7 @@ export default function WorkerDashboard() {
         const pos = await getCurrent();
         // The server refuses worse than 500 m (a laptop's IP guess); 100–500 m works, with a tip.
         if (pos.accuracy > 100 && pos.accuracy <= 500) {
-          toast('Your location is a little rough. Step near a window or outdoors for a sharper fix.', { duration: 5000 });
+          toast('Your location is not clear. Go near a window or outside.', { duration: 5000 });
         }
         await goOnline({ lat: pos.lat, lng: pos.lng, accuracy: pos.accuracy ?? null }).unwrap();
         toast.success('You are online. New work near you will ring.');

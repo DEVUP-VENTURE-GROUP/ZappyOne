@@ -197,7 +197,7 @@ export default function WorkerKycPage() {
     try {
       const body = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : { ...urls };
       await submitKyc({ ...body, ...(opens('selfieUrl') && { selfieMetadata }) }).unwrap();
-      toast.success('Documents submitted for review');
+      toast.success('Documents sent. We will check them');
       refetch();
     } catch (err) {
       toast.error(err.data?.error || 'Submission failed');
@@ -225,7 +225,7 @@ export default function WorkerKycPage() {
             <Clock size={18} className="text-amber-500 shrink-0" />
             <div>
               <p className="font-bold text-amber-800 text-sm">Under Review</p>
-              <p className="text-xs text-amber-600 mt-0.5">Your documents are being verified. We'll notify you within 24 hours.</p>
+              <p className="text-xs text-amber-600 mt-0.5">Your documents are being checked. We'll notify you within 24 hours.</p>
             </div>
           </div>
           <MyDocuments token={token} kycStatus={status} />
@@ -535,7 +535,7 @@ function StatusScreen({ type, onBack }) {
           </h2>
           <p className="text-sm text-slate-400 mt-2 leading-relaxed max-w-xs">
             {isPending
-              ? 'Your documents are being verified. We will notify you within 24 hours.'
+              ? 'Your documents are being checked. We will notify you within 24 hours.'
               : 'Your identity is verified. Go online to start receiving job requests.'
             }
           </p>

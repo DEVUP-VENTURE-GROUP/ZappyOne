@@ -20,9 +20,9 @@ import { spacing } from '@zappy/ui/theme/spacing';
 
 const KYC_PILL: Record<string, { label: string; bg: string; fg: string; Icon: typeof ShieldCheck }> = {
   approved: { label: 'Verified', bg: success[50], fg: success[700], Icon: ShieldCheck },
-  pending_review: { label: 'Pending review', bg: accent[50], fg: accent[700], Icon: Clock },
+  pending_review: { label: 'We are checking', bg: accent[50], fg: accent[700], Icon: Clock },
   rejected: { label: 'Rejected', bg: danger[50], fg: danger[600], Icon: XCircle },
-  not_submitted: { label: 'Not verified yet', bg: slate[100], fg: ink[500], Icon: Circle },
+  not_submitted: { label: 'Not checked yet', bg: slate[100], fg: ink[500], Icon: Circle },
 };
 
 interface Worker { _id: string; name?: string; phone?: string; rating?: number; isOnline?: boolean; kyc?: { status?: string }; team?: { role?: string; leadId?: string | null } }
@@ -35,7 +35,7 @@ function AddWorkerSheet({ onClose }: { onClose: () => void }) {
     if (phone.length < 10) { toast.error('Enter a valid phone number'); return; }
     try {
       const res = await addWorker({ phone, name: name || undefined }).unwrap();
-      toast.success(res.isNew ? 'Added. They sign in to ServicePro as a shop worker with this number and verify their ID to go on duty.' : 'Linked to your shop', { duration: 6000 });
+      toast.success(res.isNew ? 'Added. They sign in to ServicePro as a shop worker with this number and show their ID before they can work.' : 'Linked to your shop', { duration: 6000 });
       onClose();
     } catch (err) { toast.error(errText(err, 'Failed to add worker')); }
   }

@@ -51,7 +51,7 @@ export function InstantIdCheck() {
 
   return (
     <View style={[styles.card, { borderColor: success[100], borderWidth: 2, backgroundColor: success[50] }]}>
-      <View style={styles.row}><ShieldCheck size={17} color={success[700]} /><Text variant="bodySmall" weight="black" color={success[700]}>Verify your ID instantly</Text></View>
+      <View style={styles.row}><ShieldCheck size={17} color={success[700]} /><Text variant="bodySmall" weight="black" color={success[700]}>Check your ID now</Text></View>
       <Text variant="caption" color={success[700]}>Skip the wait: a code to the mobile linked to your Aadhaar. We keep only its last 4 digits.</Text>
       <View style={styles.card}>
         <Text variant="bodySmall" weight="bold">Aadhaar</Text>

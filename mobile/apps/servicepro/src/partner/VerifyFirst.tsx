@@ -16,12 +16,12 @@ export function VerifyFirst({ kycStatus, inset = true }: { kycStatus?: string; i
   return (
     <View style={[styles.card, inset && styles.inset]}>
       <View style={styles.icon}><ShieldCheck size={22} color={zappy[600]} /></View>
-      <Text variant="body" weight="bold">{inReview ? 'Your documents are being reviewed' : 'Verify your business to start taking bookings'}</Text>
+      <Text variant="body" weight="bold">{inReview ? 'We are checking your documents' : 'Show your business documents to start getting bookings'}</Text>
       <Text variant="bodySmall" color={ink[500]}>
-        {inReview ? 'We usually respond within 24 hours. You can finish your profile meanwhile.'
-          : 'Upload your ID and a live selfie. Packages, bookings and earnings open once you are verified.'}
+        {inReview ? 'We reply in about 24 hours. Finish your profile while you wait.'
+          : 'Add your ID and a selfie. After we approve, packages, bookings and earnings open.'}
       </Text>
-      <Button label={inReview ? 'View status' : 'Verify now'} onPress={() => router.push('/partner/kyc' as never)} fullWidth />
+      <Button label={inReview ? 'View status' : 'Start now'} onPress={() => router.push('/partner/kyc' as never)} fullWidth />
     </View>
   );
 }

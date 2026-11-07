@@ -122,7 +122,7 @@ export function ProviderRepairSetupPage() {
             <Text variant="body" weight="bold" numberOfLines={1}>{other ? other.name : `Set up ${VERTICAL_LABEL[active] || active || 'your services'}`}</Text>
             <Text variant="caption" color={ink[400]}>A few quick steps. You can come back any time.</Text>
           </View>
-          <Pressable onPress={() => router.push('/provider/onboarding' as never)} accessibilityRole="button" accessibilityLabel="Services and verification" hitSlop={8} style={styles.back}>
+          <Pressable onPress={() => router.push('/provider/onboarding' as never)} accessibilityRole="button" accessibilityLabel="Your services and documents" hitSlop={8} style={styles.back}>
             <ShieldCheck size={17} color={ink[700]} />
           </Pressable>
         </View>

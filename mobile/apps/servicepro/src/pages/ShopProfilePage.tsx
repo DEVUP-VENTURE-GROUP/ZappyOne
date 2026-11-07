@@ -151,7 +151,7 @@ export function ShopProfilePage() {
         {/* Services are read-only on purpose: set by verification, not by this form. */}
         <View style={styles.card}>
           <Text variant="caption" weight="bold" color={ink[500]}>SERVICES YOU OFFER</Text>
-          <Text variant="caption" color={ink[400]}>Set by verification, not by this form. Customers rely on it meaning something.</Text>
+          <Text variant="caption" color={ink[400]}>We set this after checking your documents. You cannot change it here.</Text>
           <Button label="Your services and ID check" variant="outline" onPress={() => router.push('/provider/onboarding' as never)} fullWidth />
         </View>
       </ScrollView>

@@ -48,7 +48,7 @@ export default function InstantIdCheck({ className = '' }) {
 
   return (
     <section className={`rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-4 ${className}`}>
-      <p className="flex items-center gap-2 text-sm font-black text-emerald-900"><ShieldCheck size={17} /> Verify your ID instantly</p>
+      <p className="flex items-center gap-2 text-sm font-black text-emerald-900"><ShieldCheck size={17} /> Check your ID now</p>
       <p className="mt-0.5 text-[12px] text-emerald-800">Skip the wait: a code to the mobile linked to your Aadhaar. We keep only its last 4 digits.</p>
 
       <div className="mt-3 rounded-xl bg-white p-3 ring-1 ring-emerald-100">

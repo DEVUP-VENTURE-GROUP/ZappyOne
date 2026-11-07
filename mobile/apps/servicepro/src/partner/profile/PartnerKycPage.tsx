@@ -34,7 +34,7 @@ const STATE: Record<string, { label: string; text: string; Icon: LucideIcon; bg:
   approved: { label: 'Verified', text: 'You can publish packages and take bookings.', Icon: BadgeCheck, bg: success[50], fg: success[700] },
   pending: { label: 'In review', text: 'We usually respond within 24 hours.', Icon: Clock, bg: accent[50], fg: accent[700] },
   rejected: { label: 'Needs changes', text: 'Please re-upload clear documents.', Icon: XCircle, bg: danger[50], fg: danger[600] },
-  not_submitted: { label: 'Not submitted', text: 'Upload the four required documents to get verified.', Icon: ShieldCheck, bg: zappy[50], fg: zappy[700] },
+  not_submitted: { label: 'Not submitted', text: 'Add the 4 documents we need. Then we check them.', Icon: ShieldCheck, bg: zappy[50], fg: zappy[700] },
 };
 
 const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
@@ -90,8 +90,8 @@ export function PartnerKycPage() {
     try {
       await updateMe({ ...pending, ...(pending.liveSelfie ? { liveSelfieMeta: selfieMeta } : {}), panNumber: panValue || undefined, gstNumber: gstValue || undefined }).unwrap();
       setPending({});
-      toast.success('Submitted for review');
-    } catch (err) { toast.error(errText(err, 'Could not submit')); }
+      toast.success('Sent. We will check it');
+    } catch (err) { toast.error(errText(err, 'Could not send. Try again')); }
   }
 
   return (
@@ -111,7 +111,7 @@ export function PartnerKycPage() {
         ) : null}
 
         {FIELDS.map((f) => (
-          <KycDocRow key={f.key} Icon={f.Icon} label={f.label} sublabel={pending[f.key] ? 'Ready to submit' : f.sublabel} required={f.required} live={f.live}
+          <KycDocRow key={f.key} Icon={f.Icon} label={f.label} sublabel={pending[f.key] ? 'Ready to send' : f.sublabel} required={f.required} live={f.live}
             uploaded={!!(pending[f.key] || kyc[f.key])} busy={uploading === f.key} locked={locked || (!!asked && !asked.has(f.key))} onPick={() => add(f.key, !!f.live)} />
         ))}
 
@@ -130,7 +130,7 @@ export function PartnerKycPage() {
       </ScrollView>
       {!locked ? (
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-          <Button label={ready ? 'Submit for review' : `Upload ${required.length - doneRequired} more required`} icon={<ShieldCheck size={15} color="#fff" />}
+          <Button label={ready ? 'Send for checking' : `Upload ${required.length - doneRequired} more required`} icon={<ShieldCheck size={15} color="#fff" />}
             onPress={submit} loading={saving} disabled={!ready} fullWidth size="large" />
         </View>
       ) : null}

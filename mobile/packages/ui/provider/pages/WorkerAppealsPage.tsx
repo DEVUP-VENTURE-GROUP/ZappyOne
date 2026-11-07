@@ -15,7 +15,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 
 const APPEAL_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
-  pending: { label: 'Pending review', bg: accent[50], fg: accent[700] },
+  pending: { label: 'We are checking', bg: accent[50], fg: accent[700] },
   under_review: { label: 'Under review', bg: zappy[50], fg: zappy[700] },
   upheld: { label: 'Upheld (won)', bg: success[50], fg: success[700] },
   dismissed: { label: 'Dismissed', bg: danger[50], fg: danger[600] },

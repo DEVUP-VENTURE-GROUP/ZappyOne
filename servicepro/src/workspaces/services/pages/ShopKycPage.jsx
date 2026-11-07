@@ -23,11 +23,11 @@ const DOCS = [
 
 const STATUS_META = {
   pending_review: {
-    title: 'Under Review', body: "Your shop documents are being verified. We'll notify you within 24 hours.", Icon: Clock,
+    title: 'Under Review', body: "Your shop documents are being checked. We'll notify you within 24 hours.", Icon: Clock,
     card: 'bg-amber-50 ring-1 ring-amber-200', icon: 'text-amber-600', title_: 'text-amber-800', body_: 'text-amber-600',
   },
   approved: {
-    title: 'Shop identity verified', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck,
+    title: 'Shop documents approved', body: 'Your documents are checked. Jobs come only for the services approved below.', Icon: ShieldCheck,
     card: 'bg-emerald-50 ring-1 ring-emerald-200', icon: 'text-emerald-600', title_: 'text-emerald-800', body_: 'text-emerald-600',
   },
   suspended: {
@@ -84,7 +84,7 @@ export default function ShopKycPage() {
     try {
       const docs = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : urls;
       await submitKyc({ ...docs, ...(opens('selfieUrl') && { selfieMetadata: selfieMeta }), gstNumber: gstNumber || undefined, panNumber: panNumber || undefined }).unwrap();
-      toast.success('Documents submitted for review');
+      toast.success('Documents sent. We will check them');
       refetch();
     } catch (err) {
       toast.error(err?.data?.error || 'Submission failed');
@@ -155,7 +155,7 @@ export default function ShopKycPage() {
           <div className="flex items-start gap-3">
             <ShieldCheck size={16} className="text-zappy-600 shrink-0 mt-0.5" />
             <p className="text-xs font-medium text-zappy-700 leading-relaxed">
-              Verifying your shop builds customer trust and unlocks the Nearby Shops listing. Reviewed within 24 hours.
+              When we approve your shop, customers trust you more and find you in Nearby Shops. We check within 24 hours.
             </p>
           </div>
         </div>

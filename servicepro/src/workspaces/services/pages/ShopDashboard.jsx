@@ -46,11 +46,11 @@ import LiveSwitch from '../components/LiveSwitch';
  */
 
 const KYC_META = {
-  not_submitted: { label: 'Verification pending', tone: 'bg-slate-100 text-slate-600', Icon: AlertTriangle },
+  not_submitted: { label: 'We are checking your documents', tone: 'bg-slate-100 text-slate-600', Icon: AlertTriangle },
   pending_review: { label: 'Under review', tone: 'bg-amber-50 text-amber-700', Icon: Clock },
   approved: { label: 'Verified', tone: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
-  rejected: { label: 'Verification rejected', tone: 'bg-red-50 text-red-700', Icon: XCircle },
-  suspended: { label: 'Verification suspended', tone: 'bg-red-50 text-red-700', Icon: XCircle },
+  rejected: { label: 'Documents not approved', tone: 'bg-red-50 text-red-700', Icon: XCircle },
+  suspended: { label: 'Paused by ZappyOne', tone: 'bg-red-50 text-red-700', Icon: XCircle },
 };
 
 /** Every kind of work a shop can be booked for. */
@@ -212,10 +212,10 @@ export default function ShopDashboard() {
   const statCards = [
     { Icon: IndianRupee, tone: 'green', label: "Today's Earnings", value: inr(earnings?.earningsRupees || 0), sub: 'View details', onClick: () => nav('/shop/earnings') },
     { Icon: Briefcase, tone: 'amber', label: "Today's Jobs", value: earnings?.jobs || 0, sub: 'View all', onClick: () => nav('/shop/earnings') },
-    { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-zappy-600' },
-    { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Manage team', onClick: () => nav('/shop/workers') },
+    { Icon: Wrench, tone: 'blue', label: 'Do this now', value: needsAction.length, sub: needsAction.length ? 'Give to a worker' : null, subTone: 'text-zappy-600' },
+    { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Your team', onClick: () => nav('/shop/workers') },
     { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '-', sub: `${shop?.reviewCount || 0} reviews`, onClick: () => nav('/shop/reviews') },
-    { Icon: ShieldCheck, tone: 'rose', label: 'Awaiting approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },
+    { Icon: ShieldCheck, tone: 'rose', label: 'Waiting for approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },
   ];
 
   return (
@@ -262,7 +262,7 @@ export default function ShopDashboard() {
                     ? 'Your documents are approved. Finish your profile so customers can find you.'
                     : kycStatus === 'pending_review' || verificationInFlight
                       ? "We'll notify you within 24 hours."
-                      : 'Submit your documents to start receiving bookings.'}
+                      : 'Send your documents to start getting bookings.'}
                 </p>
 
                 {/* What exactly is missing — a checklist beats "complete your profile". */}
