@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <service
+      android:name="expo.modules.zappyshortcuts.GoLiveTileService"
+      android:exported="true"
+      android:label="ZappyOne"
+      android:icon="@drawable/zappy_tile"
+      android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      <intent-filter>
+        <action android:name="android.service.quicksettings.action.QS_TILE" />
+      </intent-filter>
+      <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="false" />
+    </service>
+    <receiver android:name="expo.modules.zappyshortcuts.TodayWidget" android:exported="false" android:label="ZappyOne today">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/zappy_today_widget" />
+    </receiver>
+  </application>
+</manifest>

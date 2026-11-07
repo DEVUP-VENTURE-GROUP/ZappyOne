@@ -1,7 +1,9 @@
 // On while a pro is online, or while a shop owner is signed in: the shop takes jobs all day. New offers are also read out while the app is open.
+import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import * as Speech from 'expo-speech';
-import { useGetWorkerMeQuery, useShopMeQuery } from '@zappy/core/api';
+import { useGetWorkerMeQuery, useShopEarningsQuery, useShopMeQuery } from '@zappy/core/api';
+import { zappyShortcuts } from '../../modules/zappy-shortcuts';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { useCaptainMode } from './useCaptainMode';
@@ -26,6 +28,14 @@ export function CaptainMode() {
   // A shop is online while its Live switch is ON (shops/me/live).
   const online = isWorker ? !!(data as { worker?: { isOnline?: boolean } } | undefined)?.worker?.isOnline : isShop && (shopMe as { shop?: { takingOrders?: boolean } } | undefined)?.shop?.takingOrders !== false;
   useCaptainMode({ on: online, role });
+
+  // The phone's ZappyOne tile and widget show what the app last knew; signed out, they show offline.
+  const { data: today } = useShopEarningsQuery('today', { skip: !isShop });
+  const jobsToday = Number((today as { jobs?: number } | undefined)?.jobs || 0);
+  const earnedToday = `₹${Math.round(Number((today as { earningsRupees?: number } | undefined)?.earningsRupees || 0)).toLocaleString('en-IN')}`;
+  useEffect(() => {
+    zappyShortcuts.setStatus(signedIn ? { online, jobsToday, earnedToday } : { online: false, jobsToday: 0, earnedToday: '₹0' });
+  }, [signedIn, online, jobsToday, earnedToday]);
 
   useSocketEvent('repair.offer', (p) => say(['New job on ZappyOne', words(p?.repairCode) || words(p?.device), rupees((p?.totalPaise || 0) + (p?.boostPaise || 0) + (p?.surgePaise || 0))]), online);
   useSocketEvent('job.offer', (p) => say(['New job on ZappyOne', p?.area && `in ${p.area}`]), online);
