@@ -7,10 +7,11 @@ const { validate } = require('../../middlewares/validate');
 
 const router = express.Router();
 
-// Customer-facing discovery — any authenticated role can browse
+// Customer-facing discovery, open before sign-in (public shop fields only).
 router.get(
   '/nearby',
-  authenticate,
+  storefrontLimiter,
+  optionalAuth,
   validate(Joi.object({
     lat: Joi.number().min(-90).max(90).required(),
     lng: Joi.number().min(-180).max(180).required(),

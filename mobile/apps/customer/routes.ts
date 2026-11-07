@@ -24,7 +24,9 @@ const BUILT = [
  */
 const PUBLIC = [/^\/$/, /^\/home$/, /^\/services$/, /^\/orders$/, /^\/track$/, /^\/profile$/, /^\/faq$/, /^\/policy\/[\w-]+$/, /^\/location\/picker$/, /^\/events(\/browse)?$/, /^\/events\/themes\/[\w-]+$/,
   // Repair flows and their categories: browse and price without an account; Confirm asks for sign-in.
-  /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care|bike-wash|car-wash|home-cleaning|electrician|plumbing|ac-service))?$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/];
+  /^\/repair(\/(laptop|two-wheeler|four-wheeler|water-tank-care|bike-wash|car-wash|home-cleaning|electrician|plumbing|ac-service))?$/, /^\/repair\/category\/[\w-]+\/[\w-]+$/,
+  // Every service by name, pet care, helping, shops and pros: seen before the OTP, which only booking asks for.
+  /^\/repair\/[\w-]+$/, /^\/pet$/, /^\/helping$/, /^\/nearby-shops$/, /^\/shops\/[\w-]+$/, /^\/storefront\/[\w-]+\/[\w-]+$/, /^\/providers\/[\w-]+$/];
 export const isPublic = (path: string) => PUBLIC.some((re) => re.test(path.split('?')[0]));
 
 /** Whether this app has a screen for `path`: entries to screens not built yet are hidden, not dead ends. */

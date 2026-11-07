@@ -1,7 +1,8 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./helping.controller');
-const { authenticate, requireRole } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
+const { storefrontLimiter } = require('../../middlewares/rateLimit');
 const { validate } = require('../../middlewares/validate');
 const { SERVICE_TYPES, OFFERED_PAYMENT_MODELS } = require('./models/config.model');
 const { PROOF_KINDS, ITEM_STATUSES, RETURN_METHODS } = require('./models/task.model');
@@ -66,7 +67,8 @@ const returnDetailSchema = Joi.object({
 
 /* Public-ish: catalog and pricing */
 
-router.get('/services', authenticate, ctrl.listServices);
+// Browsing before sign-in: prices are shown first; creating a task asks for the OTP.
+router.get('/services', storefrontLimiter, optionalAuth, ctrl.listServices);
 
 router.post('/quote',
   authenticate,

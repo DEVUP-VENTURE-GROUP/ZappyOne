@@ -1,7 +1,8 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./pet.controller');
-const { authenticate, requireRole } = require('../../middlewares/auth');
+const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
+const { storefrontLimiter } = require('../../middlewares/rateLimit');
 const { validate } = require('../../middlewares/validate');
 const { SPECIES, PET_SIZES, RISK_LEVELS } = require('../service/pet-passport.model');
 
@@ -28,7 +29,8 @@ const locationSchema = Joi.object({
 
 /* Catalog */
 
-router.get('/categories', authenticate, ctrl.listCategories);
+// Browsing before sign-in: the customer sees what we offer first; booking asks for the OTP.
+router.get('/categories', storefrontLimiter, optionalAuth, ctrl.listCategories);
 router.get('/variants', authenticate, ctrl.listVariants);
 router.get('/breeds', authenticate, ctrl.listBreeds);
 router.get('/addons', authenticate, ctrl.listAddons);

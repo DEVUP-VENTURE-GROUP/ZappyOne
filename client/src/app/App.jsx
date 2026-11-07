@@ -152,7 +152,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/"       element={<HomePage />} />
           <Route path="/home"   element={<HomePage />} />
-          <Route path="/services" element={<RequireAuth role="user"><AllServicesPage /></RequireAuth>} />
+          <Route path="/services" element={<AllServicesPage />} />
           {/*
             Per-vertical catalog pages are retired: a customer reaching one now
             lands on the live list instead of a category whose booking flow is
@@ -219,16 +219,16 @@ export default function App() {
         <Route path="/repair/ac-service" element={<RepairFlowPage vertical="ac_service" />} />
         <Route path="/repair/car-wash" element={<RepairFlowPage vertical="car_wash" />} />
         <Route path="/repair/:slug" element={<ServiceFlowRoute />} />
-        <Route path="/providers/:slug" element={<RequireAuth role="user"><StorefrontsPage /></RequireAuth>} />
+        <Route path="/providers/:slug" element={<StorefrontsPage />} />
         {/* Public: a partner's shared link shows their whole storefront before sign-in; booking asks at checkout. */}
         <Route path="/storefront/:kind/:id" element={<StorefrontPage />} />
         <Route path="/my-plans" element={<RequireAuth role="user"><MyPlansPage /></RequireAuth>} />
         <Route path="/my-assets" element={<RequireAuth role="user"><MyAssetsPage /></RequireAuth>} />
-        <Route path="/helping" element={<RequireAuth role="user"><HelpingServicesPage /></RequireAuth>} />
+        <Route path="/helping" element={<HelpingServicesPage />} />
         <Route path="/helping/shopping" element={<RequireAuth role="user"><ShoppingTaskPage /></RequireAuth>} />
         <Route path="/helping/returns" element={<RequireAuth role="user"><ReturnTaskPage /></RequireAuth>} />
         <Route path="/helping/tasks/:id" element={<RequireAuth role="user"><HelpingTaskDetailPage /></RequireAuth>} />
-        <Route path="/pet" element={<RequireAuth role="user"><PetServicesPage /></RequireAuth>} />
+        <Route path="/pet" element={<PetServicesPage />} />
         <Route path="/pet/my-pets" element={<RequireAuth role="user"><MyPetsPage /></RequireAuth>} />
         <Route path="/pet/my-pets/:id" element={<RequireAuth role="user"><PetDetailPage /></RequireAuth>} />
         <Route path="/pet/book/:categoryCode" element={<RequireAuth role="user"><PetBookingFlowPage /></RequireAuth>} />
@@ -247,7 +247,7 @@ export default function App() {
         {/* Kept so existing worker links and notifications still resolve. */}
 
         {/* Nearby Shops — customer-facing discovery */}
-        <Route path="/nearby-shops" element={<RequireAuth role="user"><NearbyShopsPage /></RequireAuth>} />
+        <Route path="/nearby-shops" element={<NearbyShopsPage />} />
         <Route path="/shops/:id" element={<ShopPublicProfilePage />} />
 
         {/* Event Commerce */}

@@ -50,7 +50,8 @@ const browseLimiter = makeLimiter({ windowMs: 60_000, max: 120, prefix: 'repairb
 router.get('/verticals', ctrl.listVerticals);
 
 // Zomato-style browsing: who near the customer offers this service, and one storefront's menu (services/storefront).
-router.get('/storefronts', authenticate, requireKnownVertical, validate(Joi.object({
+// Open before sign-in: the customer compares pros first; booking asks for the OTP.
+router.get('/storefronts', require('../../middlewares/rateLimit').storefrontLimiter, optionalAuth, requireKnownVertical, validate(Joi.object({
   vertical: Joi.string().max(40).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required(),
   sort: Joi.string().valid(...require('./services/storefront.service').SORTS).default('best'), serviceMode: Joi.string().valid('doorstep', 'workshop', 'roadside').default('doorstep'),
 }), 'query'), async (req, res, next) => {
