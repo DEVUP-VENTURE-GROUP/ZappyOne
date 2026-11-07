@@ -65,7 +65,8 @@ function getFirebaseApp() {
 const OFFER_KEYS = new Set(['provider.job_nearby', 'provider.job_waiting']);
 const isOffer = (data) => data?.channel === 'offers' || OFFER_KEYS.has(data?.key);
 
-async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
+// ring: phones whose app draws the full-screen job ring (native zappy-ring) get the offer as data only, so the app, not Android, shows it.
+async function sendFcm({ tokens, title, body, data = {}, imageUrl, ring = false } = {}) {
   if (!tokens?.length) return { skipped: true, reason: 'no_tokens' };
 
   const app = getFirebaseApp();
@@ -96,7 +97,12 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
       // even if the SW is asleep). All web styling lives in webpush.notification.
       // The service worker must NOT also call showNotification() or you get a
       // duplicate — that's why onBackgroundMessage was removed from the SW.
-      const message = {
+      const windowSec = Math.min(900, Math.max(15, Number(data.windowSec) || 60));
+      const message = ring ? {
+        tokens: batch,
+        data: { ...stringData, zr: 'offer', title: String(title || ''), body: String(body || ''), windowSec: String(windowSec) },
+        android: { priority: 'high', ttl: windowSec * 1000 },
+      } : {
         tokens: batch,
         notification: { title, body: body || '' },
         data: stringData,
@@ -121,7 +127,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
           fcmOptions: { link: data.deepLink || '/' },
         },
       };
-      if (imageUrl) message.notification.imageUrl = imageUrl;
+      if (imageUrl && message.notification) message.notification.imageUrl = imageUrl;
 
       const result = await messaging.sendEachForMulticast(message);
       successCount += result.successCount;
@@ -238,7 +244,16 @@ async function processJob(job) {
       return { skipped: true, reason: 'no_tokens' };
     }
 
-    const fcmResult = await sendFcm({ tokens, title, body, data });
+    // A job offer rings full-screen on phones that can; every other device gets the usual ringing notification.
+    const ringSet = new Set(isOffer(data) ? (result.ring || []) : []);
+    const ringTokens = tokens.filter((t) => ringSet.has(t));
+    const rest = tokens.filter((t) => !ringSet.has(t));
+    const parts = await Promise.all([
+      rest.length ? sendFcm({ tokens: rest, title, body, data }) : null,
+      ringTokens.length ? sendFcm({ tokens: ringTokens, title, body, data, ring: true }) : null,
+    ]);
+    const sent = parts.filter(Boolean);
+    const fcmResult = { ok: sent.some((r) => r.ok), success: sent.reduce((a, r) => a + (r.success || 0), 0), failure: sent.reduce((a, r) => a + (r.failure || 0), 0) };
 
     /* Update notification doc with push delivery status */
     if (notificationId) {

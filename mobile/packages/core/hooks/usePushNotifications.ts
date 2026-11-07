@@ -40,6 +40,10 @@ import {
   type DeviceToken,
 } from '../lib/pushNotifications';
 import { createLogger } from '../lib/logger';
+import { requireOptionalNativeModule } from 'expo-modules-core';
+
+// Present only in ServicePro builds carrying the native full-screen job ring (apps/servicepro/modules/zappy-ring).
+const RING_READY = !!requireOptionalNativeModule('ZappyRing');
 
 const log = createLogger('push');
 
@@ -66,13 +70,15 @@ export function usePushNotifications(resolve: RouteResolver): void {
 
   const send = useCallback(
     async ({ token, platform }: DeviceToken) => {
-      const signature = `${role}:${token}`;
+      // A ServicePro build with the native ring tells the server, so job offers come as data it can ring full-screen (server notification/devices).
+      const sentPlatform = platform === 'android' && RING_READY ? 'android-ring' : platform;
+      const signature = `${role}:${token}:${sentPlatform}`;
       if (registered.current === signature) return;
       try {
         if (role === 'worker') {
-          await registerWorkerToken({ token, platform }).unwrap();
+          await registerWorkerToken({ token, platform: sentPlatform }).unwrap();
         } else {
-          await registerUserToken({ token, platform }).unwrap();
+          await registerUserToken({ token, platform: sentPlatform }).unwrap();
         }
         registered.current = signature;
         log.info('device registration succeeded');

@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+  <uses-permission android:name="android.permission.VIBRATE" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <application>
+    <!-- Ahead of expo-notifications' receiver (priority -1): job offers ring full-screen, everything else goes on to Expo unchanged. -->
+    <service android:name="expo.modules.zappyring.ZappyRingMessagingService" android:exported="false">
+      <intent-filter android:priority="10">
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+    <activity
+      android:name="expo.modules.zappyring.IncomingJobActivity"
+      android:exported="false"
+      android:excludeFromRecents="true"
+      android:launchMode="singleTask"
+      android:taskAffinity=""
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen" />
+  </application>
+</manifest>

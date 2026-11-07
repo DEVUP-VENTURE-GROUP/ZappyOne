@@ -1,6 +1,7 @@
 // More on the owner's bar: who they are, every page not on the bar (shared ownerMenu, the website's menu), and sign out.
 import { useEffect, useState } from 'react';
 import { zappyBubble } from '../../modules/zappy-bubble';
+import { zappyRing } from '../../modules/zappy-ring';
 import { AppState, Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PhoneCall, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
@@ -33,6 +34,25 @@ const HINTS: Record<string, string> = {
 };
 
 // The bubble over other apps while online, like a ride app's: shows whether Android allows it, with a way to turn it on.
+// A new job rings full-screen like a call, even with the phone locked; Android 14 and newer ask the pro to allow it.
+function RingSetting() {
+  const [on, setOn] = useState(zappyRing.canFullScreen());
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') setOn(zappyRing.canFullScreen()); });
+    return () => sub.remove();
+  }, []);
+  if (!zappyRing.available) return null;
+  return (
+    <View style={[styles.card, styles.row]}>
+      <View style={styles.flex}>
+        <Text variant="bodySmall" weight="semibold">Ring like a call</Text>
+        <Text variant="caption" color={ink[500]}>{on ? 'On. A new job fills your screen and rings, even when the phone is locked.' : 'Let a new job fill your screen and ring like a call, so you never miss one.'}</Text>
+      </View>
+      {on ? <Text variant="caption" weight="bold" color="#047857">On</Text> : <Button label="Turn on" size="small" onPress={() => zappyRing.openSettings()} />}
+    </View>
+  );
+}
+
 function BubbleSetting() {
   const [on, setOn] = useState(zappyBubble.canShow());
   useEffect(() => {
@@ -100,6 +120,7 @@ export function ShopAccountPage() {
           ); })}
         </View>
 
+        <RingSetting />
         <BubbleSetting />
         <View style={styles.cardFlat}>
           <Pressable onPress={() => void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.link}>
