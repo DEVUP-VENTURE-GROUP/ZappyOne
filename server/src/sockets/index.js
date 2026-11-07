@@ -75,10 +75,6 @@ function initSockets(httpServer) {
     const { sub: id, role } = socket.user;
     logger.info({ id, role, sid: socket.id }, 'Socket connected');
 
-    // Mark this user/worker as socket-present in Redis (TTL = 65s, refreshed by socket.io
-    // pings every 25s). notification.service reads this to skip FCM for online recipients.
-    redis.set(`presence:${role}:${id}`, '1', 'EX', 65).catch(() => {});
-
     // Join role-based personal room (restored on every reconnect automatically).
     socket.join(`${role}:${id}`);
 
@@ -283,19 +279,8 @@ function initSockets(httpServer) {
       }
     });
 
-    // Refresh presence TTL on every ping cycle (socket.io pings every 25s)
-    socket.conn.on('packet', (packet) => {
-      if (packet.type === 'ping') {
-        redis.set(`presence:${role}:${id}`, '1', 'EX', 65).catch(() => {});
-      }
-    });
-
     socket.on('disconnect', (reason) => {
       logger.info({ id, role, sid: socket.id, reason }, 'Socket disconnected');
-      // Only clear presence if this was the last socket for this user/worker.
-      io.in(`${role}:${id}`).fetchSockets().then((socks) => {
-        if (socks.length === 0) redis.del(`presence:${role}:${id}`).catch(() => {});
-      }).catch(() => {});
     });
   });
 

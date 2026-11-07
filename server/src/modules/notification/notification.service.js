@@ -68,12 +68,9 @@ async function notify({ recipient, type, title, body, data = {}, deepLink, sms =
     JSON.stringify(payload)
   );
 
-  // 3. Push notification — skip if recipient is actively connected via socket.
-  // Online users already receive the notification via the socket pub/sub above.
-  // FCM costs money per send; skipping for live sessions saves ~30-60% of pushes.
-  const isOnline = await redis.get(`presence:${recipient.kind}:${recipient.id}`).catch(() => null);
-  // `push: false`: quiet hours for a non-urgent message (messaging/send) — in-app only.
-  if (!isOnline && push) {
+  // 3. Push, always: FCM is free, and a website tab or a backgrounded app holding a socket is not the person looking at their phone.
+  // `push: false`: quiet hours for a non-urgent message (messaging/send), in-app only.
+  if (push) {
     notificationsQueue.add('push', {
       notificationId: String(doc._id),
       recipient,
