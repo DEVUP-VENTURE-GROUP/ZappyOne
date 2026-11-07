@@ -44,9 +44,15 @@ if (isWeb) {
   );
 }
 
+// Every request needs the token; SecureStore decrypts through the Android Keystore on each read, which queues up on low-end phones. Read once, then from memory, as the websites do.
+const cache = new Map<string, string | null>();
+
 async function readItem(key: string): Promise<string | null> {
   if (isWeb) return memoryStore.get(key) ?? null;
-  return SecureStore.getItemAsync(key);
+  if (cache.has(key)) return cache.get(key) ?? null;
+  const value = await SecureStore.getItemAsync(key);
+  cache.set(key, value);
+  return value;
 }
 
 async function writeItem(key: string, value: string): Promise<void> {
@@ -54,6 +60,7 @@ async function writeItem(key: string, value: string): Promise<void> {
     memoryStore.set(key, value);
     return;
   }
+  cache.set(key, value);
   await SecureStore.setItemAsync(key, value);
 }
 
@@ -62,6 +69,7 @@ async function deleteItem(key: string): Promise<void> {
     memoryStore.delete(key);
     return;
   }
+  cache.set(key, null);
   await SecureStore.deleteItemAsync(key);
 }
 

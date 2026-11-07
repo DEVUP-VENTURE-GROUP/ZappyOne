@@ -39,7 +39,7 @@ import { useJobRealtime } from '@zappy/core/hooks/useJobRealtime';
 import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
-import { ToastHost } from '../components/Toast';
+import { ToastHost, toast } from '../components/Toast';
 import { I18nProvider } from '../lib/i18n';
 import { UpdateGate } from './UpdateGate';
 import { useSilentUpdates } from './useSilentUpdates';
@@ -122,7 +122,7 @@ function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRo
   usePushNotifications(resolveRoute);
   useSilentUpdates();
   // Providers get this from WorkerFrame; customers' bookings and plans refresh live here.
-  useJobRealtime({ enabled: isAuthenticated && role === 'user' });
+  useJobRealtime({ enabled: isAuthenticated && role === 'user', onAccepted: () => toast.success('Your pro accepted. They are getting ready to come to you.') });
 
   useEffect(() => {
     if (booted.current) return;
