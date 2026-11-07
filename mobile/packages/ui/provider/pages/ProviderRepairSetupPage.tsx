@@ -16,7 +16,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import {
-  useProviderOnboardingStatusQuery, useRepairWorkCatalogQuery, useRepairServiceAreasQuery, useRepairProviderPricingQuery,
+  useProviderOnboardingStatusQuery, useRepairWorkCatalogQuery, useRepairServiceAreasQuery, useRepairProviderPricingQuery, useRepairVerticalsQuery,
 } from '@zappy/core/api';
 import { EmptyState, Text } from '../../components';
 import { toast } from '../../components/Toast';
@@ -34,7 +34,7 @@ import { PricingStep } from '../components/setup/PricingStep';
 import { ReadyService } from '../components/setup/ReadyService';
 import { StepRail } from '../components/setup/StepRail';
 import { WorkStep } from '../components/setup/WorkStep';
-import { VERTICAL_LABEL, stepsFor, type SetupStep } from '../components/setup/setupFlow';
+import { stepsFor, type SetupStep } from '../components/setup/setupFlow';
 
 interface Enrolment { lineCode: string; status: string; line?: { name?: string; repairVertical?: string; domainCode?: string } }
 /** The step before each one, for Back and Android's back button. */
@@ -45,6 +45,9 @@ export function ProviderRepairSetupPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: onboarding } = useProviderOnboardingStatusQuery();
+  // Service names from the server, as the website's setup page reads them; a new service needs no app change.
+  const { data: services } = useRepairVerticalsQuery(undefined);
+  const lineName = (v: string) => (services?.items as { vertical: string; name: string }[] | undefined)?.find((i) => i.vertical === v)?.name || v.replace(/_/g, ' ');
   const isShop = onboarding?.providerKind === 'shop';
   const home = isShop ? '/shop' : '/worker';
 
@@ -119,7 +122,7 @@ export function ProviderRepairSetupPage() {
         <View style={styles.row}>
           <Pressable onPress={leave} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8} style={styles.back}><ArrowLeft size={18} color={ink[900]} /></Pressable>
           <View style={styles.flex}>
-            <Text variant="body" weight="bold" numberOfLines={1}>{other ? other.name : `Set up ${VERTICAL_LABEL[active] || active || 'your services'}`}</Text>
+            <Text variant="body" weight="bold" numberOfLines={1}>{other ? other.name : `Set up ${active ? lineName(active) : 'your services'}`}</Text>
             <Text variant="caption" color={ink[400]}>A few quick steps. You can come back any time.</Text>
           </View>
           <Pressable onPress={() => router.push('/provider/onboarding' as never)} accessibilityRole="button" accessibilityLabel="Your services and documents" hitSlop={8} style={styles.back}>
@@ -130,7 +133,7 @@ export function ProviderRepairSetupPage() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
             {tabs.map((t) => (
               <Pressable key={t} onPress={() => switchTab(t)} accessibilityRole="tab" accessibilityState={{ selected: active === t }} style={[styles.tab, active === t && styles.tabOn]}>
-                <Text variant="caption" weight="bold" color={active === t ? '#fff' : ink[700]}>{VERTICAL_LABEL[t] || others.find((o) => o.key === t)?.name || t}</Text>
+                <Text variant="caption" weight="bold" color={active === t ? '#fff' : ink[700]}>{others.find((o) => o.key === t)?.name || lineName(t)}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -142,7 +145,7 @@ export function ProviderRepairSetupPage() {
         {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} />} /> : !active ? null : (
           <>
             {/* Menu services choose their inspection fee too: every service needs one. */}
-            {step === 'menu' ? <View style={styles.menuStep}><InspectionFeeCard vertical={active} /><MenuEditor key={active} vertical={active} onNext={() => setStep('area')} /></View> : null}
+            {step === 'menu' ? <MenuEditor key={active} vertical={active} top={<InspectionFeeCard vertical={active} />} onNext={() => setStep('area')} /> : null}
             {step === 'brands' && brandCodes !== null && !work?.menu ? <BrandsStep key={active} vertical={active} selected={brandCodes} onChange={setBrandCodes} onNext={() => setStep('work')} /> : null}
             {step === 'work' ? <WorkStep key={active} vertical={active} cityCode={cityCode} brandCodes={brandCodes || []} onBack={() => setStep('brands')} onNext={() => setStep('area')} /> : null}
             {step === 'area' ? <AreaStep key={active} vertical={active} profile={onboarding?.profile} onBack={() => setStep(work?.menu ? 'menu' : 'work')} onNext={() => (isShop ? setStep('hours') : work?.menu ? finish() : setStep('pricing'))} onCity={setCityCode} /> : null}
@@ -156,7 +159,6 @@ export function ProviderRepairSetupPage() {
 }
 
 const styles = StyleSheet.create({
-  menuStep: { gap: 12 },
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

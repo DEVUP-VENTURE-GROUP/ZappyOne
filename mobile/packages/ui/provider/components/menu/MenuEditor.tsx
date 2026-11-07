@@ -27,7 +27,7 @@ const toRupees = (p: number | null | undefined) => (p == null ? '' : String(Math
 const COMMON_INCLUDES = ['Tools and materials', 'Clean-up after the work', 'Before and after photos'];
 
 // The provider's own menu for one fixed-price service (the websites' MenuEditor): keep or drop sample jobs, add their own, a price per option, live as they save.
-export function MenuEditor({ vertical, onBack, onNext }: { vertical: string; onBack?: () => void; onNext: () => void }) {
+export function MenuEditor({ vertical, onBack, onNext, top = null }: { vertical: string; onBack?: () => void; onNext: () => void; top?: React.ReactNode }) {
   const { data, isLoading, isError, refetch } = useProviderMenuQuery(vertical);
   const [startSamples, { isLoading: starting }] = useStartMenuFromSamplesMutation();
   const [adjust, { isLoading: adjusting }] = useAdjustProviderMenuMutation();
@@ -51,6 +51,7 @@ export function MenuEditor({ vertical, onBack, onNext }: { vertical: string; onB
   return (
     <>
       <StepShell title="Your menu" hint="Customers near you book from this. Every change is live as soon as you save." onBack={onBack} onNext={onNext} canNext={offered.length > 0}>
+        {top}
         {menu.tips.length ? (
           <View style={styles.wrap}>{menu.tips.map((t) => <View key={t} style={styles.tip}><Text variant="caption" weight="semibold" color="#92400E">{t}</Text></View>)}</View>
         ) : null}

@@ -42,6 +42,3 @@ export const modesFor = (vertical: string) => SERVICE_MODES.filter((m) => !m.veh
 /** Every way of working a skill may carry; the server keeps only what each repair allows. */
 export const workModesFor = (vertical: string) => modesFor(vertical).map((m) => m.key);
 
-export const VERTICAL_LABEL: Record<string, string> = {
-  mobile: 'Phone repair', laptop: 'Laptop repair', two_wheeler: '2-wheeler repair', four_wheeler: '4-wheeler repair', water_tank_care: 'Water & tank care',
-};
