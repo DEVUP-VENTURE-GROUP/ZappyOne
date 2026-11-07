@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApplyReferralMutation } from '@shared/services/api';
+import { cleanReferralCode } from '@shared/customer/referralCode';
 
 const KEY = 'zappy:ref';
 
@@ -11,9 +12,9 @@ export function useReferralLink({ token, role }) {
   const [apply] = useApplyReferralMutation();
 
   useEffect(() => {
-    const ref = new URLSearchParams(search).get('ref');
-    if (ref && /^[A-Za-z0-9_-]{4,20}$/.test(ref)) {
-      try { localStorage.setItem(KEY, ref.toUpperCase()); } catch { /* storage blocked: the link still opened */ }
+    const ref = cleanReferralCode(new URLSearchParams(search).get('ref'));
+    if (ref) {
+      try { localStorage.setItem(KEY, ref); } catch { /* storage blocked: the link still opened */ }
     }
   }, [search]);
 

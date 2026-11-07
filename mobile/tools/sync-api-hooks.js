@@ -56,6 +56,7 @@ const LOGIC = [
   { from: 'constants/services.js', to: 'shared/services.js', imports: {} },
   { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
   { from: 'customer/jobsDone.js', to: 'shared/jobsDone.js', imports: {} },
+  { from: 'customer/referralCode.js', to: 'shared/referralCode.js', imports: {} },
   { from: 'hooks/useDebounced.js', to: 'shared/useDebounced.js', imports: { react: 'react' } },
   { from: 'customer/helpModes.js', to: 'shared/helpModes.js', imports: {} },
   { from: 'customer/deviceName.js', to: 'shared/deviceName.js', imports: {} },

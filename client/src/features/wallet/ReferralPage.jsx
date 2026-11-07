@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { ArrowLeft, Check, Copy, Link2, MessageCircle, Share2, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { selectAuth } from '@shared/modules/auth/authSlice';
-import { useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@shared/services/api';
+import { useApplyReferralMutation, useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@shared/services/api';
+import { cleanReferralCode } from '@shared/customer/referralCode';
 
 const rupees = (paise) => `₹${Math.floor((paise || 0) / 100).toLocaleString('en-IN')}`;
 const maskName = (name = '') => (!name || name.length <= 2 ? name || 'A friend' : `${name[0]}${'*'.repeat(Math.max(name.length - 2, 3))}${name[name.length - 1]}`);
@@ -14,6 +15,32 @@ const ago = (iso) => {
   if (days === 1) return 'Yesterday';
   return days < 30 ? `${days} days ago` : new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
+
+// A friend's code typed in, for anyone who signed up without the invite link; the server decides if it still counts.
+function FriendCode() {
+  const [code, setCode] = useState('');
+  const [apply, { isLoading }] = useApplyReferralMutation();
+  const clean = cleanReferralCode(code);
+  async function submit(e) {
+    e.preventDefault();
+    if (!clean) return;
+    try { await apply(clean).unwrap(); toast.success("Your friend's code is applied"); setCode(''); }
+    catch (err) { toast.error(err?.data?.error || 'This code could not be used. Check it and try again.'); }
+  }
+  return (
+    <section className="border-b-8 border-sunken px-4 py-5 sm:px-6">
+      <h2 className="text-[16px] font-extrabold text-ink-900">Have a friend&apos;s code?</h2>
+      <form onSubmit={submit} className="mt-3 flex gap-2">
+        <label htmlFor="friend-code" className="sr-only">Friend&apos;s code</label>
+        <input id="friend-code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={20} autoComplete="off" placeholder="Enter code"
+          className="h-11 min-w-0 flex-1 rounded-btn border border-line px-3 text-[15px] font-semibold uppercase tracking-wide text-ink-900 outline-none focus:border-zappy-500" />
+        <button type="submit" disabled={!clean || isLoading} className="h-11 rounded-btn bg-zappy-600 px-5 text-[14px] font-bold text-white disabled:opacity-50">
+          {isLoading ? 'Applying…' : 'Apply'}
+        </button>
+      </form>
+    </section>
+  );
+}
 
 // Invite friends: the code, the server's real reward amounts, ways to share, and what each invite earned.
 export default function ReferralPage() {
@@ -81,6 +108,8 @@ export default function ReferralPage() {
             {copied === 'link' ? <Check size={15} /> : <Link2 size={15} />} {copied === 'link' ? 'Link copied' : 'Copy invite link'}
           </button>
         </section>
+
+        {auth.accessToken && <FriendCode />}
 
         <section className="border-b-8 border-sunken px-4 py-5 sm:px-6">
           <dl className="grid grid-cols-3 text-center">

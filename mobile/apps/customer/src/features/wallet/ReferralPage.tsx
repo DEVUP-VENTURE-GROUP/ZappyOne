@@ -1,8 +1,12 @@
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MessageCircle, Share2, UserRound } from 'lucide-react-native';
-import { useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@zappy/core/api';
+import { useApplyReferralMutation, useGetReferralCodeQuery, useGetReferralHistoryQuery } from '@zappy/core/api';
+import { cleanReferralCode } from '@zappy/core/shared/referralCode';
+import { toast } from '@zappy/ui/components/Toast';
+import { errText } from '@zappy/ui/lib/feedback';
 import { Button, Skeleton, Text } from '@zappy/ui/components';
 import { useT } from '@zappy/ui/lib/i18n';
 import { openLink } from '@zappy/ui/lib/openLink';
@@ -17,6 +21,28 @@ function ago(iso: string) {
   if (days <= 0) return 'Today';
   if (days === 1) return 'Yesterday';
   return days < 30 ? `${days} days ago` : new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+// A friend's code typed in, for anyone who installed from the Play Store without the invite link (the website's FriendCode).
+function FriendCode() {
+  const [code, setCode] = useState('');
+  const [apply, { isLoading }] = useApplyReferralMutation();
+  const clean = cleanReferralCode(code);
+  async function submit() {
+    if (!clean) return;
+    try { await apply(clean).unwrap(); toast.success("Your friend's code is applied"); setCode(''); }
+    catch (err) { toast.error(errText(err, 'This code could not be used. Check it and try again.')); }
+  }
+  return (
+    <View style={styles.section}>
+      <Text variant="body" weight="extrabold">Have a friend&apos;s code?</Text>
+      <View style={styles.row}>
+        <TextInput value={code} onChangeText={(v) => setCode(v.toUpperCase())} maxLength={20} autoCapitalize="characters" autoCorrect={false}
+          placeholder="Enter code" placeholderTextColor={ink[400]} accessibilityLabel="Friend's code" style={[styles.flex, styles.codeInput]} returnKeyType="done" onSubmitEditing={submit} />
+        <Button label="Apply" onPress={submit} loading={isLoading} disabled={!clean} />
+      </View>
+    </View>
+  );
 }
 
 // Invite friends (the website's ReferralPage): the code, the server's real reward amounts, sharing, and each invite.
@@ -59,6 +85,8 @@ export function ReferralPage() {
           </View>
         </View>
 
+        <FriendCode />
+
         <View style={[styles.section, styles.stats]}>
           {[[String(stats.totalReferrals), 'Signed up', ink[900]], [String(stats.pendingReferrals), 'Yet to book', ink[900]], [rupees(stats.earnedPaise), 'Earned', success[700]]].map(([v, l, c]) => (
             <View key={l} style={styles.stat}><Text variant="heading2" weight="bold" color={c}>{v}</Text><Text variant="caption" color={ink[500]}>{l}</Text></View>
@@ -92,6 +120,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: slate[200] },
   back: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   section: { gap: spacing.md, padding: spacing.base, borderBottomWidth: 8, borderBottomColor: slate[100] },
+  codeInput: { minHeight: 46, borderWidth: 1, borderColor: slate[200], borderRadius: radius.button, paddingHorizontal: spacing.md, fontSize: 15, fontFamily: 'Figtree-SemiBold', letterSpacing: 1, color: ink[900] },
   last: { borderBottomWidth: 0 },
   lead: { letterSpacing: -0.4 },
   codeBox: { gap: 4, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderStyle: 'dashed', borderColor: slate[300], backgroundColor: slate[50] },
