@@ -17,7 +17,8 @@ export function useInView(delay = 0) {
   useAnimatedReaction(
     () => (scrollY ? scrollY.value : 0) + laid.value,
     () => {
-      if (shown.value > 0 || reduce || !scrollY) return;
+      // Not laid out yet means the ref is not on screen (no festival), and measuring it would crash.
+      if (shown.value > 0 || reduce || !scrollY || laid.value === 0) return;
       const m = measure(ref);
       if (m && m.pageY < edge) shown.value = withDelay(delay, withTiming(1, { duration: 650, easing: Easing.out(Easing.cubic) }));
     },
