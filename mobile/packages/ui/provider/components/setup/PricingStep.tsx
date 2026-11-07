@@ -27,6 +27,7 @@ import {
   countsFor, existingFor, rowsFromValues, type ClaimedRepair, type PriceRowData,
 } from './priceSheet';
 import { uniqueRepairs, type RepairGroup } from './workSelection';
+import { useDebounced } from '@zappy/core/shared/useDebounced';
 
 export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
@@ -41,11 +42,12 @@ export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: st
   const [model, setModel] = useState<string | null | undefined>(undefined);
   const [modelLabel, setModelLabel] = useState('');
   const [search, setSearch] = useState('');
+  const searchSettled = useDebounced(search.trim());
   const [values, setValues] = useState<Record<string, string>>({});
   const activeBrand = brand || brandCodes[0] || null;
 
   // Searched on the server: the list comes 50 at a time, and a brand past that must still be findable.
-  const { data: modelsData, isFetching: loadingModels } = useRepairModelsQuery({ vertical, brandCode: activeBrand, q: search || undefined }, { skip: !activeBrand });
+  const { data: modelsData, isFetching: loadingModels } = useRepairModelsQuery({ vertical, brandCode: activeBrand, q: searchSettled || undefined }, { skip: !activeBrand });
 
   const pricing: PriceRowData[] = pricingData?.pricing || [];
   // One row per job: a repair under two headings is still one price.

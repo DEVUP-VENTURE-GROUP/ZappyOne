@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { SelfieMetaBadges } from './KycReview';
 import AskAgain from './AskAgain';
 import PartnerRateCard from '../money/economics/PartnerRateCard';
+import { useDebounced } from '@shared/hooks/useDebounced';
 
 /* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
@@ -351,11 +352,12 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
 /** reviewMode: rendered inside Verification — opens on pending shops and allows the decision. */
 export default function Shops({ reviewMode = false }) {
   const [q, setQ] = useState('');
+  const qSettled = useDebounced(q.trim());
   const [kycStatus, setKycStatus] = useState(reviewMode ? 'pending_review' : '');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
 
-  const { data, isFetching, refetch } = useAdminShopsQuery({ q: q || undefined, kycStatus: kycStatus || undefined, page });
+  const { data, isFetching, refetch } = useAdminShopsQuery({ q: qSettled || undefined, kycStatus: kycStatus || undefined, page });
 
   return (
     <div className="space-y-4">

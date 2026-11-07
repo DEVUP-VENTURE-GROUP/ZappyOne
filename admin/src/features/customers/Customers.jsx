@@ -15,6 +15,7 @@ import {
   PageLoader, EmptyState, fmtDate,
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
+import { useDebounced } from '@shared/hooks/useDebounced';
 
 /**
  * Best-known location for a user, as a readable address — never raw
@@ -246,13 +247,14 @@ function BlockConfirm({ user, onConfirm, onCancel, loading }) {
 /* Main */
 export default function Users() {
   const [q, setQ] = useState('');
+  const qSettled = useDebounced(q.trim());
   const [blocked, setBlocked] = useState('');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [confirmUser, setConfirmUser] = useState(null);
   const [blockingId, setBlockingId] = useState(null);
 
-  const { data, isFetching, refetch } = useAdminListUsersQuery({ q: q || undefined, blocked: blocked || undefined, page });
+  const { data, isFetching, refetch } = useAdminListUsersQuery({ q: qSettled || undefined, blocked: blocked || undefined, page });
   const [blockUser] = useAdminBlockUserMutation();
 
   async function doBlock(u) {

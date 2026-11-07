@@ -47,6 +47,7 @@ import GroupCheckout from './basket/GroupCheckout';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
 import { jobsDoneLabel } from '@shared/customer/jobsDone';
+import { useDebounced } from '@shared/hooks/useDebounced';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -487,11 +488,12 @@ function ConfigurationStep({ vertical, model, onPick, onSkip }) {
 
 function ModelStep({ vertical, deep, brand, productType, family, onPick, onAuto }) {
   const [q, setQ] = useState('');
+  const qSettled = useDebounced(q.trim());
   const [showMissing, setShowMissing] = useState(false);
   const { data, isLoading } = useRepairModelsQuery({
     vertical,
     brandCode: brand.code,
-    q: q || undefined,
+    q: qSettled || undefined,
     productTypeCode: productType?.code,
     familyCode: family?.code,
   });

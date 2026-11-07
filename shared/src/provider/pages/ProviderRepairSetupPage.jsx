@@ -43,6 +43,7 @@ import toast from 'react-hot-toast';
 import WeeklyHours, { incompleteDay } from '../../components/provider/WeeklyHours';
 import { formatPaise } from '../../utils/money';
 import BrandLogo from '../../components/common/BrandLogo';
+import { useDebounced } from '../../hooks/useDebounced';
 
 /**
  * Provider setup — the mirror image of the customer's booking flow.
@@ -1138,11 +1139,12 @@ function PricingStep({ vertical, isShop, onBack, onNext }) {
   const activeBrand = brand || brandCodes[0] || null;
 
   const { data: brandsData } = useRepairBrandsQuery(vertical);
+  const searchSettled = useDebounced(search.trim());
   const { data: modelsData, isFetching: loadingModels } = useRepairModelsQuery(
     // Searching server-side rather than filtering the loaded page: the endpoint
     // returns 50 at a time, and a brand that grows past that would otherwise
     // have models that exist but can never be found.
-    { vertical, brandCode: activeBrand, q: search || undefined },
+    { vertical, brandCode: activeBrand, q: searchSettled || undefined },
     { skip: !activeBrand },
   );
 

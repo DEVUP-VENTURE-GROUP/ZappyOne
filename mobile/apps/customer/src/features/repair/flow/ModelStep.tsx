@@ -18,6 +18,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import type { Coded } from './BrandStep';
 import { IdentifySheet, MissingItemSheet } from './CatalogRequestSheets';
 import { Shell, Spinner, flow } from './FlowChrome';
+import { useDebounced } from '@zappy/core/shared/useDebounced';
 
 export interface Model extends Coded { seriesName?: string; imageUrl?: string; productNumbers?: string[]; productTypeCode?: string; fuelTypes?: string[] }
 
@@ -25,8 +26,9 @@ export function ModelStep({ vertical, deep, brand, productType, family, onPick, 
   vertical: string; deep: boolean; brand: Coded; productType: Coded | null; family: Coded | null; onPick: (m: Model) => void; onAuto?: (m: Model) => void;
 }) {
   const [q, setQ] = useState('');
+  const qSettled = useDebounced(q.trim());
   const [missing, setMissing] = useState(false);
-  const { data, isLoading } = useRepairModelsQuery({ vertical, brandCode: brand.code, q: q || undefined, productTypeCode: productType?.code, familyCode: family?.code });
+  const { data, isLoading } = useRepairModelsQuery({ vertical, brandCode: brand.code, q: qSettled || undefined, productTypeCode: productType?.code, familyCode: family?.code });
   const { data: identifications } = useMyModelIdentificationsQuery(vertical, { skip: !deep });
   const identified = ((identifications?.requests || []) as { status: string; resolvedModelId?: Model }[]).find((r) => r.status === 'identified' && r.resolvedModelId);
   const models: Model[] = data?.models || [];
