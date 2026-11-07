@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AlertTriangle, Briefcase, Clock, IndianRupee, MapPin, Menu, ShieldCheck, Star, Users, Wrench, XCircle } from 'lucide-react-native';
+import { AlertTriangle, Briefcase, Clock, IndianRupee, MapPin, ShieldCheck, Star, Users, Wrench, XCircle } from 'lucide-react-native';
 import {
   useProviderOnboardingStatusQuery, useRepairOnboardingStatusQuery, useShopEarningsQuery, useShopKycStatusQuery, useShopMeQuery,
   useShopPriceRequestsQuery, useShopWorkersQuery, useProviderWorkspaceQuery,
@@ -19,7 +19,6 @@ import { Button, LoadingState, Text } from '@zappy/ui/components';
 import { ProviderServicesCard } from '@zappy/ui/components/provider/ProviderServicesCard';
 import { Panel, StatTile, inr } from '@zappy/ui/components/worker/DashboardUI';
 import { EarningsOverview, weekPoints } from '@zappy/ui/components/worker/EarningsOverview';
-import { WorkerMenuSheet } from '@zappy/ui/provider/WorkerMenuSheet';
 import { accent, colors, danger, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -33,7 +32,6 @@ import { LiveSwitch } from '../components/LiveSwitch';
 import { ShopHeader } from '../components/ShopHeader';
 import { ZappyWordmark } from '@zappy/ui/components/ZappyLogo';
 import { TeamPanel, type TeamWorker } from '../components/TeamPanel';
-import { OWNER_MENU } from '../menus';
 import { HeaderBell } from '../components/HeaderBell';
 
 const KYC_META: Record<string, { label: string; bg: string; fg: string; Icon: typeof ShieldCheck }> = {
@@ -59,7 +57,6 @@ export function ShopDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const go = (to: string) => router.push(to as never);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Customers near the shop asking for its price.
@@ -100,7 +97,6 @@ export function ShopDashboard() {
   return (
     <View style={styles.page}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Menu" style={styles.iconBtn}><Menu size={18} color={ink[900]} /></Pressable>
         <ZappyWordmark size={22} />
         <View style={styles.flex} />
         <HeaderBell to="/shop/notifications" />
@@ -173,7 +169,6 @@ export function ShopDashboard() {
           </View>
         </Panel>
       </ScrollView>
-      <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} items={OWNER_MENU} />
     </View>
   );
 }
@@ -182,7 +177,6 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-  iconBtn: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   body: { padding: spacing.base, gap: spacing.base, paddingBottom: spacing.xxxl },
   asking: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
   block: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1 },

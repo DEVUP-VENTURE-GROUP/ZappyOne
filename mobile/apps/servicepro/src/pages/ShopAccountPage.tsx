@@ -1,10 +1,11 @@
 // More on the owner's bar: who they are, every page not on the bar (shared ownerMenu, the website's menu), and sign out.
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
+import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PhoneCall, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useProviderWorkspaceQuery, useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
-import { ownerMenu } from '@zappy/core/shared/partnerPages';
+import { ownerMenu, STAFF_HELP_PHONE } from '@zappy/core/shared/partnerPages';
+import { LanguageSwitcher } from '@zappy/ui/components/account/LanguageSwitcher';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -79,6 +80,13 @@ export function ShopAccountPage() {
           ); })}
         </View>
 
+        <View style={styles.cardFlat}>
+          <Pressable onPress={() => void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.link}>
+            <PhoneCall size={18} color={danger[600]} />
+            <Text variant="bodySmall" weight="bold" color={danger[600]} style={styles.flex}>Call ZappyOne help</Text>
+          </Pressable>
+        </View>
+        <LanguageSwitcher />
         <LegalLinks audience="provider" />
         <Button label="Sign out" variant="outline" icon={<LogOut size={16} color={danger[600]} />} onPress={signOut} fullWidth />
         <DeleteAccountCard />

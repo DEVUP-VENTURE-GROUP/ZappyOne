@@ -6,7 +6,7 @@ import { labelKey } from '@zappy/core/shared/translations';
 import { useT } from '../lib/i18n';
 import { LanguageSwitcher } from '../components/account/LanguageSwitcher';
 import React from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Linking, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Building2,
@@ -54,7 +54,7 @@ export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { vis
   const t = useT();
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Menu">
-      <View style={styles.list}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.list} showsVerticalScrollIndicator>
         {items.map(({ key, label, Icon, to }) => (
           <Pressable key={key} accessibilityRole="button" onPress={() => { onClose(); router.push(to as never); }}
             android_ripple={RIPPLE} style={[styles.item]}>
@@ -73,12 +73,14 @@ export function WorkerMenuSheet({ visible, onClose, items = WORKER_MENU }: { vis
           <LogOut size={19} color={danger[600]} />
           <Text variant="body" weight="semibold" color={danger[600]} style={styles.flex}>{t('sp.sign_out', 'Sign out')}</Text>
         </Pressable>
-      </View>
+      </ScrollView>
     </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  // The sheet stops at 90% of the screen; the list scrolls inside it so the last items and Sign out are reachable.
+  scroll: { maxHeight: Dimensions.get('window').height * 0.72 },
   list: { paddingBottom: spacing.base },
   flex: { flex: 1 },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, minHeight: 52, borderRadius: radius.button },
