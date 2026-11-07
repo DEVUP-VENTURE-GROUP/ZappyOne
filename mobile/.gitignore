@@ -41,3 +41,4 @@ ios/
 android/
 # Our own native modules are source, not generated: keep their android code (the bubble was missing from every build).
 !apps/*/modules/*/android/
+!packages/native/android/

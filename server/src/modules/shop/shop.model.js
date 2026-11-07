@@ -25,7 +25,7 @@ const shopSchema = new mongoose.Schema(
     phone:        { type: String, required: true, unique: true, index: true },
     // Push tokens of the owner's phones and browsers (notification/devices); before this a shop could not get a push at all.
     deviceTokens: [String],
-    ringTokens:   [String],
+    nativeTokens:   [String],
     email:        { type: String, lowercase: true, sparse: true },
     /** Where the shop's payouts go (shop/shop-payout); same shape as a worker's. */
     savedBankAccounts: [{

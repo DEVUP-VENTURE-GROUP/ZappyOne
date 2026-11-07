@@ -1,5 +1,5 @@
 // Phone and browser push tokens for every kind of account, in one place: save, look up, prune.
-// ringTokens are Android phones whose app can ring a job full-screen (native zappy-ring); they get job offers as data so the app draws the ring itself.
+// nativeTokens are Android phones running ZappyOne's own push code (mobile/packages/native): offers ring full-screen and job updates keep one live card, so they get those as data and draw them.
 const MODELS = {
   user: () => require('../user/user.model'),
   worker: () => require('../worker/worker.model'),
@@ -10,21 +10,21 @@ const MODELS = {
 async function saveToken(kind, id, token, platform) {
   const M = MODELS[kind];
   if (!M || !id || !token) return false;
-  const add = { deviceTokens: token, ...(platform === 'android-ring' && { ringTokens: token }) };
+  const add = { deviceTokens: token, ...(platform === 'android-native' && { nativeTokens: token }) };
   await M().updateOne({ _id: id }, { $addToSet: add });
   return true;
 }
 
 async function tokensOf(kind, id) {
   const M = MODELS[kind];
-  if (!M || !id) return { tokens: [], ring: [], phone: null };
-  const doc = await M().findById(id).select('deviceTokens ringTokens phone').lean();
-  return { tokens: doc?.deviceTokens || [], ring: doc?.ringTokens || [], phone: doc?.phone || null };
+  if (!M || !id) return { tokens: [], native: [], phone: null };
+  const doc = await M().findById(id).select('deviceTokens nativeTokens phone').lean();
+  return { tokens: doc?.deviceTokens || [], native: doc?.nativeTokens || [], phone: doc?.phone || null };
 }
 
 async function prune(stale) {
   if (!stale?.length) return;
-  const pull = { $pull: { deviceTokens: { $in: stale }, ringTokens: { $in: stale } } };
+  const pull = { $pull: { deviceTokens: { $in: stale }, nativeTokens: { $in: stale } } };
   await Promise.all(Object.values(MODELS).map((M) => M().updateMany({ deviceTokens: { $in: stale } }, pull).catch(() => {})));
 }
 

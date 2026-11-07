@@ -1,4 +1,4 @@
-package expo.modules.zappyring
+package expo.modules.zappynative
 
 import android.app.Activity
 import android.graphics.Color

@@ -112,7 +112,7 @@ router.post(
 router.post(
   '/device-token',
   authenticate,
-  validate(Joi.object({ token: Joi.string().max(1000).required(), platform: Joi.string().valid('android', 'android-ring', 'ios', 'web').optional() })),
+  validate(Joi.object({ token: Joi.string().max(1000).required(), platform: Joi.string().valid('android', 'android-native', 'ios', 'web').optional() })),
   async (req, res, next) => {
     try {
       const saved = await require('../notification/devices').saveToken(req.auth.role, req.auth.sub, req.body.token, req.body.platform);

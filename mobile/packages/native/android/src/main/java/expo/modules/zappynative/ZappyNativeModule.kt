@@ -1,4 +1,4 @@
-package expo.modules.zappyring
+package expo.modules.zappynative
 
 import android.app.NotificationManager
 import android.content.Context
@@ -10,12 +10,12 @@ import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
 // Lets the app see whether Android allows the full-screen ring (Android 14 asks the user) and open that setting.
-class ZappyRingModule : Module() {
+class ZappyNativeModule : Module() {
   private val context: Context
     get() = appContext.reactContext?.applicationContext ?: throw IllegalStateException("No context")
 
   override fun definition() = ModuleDefinition {
-    Name("ZappyRing")
+    Name("ZappyNative")
 
     Function("canFullScreen") {
       if (Build.VERSION.SDK_INT < 34) true

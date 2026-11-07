@@ -3,11 +3,11 @@ plugins {
   id 'expo-module-gradle-plugin'
 }
 
-group = 'expo.modules.zappyring'
+group = 'expo.modules.zappynative'
 version = '1.0.0'
 
 android {
-  namespace "expo.modules.zappyring"
+  namespace "expo.modules.zappynative"
   defaultConfig {
     versionCode 1
     versionName "1.0.0"

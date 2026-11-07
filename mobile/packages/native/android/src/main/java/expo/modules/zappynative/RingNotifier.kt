@@ -1,4 +1,4 @@
-package expo.modules.zappyring
+package expo.modules.zappynative
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,7 +19,9 @@ object RingNotifier {
 
   fun appLink(context: Context, deepLink: String?): Intent {
     val path = (deepLink ?: "").trimStart('/')
-    val intent = if (path.isNotEmpty()) Intent(Intent.ACTION_VIEW, Uri.parse("zappyone-servicepro://$path")).setPackage(context.packageName)
+    // Each app's own link scheme (app.config scheme), so a tap lands inside the right app.
+    val scheme = if (context.packageName.endsWith(".servicepro")) "zappyone-servicepro" else "zappyone"
+    val intent = if (path.isNotEmpty()) Intent(Intent.ACTION_VIEW, Uri.parse("$scheme://$path")).setPackage(context.packageName)
     else context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent()
     return intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
   }

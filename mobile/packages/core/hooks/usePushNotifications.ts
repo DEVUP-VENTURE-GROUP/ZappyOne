@@ -42,8 +42,8 @@ import {
 import { createLogger } from '../lib/logger';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
-// Present only in ServicePro builds carrying the native full-screen job ring (apps/servicepro/modules/zappy-ring).
-const RING_READY = !!requireOptionalNativeModule('ZappyRing');
+// Present only in builds carrying ZappyOne's native push code (packages/native): job offers ring full-screen and job updates keep one live card.
+const NATIVE_READY = !!requireOptionalNativeModule('ZappyNative');
 
 const log = createLogger('push');
 
@@ -70,8 +70,8 @@ export function usePushNotifications(resolve: RouteResolver): void {
 
   const send = useCallback(
     async ({ token, platform }: DeviceToken) => {
-      // A ServicePro build with the native ring tells the server, so job offers come as data it can ring full-screen (server notification/devices).
-      const sentPlatform = platform === 'android' && RING_READY ? 'android-ring' : platform;
+      // A build with the native push code tells the server, so offers and job updates come as data it draws itself (server notification/devices).
+      const sentPlatform = platform === 'android' && NATIVE_READY ? 'android-native' : platform;
       const signature = `${role}:${token}:${sentPlatform}`;
       if (registered.current === signature) return;
       try {

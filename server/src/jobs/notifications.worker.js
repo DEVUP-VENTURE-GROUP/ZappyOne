@@ -65,8 +65,17 @@ function getFirebaseApp() {
 const OFFER_KEYS = new Set(['provider.job_nearby', 'provider.job_waiting']);
 const isOffer = (data) => data?.channel === 'offers' || OFFER_KEYS.has(data?.key);
 
-// ring: phones whose app draws the full-screen job ring (native zappy-ring) get the offer as data only, so the app, not Android, shows it.
-async function sendFcm({ tokens, title, body, data = {}, imageUrl, ring = false } = {}) {
+// Where a job stands for its live card: finished and ended jobs stop being sticky. Read from the kind's own lists, not a copy of the apps' tables.
+function liveStage(kind, status) {
+  const k = require('../modules/jobs/kinds').KINDS[kind];
+  if (!k || !status) return null;
+  if (k.earning?.done?.includes(status)) return 'completed';
+  if (k.ops?.terminal?.includes(status)) return 'cancelled';
+  return 'active';
+}
+
+// native: phones running ZappyOne's own push code (packages/native) get data only and draw it themselves: 'ring' a job offer full-screen, 'live' one card per job.
+async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null } = {}) {
   if (!tokens?.length) return { skipped: true, reason: 'no_tokens' };
 
   const app = getFirebaseApp();
@@ -98,10 +107,15 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, ring = false 
       // The service worker must NOT also call showNotification() or you get a
       // duplicate — that's why onBackgroundMessage was removed from the SW.
       const windowSec = Math.min(900, Math.max(15, Number(data.windowSec) || 60));
-      const message = ring ? {
+      const words = { title: String(title || ''), body: String(body || '') };
+      const message = native === 'ring' ? {
         tokens: batch,
-        data: { ...stringData, zr: 'offer', title: String(title || ''), body: String(body || ''), windowSec: String(windowSec) },
+        data: { ...stringData, zr: 'offer', ...words, windowSec: String(windowSec) },
         android: { priority: 'high', ttl: windowSec * 1000 },
+      } : native === 'live' ? {
+        tokens: batch,
+        data: { ...stringData, zl: 'job', ...words, stage: String(liveStage(data.kind, data.status) || 'active') },
+        android: { priority: 'high', ttl: 6 * 60 * 60 * 1000 },
       } : {
         tokens: batch,
         notification: { title, body: body || '' },
@@ -244,13 +258,14 @@ async function processJob(job) {
       return { skipped: true, reason: 'no_tokens' };
     }
 
-    // A job offer rings full-screen on phones that can; every other device gets the usual ringing notification.
-    const ringSet = new Set(isOffer(data) ? (result.ring || []) : []);
-    const ringTokens = tokens.filter((t) => ringSet.has(t));
-    const rest = tokens.filter((t) => !ringSet.has(t));
+    // On phones with ZappyOne's own push code a job offer rings full-screen and a job update refreshes that job's one live card; every other device gets the usual notification.
+    const mode = isOffer(data) ? 'ring' : (data?.kind && data?.id && liveStage(data.kind, data.status) ? 'live' : null);
+    const nativeSet = new Set(mode ? (result.native || []) : []);
+    const nativeTokens = tokens.filter((t) => nativeSet.has(t));
+    const rest = tokens.filter((t) => !nativeSet.has(t));
     const parts = await Promise.all([
       rest.length ? sendFcm({ tokens: rest, title, body, data }) : null,
-      ringTokens.length ? sendFcm({ tokens: ringTokens, title, body, data, ring: true }) : null,
+      nativeTokens.length ? sendFcm({ tokens: nativeTokens, title, body, data, native: mode }) : null,
     ]);
     const sent = parts.filter(Boolean);
     const fcmResult = { ok: sent.some((r) => r.ok), success: sent.reduce((a, r) => a + (r.success || 0), 0), failure: sent.reduce((a, r) => a + (r.failure || 0), 0) };

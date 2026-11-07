@@ -27,18 +27,18 @@ test('a customer still saves to their own record, and a phone that can ring is r
   const User = require('../src/modules/user/user.model');
   const id = new mongoose.Types.ObjectId();
   await User.collection.insertOne({ _id: id, phone: '9100000002' });
-  await request(app).post('/api/users/device-token').set(as(id, 'user')).send({ token: 'cust-token', platform: 'android-ring' });
+  await request(app).post('/api/users/device-token').set(as(id, 'user')).send({ token: 'cust-token', platform: 'android-native' });
   const t = await devices.tokensOf('user', id);
   expect(t.tokens).toEqual(['cust-token']);
-  expect(t.ring).toEqual(['cust-token']);
+  expect(t.native).toEqual(['cust-token']);
 });
 
 test('a dead token is removed from every kind of account', async () => {
   const Shop = require('../src/modules/shop/shop.model');
   const id = new mongoose.Types.ObjectId();
-  await Shop.collection.insertOne({ _id: id, businessName: 'Stale shop', phone: '9100000003', deviceTokens: ['dead', 'live'], ringTokens: ['dead'] });
+  await Shop.collection.insertOne({ _id: id, businessName: 'Stale shop', phone: '9100000003', deviceTokens: ['dead', 'live'], nativeTokens: ['dead'] });
   await devices.prune(['dead']);
   const t = await devices.tokensOf('shop', id);
   expect(t.tokens).toEqual(['live']);
-  expect(t.ring).toEqual([]);
+  expect(t.native).toEqual([]);
 });

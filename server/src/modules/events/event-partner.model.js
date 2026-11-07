@@ -5,7 +5,7 @@ const eventPartnerSchema = new mongoose.Schema({
   ownerName:    { type: String, required: true },
   phone:        { type: String },  // required for OTP path; optional for Google auth
   deviceTokens: [String],  // push tokens (notification/devices)
-  ringTokens:   [String],
+  nativeTokens:   [String],
   email:        { type: String, sparse: true },
   googleId:     { type: String, sparse: true },  // set when partner signs in via Google
 
