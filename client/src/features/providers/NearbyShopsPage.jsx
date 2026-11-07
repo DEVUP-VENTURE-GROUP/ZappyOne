@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { ArrowLeft, Store, Star, MapPin, Loader2, ShieldCheck, ChevronRight, SearchX } from 'lucide-react';
 import { useNearbyShopsQuery } from '@shared/services/api';
 import { selectLocation, selectHasLocation } from '@shared/store/locationSlice';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 
 export default function NearbyShopsPage() {
@@ -94,7 +95,7 @@ export default function NearbyShopsPage() {
                         <Star size={11} className="text-amber-400 fill-amber-400" /> {s.rating.toFixed(1)}
                       </span>
                     )}
-                    {s.completedJobs > 0 && <span className="text-[11px] text-slate-400">{s.completedJobs} jobs done</span>}
+                    <span className="text-[11px] text-slate-400">{jobsDoneLabel(s.completedJobs)}</span>
 
                     {/*
                       Whether the shop is open decides whether it is worth

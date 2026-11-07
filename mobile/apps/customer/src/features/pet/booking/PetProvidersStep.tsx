@@ -15,6 +15,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { GrowingHere } from '../../catalog/serviceability/GrowingHere';
 import type { PetProvider } from './petBookingRules';
+import { jobsDoneLabel } from '@zappy/core/shared/jobsDone';
 
 export function PetProvidersStep({ result, categoryCode, loc, onChangeLocation, onPick }: {
   result?: { providers?: PetProvider[]; nearbyCount?: number; primaryReason?: string }; categoryCode: string; loc: BookingLocation | null;
@@ -40,7 +41,7 @@ export function PetProvidersStep({ result, categoryCode, loc, onChangeLocation, 
           <Text variant="bodySmall" weight="bold">{p.name}</Text>
           <View style={styles.meta}>
             <Star size={11} color={accent[500]} fill={accent[500]} />
-            <Text variant="caption" color={ink[500]}>{p.rating != null ? p.rating.toFixed(1) : 'New'}{p.distanceKm != null ? `, ${p.distanceKm} km` : ''}{p.completedJobs ? `, ${p.completedJobs} jobs` : ''}</Text>
+            <Text variant="caption" color={ink[500]}>{p.rating != null ? p.rating.toFixed(1) : 'New'}{p.distanceKm != null ? `, ${p.distanceKm} km` : ''}{`, ${jobsDoneLabel(p.completedJobs, 'jobs')}`}</Text>
           </View>
           {p.arrivalMinutes != null ? <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} /> : null}
           {p.fromPaise != null ? <Text variant="bodySmall" weight="extrabold">₹{Math.round(p.fromPaise / 100).toLocaleString('en-IN')} <Text variant="caption" color={ink[500]}>their price</Text></Text> : null}

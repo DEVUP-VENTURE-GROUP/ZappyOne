@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Star, MapPin, Award, X, CheckCircle } from 'lucide-react';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 const REASONS = [
   { icon: MapPin,    text: 'Closest available worker to your location' },
@@ -84,7 +85,7 @@ export default function SmartMatchSheet({ worker, onDismiss }) {
                   {worker?.rating ? Number(worker.rating).toFixed(1) : 'New'}
                 </span>
                 <span className="text-slate-300 text-xs">|</span>
-                <span className="text-xs text-slate-500">{worker?.completedJobs || 0}+ jobs</span>
+                <span className="text-xs text-slate-500">{jobsDoneLabel(worker?.completedJobs)}</span>
               </div>
             </div>
             <div className="text-right">

@@ -19,6 +19,7 @@ import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { PlansNear } from '../plans/PlansNear';
+import { isNewPro } from '@zappy/core/shared/jobsDone';
 
 interface Option { brandCode: string; typeName: string; totalPaise: number; path: string }
 interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; includes?: string[]; photoUrl?: string | null }
@@ -131,7 +132,7 @@ export function StorefrontPage() {
               <View style={styles.inline}>{rating != null ? <Star size={15} color="#FBBF24" fill="#FBBF24" /> : null}<Text variant="heading3" weight="extrabold">{rating != null ? Number(rating).toFixed(1) : 'New'}</Text></View>
               <Text variant="caption" color={ink[500]}>{reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</Text>
             </View>
-            <View style={[styles.stat, styles.divider]}><Text variant="heading3" weight="extrabold">{jobs.toLocaleString('en-IN')}</Text><Text variant="caption" color={ink[500]}>jobs done</Text></View>
+            <View style={[styles.stat, styles.divider]}><Text variant="heading3" weight="extrabold">{isNewPro(jobs) ? 'New' : jobs.toLocaleString('en-IN')}</Text><Text variant="caption" color={ink[500]}>{isNewPro(jobs) ? 'on ZappyOne' : 'jobs done'}</Text></View>
             <View style={[styles.stat, styles.divider]}><Text variant="heading3" weight="extrabold">{third[0]}</Text><Text variant="caption" color={ink[500]}>{third[1]}</Text></View>
           </View>
           {shop?.bio ? <Text variant="body" color={ink[700]}>{shop.bio}</Text> : null}

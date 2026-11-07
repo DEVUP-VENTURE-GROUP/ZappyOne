@@ -46,6 +46,7 @@ import BasketBar from './basket/BasketBar';
 import GroupCheckout from './basket/GroupCheckout';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -1458,9 +1459,7 @@ function ProviderCard({ p, recommended, serviceMode, onPick }) {
                 <MapPin size={11} /> {p.distanceKm.toFixed(1)} km
               </span>
             )}
-            {p.completedJobs > 0 && (
-              <span className="text-[11px] text-slate-500">{p.completedJobs} jobs done</span>
-            )}
+            <span className="text-[11px] text-slate-500">{jobsDoneLabel(p.completedJobs)}</span>
           </div>
         </div>
 

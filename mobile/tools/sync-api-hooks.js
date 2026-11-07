@@ -55,6 +55,7 @@ const LOGIC = [
   { from: 'customer/useMyJobs.js', to: 'shared/useMyJobs.js', imports: { react: 'react', '../services/api': '../api/hooks', '../i18n/translations': './translations', './helpModes': './helpModes', './repairBasket': './repairBasket' } },
   { from: 'constants/services.js', to: 'shared/services.js', imports: {} },
   { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
+  { from: 'customer/jobsDone.js', to: 'shared/jobsDone.js', imports: {} },
   { from: 'customer/helpModes.js', to: 'shared/helpModes.js', imports: {} },
   { from: 'customer/deviceName.js', to: 'shared/deviceName.js', imports: {} },
   { from: 'customer/prosArrive.js', to: 'shared/prosArrive.js', imports: { react: 'react' } },

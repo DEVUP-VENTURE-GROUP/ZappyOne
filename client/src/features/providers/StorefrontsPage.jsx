@@ -7,6 +7,7 @@ import { useRepairVerticalsQuery, useStorefrontsQuery } from '@shared/services/a
 import { selectLocation, selectHasLocation } from '@shared/store/locationSlice';
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import PlansNear from '../plans/PlansNear';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 const SORTS = [
   { key: 'best', label: 'Recommended' },
@@ -52,7 +53,7 @@ function Card({ s, onOpen, index }) {
             ? <span className="flex shrink-0 items-center gap-0.5 rounded-lg bg-emerald-600 px-1.5 py-0.5 text-[11px] font-bold text-white"><Star size={10} className="fill-white" />{s.rating.toFixed(1)}</span>
             : <span className="shrink-0 rounded-lg bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-600">New</span>}
         </div>
-        <p className="mt-0.5 flex items-center gap-1 text-[12px] text-slate-500"><BadgeCheck size={13} className="text-zappy-600" /> Verified {KIND[s.partnerType] || 'provider'}{s.completedJobs ? ` · ${s.completedJobs.toLocaleString('en-IN')} jobs done` : ''}</p>
+        <p className="mt-0.5 flex items-center gap-1 text-[12px] text-slate-500"><BadgeCheck size={13} className="text-zappy-600" /> Verified {KIND[s.partnerType] || 'provider'}{` · ${jobsDoneLabel(s.completedJobs)}`}</p>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-semibold text-slate-700">
           {s.arrivalMinutes != null && <span className={`flex items-center gap-1 ${s.arrivalWithinPromise ? 'text-emerald-700' : ''}`}><Timer size={13} /> Arrives in ~{s.arrivalMinutes} min</span>}
           {s.distanceKm != null && <span className="flex items-center gap-1"><MapPin size={13} /> {s.distanceKm < 1 ? `${Math.round(s.distanceKm * 1000)} m` : `${s.distanceKm.toFixed(1)} km`}</span>}

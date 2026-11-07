@@ -26,6 +26,7 @@ import TipAtCheckout from '@shared/components/common/TipAtCheckout';
 import { useCheckoutDraft } from '@shared/customer/useCheckoutDraft';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 /**
  * One adaptive booking flow for all seven categories (§3, §54).
@@ -463,7 +464,7 @@ function PetBookingFlow({ categoryCode, saved, draftKey, onStartOver }) {
                 <span className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                   <Star size={11} className="fill-amber-400 text-amber-400" /> {p.rating != null ? p.rating.toFixed(1) : 'New'}
                   {p.distanceKm != null && <span>| {p.distanceKm} km</span>}
-                  {p.completedJobs > 0 && <span>| {p.completedJobs} jobs</span>}
+                  <span>| {jobsDoneLabel(p.completedJobs, 'jobs')}</span>
                 </span>
                 {/* A visit: how soon they can be at the door (jobs/arrival). */}
                 {p.arrivalMinutes != null && <ArrivalBadge minutes={p.arrivalMinutes} withinPromise={p.arrivalWithinPromise} className="mt-1.5" />}

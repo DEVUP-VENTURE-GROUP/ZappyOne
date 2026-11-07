@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, BadgeCheck, Briefcase, CalendarDays, ThumbsUp, Loader2, Quote } from 'lucide-react';
 import { useGetWorkerPublicProfileQuery } from '@shared/services/api';
 import { serviceLabel } from '@shared/constants/services';
+import { isNewPro } from '@shared/customer/jobsDone';
 
 function timeAgo(d) {
   if (!d) return '';
@@ -72,7 +73,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   <div className="bg-white/10 rounded-xl p-2.5 text-center">
                     <Briefcase size={14} className="mx-auto text-white/70 mb-1" />
-                    <p className="text-sm font-black">{w.completedJobs || 0}</p>
+                    <p className="text-sm font-black">{isNewPro(w.completedJobs) ? 'New' : w.completedJobs}</p>
                     <p className="text-[10px] text-white/50 font-semibold">Jobs done</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-2.5 text-center">

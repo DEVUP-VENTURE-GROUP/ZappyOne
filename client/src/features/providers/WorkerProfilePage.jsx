@@ -2,6 +2,7 @@ import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, MessageSquareQuote, ShieldCheck, Star, UserRound } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
+import { isNewPro } from '@shared/customer/jobsDone';
 
 /**
  * A provider's public profile: who they are, what ZappyOne has verified them
@@ -76,8 +77,8 @@ export default function WorkerProfilePage() {
             </div>
             <div>
               <dt className="sr-only">Bookings</dt>
-              <dd className="text-[24px] font-semibold tabular-nums text-ink-900">{completedJobs.toLocaleString('en-IN')}</dd>
-              <p className="mt-0.5 text-[13px] text-ink-500">Bookings</p>
+              <dd className="text-[24px] font-semibold tabular-nums text-ink-900">{isNewPro(completedJobs) ? 'New' : completedJobs.toLocaleString('en-IN')}</dd>
+              <p className="mt-0.5 text-[13px] text-ink-500">{isNewPro(completedJobs) ? 'on ZappyOne' : 'Bookings'}</p>
             </div>
           </dl>
         </section>

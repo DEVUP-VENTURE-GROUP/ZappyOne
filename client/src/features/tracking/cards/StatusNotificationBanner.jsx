@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { isNewPro, jobsDoneLabel } from '@shared/customer/jobsDone';
 import {
   Search, UserCheck, Navigation, MapPin, Wrench, CheckCircle2, FileText, X,
 } from 'lucide-react';
@@ -24,7 +25,7 @@ const STATES = {
   assigned: {
     Icon: UserCheck, tone: 'brand',
     title: (w) => `${w.name || 'Your pro'} accepted your booking`,
-    body: (w) => (w.rating ? `Rated ${Number(w.rating).toFixed(1)}${w.jobs ? `, ${w.jobs} jobs done` : ''}` : 'Verified by ZappyOne'),
+    body: (w) => (w.rating ? `Rated ${Number(w.rating).toFixed(1)}${isNewPro(w.jobs) ? '' : `, ${jobsDoneLabel(w.jobs)}`}` : 'Verified by ZappyOne'),
   },
   on_the_way: {
     Icon: Navigation, tone: 'brand',

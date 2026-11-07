@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import { Clock3, Loader2, Star } from 'lucide-react';
 import { useChooseJobOfferMutation, useJobOffersQuery } from '@shared/services/api';
 import { useLivePoll } from '@shared/hooks/useSocket';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 const clockOf = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 
@@ -34,7 +35,7 @@ export default function LaterOffersCard({ jobId }) {
               <span className="flex flex-wrap items-center gap-x-2 text-[12.5px] text-ink-500">
                 <span className="flex items-center gap-1 font-semibold text-ink-700"><Clock3 size={12} /> by {clockOf(o.arriveBy)} (in {Math.max(1, Math.round((new Date(o.arriveBy) - Date.now()) / 60000))} min)</span>
                 {o.rating != null && <span className="flex items-center gap-0.5"><Star size={11} className="fill-amber-400 text-amber-400" />{Number(o.rating).toFixed(1)}</span>}
-                {o.completedJobs > 0 && <span>{o.completedJobs} jobs</span>}
+                <span>{jobsDoneLabel(o.completedJobs, 'jobs')}</span>
               </span>
             </span>
             <button type="button" onClick={() => ok(o)} disabled={isLoading} className="btn-primary min-h-[40px] shrink-0 px-4 text-[13.5px]">

@@ -2,6 +2,7 @@ import { useSafeBack } from '../../hooks/useBookingFlow';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Store, Star, ShieldCheck, MapPin, Calendar, Loader2, ChevronRight } from 'lucide-react';
 import { useGetShopProfileQuery } from '@shared/services/api';
+import { jobsDoneLabel } from '@shared/customer/jobsDone';
 
 
 export default function ShopPublicProfilePage() {
@@ -60,7 +61,7 @@ export default function ShopPublicProfilePage() {
                 {shop.reviewCount > 0 && <span className="text-xs text-slate-400 font-normal">({shop.reviewCount})</span>}
               </span>
             )}
-            {shop.completedJobs > 0 && <span className="text-xs text-slate-400">{shop.completedJobs} jobs completed</span>}
+            <span className="text-xs text-slate-400">{jobsDoneLabel(shop.completedJobs, 'jobs completed')}</span>
             {shop.yearsActive > 0 && (
               <span className="flex items-center gap-1 text-xs text-slate-400">
                 <Calendar size={11} /> {shop.yearsActive}+ yrs

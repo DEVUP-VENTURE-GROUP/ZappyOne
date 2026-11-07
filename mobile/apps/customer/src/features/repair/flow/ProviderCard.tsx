@@ -17,6 +17,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { flow } from './FlowChrome';
 import type { Provider } from './repairRules';
+import { jobsDoneLabel } from '@zappy/core/shared/jobsDone';
 
 export const ProviderCard = memo(function ProviderCard({ p, recommended, serviceMode, onPick }: { p: Provider; recommended: boolean; serviceMode: string; onPick: (qualityCode: string | null) => void }) {
   const options = p.priceOptions?.length ? p.priceOptions : null;
@@ -38,7 +39,7 @@ export const ProviderCard = memo(function ProviderCard({ p, recommended, service
             {p.rating != null ? <View style={styles.inline}><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{Number(p.rating).toFixed(1)}</Text></View> : null}
             {p.durationMinutes || p.etaMinutes ? <View style={styles.inline}><Clock size={11} color={ink[500]} /><Text variant="caption" color={ink[500]}>Repair takes ~{p.durationMinutes || p.etaMinutes} min</Text></View> : null}
             {p.distanceKm != null ? <View style={styles.inline}><MapPin size={11} color={ink[500]} /><Text variant="caption" color={ink[500]}>{p.distanceKm.toFixed(1)} km</Text></View> : null}
-            {p.completedJobs ? <Text variant="caption" color={ink[500]}>{p.completedJobs} jobs done</Text> : null}
+            <Text variant="caption" color={ink[500]}>{jobsDoneLabel(p.completedJobs)}</Text>
           </View>
         </View>
         {!options ? (p.totalPaise != null ? (

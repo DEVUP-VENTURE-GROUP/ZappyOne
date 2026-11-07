@@ -14,6 +14,7 @@ import { useT } from '@zappy/ui/lib/i18n';
 import { accent, colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { isNewPro } from '@zappy/core/shared/jobsDone';
 
 const since = (d?: string) => (d ? new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '-');
 function ago(d?: string) {
@@ -73,7 +74,7 @@ export function WorkerProfilePage() {
           </View>
         </View>
         <View style={styles.facts}>
-          <Fact Icon={Briefcase} label={t('worker.jobs', 'Jobs completed')} value={w?.completedJobs ? Number(w.completedJobs).toLocaleString('en-IN') : t('worker.noneYet', 'None yet')} />
+          <Fact Icon={Briefcase} label={t('worker.jobs', 'Jobs completed')} value={isNewPro(w?.completedJobs) ? 'New' : Number(w.completedJobs).toLocaleString('en-IN')} />
           <Fact Icon={CalendarDays} label={t('worker.since', 'On ZappyOne since')} value={since(w?.memberSince)} />
         </View>
         <View style={styles.card}>

@@ -9,6 +9,7 @@ import { useGetShopProfileQuery, useGetWorkerPublicProfileQuery, useRepairVertic
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import Avatar from '../tracking/redesign/Avatar';
 import PlansNear from '../plans/PlansNear';
+import { isNewPro } from '@shared/customer/jobsDone';
 
 const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -137,8 +138,8 @@ export default function StorefrontPage() {
               <dt className="text-[12.5px] text-ink-500">{reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}</dt>
             </div>
             <div>
-              <dd className="text-[18px] font-extrabold tabular-nums text-ink-900">{Number(jobs).toLocaleString('en-IN')}</dd>
-              <dt className="text-[12.5px] text-ink-500">jobs done</dt>
+              <dd className="text-[18px] font-extrabold tabular-nums text-ink-900">{isNewPro(jobs) ? 'New' : Number(jobs).toLocaleString('en-IN')}</dd>
+              <dt className="text-[12.5px] text-ink-500">{isNewPro(jobs) ? 'on ZappyOne' : 'jobs done'}</dt>
             </div>
             <div>
               <dd className="text-[18px] font-extrabold tabular-nums text-ink-900">{passed?.arrivalMinutes != null ? `${passed.arrivalMinutes} min` : pro?.acceptRate != null ? `${pro.acceptRate}%` : '-'}</dd>

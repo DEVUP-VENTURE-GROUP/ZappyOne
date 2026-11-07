@@ -93,6 +93,8 @@ async function announce(kind, doc, status) {
   toRoom(id, 'job.status', payload);
   // The arrival promise: set on accept, kept on arrival, closed on hand-back or end (jobs/promise).
   require('./promise').onStatus(kind, doc, status).catch(() => {});
+  // Jobs done on the shop and pro profiles, once per job (jobs/job-count).
+  require('./job-count').onStatus(kind, doc, status).catch(() => {});
   // Pros who offered a time hear the job is gone (taken, or cancelled), and their offers are cleared (jobs/offers).
   require('./offers').onStatus(kind, doc).catch(() => {});
   // Time inside the customer's home, for the safety check (jobs/safety-check).

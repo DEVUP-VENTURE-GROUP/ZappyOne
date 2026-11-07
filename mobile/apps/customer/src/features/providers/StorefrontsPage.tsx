@@ -15,6 +15,7 @@ import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { PlansNear } from '../plans/PlansNear';
+import { jobsDoneLabel } from '@zappy/core/shared/jobsDone';
 
 export interface Storefront { kind: 'shop' | 'worker'; id: string; name: string; partnerType: string; imageUrl?: string | null; rating: number | null; reviewCount: number; completedJobs: number; distanceKm?: number | null; arrivalMinutes?: number | null; arrivalWithinPromise?: boolean; onTimeRate?: number | null; fromPaise: number; jobs: number; openNow?: boolean | null }
 
@@ -33,7 +34,7 @@ function Card({ s, onOpen }: { s: Storefront; onOpen: () => void }) {
             ? <View style={styles.rating}><Star size={10} color="#fff" fill="#fff" /><Text variant="caption" weight="bold" color="#fff">{s.rating.toFixed(1)}</Text></View>
             : <View style={styles.newTag}><Text variant="caption" weight="bold" color={ink[700]}>New</Text></View>}
         </View>
-        <View style={styles.inline}><BadgeCheck size={12} color={zappy[600]} /><Text variant="caption" color={ink[500]} numberOfLines={1}>Verified {KIND[s.partnerType] || 'provider'}{s.completedJobs ? ` · ${s.completedJobs} jobs done` : ''}</Text></View>
+        <View style={styles.inline}><BadgeCheck size={12} color={zappy[600]} /><Text variant="caption" color={ink[500]} numberOfLines={1}>Verified {KIND[s.partnerType] || 'provider'}{` · ${jobsDoneLabel(s.completedJobs)}`}</Text></View>
         <View style={styles.meta}>
           {s.arrivalMinutes != null ? <View style={styles.inline}><Timer size={12} color={s.arrivalWithinPromise ? success[600] : ink[700]} /><Text variant="caption" weight="semibold" color={s.arrivalWithinPromise ? success[600] : ink[700]}>~{s.arrivalMinutes} min</Text></View> : null}
           {s.distanceKm != null ? <View style={styles.inline}><MapPin size={12} color={ink[700]} /><Text variant="caption" weight="semibold" color={ink[700]}>{s.distanceKm < 1 ? `${Math.round(s.distanceKm * 1000)} m` : `${s.distanceKm.toFixed(1)} km`}</Text></View> : null}
