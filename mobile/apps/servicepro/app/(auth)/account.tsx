@@ -84,7 +84,7 @@ export default function AccountScreen() {
           <View style={styles.terms}>
             <Text variant="bodySmall" weight="bold">Keep what you charge</Text>
             {terms.points.map((pt: string) => (
-              <View key={pt} style={styles.point}><CheckCircle2 size={14} color="#059669" style={styles.tick} /><Text variant="caption" color={ink[600]} style={styles.flex}>{pt}</Text></View>
+              <View key={pt} style={styles.point}><CheckCircle2 size={14} color="#059669" style={styles.tick} /><Text variant="caption" color={ink[700]} style={styles.flex}>{pt}</Text></View>
             ))}
           </View>
         ) : null}
