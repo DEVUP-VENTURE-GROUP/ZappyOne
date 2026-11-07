@@ -1,6 +1,7 @@
 // More on the owner's bar: who they are, every page not on the bar (shared ownerMenu, the website's menu), and sign out.
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { zappyBubble } from '../../modules/zappy-bubble';
+import { AppState, Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PhoneCall, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useProviderWorkspaceQuery, useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
@@ -30,6 +31,25 @@ const HINTS: Record<string, string> = {
   services: 'Start taking a new kind of work',
   support: 'Chat or call us',
 };
+
+// The bubble over other apps while online, like a ride app's: shows whether Android allows it, with a way to turn it on.
+function BubbleSetting() {
+  const [on, setOn] = useState(zappyBubble.canShow());
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') setOn(zappyBubble.canShow()); });
+    return () => sub.remove();
+  }, []);
+  if (!zappyBubble.available) return null;
+  return (
+    <View style={[styles.card, styles.row]}>
+      <View style={styles.flex}>
+        <Text variant="bodySmall" weight="semibold">ZappyOne bubble</Text>
+        <Text variant="caption" color={ink[500]}>{on ? 'On. While you are online it stays on your screen, even with the app closed.' : 'A ZappyOne button on your screen while you are online. Tap it to open a job fast.'}</Text>
+      </View>
+      {on ? <Text variant="caption" weight="bold" color="#047857">On</Text> : <Button label="Turn on" size="small" onPress={() => zappyBubble.askPermission()} />}
+    </View>
+  );
+}
 
 export function ShopAccountPage() {
   const router = useRouter();
@@ -80,6 +100,7 @@ export function ShopAccountPage() {
           ); })}
         </View>
 
+        <BubbleSetting />
         <View style={styles.cardFlat}>
           <Pressable onPress={() => void Linking.openURL(`tel:+91${STAFF_HELP_PHONE}`)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.link}>
             <PhoneCall size={18} color={danger[600]} />
