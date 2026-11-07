@@ -124,8 +124,9 @@ export default function AdminDashboard() {
     return <div className="flex h-screen items-center justify-center text-sm text-slate-400" style={{ background: '#0f1117' }}>Loading…</div>;
   }
 
+  // Pinned to the screen: only <main> scrolls, so a tall page can never slide the console up and leave a blank strip.
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0f1117' }}>
+    <div className="fixed inset-0 flex overflow-clip" style={{ background: '#0f1117' }}>
 
       {/* Mobile overlay */}
       <AnimatePresence>
@@ -210,7 +211,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main panel */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50">
+      <div className="flex-1 flex flex-col min-w-0 overflow-clip bg-slate-50">
 
         {/* Topbar */}
         <header className="h-13 bg-white flex items-center px-4 lg:px-6 gap-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', height: 52 }}>
