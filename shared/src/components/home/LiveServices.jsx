@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Smartphone, Laptop, Cpu, Bike, Car, Truck, Home, HeartHandshake, Baby, Users,
@@ -232,48 +233,122 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
     );
   }
 
+ 
+  const [selectedDomain, setSelectedDomain] = useState('all');
+
   const allowed = availableCodes && new Set(availableCodes);
   const domains = (data?.domains || [])
     .map((d) => ({
       ...d,
-      services: d.services.map((s) => ({ ...s, domainCode: d.code, available: allowed ? allowed.has(s.code) : undefined })),
+      services: d.services.map((s) => ({
+        ...s,
+        domainCode: d.code,
+        available: allowed ? allowed.has(s.code) : undefined,
+      })),
     }))
     .filter((d) => d.services.length);
+
   const open = (s, path) => {
     onOpenService?.(s.code, s.available !== false);
     nav(path || s.path);
   };
+
   if (!domains.length) return null;
 
-  return (
-    <div className="space-y-8">
-      {domains.map((d) => (
-        <section key={d.code} aria-labelledby={`domain-${d.code}`}>
-          <h2 id={`domain-${d.code}`} className="text-[17px] font-bold text-navy sm:text-[20px]">{d.name}</h2>
-          {d.description && <p className="mt-0.5 text-[13px] text-slate-500">{d.description}</p>}
-          {d.services.some((s) => s.coverage?.length) ? (
-            <div className="mt-3 space-y-3">
-              {d.services.map((s) => (
-                <ServiceCard
-                  key={s.code}
-                  service={s}
-                  character={distinctArt(d.services, d.code).get(s.code)}
-                  onOpenService={() => open(s)}
-                  onOpenCategory={(group) => open(s, `/repair/category/${s.artKey || s.code}/${group.code}`)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-3">
-              <ServiceRow services={d.services} onOpen={(s) => open(s)} />
-            </div>
-          )}
-        </section>
-      ))}
+  const visibleDomains =
+    selectedDomain === 'all'
+      ? domains
+      : domains.filter((d) => d.code === selectedDomain);
 
-      <p className="text-[13px] text-slate-500">
-        New areas open every week as we verify providers across Telangana.
-      </p>
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+
+      {/* Category navigation */}
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <h2 className="mb-3 text-sm font-bold text-slate-800">
+          Browse Categories
+        </h2>
+
+        <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-col">
+          <button
+            onClick={() => setSelectedDomain('all')}
+            aria-pressed={selectedDomain === 'all'}
+            className={`shrink-0 rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
+              selectedDomain === 'all'
+                ? 'bg-navy text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            All Services
+          </button>
+
+          {domains.map((d) => (
+            <button
+              key={d.code}
+              onClick={() => setSelectedDomain(d.code)}
+              aria-pressed={selectedDomain === d.code}
+              className={`shrink-0 rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
+                selectedDomain === d.code
+                  ? 'bg-navy text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {d.name}
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {/* Selected category services */}
+      <div className="min-w-0 space-y-8">
+        {visibleDomains.map((d) => (
+          <section key={d.code} aria-labelledby={`domain-${d.code}`}>
+            <h2
+              id={`domain-${d.code}`}
+              className="text-[17px] font-bold text-navy sm:text-[20px]"
+            >
+              {d.name}
+            </h2>
+
+            {d.description && (
+              <p className="mt-0.5 text-[13px] text-slate-500">
+                {d.description}
+              </p>
+            )}
+
+            {d.services.some((s) => s.coverage?.length) ? (
+              <div className="mt-3 space-y-3">
+                {d.services.map((s) => (
+                  <ServiceCard
+                    key={s.code}
+                    service={s}
+                    character={distinctArt(d.services, d.code).get(s.code)}
+                    onOpenService={() => open(s)}
+                    onOpenCategory={(group) =>
+                      open(
+                        s,
+                        `/repair/category/${s.artKey || s.code}/${group.code}`
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3">
+                <ServiceRow
+                  services={d.services}
+                  onOpen={(s) => open(s)}
+                />
+              </div>
+            )}
+          </section>
+        ))}
+
+        <p className="text-[13px] text-slate-500">
+          New areas open every week as we verify providers across Telangana.
+        </p>
+      </div>
     </div>
   );
 }
+
