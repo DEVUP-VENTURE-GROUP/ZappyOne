@@ -6,6 +6,7 @@ import { useListNotificationsQuery } from '../../services/api';
 import { ZappyWordmark } from '../common/ZappyLogo';
 import { WorkerSidebar, WorkerBottomNav } from './DashboardUI';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import CommandPalette, { usePaletteKeys } from '../common/CommandPalette';
 import { useT } from '../../i18n/I18nProvider';
 import { labelKey } from '../../i18n/translations';
 
@@ -57,6 +58,8 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
   const t = useT();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  usePaletteKeys(setPaletteOpen);
 
   const activeKey = activeKeyFor(items, pathname);
   // Notifications live behind the bell at the top on a phone, not in the menu or the bottom bar.
@@ -154,6 +157,7 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
 
       <div className="pb-20 lg:pb-0 lg:pl-64">{children}</div>
 
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={items.map((i) => ({ id: i.key, label: t(labelKey(i.label), i.label), Icon: i.Icon, onSelect: () => go(i) }))} placeholder={t('sp.go_to', 'Go to a page…')} />
       <WorkerBottomNav items={more ? [...primary, more] : primary} activeKey={menuOpen ? 'more' : barActive} onNavigate={onBar} />
     </div>
   );

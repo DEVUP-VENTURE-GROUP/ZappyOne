@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Menu, X, ChevronRight, Zap } from 'lucide-react';
+import { LogOut, Menu, X, ChevronRight, Zap, Search } from 'lucide-react';
+import CommandPalette, { usePaletteKeys } from '@shared/components/common/CommandPalette';
+import ConnectionBanner from '@shared/components/common/ConnectionBanner';
+import { PageSkeleton } from '@/ui/kit';
 import { logout } from '@shared/modules/auth/authSlice';
 import { useLogoutMutation, useAdminAlertsQuery, useAdminMeQuery } from '@shared/services/api';
 import TodoBell from './TodoBell';
@@ -109,10 +112,18 @@ export default function AdminDashboard() {
   const Section = permitted ? SECTIONS[active].Comp : NotAllowed;
   const activeLabel = SECTIONS[active].label;
 
-  const handleNav = useCallback((id) => {
-    setSearchParams({ tab: id }, { replace: true });
+  const handleNav = useCallback((id, sub) => {
+    setSearchParams(sub ? { tab: id, sub } : { tab: id }, { replace: true });
     setSidebarOpen(false);
   }, [setSearchParams]);
+
+  // Every screen this admin may open, and every tab inside a hub, one keystroke away.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  usePaletteKeys(setPaletteOpen);
+  const paletteItems = useMemo(() => groups.flatMap((g) => g.items.flatMap((item) => [
+    { id: item.id, label: item.label, group: g.label, Icon: item.icon, onSelect: () => handleNav(item.id) },
+    ...(item.Comp.views || []).map((v) => ({ id: `${item.id}.${v.id}`, label: v.label, group: item.label, Icon: v.icon, onSelect: () => handleNav(item.id, v.id) })),
+  ])), [groups, handleNav]);
 
   async function doLogout() {
     try { await callLogout().unwrap(); } catch {}
@@ -231,6 +242,11 @@ export default function AdminDashboard() {
 
           {/* Right side */}
           <div className="ml-auto flex items-center gap-3">
+            <button type="button" onClick={() => setPaletteOpen(true)} aria-label="Go to a page (Ctrl K)"
+              className="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-[12.5px] font-medium text-slate-500 hover:bg-white">
+              <Search size={14} /> <span className="hidden sm:inline">Go to…</span>
+              <kbd className="hidden rounded border border-slate-200 bg-white px-1 text-[10.5px] font-semibold text-slate-400 md:inline">Ctrl K</kbd>
+            </button>
             <span className="text-[11px] text-slate-400 hidden sm:block font-medium">
               {new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
@@ -252,7 +268,7 @@ export default function AdminDashboard() {
               className="h-full"
             >
               <div className="p-4 lg:p-6">
-                <Suspense fallback={<div className="flex items-center justify-center py-24 text-slate-400 text-sm">Loading…</div>}>
+                <Suspense fallback={<PageSkeleton />}>
                   <Section />
                 </Suspense>
               </div>
@@ -260,6 +276,8 @@ export default function AdminDashboard() {
           </AnimatePresence>
         </main>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} placeholder="Go to a screen: bookings, dues, shops…" />
+      <ConnectionBanner />
     </div>
   );
 }

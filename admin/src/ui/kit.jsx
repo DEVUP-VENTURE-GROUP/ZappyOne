@@ -5,10 +5,28 @@ export function Spinner({ size = 20 }) {
   return <Loader2 size={size} className="animate-spin text-blue-600" />;
 }
 
-export function PageLoader() {
+// The shape of a page while it loads: a header, a row of figures and a list, so nothing jumps when the data lands.
+export function PageSkeleton({ rows = 6 }) {
+  const bar = 'animate-pulse rounded-lg bg-slate-200/70';
   return (
-    <div className="flex items-center justify-center h-48">
-      <Spinner size={24} />
+    <div className="space-y-5" aria-busy="true" aria-label="Loading">
+      <div className="space-y-2"><div className={`h-6 w-48 ${bar}`} /><div className={`h-4 w-72 max-w-full ${bar}`} /></div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className={`h-20 ${bar}`} />)}</div>
+      <div className="space-y-2 rounded-xl border border-slate-100 bg-white p-4">{Array.from({ length: rows }, (_, i) => <div key={i} className={`h-10 ${bar}`} />)}</div>
+    </div>
+  );
+}
+
+export function PageLoader() {
+  return <PageSkeleton rows={4} />;
+}
+
+// When a load fails: say so in plain words and offer Retry; what was on screen is kept.
+export function ErrorState({ message = 'Could not load this. Check your internet and try again.', onRetry }) {
+  return (
+    <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+      <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-rose-800">{message}</span>
+      {onRetry && <button type="button" onClick={onRetry} className="rounded-lg bg-white px-3 py-1.5 text-[13px] font-bold text-rose-700 ring-1 ring-rose-200 hover:bg-rose-100">Try again</button>}
     </div>
   );
 }
