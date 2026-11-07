@@ -269,6 +269,7 @@ const workerSchema = new mongoose.Schema(
 
     // Ops
     deviceTokens: [String], // FCM push tokens
+    ringTokens: [String], // Android phones that ring a job full-screen (notification/devices)
     deviceIds:    [String], // hardware fingerprints (for multi-account detection)
     // Trusted-device binding for re-login security. A sign-in from a device not
     // in this list (on an established account) is flagged + alerted.

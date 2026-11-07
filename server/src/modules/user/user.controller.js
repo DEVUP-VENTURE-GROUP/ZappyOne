@@ -226,21 +226,11 @@ async function saveRecentLocation(req, res, next) {
   } catch (err) { next(err); }
 }
 
-async function registerDeviceToken(req, res, next) {
-  try {
-    await User.updateOne(
-      { _id: req.auth.sub },
-      { $addToSet: { deviceTokens: req.body.token } }
-    );
-    res.json({ ok: true });
-  } catch (err) { next(err); }
-}
-
 module.exports = {
   getMe, updateMe,
   getAddresses, addAddress, deleteAddress, editAddress, setDefaultAddress,
   listPaymentMethods, addPaymentMethod, deletePaymentMethod, setDefaultPaymentMethod,
   getNotificationPrefs, updateNotificationPrefs,
   getSpending, deleteAccount,
-  saveRecentLocation, registerDeviceToken,
+  saveRecentLocation,
 };

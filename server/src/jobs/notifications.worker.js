@@ -21,7 +21,6 @@ const { Worker: BullWorker } = require('bullmq');
 const { createBullConnection } = require('../config/redis');
 const { connectMongo } = require('../config/mongo');
 const WorkerModel = require('../modules/worker/worker.model');
-const UserModel = require('../modules/user/user.model');
 const Notification = require('../modules/notification/notification.model');
 const Order = require('../modules/order/order.model');
 const config = require('../config');
@@ -146,16 +145,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl } = {}) {
 
   // Prune stale tokens from Mongo — fire-and-forget
   if (staleTokens.length) {
-    Promise.all([
-      WorkerModel.updateMany(
-        { deviceTokens: { $in: staleTokens } },
-        { $pull: { deviceTokens: { $in: staleTokens } } }
-      ),
-      UserModel.updateMany(
-        { deviceTokens: { $in: staleTokens } },
-        { $pull: { deviceTokens: { $in: staleTokens } } }
-      ),
-    ]).catch(() => {});
+    require('../modules/notification/devices').prune(staleTokens).catch(() => {});
     logger.info({ count: staleTokens.length }, '[FCM] Pruned stale tokens');
   }
 
@@ -205,17 +195,8 @@ async function sendSms({ phone, message }) {
 
 /* Token lookup helpers */
 
-async function getTokens({ kind, id }) {
-  if (kind === 'worker') {
-    const w = await WorkerModel.findById(id).select('deviceTokens').lean();
-    return w?.deviceTokens || [];
-  }
-  if (kind === 'user') {
-    const u = await UserModel.findById(id).select('deviceTokens phone').lean();
-    return { tokens: u?.deviceTokens || [], phone: u?.phone };
-  }
-  return [];
-}
+// Every kind of account (customer, worker, shop, event partner): notification/devices.
+const getTokens = ({ kind, id }) => require('../modules/notification/devices').tokensOf(kind, id);
 
 /* Job processor */
 

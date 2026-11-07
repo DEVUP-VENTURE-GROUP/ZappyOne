@@ -108,11 +108,17 @@ router.post(
   ctrl.saveRecentLocation
 );
 
+// Every signed-in account saves its token here (customers, shop owners, event partners); before, a shop's token was written to a customer record that did not exist.
 router.post(
   '/device-token',
   authenticate,
-  validate(Joi.object({ token: Joi.string().max(1000).required() })),
-  ctrl.registerDeviceToken
+  validate(Joi.object({ token: Joi.string().max(1000).required(), platform: Joi.string().valid('android', 'android-ring', 'ios', 'web').optional() })),
+  async (req, res, next) => {
+    try {
+      const saved = await require('../notification/devices').saveToken(req.auth.role, req.auth.sub, req.body.token, req.body.platform);
+      res.json({ ok: saved });
+    } catch (err) { next(err); }
+  },
 );
 
 module.exports = router;

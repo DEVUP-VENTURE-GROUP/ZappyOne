@@ -260,14 +260,10 @@ router.post(
   '/device-token',
   authenticate,
   requireRole('worker'),
-  validate(Joi.object({ token: Joi.string().max(1000).required() })),
+  validate(Joi.object({ token: Joi.string().max(1000).required(), platform: Joi.string().valid('android', 'android-ring', 'ios', 'web').optional() })),
   async (req, res, next) => {
     try {
-      const Worker = require('./worker.model');
-      await Worker.updateOne(
-        { _id: req.auth.sub },
-        { $addToSet: { deviceTokens: req.body.token } }
-      );
+      await require('../notification/devices').saveToken('worker', req.auth.sub, req.body.token, req.body.platform);
       res.json({ ok: true });
     } catch (err) { next(err); }
   }
