@@ -4,41 +4,15 @@ import {
   LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, FileText, Wallet, Landmark, KanbanSquare, BarChart3, Repeat, Headphones } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import ProfileGate, { ALWAYS } from './ProfileGate';
-import { STAFF_HELP_PHONE } from '@shared/provider/partnerPages';
+import { STAFF_HELP_PHONE, ownerPages as sharedOwnerPages } from '@shared/provider/partnerPages';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
   useShopMeQuery, useGetWorkerMeQuery, useGetMyShopQuery, useLogoutMutation, useProviderWorkspaceQuery, useProviderProfileStatusQuery, useAccountMeQuery,
 } from '@shared/services/api';
 
 // ServicePro's frame for a business and its technicians. Every partner has the core pages; the sections and words of their trades come from the server (onboarding/workspace), so a new kind of work changes data, not this file.
-// The optional sections (pricereq, plans, insights) appear only when a trade asks for them; `labels` renames pages for that trade.
-const OPTIONAL = new Set(['pricereq', 'plans', 'insights']);
-export function ownerPages(workspace) {
-  const on = new Set(workspace?.modules || []);
-  const labels = workspace?.labels || {};
-  return OWNER_PAGES.filter((p) => !OPTIONAL.has(p.key) || on.has(p.key)).map((p) => (labels[p.key] ? { ...p, label: labels[p.key] } : p));
-}
-
-const OWNER_PAGES = [
-  { key: 'home', label: 'Home', Icon: LayoutDashboard, to: '/shop', primary: true },
-  { key: 'work', label: 'Work & prices', Icon: Wrench, to: '/provider/services', primary: true },
-  { key: 'pricereq', label: 'Customers asking your price', Icon: MessageSquareQuote, to: '/shop/price-requests' },
-  { key: 'orders', label: 'Orders', Icon: KanbanSquare, to: '/shop/orders' },
-  { key: 'plans', label: 'Plans', Icon: Repeat, to: '/shop/plans' },
-  { key: 'team', label: 'Team', Icon: Users, to: '/shop/workers', primary: true },
-  { key: 'insights', label: 'How you are doing', Icon: BarChart3, to: '/shop/insights' },
-  { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/shop/earnings', primary: true },
-  { key: 'withdraw', label: 'Take out money', Icon: Wallet, to: '/shop/withdraw' },
-  { key: 'bank', label: 'Bank & UPI', Icon: Landmark, to: '/shop/bank' },
-  { key: 'notifications', label: 'Notifications', Icon: Bell, to: '/shop/notifications' },
-  { key: 'account', label: 'Profile', Icon: UserRound, to: '/shop/account' },
-  { key: 'shop', label: 'Shop & hours', Icon: Store, to: '/shop/profile', primary: true },
-  { key: 'reviews', label: 'Reviews', Icon: Star, to: '/shop/reviews' },
-  { key: 'kyc', label: 'ID check', Icon: ShieldCheck, to: '/shop/kyc' },
-  { key: 'appeals', label: 'Ask us to recheck', Icon: Scale, to: '/shop/appeals' },
-  { key: 'services', label: 'Add a service', Icon: PlusCircle, to: '/provider/onboarding' },
-  { key: 'support', label: 'Talk to ZappyOne', Icon: Headphones, to: '/shop/support' },
-];
+const ICONS = { LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, MessageSquareQuote, Scale, Wallet, Landmark, KanbanSquare, BarChart3, Repeat, Headphones };
+const ownerPages = (workspace) => sharedOwnerPages(workspace).map((p) => ({ ...p, Icon: ICONS[p.icon] }));
 
 // While the profile is unfinished every other page is locked and opens the next missing step instead.
 function lockUntilComplete(items, status) {

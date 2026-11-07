@@ -1,13 +1,10 @@
-/**
- * The owner's own account (the website's ShopAccountPage): their name, how
- * ZappyOne reaches them, and the shortcuts to the shop's money and settings.
- * The app adds Sign out at the end. (The shop itself is "Shop & hours".)
- */
+// More on the owner's bar: who they are, every page not on the bar (shared ownerMenu, the website's menu), and sign out.
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, ChevronRight, Landmark, LogOut, Mail, Phone, ShieldCheck, Store, Wallet } from 'lucide-react-native';
-import { useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
+import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
+import { useProviderWorkspaceQuery, useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
+import { ownerMenu } from '@zappy/core/shared/partnerPages';
 import { useSignOut } from '@zappy/core/hooks/useSignOut';
 import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -18,25 +15,34 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { DeleteAccountCard } from '@zappy/ui/components/account/DeleteAccountCard';
 import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 
-const LINKS: [string, string, typeof Store, string][] = [
-  ['Shop & hours', 'Name, photos, address and opening hours', Store, '/shop/profile'],
-  ['Bank & UPI', 'Where we send your money', Landmark, '/shop/bank'],
-  ['Take out money', 'What ZappyOne owes you, and asking for it', Wallet, '/shop/withdraw'],
-  ['Notifications', 'Everything we have told you', Bell, '/shop/notifications'],
-  ['ID check', 'Your documents and services', ShieldCheck, '/shop/kyc'],
-];
+const ICONS: Record<string, LucideIcon> = { MessageSquareQuote, KanbanSquare, Repeat, BarChart3, Wallet, Landmark, Star, ShieldCheck, Scale, PlusCircle, Headphones };
+const HINTS: Record<string, string> = {
+  orders: 'Every booking, new to finished',
+  pricereq: 'Customers waiting for your price',
+  plans: 'Monthly plans customers bought',
+  insights: 'Jobs, ratings and arrival times',
+  withdraw: 'What ZappyOne owes you, and asking for it',
+  bank: 'Where we send your money',
+  reviews: 'What customers said',
+  kyc: 'Your documents and services',
+  appeals: 'If we said no and you disagree',
+  services: 'Start taking a new kind of work',
+  support: 'Chat or call us',
+};
 
 export function ShopAccountPage() {
   const router = useRouter();
   const signOut = useSignOut();
   const { data, isLoading, isError, refetch } = useShopMeQuery();
+  const { data: workspace } = useProviderWorkspaceQuery(undefined);
+  const links = ownerMenu(workspace);
   const [save, { isLoading: saving }] = useUpdateShopMeMutation();
   const shop = data?.shop;
   const [ownerName, setOwnerName] = useState('');
   useEffect(() => { if (shop) setOwnerName(shop.ownerName || ''); }, [shop]);
 
-  if (isError && !shop) return <View style={styles.page}><ScreenHeader title="Profile" safeArea /><ErrorState title="Your profile did not load" onRetry={refetch} /></View>;
-  if (isLoading || !shop) return <View style={styles.page}><ScreenHeader title="Profile" safeArea /><LoadingState /></View>;
+  if (isError && !shop) return <View style={styles.page}><ScreenHeader title="More" safeArea /><ErrorState title="Your profile did not load" onRetry={refetch} /></View>;
+  if (isLoading || !shop) return <View style={styles.page}><ScreenHeader title="More" safeArea /><LoadingState /></View>;
 
   async function submit() {
     try { await save({ ownerName: ownerName.trim() }).unwrap(); toast.success('Saved'); }
@@ -45,7 +51,7 @@ export function ShopAccountPage() {
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Profile" safeArea />
+      <ScreenHeader title="More" safeArea />
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={[styles.card, styles.row]}>
           <View style={styles.avatar}><Text variant="heading3" weight="black" color="#fff">{(shop.ownerName || shop.businessName || 'S').trim()[0].toUpperCase()}</Text></View>
@@ -64,13 +70,13 @@ export function ShopAccountPage() {
         </View>
 
         <View style={styles.cardFlat}>
-          {LINKS.map(([title, hint, Icon, to], i) => (
-            <Pressable key={to} onPress={() => router.push(to as never)} android_ripple={RIPPLE} accessibilityRole="button" style={[styles.link, i > 0 && styles.rule]}>
+          {links.map(({ key, label, icon, to }, i) => { const Icon = ICONS[icon] || ChevronRight; return (
+            <Pressable key={key} onPress={() => router.push(to as never)} android_ripple={RIPPLE} accessibilityRole="button" style={[styles.link, i > 0 && styles.rule]}>
               <Icon size={18} color={ink[500]} />
-              <View style={styles.flex}><Text variant="bodySmall" weight="semibold">{title}</Text><Text variant="caption" color={ink[500]}>{hint}</Text></View>
+              <View style={styles.flex}><Text variant="bodySmall" weight="semibold">{label}</Text>{HINTS[key] ? <Text variant="caption" color={ink[500]}>{HINTS[key]}</Text> : null}</View>
               <ChevronRight size={16} color={slate[300]} />
             </Pressable>
-          ))}
+          ); })}
         </View>
 
         <LegalLinks audience="provider" />

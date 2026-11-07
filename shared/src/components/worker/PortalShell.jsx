@@ -66,6 +66,10 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
   const primary = items.filter((i) => i.primary && i !== bell);
   const rest = items.filter((i) => !i.primary && i !== bell);
   const go = (item) => { setMenuOpen(false); nav(item.to); };
+  // The menu opens from More, the last place on the bar (six in all with five pages); nothing else opens it on a phone.
+  const more = rest.length ? { key: 'more', label: 'More', Icon: Menu } : null;
+  const onBar = (item) => (item.key === 'more' ? setMenuOpen(true) : go(item));
+  const barActive = rest.some((i) => i.key === activeKey) ? 'more' : activeKey;
 
   return (
     // Pages with a fixed bar (Save, Continue) sit above the bottom bar and beside
@@ -84,9 +88,6 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
 
       {/* Phone top bar */}
       <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2.5 lg:hidden">
-        <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open menu" className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-slate-100">
-          <Menu size={20} className="text-slate-700" />
-        </button>
         {/* Who is signed in is in the menu and on the page itself; not repeated here. */}
         <ZappyWordmark size={22} />
         {bell && (
@@ -153,7 +154,7 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
 
       <div className="pb-20 lg:pb-0 lg:pl-64">{children}</div>
 
-      <WorkerBottomNav items={primary} activeKey={activeKey} onNavigate={go} />
+      <WorkerBottomNav items={more ? [...primary, more] : primary} activeKey={menuOpen ? 'more' : barActive} onNavigate={onBar} />
     </div>
   );
 }
