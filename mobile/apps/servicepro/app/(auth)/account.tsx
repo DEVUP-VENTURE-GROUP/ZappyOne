@@ -5,9 +5,9 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowRight, PartyPopper, Store, Wrench } from 'lucide-react-native';
+import { ArrowRight, CheckCircle2, PartyPopper, Store, Wrench } from 'lucide-react-native';
 import { saveSession } from '@zappy/core/api/tokenStorage';
-import { useServiceproLoginMutation, useServiceproRegisterMutation } from '@zappy/core/api';
+import { usePartnerTermsQuery, useServiceproLoginMutation, useServiceproRegisterMutation } from '@zappy/core/api';
 import { PARTNER_TYPES } from '@zappy/core/shared/partnerBoard';
 import { socketClient } from '@zappy/core/socket/socketClient';
 import { setSession } from '@zappy/core/store/authSlice';
@@ -33,6 +33,8 @@ export default function AccountScreen() {
   const [register, { isLoading: creating }] = useServiceproRegisterMutation();
   const [kind, setKind] = useState<'services' | 'events'>('services');
   const [partnerType, setPartnerType] = useState('individual');
+  // The terms for the partner type picked, as plain points before they accept (the website's PartnerTermsList).
+  const { data: terms } = usePartnerTermsQuery(partnerType, { skip: kind !== 'services' });
   const [businessName, setBusinessName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [accepted, setAccepted] = useState(false);
@@ -78,6 +80,14 @@ export default function AccountScreen() {
         ) : null}
         <TextInput value={businessName} onChangeText={setBusinessName} maxLength={120} placeholder={kind === 'services' && partnerType === 'individual' ? 'Your work name, e.g. Ramesh Electricals' : 'Business name'} placeholderTextColor={ink[400]} style={styles.input} />
         <TextInput value={ownerName} onChangeText={setOwnerName} maxLength={100} placeholder="Your name" placeholderTextColor={ink[400]} style={styles.input} />
+        {kind === 'services' && terms?.points?.length ? (
+          <View style={styles.terms}>
+            <Text variant="bodySmall" weight="bold">Keep what you charge</Text>
+            {terms.points.map((pt: string) => (
+              <View key={pt} style={styles.point}><CheckCircle2 size={14} color="#059669" style={styles.tick} /><Text variant="caption" color={ink[600]} style={styles.flex}>{pt}</Text></View>
+            ))}
+          </View>
+        ) : null}
         <Pressable onPress={() => setAccepted((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} style={styles.row}>
           <View style={[styles.box, accepted && styles.boxOn]} />
           <Text variant="caption" weight="semibold" color={ink[700]} style={styles.flex}>I accept the ZappyOne partner terms.</Text>
@@ -90,6 +100,9 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
+  terms: { gap: 6, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: '#F8FAFC' },
+  point: { flexDirection: 'row', gap: spacing.sm },
+  tick: { marginTop: 2 },
   list: { gap: spacing.md },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   card: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
