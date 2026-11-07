@@ -225,6 +225,7 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
   const nav = useNavigate();
   const { data, isLoading } = useLiveCatalogQuery();
 
+  const [selectedDomain, setSelectedDomain] = useState('all');
   if (isLoading) {
     return (
       <div className="space-y-3" aria-hidden="true">
@@ -234,7 +235,6 @@ export default function LiveServices({ availableCodes = null, onOpenService = nu
   }
 
  
-  const [selectedDomain, setSelectedDomain] = useState('all');
 
   const allowed = availableCodes && new Set(availableCodes);
   const domains = (data?.domains || [])
