@@ -28,6 +28,8 @@ async function booking(status = 'PROVIDER_ASSIGNED') {
 }
 
 test('owner shares; the link shows the job without money or the owner contact', async () => {
+  // The person at home meets the pro, so the link carries the owner's PIN while the job is live (jobs/customer-pin).
+  await require('../src/modules/user/user.model').collection.updateOne({ _id: owner }, { $set: { startPin: '4821' } }, { upsert: true });
   const id = await booking();
   const made = await request(app).post(`/api/jobs/${id}/share`).set(auth(owner));
   expect(made.status).toBe(201);

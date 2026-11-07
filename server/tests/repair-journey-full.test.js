@@ -118,6 +118,8 @@ beforeAll(async () => {
 
 afterAll(async () => { await stopMongo(); });
 afterEach(async () => { await RepairBooking.deleteMany({}); });
+// The customer's one PIN covers start and collection (jobs/customer-pin); a device coming back gets a one-time code.
+beforeAll(() => require('../src/modules/user/user.model').collection.updateOne({ _id: CUSTOMER }, { $set: { startPin: '2468' } }, { upsert: true }));
 
 const handoverSvc = require('../src/modules/repair/services/handover.service');
 
@@ -458,7 +460,7 @@ describe('handover codes', () => {
     await bookingService.transition(id, 'PICKUP_SCHEDULED', actor);
 
     const code = await handover.issue(id, 'handover');
-    expect(code).toMatch(/^[0-9]{6}$/);
+    expect(code).toBe('2468');
 
     await handover.verify({ bookingId: id, kind: 'handover', code, actorRole: 'worker', actorId: String(tech._id) });
     const moved = await bookingService.transition(id, 'DEVICE_PICKED_UP', actor);
@@ -475,6 +477,17 @@ describe('handover codes', () => {
       bookingId: booking._id, kind: 'handover', code: '000000',
       actorRole: 'worker', actorId: String(tech._id),
     })).rejects.toMatchObject({ code: 'OTP_INVALID' });
+  });
+
+  it('a device coming back needs its own one-time code; the PIN the shop already heard does not open it', async () => {
+    const { booking } = await bookingService.createBooking(baseBooking({ shopId: shop._id, serviceMode: 'pickup_repair' }));
+    const code = await handover.issue(booking._id, 'return');
+    expect(code).toMatch(/^[0-9]{6}$/);
+    expect(code).not.toBe('2468');
+    await expect(handover.verify({ bookingId: booking._id, kind: 'return', code: '2468', actorRole: 'worker', actorId: String(tech._id) }))
+      .rejects.toMatchObject({ code: 'OTP_INVALID' });
+    await expect(handover.verify({ bookingId: booking._id, kind: 'return', code, actorRole: 'worker', actorId: String(tech._id) }))
+      .resolves.toMatchObject({ verified: true });
   });
 
   it('issues the same code twice rather than moving it under the customer', async () => {

@@ -229,7 +229,6 @@ async function createBooking({
     cancellationPolicyCode: policy?.code || null,
     recurringId,
     occurrenceIndex,
-    handoverOtp: String(crypto.randomInt(1000, 9999)),
     idempotencyKey,
     status: 'REQUESTED',
     statusHistory: [{ status: 'REQUESTED', at: new Date(), by: userId, byRole: 'user' }],

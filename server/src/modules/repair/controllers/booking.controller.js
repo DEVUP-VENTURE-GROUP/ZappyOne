@@ -524,19 +524,17 @@ async function rateRepair(req, res, next) {
 async function myHandoverCode(req, res, next) {
   try {
     const booking = await RepairBooking.findOne({ _id: req.params.id, userId: req.auth.sub })
-      .select('+otp.start +otp.handover +otp.return')
+      .select('status serviceMode otpVerified userId')
       .lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
-    // Whichever step is next for this mode, if any.
-    const due = ['start', 'handover', 'return']
-      .find((kind) => booking.otp?.[kind] && !booking.otpVerified?.[`${kind}At`]);
-
+    // Only the step due now: their PIN when the pro is at the door or collecting, the one-time code when the device comes back.
+    const due = handoverService.dueKind(booking);
     if (!due) return res.json({ code: null, kind: null });
 
     res.json({
       kind: due,
-      code: booking.otp[due],
+      code: await handoverService.issue(booking._id, due),
       label: handoverService.LABEL[due],
     });
   } catch (err) { next(err); }

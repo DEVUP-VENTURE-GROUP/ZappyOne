@@ -146,6 +146,7 @@ async function getTask(req, res, next) {
 
     // The handover code proves the customer was there; only the customer holds it.
     if (req.auth.role !== 'user') delete task.handoverOtp;
+    else task.handoverOtp = await require('../jobs/customer-pin').pinOf(task.userId);
     const signed = await signTask(task);
     const introduced = !NOT_YET_INTRODUCED.includes(task.status);
     res.json({

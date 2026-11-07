@@ -4,6 +4,8 @@ const userSchema = new mongoose.Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
     name: { type: String, trim: true },
+    // The customer's one start code for every booking (jobs/customer-pin); only their own app reads it.
+    startPin: { type: String, select: false },
     /** Profile photo: storage key, signed when read (account.service). */
     avatarKey: { type: String, default: null },
     email: { type: String, lowercase: true, sparse: true },

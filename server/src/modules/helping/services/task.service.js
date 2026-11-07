@@ -159,7 +159,6 @@ async function createTask({
     status: 'DRAFT',
     statusHistory: [{ status: 'DRAFT', at: new Date(), by: userId, byRole: 'user' }],
     idempotencyKey,
-    handoverOtp: String(crypto.randomInt(1000, 9999)),
   });
 
   task.transitionTo('REQUESTED', { by: userId, byRole: 'user' });

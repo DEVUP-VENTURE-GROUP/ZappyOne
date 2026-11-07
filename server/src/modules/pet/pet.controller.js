@@ -265,6 +265,7 @@ async function getBooking(req, res, next) {
     const introduced = !NOT_YET_INTRODUCED.includes(booking.status);
     // The handover code proves the right person turned up; only the customer holds it.
     if (req.auth.role !== 'user') delete booking.handoverOtp;
+    else booking.handoverOtp = await require('../jobs/customer-pin').pinOf(booking.userId);
     res.json({
       booking: await signBooking(booking),
       provider: introduced ? await providerCard(booking, { fallbackName: 'Your pet pro', active: !require('../jobs/kinds').KINDS.pet.ops.terminal.includes(booking.status) }) : null,

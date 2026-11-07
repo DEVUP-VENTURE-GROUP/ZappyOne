@@ -296,6 +296,8 @@ describe('SOS on any job', () => {
 
 describe('the start code, from the first version, on every new kind', () => {
   const patch = (path, token, body) => request(app).post(`/api${path}`).set('Authorization', `Bearer ${token}`).send(body);
+  // The customer's one PIN for every booking (jobs/customer-pin).
+  beforeAll(() => require('../src/modules/user/user.model').collection.updateOne({ _id: customer }, { $set: { startPin: '4321' } }, { upsert: true }));
 
   test('a pet pro cannot start with the pet until the owner reads out the code', async () => {
     const { insertedId } = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep' });
@@ -321,14 +323,26 @@ describe('the start code, from the first version, on every new kind', () => {
     });
     const path = `/helping/tasks/${insertedId}/status`;
     expect((await patch(path, as(approved._id, 'worker'), { status: 'TASK_STARTED' })).body.code).toBe('START_CODE_REQUIRED');
-    expect((await patch(path, as(approved._id, 'worker'), { status: 'TASK_STARTED', code: '9876' })).status).toBe(200);
+    expect((await patch(path, as(approved._id, 'worker'), { status: 'TASK_STARTED', code: '4321' })).status).toBe(200);
   });
 
-  test('a job from before codes existed gets one, so it can still start', async () => {
+  test('every booking takes the same PIN, like a ride app, and no code is stored per booking', async () => {
+    const first = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep', handoverOtp: '' });
+    const second = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep', handoverOtp: '' });
+    for (const { insertedId } of [first, second]) {
+      // eslint-disable-next-line no-await-in-loop
+      expect((await patch(`/pet/bookings/${insertedId}/status`, as(approved._id, 'worker'), { status: 'SERVICE_STARTED', code: '4321' })).status).toBe(200);
+      // eslint-disable-next-line no-await-in-loop
+      expect((await PetBooking.findById(insertedId).lean()).handoverOtp).toBe('');
+    }
+  });
+
+  test('the customer sees their PIN on their booking; the pro never does', async () => {
     const { insertedId } = await openPet({ status: 'PROVIDER_ARRIVED', workerId: approved._id, serviceMode: 'doorstep', handoverOtp: '' });
-    const res = await patch(`/pet/bookings/${insertedId}/status`, as(approved._id, 'worker'), { status: 'SERVICE_STARTED' });
-    expect(res.body.code).toBe('START_CODE_REQUIRED');
-    expect((await PetBooking.findById(insertedId).lean()).handoverOtp).toMatch(/^[0-9]{4}$/);
+    const mine = await request(app).get(`/api/pet/bookings/${insertedId}`).set('Authorization', `Bearer ${as(customer, 'user')}`);
+    expect(mine.body.booking.handoverOtp).toBe('4321');
+    const theirs = await request(app).get(`/api/pet/bookings/${insertedId}`).set('Authorization', `Bearer ${as(approved._id, 'worker')}`);
+    expect(theirs.body.booking).not.toHaveProperty('handoverOtp');
   });
 });
 
@@ -337,7 +351,7 @@ describe('SOS files a real ticket now', () => {
 
   test('a customer SOS on a pet job reaches the ops queue and files an urgent ticket', async () => {
     const User = require('../src/modules/user/user.model');
-    await User.collection.insertOne({ _id: customer, phone: '9000000700', name: 'Asha' });
+    await User.collection.updateOne({ _id: customer }, { $set: { phone: '9000000700', name: 'Asha' } }, { upsert: true });
     const { insertedId } = await openPet({ status: 'PROVIDER_EN_ROUTE', workerId: approved._id });
     const res = await request(app).post(`/api/jobs/${insertedId}/sos`).set('Authorization', `Bearer ${as(customer, 'user')}`).send({ lat: 17.44, lng: 78.39 });
     expect(res.status).toBe(200);

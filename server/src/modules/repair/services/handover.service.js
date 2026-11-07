@@ -2,6 +2,10 @@ const crypto = require('crypto');
 const { RepairBooking } = require('../models/booking.model');
 const eventsService = require('./events.service');
 const logger = require('../../../core/logger');
+const { pinOf, sameCode } = require('../../jobs/customer-pin');
+
+// Start and handover use the customer's own PIN, the same for every booking; only a device coming back gets a one-time code, because the shop already knows the PIN from collecting it.
+const ONE_TIME = new Set(['return']);
 
 /**
  * Proving a device changed hands.
@@ -78,6 +82,10 @@ function newCode() {
 async function issue(bookingId, kind) {
   const field = FIELD[kind];
   if (!field) throw new Error(`Unknown handover kind: ${kind}`);
+  if (!ONE_TIME.has(kind)) {
+    const b = await RepairBooking.findById(bookingId).select('userId').lean();
+    return b ? pinOf(b.userId) : null;
+  }
 
   const candidate = newCode();
 
@@ -128,10 +136,10 @@ async function verify({ bookingId, kind, code, actorRole, actorId }) {
   const field = FIELD[kind];
   if (!field) throw Object.assign(new Error('Unknown code type'), { status: 400 });
 
-  const booking = await RepairBooking.findById(bookingId).select(`+${field.code}`);
+  const booking = await RepairBooking.findById(bookingId).select(`+${field.code} userId`);
   if (!booking) throw Object.assign(new Error('Booking not found'), { status: 404 });
 
-  const expected = booking.otp?.[kind];
+  const expected = ONE_TIME.has(kind) ? booking.otp?.[kind] : await pinOf(booking.userId);
   if (!expected) {
     throw Object.assign(
       new Error('No code has been issued for this step yet'),
@@ -139,7 +147,7 @@ async function verify({ bookingId, kind, code, actorRole, actorId }) {
     );
   }
 
-  if (String(code).trim() !== expected) {
+  if (!sameCode(expected, code)) {
     logger.warn(
       { bookingId: String(bookingId), kind, actorRole, actorId },
       '[repair] handover code rejected',
@@ -183,21 +191,28 @@ async function assertGatePassed(booking, nextStatus) {
  * it; generating it at the moment of asking means two people standing in a
  * doorway waiting for a push notification.
  */
-async function issueForUpcoming(booking) {
-  const upcoming = {
-    doorstep: { ARRIVED: 'start' },
-    roadside: { ARRIVED: 'start' },
-    diagnosis_only: { ARRIVED: 'start' },
-    pickup_repair: { WORKER_ACCEPTED: 'handover', PICKUP_SCHEDULED: 'handover', READY_FOR_RETURN: 'return', OUT_FOR_RETURN: 'return' },
-    workshop: { QA_PENDING: 'return', READY_FOR_RETURN: 'return' },
-  };
+const UPCOMING = {
+  doorstep: { ARRIVED: 'start' },
+  roadside: { ARRIVED: 'start' },
+  diagnosis_only: { ARRIVED: 'start' },
+  pickup_repair: { WORKER_ACCEPTED: 'handover', PICKUP_SCHEDULED: 'handover', READY_FOR_RETURN: 'return', OUT_FOR_RETURN: 'return' },
+  workshop: { QA_PENDING: 'return', READY_FOR_RETURN: 'return' },
+};
 
-  const kind = upcoming[booking.serviceMode]?.[booking.status];
-  if (!kind) return null;
+/** The code the customer should show right now, if any: only at the moment the pro needs it, like a ride app's PIN. */
+function dueKind(booking) {
+  const kind = UPCOMING[booking.serviceMode]?.[booking.status];
+  return kind && !booking.otpVerified?.[`${kind}At`] ? kind : null;
+}
+
+async function issueForUpcoming(booking) {
+  const kind = UPCOMING[booking.serviceMode]?.[booking.status];
+  if (!kind || !ONE_TIME.has(kind)) return null;
   return issue(booking._id, kind);
 }
 
 module.exports = {
+  dueKind,
   issue,
   verify,
   assertGatePassed,
