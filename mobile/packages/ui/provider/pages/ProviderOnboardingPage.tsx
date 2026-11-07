@@ -15,7 +15,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { useProviderOnboardingStatusQuery } from '@zappy/core/api';
-import { LoadingState, Text } from '../../components';
+import { ErrorState, LoadingState, Text } from '../../components';
 import { colors, ink, slate } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -31,7 +31,7 @@ const PREVIOUS: Record<Step, Step | null> = { summary: null, domain: 'summary', 
 export function ProviderOnboardingPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useProviderOnboardingStatusQuery();
+  const { data, isLoading, isError, refetch } = useProviderOnboardingStatusQuery();
   const status = data as OnboardingStatus | undefined;
   const [step, setStep] = useState<Step>('summary');
   const [domain, setDomain] = useState<Domain | null>(null);
@@ -69,7 +69,7 @@ export function ProviderOnboardingPage() {
           {subtitle ? <Text variant="caption" color={ink[400]} numberOfLines={1}>{subtitle}</Text> : null}
         </View>
       </View>
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <ScrollView ref={scroll} contentContainerStyle={{ paddingBottom: insets.bottom }} keyboardShouldPersistTaps="handled">
           {step === 'summary' && status ? (
             <OnboardingSummary status={status} onAddService={() => go('domain')} onOpenEnrolment={(e) => { setLineCode(e.lineCode); go('verify'); }} />

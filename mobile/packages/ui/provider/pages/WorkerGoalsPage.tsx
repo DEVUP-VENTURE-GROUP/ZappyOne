@@ -8,7 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Pencil, Target, TrendingUp, Trophy, Zap } from 'lucide-react-native';
 import { useGetWorkerGoalsQuery, useSetWorkerGoalMutation, useGetZoneBenchmarkQuery } from '@zappy/core/api';
-import { Button, LoadingState, ScreenHeader, Text } from '../../components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { FieldLabel } from '../../components/common/FormField';
 import { FullScreenSheet } from '../../components/common/FullScreenSheet';
@@ -99,7 +99,7 @@ function SetGoalSheet({ period, currentTarget, onClose }: { period: 'daily' | 'w
 
 export function WorkerGoalsPage() {
   const router = useRouter();
-  const { data, isLoading } = useGetWorkerGoalsQuery();
+  const { data, isLoading, isError, refetch } = useGetWorkerGoalsQuery();
   const { data: benchmark } = useGetZoneBenchmarkQuery();
   const [editPeriod, setEditPeriod] = useState<'daily' | 'weekly' | null>(null);
   const goals: Goal[] = data?.goals ?? [];
@@ -120,7 +120,7 @@ export function WorkerGoalsPage() {
             <View style={[styles.bar, { backgroundColor: zappy[800] }]}><View style={[styles.barFill, { width: `${benchmark.percentile}%`, backgroundColor: '#5EEAD4' }]} /></View>
           </View>
         ) : null}
-        {isLoading ? <LoadingState /> : (['daily', 'weekly'] as const).map((p) => (
+        {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (['daily', 'weekly'] as const).map((p) => (
           <View key={p} style={styles.gap}>
             <FieldLabel>{p === 'daily' ? 'DAILY GOAL' : 'WEEKLY GOAL'}</FieldLabel>
             {byPeriod[p] ? <GoalCard goal={byPeriod[p]!} onEdit={() => setEditPeriod(p)} /> : (

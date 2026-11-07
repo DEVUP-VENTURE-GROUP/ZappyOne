@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AlertTriangle, Check, ClipboardCheck, X } from 'lucide-react-native';
 import { useRepairQaChecklistQuery, useSubmitRepairQaMutation } from '@zappy/core/api';
 import { qaState, qaPayload } from '@zappy/core/shared/jobFlows';
-import { Button, LoadingState, Text } from '../../../components';
+import { Button, ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { JobCard } from '../../../components/jobs/JobCard';
 import { errText } from '../../../lib/feedback';
@@ -15,9 +15,10 @@ import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 
 export function QAPanel({ bookingId, onDone }: { bookingId: string; onDone: () => void }) {
-  const { data, isLoading } = useRepairQaChecklistQuery(bookingId);
+  const { data, isLoading, isError, refetch } = useRepairQaChecklistQuery(bookingId);
   const [submit, { isLoading: submitting }] = useSubmitRepairQaMutation();
   const [results, setResults] = useState<Record<string, string>>({});
+  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   const checklist = data?.checklist;
   if (!checklist) return null;

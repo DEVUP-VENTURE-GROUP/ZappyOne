@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Footprints } from 'lucide-react-native';
 import { useHelpingProviderRatesQuery, useSaveHelpingProviderRateMutation } from '@zappy/core/api';
-import { Button, LoadingState, Text } from '../../../components';
+import { Button, ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { errText } from '../../../lib/feedback';
 import { colors, ink, zappy } from '../../../theme/colors';
@@ -24,7 +24,8 @@ interface Errand { serviceType: string; name: string; rate: Record<string, numbe
 // A helper's own rates for each errand in one service (the websites' HelpingRateCard); `fallback` shows when the service has no errands to price.
 export function HelpingRateCard({ lineCode, fallback = null }: { lineCode: string; fallback?: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useHelpingProviderRatesQuery(lineCode);
+  const { data, isLoading, isError, refetch } = useHelpingProviderRatesQuery(lineCode);
+  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   const types: Errand[] = data?.types || [];
   if (!types.length) return <>{fallback}</>;

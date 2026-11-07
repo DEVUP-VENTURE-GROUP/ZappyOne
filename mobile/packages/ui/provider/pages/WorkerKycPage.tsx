@@ -12,7 +12,7 @@ import { useGetKycStatusQuery, useSubmitKycMutation, useWorkerRequestDocumentCha
 import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
 import { pickDocument } from '@zappy/core/lib/pickDocument';
 import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
-import { Button, LoadingState, ScreenHeader, Text } from '../../components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { KycDocRow } from '../../components/kyc/KycDocRow';
 import { MyKycDocuments } from '../../components/kyc/MyKycDocuments';
@@ -41,7 +41,7 @@ function Banner({ tone, Icon, title, children }: { tone: 'amber' | 'green' | 're
 
 export function WorkerKycPage() {
   const insets = useSafeAreaInsets();
-  const { data, refetch, isLoading } = useGetKycStatusQuery();
+  const { data, refetch, isLoading, isError } = useGetKycStatusQuery();
   const [submitKyc, { isLoading: submitting }] = useSubmitKycMutation();
   const [requestChange, { isLoading: requesting }] = useWorkerRequestDocumentChangeMutation();
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -50,6 +50,7 @@ export function WorkerKycPage() {
   const [asking, setAsking] = useState(false);
   const [changeMsg, setChangeMsg] = useState('');
 
+  if (isError && !data) return <View style={styles.page}><ScreenHeader title="ID check" safeArea /><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><ScreenHeader title="ID check" safeArea /><LoadingState /></View>;
 
   const kyc = data?.kyc;

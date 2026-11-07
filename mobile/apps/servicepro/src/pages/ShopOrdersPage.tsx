@@ -6,7 +6,7 @@ import { useShopWorkersQuery } from '@zappy/core/api';
 import { BOARD_COLUMNS, bucketOf } from '@zappy/core/shared/partnerBoard';
 import { formatPaise } from '@zappy/core/shared/money';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
-import { Chip, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Chip, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { StagePill } from '@zappy/ui/components/worker/DashboardUI';
 import { AssignTechnician } from '@zappy/ui/provider/components/AssignTechnician';
 import { providerPath } from '@zappy/ui/provider/paths';
@@ -19,7 +19,7 @@ interface Member { _id: string; name?: string; phone?: string; team?: { role?: s
 
 export function ShopOrdersPage() {
   const router = useRouter();
-  const { mine, isLoading } = useProviderJobs({ kinds: ['repair', 'pet'] });
+  const { mine, isLoading, isError, refetch } = useProviderJobs({ kinds: ['repair', 'pet'] });
   const { data } = useShopWorkersQuery(undefined);
   const [column, setColumn] = useState('new');
   const [who, setWho] = useState('');
@@ -53,7 +53,7 @@ export function ShopOrdersPage() {
           {workers.map((w) => <Chip key={w._id} label={w.name || w.phone || ''} selected={who === String(w._id)} onPress={() => setWho(String(w._id))} />)}
         </ScrollView>
       ) : null}
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <ScrollView contentContainerStyle={styles.body}>
           {inColumn(column).length === 0 ? <Text variant="bodySmall" color={ink[400]} style={styles.empty}>Nothing here</Text> : null}
           {inColumn(column).map((j) => (

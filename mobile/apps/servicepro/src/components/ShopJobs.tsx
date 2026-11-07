@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { Banknote, ChevronRight, Clock, PawPrint, UserX, Wrench } from 'lucide-react-native';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { formatPaise } from '@zappy/core/shared/money';
-import { LoadingState, Text } from '@zappy/ui/components';
+import { ErrorState, LoadingState, Text } from '@zappy/ui/components';
 import { StagePill } from '@zappy/ui/components/worker/DashboardUI';
 import { AssignTechnician } from '@zappy/ui/provider/components/AssignTechnician';
 import { providerPath } from '@zappy/ui/provider/paths';
@@ -22,9 +22,10 @@ interface Job { kind: string; id: string; to: string; title: string; status: str
 
 export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
   const router = useRouter();
-  const { mine, isLoading, refetch } = useProviderJobs({ kinds });
+  const { mine, isLoading, refetch, isError } = useProviderJobs({ kinds });
   const jobs = mine as Job[];
 
+  if (isError) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   if (!jobs.length) {
     return (

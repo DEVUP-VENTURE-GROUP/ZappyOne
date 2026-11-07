@@ -38,7 +38,7 @@ import {
 } from '@zappy/core/shared/jobFlows';
 import { PASS_REASONS } from '@zappy/core/shared/jobOffers';
 import { useAppSelector } from '@zappy/core/store/hooks';
-import { Button, EmptyState, LoadingState, Text } from '../../components';
+import { Button, EmptyState, ErrorState, LoadingState, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { ArrivalBar } from '../../components/common/ArrivalBar';
 import { CodeBoxes } from '../../components/common/CodeBoxes';
@@ -69,7 +69,7 @@ export function WorkerRepairJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
+  const { data, isLoading, refetch, isError } = useGetRepairBookingQuery(id, { pollingInterval: useLivePoll(20000) });
   const { data: verticals } = useRepairVerticalsQuery(undefined);
   const [transition, { isLoading: moving }] = useTransitionRepairBookingMutation();
   const checkedIn = useCheckInThen();
@@ -91,6 +91,7 @@ export function WorkerRepairJobPage() {
   const headingToCustomer = status === 'ON_THE_WAY';
   const proximity = useArrivalProximity(booking?.location?.coordinates, headingToCustomer);
 
+  if (isError && !data) return <View style={styles.page}><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><LoadingState /></View>;
   if (!booking) {
     return (

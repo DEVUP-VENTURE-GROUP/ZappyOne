@@ -15,7 +15,7 @@ import {
 } from '@zappy/core/api';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { last7, weekDeltaPct } from '@zappy/core/shared/workerHome';
-import { Button, LoadingState, Text } from '@zappy/ui/components';
+import { Button, ErrorState, LoadingState, Text } from '@zappy/ui/components';
 import { ProviderServicesCard } from '@zappy/ui/components/provider/ProviderServicesCard';
 import { Panel, StatTile, inr } from '@zappy/ui/components/worker/DashboardUI';
 import { EarningsOverview, weekPoints } from '@zappy/ui/components/worker/EarningsOverview';
@@ -62,7 +62,7 @@ export function ShopDashboard() {
   // Customers near the shop asking for its price.
   const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
   const askingNow = ((priceReqs?.requests || []) as { myOffer?: unknown }[]).filter((r) => !r.myOffer).length;
-  const { data, isLoading, refetch } = useShopMeQuery();
+  const { data, isLoading, refetch, isError } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();
   const { data: today } = useShopEarningsQuery('today');
   const { data: week } = useShopEarningsQuery('week');
@@ -76,6 +76,7 @@ export function ShopDashboard() {
   // Service verification already collected the owner's ID, shop photo and selfie: no second ask while it is in flight.
   const verificationInFlight = ((providerStatus?.enrolments || []) as { status: string }[]).some((e) => ['pending_review', 'approved'].includes(e.status));
 
+  if (isError && !data) return <View style={styles.page}><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><LoadingState /></View>;
 
   const shop = data?.shop;

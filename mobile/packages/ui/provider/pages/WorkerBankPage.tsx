@@ -13,7 +13,7 @@ import {
   useDeleteWorkerBankAccountMutation,
   useSetDefaultWorkerBankAccountMutation,
 } from '@zappy/core/api';
-import { Button, EmptyState, LoadingState, ScreenHeader, Text } from '../../components';
+import { Button, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { FieldLabel, FormField } from '../../components/common/FormField';
 import { FullScreenSheet } from '../../components/common/FullScreenSheet';
@@ -100,7 +100,7 @@ export type Bank = { _id: string; bankName?: string; accountName: string; accoun
 export type Upi = { _id: string; upiId: string; label?: string; isDefault?: boolean; verifiedName?: string };
 
 export function WorkerBankPage() {
-  const { data, isLoading } = useGetWorkerBankAccountsQuery();
+  const { data, isLoading, isError, refetch } = useGetWorkerBankAccountsQuery();
   const [deleteAcc] = useDeleteWorkerBankAccountMutation();
   const [setDefault] = useSetDefaultWorkerBankAccountMutation();
   // From the setup list's UPI step (?focus=upi): open straight on Add UPI ID.
@@ -124,7 +124,7 @@ export function WorkerBankPage() {
   return (
     <View style={styles.page}>
       <ScreenHeader title="Bank & UPI" safeArea right={<Button label="Add" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowAdd(true)} />} />
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <ScrollView contentContainerStyle={styles.body}>
           {banks.length === 0 && upiIds.length === 0 ? (
             <EmptyState title="No payment methods" message="Add a bank account or UPI ID to withdraw your earnings securely." actionLabel="Add method now" onAction={() => setShowAdd(true)}

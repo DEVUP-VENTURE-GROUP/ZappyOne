@@ -6,7 +6,7 @@ import {
   useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation,
   useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
 } from '@zappy/core/api';
-import { Button, LoadingState, Text } from '../../../components';
+import { Button, ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { PhotoTiles } from '../../../components/common/PhotoTiles';
 import { errText } from '../../../lib/feedback';
@@ -28,13 +28,14 @@ const COMMON_INCLUDES = ['Tools and materials', 'Clean-up after the work', 'Befo
 
 // The provider's own menu for one fixed-price service (the websites' MenuEditor): keep or drop sample jobs, add their own, a price per option, live as they save.
 export function MenuEditor({ vertical, onBack, onNext }: { vertical: string; onBack?: () => void; onNext: () => void }) {
-  const { data, isLoading } = useProviderMenuQuery(vertical);
+  const { data, isLoading, isError, refetch } = useProviderMenuQuery(vertical);
   const [startSamples, { isLoading: starting }] = useStartMenuFromSamplesMutation();
   const [adjust, { isLoading: adjusting }] = useAdjustProviderMenuMutation();
   const [editing, setEditing] = useState<Partial<MenuItem> | null>(null);
   const [pct, setPct] = useState('');
   const [preview, setPreview] = useState(false);
   const menu = data as Menu | undefined;
+  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading || !menu) return <LoadingState />;
   const offered = menu.items.filter((i) => i.offered);
   const more = menu.items.filter((i) => !i.offered && !i.own);

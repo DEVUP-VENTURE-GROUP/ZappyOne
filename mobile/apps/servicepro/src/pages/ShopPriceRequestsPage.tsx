@@ -9,7 +9,7 @@ import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { CheckCircle2, Clock, Inbox, MapPin, Send } from 'lucide-react-native';
 import { useOfferPriceMutation, useShopPriceRequestsQuery } from '@zappy/core/api';
 import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
-import { Button, EmptyState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
@@ -88,14 +88,14 @@ function RequestCard({ r }: { r: Request }) {
 }
 
 export function ShopPriceRequestsPage() {
-  const { data, isLoading, refetch } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
+  const { data, isLoading, refetch, isError } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
   // A new request arrives live.
   useSocketEvent('price_request.new', () => { refetch(); toast('A customer near you asked for your price'); });
   const rows: Request[] = data?.requests || [];
   return (
     <View style={styles.page}>
       <ScreenHeader title="Customers asking your price" subtitle="Customers near you asking what you charge" safeArea />
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <FlatList data={rows} keyExtractor={(r) => r._id} contentContainerStyle={styles.body} ItemSeparatorComponent={() => <View style={styles.sep} />}
           renderItem={({ item }) => <RequestCard r={item} />} keyboardShouldPersistTaps="handled"
           ListEmptyComponent={<EmptyState title="No requests right now" message="When a customer nearby needs a repair you have not priced, it shows here and you get a notification." icon={<Inbox size={22} color={slate[300]} />} />} />

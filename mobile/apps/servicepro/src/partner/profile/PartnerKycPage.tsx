@@ -12,7 +12,7 @@ import { useUpdatePartnerMeMutation } from '@zappy/core/api';
 import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
 import { pickDocument } from '@zappy/core/lib/pickDocument';
 import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
-import { Button, Input, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, Input, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { KycDocRow } from '@zappy/ui/components/kyc/KycDocRow';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -41,7 +41,7 @@ const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
 export function PartnerKycPage() {
   const insets = useSafeAreaInsets();
-  const { partner, isLoading } = usePartner();
+  const { partner, isLoading, isError, refetch } = usePartner();
   const [updateMe, { isLoading: saving }] = useUpdatePartnerMeMutation();
   const [pending, setPending] = useState<Record<string, string>>({});
   const [selfieMeta, setSelfieMeta] = useState<LiveCaptureMeta | null>(null);
@@ -49,6 +49,7 @@ export function PartnerKycPage() {
   const [pan, setPan] = useState<string | null>(null);
   const [gst, setGst] = useState<string | null>(null);
 
+  if (isError && !partner) return <View style={styles.page}><ScreenHeader title="ID check" safeArea /><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading || !partner) return <View style={styles.page}><ScreenHeader title="ID check" safeArea /><LoadingState /></View>;
 
   const kyc = (partner.kyc || {}) as Record<string, unknown> & NonNullable<typeof partner.kyc>;

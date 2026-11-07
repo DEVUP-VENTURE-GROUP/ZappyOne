@@ -142,6 +142,8 @@ export function useProviderJobs({ kinds = ['repair', 'pet', 'helping'] } = {}) {
     open,
     notApproved,
     isLoading: sources.some((q) => q.isLoading),
+    // Only when nothing could be shown: a list that loaded stays on screen if one source fails.
+    isError: !mine.length && !open.length && sources.some((q) => q.isError),
     taking: takingPet || takingHelp,
     /** Take an open job; resolves to where its page is. */
     take: async (job) => {

@@ -31,7 +31,7 @@ import {
 } from '@zappy/core/shared/jobFlows';
 import { formatPaise, billTipPaise } from '@zappy/core/shared/money';
 import { useAppSelector } from '@zappy/core/store/hooks';
-import { Button, EmptyState, LoadingState, Text } from '../../components';
+import { Button, EmptyState, ErrorState, LoadingState, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { CollectPaymentCard } from '../../components/common/CollectPaymentCard';
 import { ProofPhotos, readyKeys, type ProofPhoto } from '../../components/common/ProofPhotos';
@@ -57,7 +57,7 @@ export function WorkerPetJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data, isLoading, refetch } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(10000) });
+  const { data, isLoading, refetch, isError } = useGetPetBookingQuery(id, { pollingInterval: useLivePoll(10000) });
   const [advance] = useAdvancePetBookingStatusMutation();
   const [addProof] = useAddPetBookingProofMutation();
   const [collectCash, { isLoading: collecting }] = useCollectPetCashMutation();
@@ -74,6 +74,7 @@ export function WorkerPetJobPage() {
   const ownerGoing = isOwner && !booking?.workerId;
   const sharing = useTripPublish(id, Boolean(trip) && (!isOwner || ownerGoing), { asOwner: ownerGoing });
 
+  if (isError && !data) return <View style={styles.page}><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><LoadingState /></View>;
   if (!booking) return <View style={[styles.page, styles.center]}><EmptyState title="Booking not found" actionLabel="Back to work" onAction={() => router.replace('/worker/work' as never)} /></View>;
 

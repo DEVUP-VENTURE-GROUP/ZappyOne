@@ -4,7 +4,7 @@ import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Briefcase, Users } from 'lucide-react-native';
 import { useShopEarningsQuery } from '@zappy/core/api';
-import { LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { inr } from '@zappy/ui/components/worker/DashboardUI';
 import { colors, ink, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -15,7 +15,7 @@ const RANGES = [{ key: 'today', label: 'Today' }, { key: 'week', label: 'This we
 
 export function ShopEarningsPage() {
   const [range, setRange] = useState('today');
-  const { data, isLoading } = useShopEarningsQuery(range);
+  const { data, isLoading, isError, refetch } = useShopEarningsQuery(range);
   return (
     <View style={styles.page}>
       <ScreenHeader title="Earnings" safeArea />
@@ -30,7 +30,7 @@ export function ShopEarningsPage() {
             </Pressable>
           ))}
         </View>
-        {isLoading ? <LoadingState /> : (
+        {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
           <>
             <View style={styles.total}>
               <Text variant="caption" weight="semibold" color={zappy[100]}>TOTAL EARNINGS</Text>

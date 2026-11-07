@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Check, MapPin, Minus, Plus } from 'lucide-react-native';
 import { useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation } from '@zappy/core/api';
-import { LoadingState, Text } from '../../../components';
+import { ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { LocationPicker } from '../../../components/common/LocationPicker';
 import { errText } from '../../../lib/feedback';
@@ -24,7 +24,7 @@ interface AreaForm { cityCode: string; radiusKm: number; pincodes: string; servi
 interface Profile { address?: { text?: string; location?: { coordinates?: number[] } } }
 
 export function AreaStep({ vertical, profile, onBack, onNext, onCity }: { vertical: string; profile?: Profile; onBack: () => void; onNext: () => void; onCity: (city: string) => void }) {
-  const { data, isLoading } = useRepairServiceAreasQuery(vertical);
+  const { data, isLoading, isError, refetch } = useRepairServiceAreasQuery(vertical);
   const [save, { isLoading: saving }] = useUpsertRepairServiceAreaMutation();
   const [form, setForm] = useState<AreaForm | null>(null);
   const [picking, setPicking] = useState(false);
@@ -46,6 +46,7 @@ export function AreaStep({ vertical, profile, onBack, onNext, onCity }: { vertic
     });
   }, [data, existing, form, profile]);
 
+  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading || !form) return <LoadingState />;
   const set = (patch: Partial<AreaForm>) => setForm((f) => (f ? { ...f, ...patch } : f));
   const needsWorkshop = form.serviceModes.some((m) => m === 'workshop' || m === 'pickup_repair');

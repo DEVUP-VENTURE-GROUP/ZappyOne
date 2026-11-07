@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Briefcase, Circle, Clock, Crown, Plus, ShieldCheck, Star, Trash2, Users, XCircle } from 'lucide-react-native';
 import { useAddShopWorkerMutation, useRemoveShopWorkerMutation, useSetShopWorkerTeamMutation, useShopWorkersQuery } from '@zappy/core/api';
-import { Button, Chip, EmptyState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, Chip, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { DispatchSettingsCard } from '../components/DispatchSettingsCard';
 import { InviteTeamSheet } from '../components/InviteTeamSheet';
 import { toast } from '@zappy/ui/components/Toast';
@@ -53,7 +53,7 @@ function AddWorkerSheet({ onClose }: { onClose: () => void }) {
 }
 
 export function ShopWorkersPage() {
-  const { data, isLoading } = useShopWorkersQuery();
+  const { data, isLoading, isError, refetch } = useShopWorkersQuery();
   const [removeWorker] = useRemoveShopWorkerMutation();
   const [showAdd, setShowAdd] = useState(false);
   const [inviting, setInviting] = useState(false);
@@ -78,7 +78,7 @@ export function ShopWorkersPage() {
   return (
     <View style={styles.page}>
       <ScreenHeader title="Team" safeArea right={<View style={styles.inline}><Button label="Many" size="small" variant="secondary" icon={<Users size={14} color={zappy[700]} />} onPress={() => setInviting(true)} /><Button label="Add" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowAdd(true)} /></View>} />
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <FlatList
           data={workers}
           keyExtractor={(w) => w._id}

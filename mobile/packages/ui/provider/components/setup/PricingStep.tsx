@@ -12,7 +12,7 @@ import {
   useBulkRepairProviderPricingMutation, useRepairBrandsQuery, useRepairModelsQuery,
   useRepairProviderPricingQuery, useRepairWorkCatalogQuery, useSaveRepairCapabilitiesMutation,
 } from '@zappy/core/api';
-import { Button, LoadingState, Text } from '../../../components';
+import { Button, ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { errText } from '../../../lib/feedback';
 import { colors, ink, slate, success, zappy } from '../../../theme/colors';
@@ -30,7 +30,7 @@ import { uniqueRepairs, type RepairGroup } from './workSelection';
 
 export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
-  const { data: pricingData, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
+  const { data: pricingData, isLoading, refetch, isError } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
   const [saveWork] = useSaveRepairCapabilitiesMutation();
   const { data: brandsData } = useRepairBrandsQuery(vertical);
@@ -54,6 +54,7 @@ export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: st
   const counts = useMemo(() => countsFor(pricing, activeBrand), [pricing, activeBrand]);
   const brandName = (code: string | null) => (brandsData?.brands || []).find((b: { code: string; name: string }) => b.code === code)?.name || code || '';
 
+  if (isError && !pricingData) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
 
   /** Take one job off the shop's work, saved like the work step, with Undo. */

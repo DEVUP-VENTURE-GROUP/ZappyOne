@@ -10,7 +10,7 @@ import {
 import { formatPaise } from '@zappy/core/shared/money';
 import { targetLine } from '@zappy/core/shared/staffTarget';
 import { shiftHours } from '@zappy/core/shared/clock';
-import { Button, LoadingState, ScreenHeader, Text } from '../../components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
 import { accent, colors, danger, ink, slate, success, zappy } from '../../theme/colors';
@@ -24,7 +24,7 @@ const STATUS: Record<string, string> = { booked: 'Booked', checked_in: 'On duty'
 const istKey = (offset = 0) => new Date(Date.now() + 330 * 60000 + offset * 86400000).toISOString().slice(0, 10);
 
 export function StaffShiftsPage() {
-  const { data, isLoading } = useWorkforceMeQuery(undefined);
+  const { data, isLoading, isError, refetch } = useWorkforceMeQuery(undefined);
   const { data: sal } = useStaffSalaryQuery(undefined);
   const { data: leaveData } = useStaffLeaveQuery(undefined);
   const [book, { isLoading: booking }] = useBookShiftMutation();
@@ -38,7 +38,7 @@ export function StaffShiftsPage() {
   return (
     <View style={styles.page}>
       <ScreenHeader title="My shifts" safeArea />
-      {isLoading ? <LoadingState /> : !data?.staff ? (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : !data?.staff ? (
         <View style={styles.body}><Text variant="bodySmall" color={ink[700]}>Shifts are for ZappyOne staff.</Text></View>
       ) : (
         <ScrollView contentContainerStyle={styles.body}>

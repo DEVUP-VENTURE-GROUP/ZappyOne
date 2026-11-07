@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, CalendarCheck, Images, Star } from 'lucide-react-native';
 import { usePartnerBookingsQuery, usePartnerNotificationsQuery, usePartnerOverviewQuery } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
-import { IconButton, LoadingState, Text } from '@zappy/ui/components';
+import { IconButton, ErrorState, LoadingState, Text } from '@zappy/ui/components';
 import { colors, danger, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -24,12 +24,13 @@ export function PartnerOverviewPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { partner, verified, refetch: refetchMe } = usePartner();
-  const { data, isLoading, refetch, isFetching } = usePartnerOverviewQuery(undefined, { pollingInterval: 60000 });
+  const { data, isLoading, refetch, isFetching, isError } = usePartnerOverviewQuery(undefined, { pollingInterval: 60000 });
   const { data: newOnes } = usePartnerBookingsQuery({ status: 'confirmed' }, { skip: !verified });
   const { data: upcoming } = usePartnerBookingsQuery({ status: 'upcoming' }, { skip: !verified });
   const { data: notes } = usePartnerNotificationsQuery({ page: 1, unreadOnly: false }, { pollingInterval: useLivePoll(30000) });
   const unread: number = notes?.unread || 0;
 
+  if (isError && !data) return <View style={[styles.page, { paddingTop: insets.top }]}><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading && !partner) return <View style={[styles.page, { paddingTop: insets.top }]}><LoadingState /></View>;
   const s = data?.stats || {};
   const rating = partner?.reviewCount ? Number(partner.rating).toFixed(1) : null;

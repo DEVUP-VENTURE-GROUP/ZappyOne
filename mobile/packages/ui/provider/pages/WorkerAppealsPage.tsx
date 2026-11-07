@@ -7,7 +7,7 @@ import { FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Tex
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, Plus, Scale, X, MessagesSquare } from 'lucide-react-native';
 import { useGetWorkerAppealsQuery, useCreateWorkerAppealMutation } from '@zappy/core/api';
-import { Button, EmptyState, LoadingState, ScreenHeader, Text } from '../../components';
+import { Button, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
@@ -76,14 +76,14 @@ function NewAppealSheet({ onClose }: { onClose: () => void }) {
 type Appeal = { _id: string; type: string; status: string; subject: string; description: string; adminNote?: string; createdAt: string; jobRef?: string; orderId?: string };
 
 export function WorkerAppealsPage() {
-  const { data, isLoading, refetch } = useGetWorkerAppealsQuery();
+  const { data, isLoading, refetch, isError } = useGetWorkerAppealsQuery();
   const [showNew, setShowNew] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const appeals: Appeal[] = data?.appeals ?? [];
   return (
     <View style={styles.page}>
       <ScreenHeader title="Ask us to recheck" safeArea right={<Button label="Ask now" size="small" icon={<Plus size={14} color="#fff" />} onPress={() => setShowNew(true)} />} />
-      {isLoading ? <LoadingState /> : (
+      {isLoading ? <LoadingState /> : isError ? <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /> : (
         <FlatList
           data={appeals}
           keyExtractor={(a) => a._id}

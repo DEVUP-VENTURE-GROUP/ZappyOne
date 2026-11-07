@@ -4,7 +4,7 @@
  */
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRepairBrandsQuery } from '@zappy/core/api';
-import { LoadingState, Text } from '../../../components';
+import { ErrorState, LoadingState, Text } from '../../../components';
 import { BrandLogo } from '../../../components/common/BrandLogo';
 import { colors, ink, slate, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
@@ -14,7 +14,8 @@ import { StepShell } from './StepShell';
 interface Brand { code: string; name: string; logoUrl?: string }
 
 export function BrandsStep({ vertical, selected, onChange, onNext }: { vertical: string; selected: string[]; onChange: (codes: string[]) => void; onNext: () => void }) {
-  const { data, isLoading } = useRepairBrandsQuery(vertical);
+  const { data, isLoading, isError, refetch } = useRepairBrandsQuery(vertical);
+  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   const brands: Brand[] = data?.brands || [];
   const chosen = new Set(selected);

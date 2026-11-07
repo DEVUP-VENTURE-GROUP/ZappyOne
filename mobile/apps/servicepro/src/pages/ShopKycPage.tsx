@@ -12,7 +12,7 @@ import { useShopKycStatusQuery, useSubmitShopKycMutation } from '@zappy/core/api
 import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
 import { pickDocument } from '@zappy/core/lib/pickDocument';
 import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
-import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { KycDocRow } from '@zappy/ui/components/kyc/KycDocRow';
 import { errText } from '@zappy/ui/lib/feedback';
@@ -38,7 +38,7 @@ const DONE: Record<string, { title: string; body: string; Icon: typeof Clock; bg
 
 export function ShopKycPage() {
   const insets = useSafeAreaInsets();
-  const { data, refetch, isLoading } = useShopKycStatusQuery();
+  const { data, refetch, isLoading, isError } = useShopKycStatusQuery();
   const [submitKyc, { isLoading: submitting }] = useSubmitShopKycMutation();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [gstNumber, setGstNumber] = useState('');
@@ -46,6 +46,7 @@ export function ShopKycPage() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [selfieMeta, setSelfieMeta] = useState<LiveCaptureMeta | null>(null);
 
+  if (isError && !data) return <View style={styles.page}><ScreenHeader title="Shop ID check" safeArea /><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><ScreenHeader title="Shop ID check" safeArea /><LoadingState /></View>;
 
   const status: string = data?.kyc?.status || 'not_submitted';

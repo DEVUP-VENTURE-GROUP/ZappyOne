@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { CheckCircle2, Clock, Landmark, Smartphone, XCircle } from 'lucide-react-native';
 import { useGetWorkerBankAccountsQuery, useRequestShopPayoutMutation, useShopPayoutsQuery } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
-import { Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Button, ErrorState, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { useOtpGate } from '@zappy/ui/components/common/OtpGate';
 import { errText, type ApiErr } from '@zappy/ui/lib/feedback';
@@ -28,7 +28,7 @@ interface Payout { _id: string; status: string; amountPaise: number; createdAt: 
 
 export function ShopWithdrawPage() {
   const router = useRouter();
-  const { data, isLoading } = useShopPayoutsQuery();
+  const { data, isLoading, isError, refetch } = useShopPayoutsQuery();
   const { data: accounts } = useGetWorkerBankAccountsQuery();
   const [request, { isLoading: sending }] = useRequestShopPayoutMutation();
   const otp = useOtpGate();
@@ -41,6 +41,7 @@ export function ShopWithdrawPage() {
   ], [accounts]);
   useEffect(() => { if (!dest && options.length) setDest(options.find((o) => o.isDefault) || options[0]); }, [options, dest]);
 
+  if (isError && !data) return <View style={styles.page}><ScreenHeader title="Take out money" safeArea /><ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} /></View>;
   if (isLoading) return <View style={styles.page}><ScreenHeader title="Take out money" safeArea /><LoadingState /></View>;
   const b = data || {};
   const paise = Math.round(Number(amount || 0) * 100);
