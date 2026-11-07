@@ -42,6 +42,7 @@ import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
 import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
+import { HomeFooter } from './HomeFooter';
 import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
 import { ProblemChips } from './ProblemChips';
@@ -217,6 +218,7 @@ export function HomePage() {
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
             <AdBanner isAuthed={isAuthed} />
             <NearbyShopsLink />
+            <HomeFooter areas={svc?.areas || []} />
           </>
         )}
       </Animated.ScrollView>

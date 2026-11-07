@@ -1,6 +1,7 @@
-import { ShieldCheck } from "lucide-react";
+import { Heart, ShieldCheck } from "lucide-react";
 import { ZappyWordmark } from "@shared/components/common/ZappyLogo";
 import { PORTAL_URLS } from "@shared/config/portals";
+import { APP_PACKAGES } from "@shared/config/appVersion";
 import { jhalarCss } from '@shared/customer/season';
 import { useGetPoliciesQuery } from "@shared/services/api";
 
@@ -17,7 +18,7 @@ const SOCIALS = [
   { label: "Threads", href: "https://www.threads.com/@zappyone.india" },
   {
     label: "Play Store",
-    href: "https://play.google.com/store/apps/details?id=co.in.zappy",
+    href: `https://play.google.com/store/apps/details?id=${APP_PACKAGES.customer}`,
   },
 ];
 
@@ -141,6 +142,13 @@ export default function Footer({ services = [], areas = [], season = null, theme
             </p>
           </div>
         )}
+
+        <div className="mt-12">
+          <p className="text-[44px] font-black leading-[0.98] tracking-[-0.03em] text-white/15 [text-wrap:balance] sm:text-[72px]">
+            India&apos;s doorstep help app
+          </p>
+          <Heart aria-hidden="true" size={36} className="mt-3 fill-[#F0566B] text-[#F0566B]" />
+        </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-[12px] text-slate-500 md:flex-row">
           <p>© {new Date().getFullYear()} ZappyOne, a venture of DevUp Ecosystem</p>
