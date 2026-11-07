@@ -13,14 +13,14 @@ import {
   useAdminBlockShopMutation, useAdminShopKycDocUrlsQuery,
 } from '@shared/services/api';
 import {
-  SectionHeader, Pagination, StatusBadge, Card, Th, Td,
-  EmptyState, PageLoader, fmtDate,
+  SectionHeader, StatusBadge, PageLoader, fmtDate,
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
 import { SelfieMetaBadges } from './KycReview';
 import AskAgain from './AskAgain';
 import PartnerRateCard from '../money/economics/PartnerRateCard';
 import { useDebounced } from '@shared/hooks/useDebounced';
+import DataTable, { eachRow } from '@/ui/DataTable';
 
 /* Permanent doc hook — server-proxied, no URL expiry */
 function useKycDoc(shopId, docType, token, enabled = true) {
@@ -357,7 +357,8 @@ export default function Shops({ reviewMode = false }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
 
-  const { data, isFetching, refetch } = useAdminShopsQuery({ q: qSettled || undefined, kycStatus: kycStatus || undefined, page });
+  const [blockShop] = useAdminBlockShopMutation();
+  const { data, isLoading, isError, isFetching, refetch } = useAdminShopsQuery({ q: qSettled || undefined, kycStatus: kycStatus || undefined, page });
 
   return (
     <div className="space-y-4">
@@ -383,56 +384,39 @@ export default function Shops({ reviewMode = false }) {
         </select>
       </div>
 
-      <Card className="overflow-hidden">
-        {isFetching && <div className="h-1 bg-blue-600 animate-pulse" />}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <Th>Business</Th><Th>Owner</Th><Th>Phone</Th><Th>Services</Th>
-                <Th>KYC</Th><Th>Status</Th><Th>Actions</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {data?.shops?.map((s) => (
-                <tr key={s._id} className="hover:bg-slate-50/60 transition-colors">
-                  <Td>
-                    <button className="font-semibold text-zappy-700 hover:underline text-left" onClick={() => setSelected(s)}>
-                      {s.businessName}
-                    </button>
-                  </Td>
-                  <Td muted>{s.ownerName}</Td>
-                  <Td muted>{s.phone}</Td>
-                  <Td>
-                    <div className="flex flex-wrap gap-1">
-                      {s.services?.slice(0, 2).map((sk) => (
-                        <span key={sk} className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-1.5 py-0.5 rounded">{sk.replace(/_/g, ' ')}</span>
-                      ))}
-                      {(s.services?.length || 0) > 2 && <span className="text-[10px] text-slate-400">+{s.services.length - 2}</span>}
-                    </div>
-                  </Td>
-                  <Td><StatusBadge status={s.kyc?.status || 'not_submitted'} /></Td>
-                  <Td>
-                    {s.isBlocked
-                      ? <StatusBadge status="blocked" />
-                      : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Active</span>}
-                  </Td>
-                  <Td>
-                    <button onClick={() => setSelected(s)}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zappy-50 text-zappy-700 hover:bg-zappy-100 transition">
-                      <Store size={12} /> View
-                    </button>
-                  </Td>
-                </tr>
+      <DataTable
+        rows={data?.shops || []}
+        loading={isLoading}
+        fetching={isFetching}
+        error={isError && !data}
+        onRetry={refetch}
+        onRowClick={setSelected}
+        empty={{ message: 'No shops found', icon: Store }}
+        page={page} total={data?.total} onPage={setPage}
+        columns={[
+          { key: 'businessName', header: 'Business', render: (s) => <span className="font-semibold text-zappy-700">{s.businessName}</span> },
+          { key: 'ownerName', header: 'Owner', render: (s) => <span className="text-slate-500">{s.ownerName}</span> },
+          { key: 'phone', header: 'Phone', render: (s) => <span className="text-slate-500">{s.phone}</span> },
+          { key: 'services', header: 'Services', sortValue: (s) => s.services?.length || 0, render: (s) => (
+            <div className="flex flex-wrap gap-1">
+              {s.services?.slice(0, 2).map((sk) => (
+                <span key={sk} className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-1.5 py-0.5 rounded">{sk.replace(/_/g, ' ')}</span>
               ))}
-            </tbody>
-          </table>
-          {!data?.shops?.length && !isFetching && <EmptyState message="No shops found" icon={Store} />}
-        </div>
-        <div className="px-4 py-3 border-t border-slate-100">
-          <Pagination page={page} total={data?.total} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
-        </div>
-      </Card>
+              {(s.services?.length || 0) > 2 && <span className="text-[10px] text-slate-400">+{s.services.length - 2}</span>}
+            </div>
+          ) },
+          { key: 'kyc', header: 'KYC', sortValue: (s) => s.kyc?.status || 'not_submitted', render: (s) => <StatusBadge status={s.kyc?.status || 'not_submitted'} /> },
+          { key: 'status', header: 'Status', sortValue: (s) => (s.isBlocked ? 1 : 0), render: (s) => (s.isBlocked
+            ? <StatusBadge status="blocked" />
+            : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Active</span>) },
+          { key: 'view', header: '', sortable: false, render: () => <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zappy-50 text-zappy-700 w-fit"><Store size={12} /> View</span> },
+        ]}
+        bulkActions={reviewMode ? [] : [
+          { label: 'Block', tone: 'danger', confirm: (rows) => `Block ${rows.length} shop${rows.length === 1 ? '' : 's'}? They stop getting orders until unblocked.`,
+            run: async (rows) => { const r = await eachRow(rows.filter((x) => !x.isBlocked), (x) => blockShop({ id: x._id, blocked: true }).unwrap()); refetch(); return r; } },
+          { label: 'Unblock', run: async (rows) => { const r = await eachRow(rows.filter((x) => x.isBlocked), (x) => blockShop({ id: x._id, blocked: false }).unwrap()); refetch(); return r; } },
+        ]}
+      />
 
       {selected && <ShopDetailPanel shop={selected} reviewMode={reviewMode} onClose={() => setSelected(null)} onRefetch={refetch} />}
     </div>

@@ -10,12 +10,10 @@ import {
   X, Phone, Mail, Star, Calendar, Package, AlertTriangle,
   ChevronRight, MapPin,
 } from 'lucide-react';
-import {
-  SectionHeader, Pagination, StatusBadge, Card, Th, Td,
-  PageLoader, EmptyState, fmtDate,
-} from '../../ui/kit';
+import { SectionHeader, StatusBadge, fmtDate } from '../../ui/kit';
 import toast from 'react-hot-toast';
 import { useDebounced } from '@shared/hooks/useDebounced';
+import DataTable, { eachRow } from '@/ui/DataTable';
 
 /**
  * Best-known location for a user, as a readable address — never raw
@@ -254,7 +252,7 @@ export default function Users() {
   const [confirmUser, setConfirmUser] = useState(null);
   const [blockingId, setBlockingId] = useState(null);
 
-  const { data, isFetching, refetch } = useAdminListUsersQuery({ q: qSettled || undefined, blocked: blocked || undefined, page });
+  const { data, isLoading, isError, isFetching, refetch } = useAdminListUsersQuery({ q: qSettled || undefined, blocked: blocked || undefined, page });
   const [blockUser] = useAdminBlockUserMutation();
 
   async function doBlock(u) {
@@ -296,43 +294,32 @@ export default function Users() {
         </select>
       </div>
 
-      <Card className="overflow-hidden">
-        {isFetching && <div className="h-1 bg-blue-600 animate-pulse" />}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <Th>Name</Th><Th>Phone</Th><Th>Email</Th><Th>Rating</Th><Th>Status</Th><Th>Joined</Th><Th></Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {data?.users?.map((u) => (
-                <tr
-                  key={u._id}
-                  onClick={() => setSelectedId(u._id)}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                >
-                  <Td><span className="font-semibold text-slate-900">{u.name || '-'}</span></Td>
-                  <Td muted>{u.phone}</Td>
-                  <Td muted>{u.email || '-'}</Td>
-                  {/* Rated by providers (jobs/customer-rating); flagged when low or marked unsafe. */}
-                  <Td><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span>
-                    {u.flags?.lowCustomerRating && <span className="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10.5px] font-bold text-red-700">Flagged by providers</span>}</Td>
-                  <Td><StatusBadge status={u.isBlocked ? 'blocked' : 'active'} /></Td>
-                  <Td muted>{fmtDate(u.createdAt)}</Td>
-                  <Td>
-                    <ChevronRight size={14} className="text-slate-300" />
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!data?.users?.length && !isFetching && <EmptyState message="No users found" icon={UsersIcon} />}
-        </div>
-        <div className="px-4 py-3 border-t border-slate-100">
-          <Pagination page={page} total={data?.total} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
-        </div>
-      </Card>
+      <DataTable
+        rows={data?.users || []}
+        loading={isLoading}
+        fetching={isFetching}
+        error={isError && !data}
+        onRetry={refetch}
+        onRowClick={(u) => setSelectedId(u._id)}
+        empty={{ message: 'No users found', icon: UsersIcon }}
+        page={page} total={data?.total} onPage={setPage}
+        columns={[
+          { key: 'name', header: 'Name', render: (u) => <span className="font-semibold text-slate-900">{u.name || '-'}</span> },
+          { key: 'phone', header: 'Phone', render: (u) => <span className="text-slate-500">{u.phone}</span> },
+          { key: 'email', header: 'Email', render: (u) => <span className="text-slate-500">{u.email || '-'}</span> },
+          // Rated by providers (jobs/customer-rating); flagged when low or marked unsafe.
+          { key: 'rating', header: 'Rating', sortValue: (u) => (u.ratingCount ? Number(u.rating) : -1), render: (u) => (<><span className="font-semibold">{u.ratingCount ? `${Number(u.rating).toFixed(1)} ★` : 'New'}</span>
+            {u.flags?.lowCustomerRating && <span className="ml-1.5 rounded-full bg-red-50 px-1.5 py-0.5 text-[10.5px] font-bold text-red-700">Flagged by providers</span>}</>) },
+          { key: 'status', header: 'Status', sortValue: (u) => (u.isBlocked ? 1 : 0), render: (u) => <StatusBadge status={u.isBlocked ? 'blocked' : 'active'} /> },
+          { key: 'createdAt', header: 'Joined', sortValue: (u) => new Date(u.createdAt).getTime() || 0, render: (u) => <span className="text-slate-500">{fmtDate(u.createdAt)}</span> },
+          { key: 'go', header: '', sortable: false, render: () => <ChevronRight size={14} className="text-slate-300" /> },
+        ]}
+        bulkActions={[
+          { label: 'Block', tone: 'danger', confirm: (rows) => `Block ${rows.length} user${rows.length === 1 ? '' : 's'}? They cannot book until unblocked.`,
+            run: async (rows) => { const r = await eachRow(rows.filter((u) => !u.isBlocked), (u) => blockUser({ id: u._id, blocked: true }).unwrap()); refetch(); return r; } },
+          { label: 'Unblock', run: async (rows) => { const r = await eachRow(rows.filter((u) => u.isBlocked), (u) => blockUser({ id: u._id, blocked: false }).unwrap()); refetch(); return r; } },
+        ]}
+      />
 
       {/* User detail drawer */}
       {selectedId && (
