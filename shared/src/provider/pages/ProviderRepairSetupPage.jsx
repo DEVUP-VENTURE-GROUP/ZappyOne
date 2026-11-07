@@ -181,6 +181,8 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
   const { data, isLoading } = useRepairBrandsQuery(vertical);
   const brands = data?.brands || [];
   const all = brands.length > 0 && selected.length === brands.length;
+  // No brand list from ZappyOne for this service yet: nothing to pick, so the pro goes on to their own work and prices.
+  const none = brands.length === 0;
 
   if (isLoading) return <Spinner />;
 
@@ -189,9 +191,10 @@ function BrandsStep({ vertical, selected, onChange, onNext }) {
       title="Which brands do you work on?"
       hint="Customers see these on your profile. You can change them any time."
       onNext={onNext}
-      canNext={selected.length > 0}
-      nextLabel={selected.length ? `Continue with ${selected.length}` : 'Pick at least one'}
+      canNext={none || selected.length > 0}
+      nextLabel={none ? 'Continue' : selected.length ? `Continue with ${selected.length}` : 'Pick at least one'}
     >
+      {none && <p className="text-[14px] text-slate-500">No brand list for this service yet. Continue and set up the work you do and your prices.</p>}
       <button
         onClick={() => onChange(all ? [] : brands.map((b) => b.code))}
         className="text-xs font-bold text-zappy-600"

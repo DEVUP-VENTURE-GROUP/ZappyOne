@@ -31,7 +31,7 @@ import { useDebounced } from '@zappy/core/shared/useDebounced';
 
 export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
-  const { data: pricingData, isLoading, refetch, isError } = useRepairProviderPricingQuery(vertical);
+  const { data: pricingData, isLoading, refetch, isError, error } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
   const [saveWork] = useSaveRepairCapabilitiesMutation();
   const { data: brandsData } = useRepairBrandsQuery(vertical);
@@ -56,7 +56,7 @@ export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: st
   const counts = useMemo(() => countsFor(pricing, activeBrand), [pricing, activeBrand]);
   const brandName = (code: string | null) => (brandsData?.brands || []).find((b: { code: string; name: string }) => b.code === code)?.name || code || '';
 
-  if (isError && !pricingData) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
+  if (isError && !pricingData) return <ErrorState title="This did not load" message={errText(error, 'Check your internet and try again.')} onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
 
   /** Take one job off the shop's work, saved like the work step, with Undo. */

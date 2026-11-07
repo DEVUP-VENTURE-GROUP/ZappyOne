@@ -5,6 +5,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useRepairBrandsQuery } from '@zappy/core/api';
 import { ErrorState, LoadingState, Text } from '../../../components';
+import { errText } from '../../../lib/feedback';
 import { BrandLogo } from '../../../components/common/BrandLogo';
 import { colors, ink, slate, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
@@ -14,16 +15,20 @@ import { StepShell } from './StepShell';
 interface Brand { code: string; name: string; logoUrl?: string }
 
 export function BrandsStep({ vertical, selected, onChange, onNext }: { vertical: string; selected: string[]; onChange: (codes: string[]) => void; onNext: () => void }) {
-  const { data, isLoading, isError, refetch } = useRepairBrandsQuery(vertical);
-  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
+  const { data, isLoading, isError, error, refetch } = useRepairBrandsQuery(vertical);
+  // The server's own reason, so a failure says what is wrong rather than always blaming the internet.
+  if (isError && !data) return <ErrorState title="This did not load" message={errText(error, 'Check your internet and try again.')} onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   const brands: Brand[] = data?.brands || [];
   const chosen = new Set(selected);
   const all = brands.length > 0 && selected.length === brands.length;
+  // No brand list from ZappyOne for this service yet: nothing to pick, so the pro goes on to their own work and prices.
+  const none = brands.length === 0;
 
   return (
     <StepShell title="Which brands do you work on?" hint="Customers see these on your profile. You can change them any time."
-      onNext={onNext} canNext={selected.length > 0} nextLabel={selected.length ? `Continue with ${selected.length}` : 'Pick at least one'}>
+      onNext={onNext} canNext={none || selected.length > 0} nextLabel={none ? 'Continue' : selected.length ? `Continue with ${selected.length}` : 'Pick at least one'}>
+      {none ? <Text variant="body" color={ink[500]}>No brand list for this service yet. Continue and set up the work you do and your prices.</Text> : null}
       <Pressable onPress={() => onChange(all ? [] : brands.map((b) => b.code))} hitSlop={8} accessibilityRole="button" style={styles.selectAll}>
         <Text variant="caption" weight="bold" color={zappy[600]}>{all ? 'Clear all' : 'Select all brands'}</Text>
       </Pressable>

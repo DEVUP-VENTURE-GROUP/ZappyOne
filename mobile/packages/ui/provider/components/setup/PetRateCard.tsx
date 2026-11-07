@@ -19,7 +19,7 @@ const toP = (r: string | undefined) => (Number(r) >= 1 ? Math.round(Number(r) * 
 // A pet care provider's own prices for one pet service (the websites' PetRateCard): a price per pet size, add-ons, pickup and drop-back. ZappyOne sets none.
 export function PetRateCard({ category }: { category: string }) {
   const insets = useSafeAreaInsets();
-  const { data, isLoading, isError, refetch } = usePetProviderRatesQuery(undefined);
+  const { data, isLoading, isError, refetch, error } = usePetProviderRatesQuery(undefined);
   const [save, { isLoading: saving }] = useSavePetProviderRatesMutation();
   const [rates, setRates] = useState<Record<string, Record<string, string>>>({});
   const [addons, setAddons] = useState<Record<string, string>>({});
@@ -31,7 +31,7 @@ export function PetRateCard({ category }: { category: string }) {
     setAddons(Object.fromEntries(card.addons.map((a) => [a.code, toR(a.pricePaise)])));
     setFees({ pickup: toR(card.pickupPaise), ret: toR(card.returnPaise) });
   }, [card]);
-  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
+  if (isError && !data) return <ErrorState title="This did not load" message={errText(error, 'Check your internet and try again.')} onRetry={refetch} />;
   if (isLoading || !card) return <LoadingState />;
   const mine = card.services.filter((s) => s.categoryCode === category);
 

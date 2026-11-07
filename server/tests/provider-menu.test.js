@@ -27,9 +27,17 @@ beforeAll(async () => {
 });
 afterAll(stopMongo);
 
-test('a fixed-price service is a menu; a phone repair is not', async () => {
+test('a fixed-price service is a menu; a phone repair priced model by model is not', async () => {
+  const { Repair } = require('../src/modules/repair/models/repair.model');
+  await Repair.collection.insertOne({ vertical: 'mobile', code: 'screen_test', name: 'Screen', pricingMode: 'range', isActive: true, isArchived: false, owner: null });
   expect(await menu.isMenuService(V)).toBe(true);
   expect(await menu.isMenuService('mobile')).toBe(false);
+});
+
+test('a service admin has not set up yet is the provider\'s own menu, never an empty list', async () => {
+  expect(await menu.isMenuService('brand_new_service')).toBe(true);
+  const m = await menu.menu(own(shop), 'brand_new_service');
+  expect(Array.isArray(m.items)).toBe(true);
 });
 
 test('the starter menu shows sample jobs with suggested starting prices, nothing offered until they choose', async () => {

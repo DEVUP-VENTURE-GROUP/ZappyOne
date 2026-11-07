@@ -17,13 +17,10 @@ const ownerRef = (o) => (o.shopId ? { kind: 'shop', id: o.shopId } : { kind: 'wo
 const filterOf = (o) => (o.shopId ? { shopId: o.shopId } : { workerId: o.workerId });
 const cleanIncludes = (list = []) => [...new Set(list.map((x) => String(x || '').trim()).filter((x) => x.length >= 2))].slice(0, MAX_INCLUDES).map((x) => x.slice(0, 60));
 
-// A menu fits a service whose every shared job has one fixed price per option and no parts to grade (phones, laptops and vehicles keep their model-by-model price sheet).
+// A menu service unless admin set it up as model-by-model pricing; nothing seeded yet means the provider builds their own menu, never an empty list.
 async function isMenuService(vertical) {
-  const [any, deep] = await Promise.all([
-    Repair.exists({ vertical, owner: null, isActive: true, isArchived: false, isAddOn: { $ne: true } }),
-    Repair.exists({ vertical, owner: null, isActive: true, isArchived: false, $or: [{ pricingMode: { $ne: 'fixed' } }, { 'partRequirements.0': { $exists: true } }] }),
-  ]);
-  return !!any && !deep;
+  const deep = await Repair.exists({ vertical, owner: null, isActive: true, isArchived: false, $or: [{ pricingMode: { $ne: 'fixed' } }, { 'partRequirements.0': { $exists: true } }] });
+  return !deep;
 }
 
 async function assertMenuService(vertical) {

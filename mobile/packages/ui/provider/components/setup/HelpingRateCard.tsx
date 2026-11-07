@@ -24,8 +24,8 @@ interface Errand { serviceType: string; name: string; rate: Record<string, numbe
 // A helper's own rates for each errand in one service (the websites' HelpingRateCard); `fallback` shows when the service has no errands to price.
 export function HelpingRateCard({ lineCode, fallback = null }: { lineCode: string; fallback?: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { data, isLoading, isError, refetch } = useHelpingProviderRatesQuery(lineCode);
-  if (isError && !data) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
+  const { data, isLoading, isError, refetch, error } = useHelpingProviderRatesQuery(lineCode);
+  if (isError && !data) return <ErrorState title="This did not load" message={errText(error, 'Check your internet and try again.')} onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
   const types: Errand[] = data?.types || [];
   if (!types.length) return <>{fallback}</>;
