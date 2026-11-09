@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import { useFCM } from '../features/notifications/useFCM.jsx';
-import useTelemetry from '../hooks/useTelemetry';
+import useTelemetry from '@shared/hooks/useTelemetry';
 import { prefetchMainTabs, onIdle } from '../lib/routePrefetch';
 import { prefetchServiceCatalog } from '../features/catalog/useServiceCatalog';
 import { loadCategories } from '../features/catalog/useCategories';

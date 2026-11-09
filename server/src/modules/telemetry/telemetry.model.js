@@ -20,7 +20,14 @@ const visitorSessionSchema = new mongoose.Schema(
   {
     sessionId: { type: String, required: true, unique: true, index: true },
     userId:    { type: mongoose.Schema.Types.ObjectId, default: null },
-    userType:  { type: String, enum: ['guest', 'user', 'worker', 'admin'], default: 'guest', index: true },
+    userType:  { type: String, enum: ['guest', 'user', 'worker', 'shop', 'event_partner', 'admin'], default: 'guest', index: true },
+
+    // Which surface: the website or a phone app, which app, and its version (admin App & traffic).
+    platform:    { type: String, enum: ['web', 'android', 'ios'], default: 'web', index: true },
+    app:         { type: String, enum: ['customer', 'servicepro', 'admin'], default: 'customer', index: true },
+    appVersion:  { type: String, default: null, index: true },
+    deviceModel: { type: String, default: null },
+    osVersion:   { type: String, default: null },
 
     device:  { type: String, enum: ['mobile', 'tablet', 'desktop', 'bot', 'unknown'], default: 'unknown', index: true },
     browser: { type: String, default: 'unknown' },

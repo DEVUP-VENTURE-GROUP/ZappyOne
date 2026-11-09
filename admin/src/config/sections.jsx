@@ -13,6 +13,16 @@ const page = (load) => lazy(load);
 const P = {
   Overview: page(() => import('../features/overview/Overview')),
   Insights: page(() => import('../features/insights/Insights')),
+  TrafficLive: page(() => import('../features/traffic/Traffic').then((m) => ({ default: m.LiveNowView }))),
+  TrafficDaily: page(() => import('../features/traffic/Traffic').then((m) => ({ default: m.TrafficView }))),
+  TrafficVersions: page(() => import('../features/traffic/Traffic').then((m) => ({ default: m.VersionsView }))),
+  TrafficFunnel: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.FunnelTrafficView }))),
+  TrafficNotifications: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.NotificationsTrafficView }))),
+  TrafficPartners: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.PartnersTrafficView }))),
+  TrafficRetention: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.RetentionTrafficView }))),
+  TrafficSearch: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.SearchTrafficView }))),
+  TrafficSources: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.SourcesTrafficView }))),
+  TrafficSpeed: page(() => import('../features/traffic/TrafficMore').then((m) => ({ default: m.SpeedTrafficView }))),
   Services: page(() => import('../features/catalog/ServicesHub')),
   Customers: page(() => import('../features/customers/Customers')),
   Bookings: page(() => import('../features/bookings/Bookings')),
@@ -68,6 +78,19 @@ const hub = (title, subtitle, views) => {
 };
 
 const HUBS = {
+  // Who uses the websites and the apps: live now, daily traffic, versions and phones (admin-portal/traffic).
+  traffic: hub('App & traffic', 'People on the websites and the apps, live and day by day', [
+    { id: 'live', label: 'Live now', icon: Radio, Comp: P.TrafficLive },
+    { id: 'daily', label: 'Traffic', icon: LineChart, Comp: P.TrafficDaily },
+    { id: 'funnel', label: 'Funnel', icon: Activity, Comp: P.TrafficFunnel },
+    { id: 'retention', label: 'Retention', icon: Repeat, Comp: P.TrafficRetention },
+    { id: 'partners', label: 'Partners', icon: Store, Comp: P.TrafficPartners },
+    { id: 'notifications', label: 'Notifications', icon: BellRing, Comp: P.TrafficNotifications },
+    { id: 'search', label: 'Search', icon: Globe, Comp: P.TrafficSearch },
+    { id: 'sources', label: 'Sources', icon: Ticket, Comp: P.TrafficSources },
+    { id: 'versions', label: 'Versions & phones', icon: Layers, Comp: P.TrafficVersions },
+    { id: 'speed', label: 'Speed', icon: Zap, Comp: P.TrafficSpeed },
+  ]),
   // Oversight of the fleet; it is run in the Fleet portal (fleet/).
   fleet: hub('Fleet insights', 'How your own hubs and staff are doing, and what to do about it', ADMIN_FLEET_VIEWS),
   helpdesk: hub('Help desk', 'Customer tickets, disputes and reviews', [
@@ -111,6 +134,7 @@ export const NAV_GROUPS = [
   { label: 'Insights', items: [
     { id: 'overview', area: 'overview', label: 'Overview', icon: LayoutDashboard, Comp: P.Overview },
     { id: 'insights', area: 'insights', label: 'Insights', icon: LineChart, Comp: P.Insights },
+    { id: 'traffic', area: 'insights', label: 'App & traffic', icon: Activity, Comp: HUBS.traffic },
   ] },
   { label: 'Catalog', items: [
     { id: 'services', area: 'catalog', label: 'Services', icon: Layers, Comp: P.Services },

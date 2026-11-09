@@ -21,7 +21,7 @@ import Footer from '../../components/layout/Footer';
 import SpotlightSearch from '../catalog/SpotlightSearch';
 import LensModal from '../catalog/LensModal';
 import { useMyJobs } from '@shared/customer/useMyJobs';
-import { trackSearch } from '../../hooks/useTelemetry';
+import { trackSearch } from '@shared/hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';

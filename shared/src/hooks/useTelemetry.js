@@ -60,16 +60,14 @@ export function sendBeacon(endpoint, body) {
   } catch { /* analytics must never break the app */ }
 }
 
-export default function useTelemetry() {
+// app: which website this is (customer or servicepro), for admin App & traffic.
+export default function useTelemetry({ app = 'customer' } = {}) {
   const location = useLocation();
   const { role, profile } = useSelector(selectAuth);
   const userId = profile?.id || profile?._id || undefined;
   const sidRef = useRef(getSessionId());
 
-  const userType = role === 'worker' ? 'worker'
-    : role === 'admin' ? 'admin'
-    : role ? 'user'        // user / event_partner
-    : 'guest';
+  const userType = ['worker', 'shop', 'event_partner', 'admin'].includes(role) ? role : role ? 'user' : 'guest';
 
   const tracked = userType !== 'admin'; // don't count admins as visitors
 
@@ -82,9 +80,11 @@ export default function useTelemetry() {
       referrer: document.referrer || null,
       userType,
       userId: userId || undefined,
+      platform: 'web',
+      app,
       ...lastCoords(),
     });
-  }, [location.pathname, tracked, userType, userId]);
+  }, [location.pathname, tracked, userType, userId, app]);
 
   // Heartbeat while the tab is visible
   useEffect(() => {

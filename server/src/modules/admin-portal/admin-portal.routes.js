@@ -188,6 +188,38 @@ router.get('/insights/booking-health', async (req, res, next) => {
   try { res.json(await require('./booking-health.service').bookingHealth({ days: req.query.days })); } catch (err) { next(err); }
 });
 
+// App & traffic: live now, daily traffic by surface, versions and phones (admin-portal/traffic).
+router.get('/insights/traffic/live', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').live()); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/summary', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').summary({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/versions', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').versions({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/funnel', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').funnel({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/notifications', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').notifications({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/partners', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').partners({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/searches', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').searches({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/sources', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').sources({ days: req.query.days })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/retention', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').retention({ weeks: req.query.weeks })); } catch (err) { next(err); }
+});
+router.get('/insights/traffic/speed', async (req, res, next) => {
+  try { res.json(await require('./traffic.service').speed()); } catch (err) { next(err); }
+});
+
 router.get('/insights/overview', async (req, res, next) => {
   try { res.json(await require('./analytics.service').overview({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
 });

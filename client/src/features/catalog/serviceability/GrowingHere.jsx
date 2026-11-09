@@ -6,7 +6,7 @@ import { BellRing, Check, Loader2, MapPin } from 'lucide-react';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useNotifyLaunchMutation } from '@shared/services/api';
 import { artFor } from '@shared/components/home/serviceArt';
-import { trackSearch } from '../../../hooks/useTelemetry';
+import { trackSearch } from '@shared/hooks/useTelemetry';
 
 /**
  * Shown at the booking step when nobody verified covers the address yet.

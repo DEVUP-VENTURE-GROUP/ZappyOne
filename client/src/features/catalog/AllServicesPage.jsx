@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useGetServiceabilityQuery } from '@shared/services/api';
 import { loadGeoLocation } from '@shared/hooks/useGeolocation';
-import { trackSearch } from '../../hooks/useTelemetry';
+import { trackSearch } from '@shared/hooks/useTelemetry';
 import LiveServices from '@shared/components/home/LiveServices';
 import SEO from '@shared/components/SEO';
 

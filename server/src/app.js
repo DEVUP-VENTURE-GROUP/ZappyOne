@@ -19,6 +19,7 @@ function buildApp() {
 
   app.set("trust proxy", 1);
   app.use(requestIdMiddleware);
+  app.use(require("./middlewares/requestTiming").requestTiming);
   app.use(cookieParser()); // needed for req.cookies (httpOnly refresh token)
   // Helmet with explicit Content-Security-Policy
   // Tight CSP eliminates most XSS vectors even if an attacker injects script.

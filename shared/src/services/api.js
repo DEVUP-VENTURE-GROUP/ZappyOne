@@ -380,6 +380,8 @@ export const {
   useAdminFeesQuery,
   useAdminBookingAttentionQuery,
   useAdminInsightsOverviewQuery,
+  useAdminTrafficLiveQuery, useAdminTrafficSummaryQuery, useAdminTrafficVersionsQuery,
+  useAdminTrafficFunnelQuery, useAdminTrafficNotificationsQuery, useAdminTrafficPartnersQuery, useAdminTrafficSearchesQuery, useAdminTrafficSourcesQuery, useAdminTrafficRetentionQuery, useAdminTrafficSpeedQuery,
   useAdminInsightsDemandQuery,
   useAdminInsightsSupplyQuery,
   useAdminInsightsFunnelQuery,

@@ -7,7 +7,7 @@ import { problemPhoto, categoryPhoto, servicePhoto } from '@shared/components/ho
 import { useLazySmartSearchQuery, useMenuSearchQuery, useSearchTrendingQuery } from '@shared/services/api';
 import { getRecent, addRecent, clearRecent } from './recentSearches';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
-import { trackSearch } from '../../hooks/useTelemetry';
+import { trackSearch } from '@shared/hooks/useTelemetry';
 
 /**
  * Full-screen search over the live catalog.

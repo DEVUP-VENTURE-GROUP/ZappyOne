@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, Outlet, useOutletContext } from 'react-router-
 import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
+import useTelemetry from '@shared/hooks/useTelemetry';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
@@ -70,6 +71,7 @@ export default function App() {
   useDisconnectOnLogout();
   // Job changes land on every open screen at once (new work rings via JobOfferHost).
   useJobRealtime();
+  useTelemetry({ app: 'servicepro' });
   const shop = (el) => <RequireAuth role="shop" loginPath={LOGIN}>{el}</RequireAuth>;
   const eventPartner = (el) => <RequireAuth role="event_partner" loginPath={LOGIN}>{el}</RequireAuth>;
 

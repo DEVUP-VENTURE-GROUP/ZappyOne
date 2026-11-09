@@ -1268,6 +1268,17 @@ export function endpoints(b, { adminApiPath }) {
     // Bookings → Needs intervention, and Overview → what customers search for
     // Insights, from the bookings the platform takes today
     adminInsightsOverview: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/overview'), params: { days } }) }),
+    // App & traffic (admin-portal/traffic): live now polls; summary and versions per range.
+    adminTrafficLive: b.query({ query: () => adminApiPath('/insights/traffic/live'), keepUnusedDataFor: 0 }),
+    adminTrafficSummary: b.query({ query: (days = 14) => ({ url: adminApiPath('/insights/traffic/summary'), params: { days } }) }),
+    adminTrafficVersions: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/traffic/versions'), params: { days } }) }),
+    adminTrafficFunnel: b.query({ query: (days = 14) => ({ url: adminApiPath('/insights/traffic/funnel'), params: { days } }) }),
+    adminTrafficNotifications: b.query({ query: (days = 14) => ({ url: adminApiPath('/insights/traffic/notifications'), params: { days } }) }),
+    adminTrafficPartners: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/traffic/partners'), params: { days } }) }),
+    adminTrafficSearches: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/traffic/searches'), params: { days } }) }),
+    adminTrafficSources: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/traffic/sources'), params: { days } }) }),
+    adminTrafficRetention: b.query({ query: (weeks = 8) => ({ url: adminApiPath('/insights/traffic/retention'), params: { weeks } }) }),
+    adminTrafficSpeed: b.query({ query: () => adminApiPath('/insights/traffic/speed'), keepUnusedDataFor: 0 }),
     adminInsightsSupply: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/supply'), params: { days } }) }),
     adminInsightsFunnel: b.query({ query: (days = 7) => ({ url: adminApiPath('/insights/funnel'), params: { days } }) }),
     adminInsightsCustomers: b.query({ query: (days = 30) => ({ url: adminApiPath('/insights/customers'), params: { days } }) }),

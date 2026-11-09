@@ -83,7 +83,7 @@ const BOOKING_PATH = /^\/(repair(\/(laptop|two-wheeler|four-wheeler|water-tank-c
 async function pageview(req, res) {
   res.status(204).end(); // respond immediately — ingest is fire-and-forget
   try {
-    const { sessionId, path, referrer, lat, lng, userType, userId, prevDwellMs } = req.body || {};
+    const { sessionId, path, referrer, lat, lng, userType, userId, prevDwellMs, platform, app, appVersion, deviceModel, osVersion } = req.body || {};
     if (!sessionId || !SESSION_RE.test(sessionId)) return;
 
     const ua = parseUA(req.headers['user-agent']);
@@ -101,7 +101,12 @@ async function pageview(req, res) {
       lastSeen: now,
       currentPath: typeof path === 'string' ? path.slice(0, 200) : '/',
       pageEnteredAt: now,
-      ...(userType && ['guest', 'user', 'worker', 'admin'].includes(userType) ? { userType } : {}),
+      ...(userType && ['guest', 'user', 'worker', 'shop', 'event_partner', 'admin'].includes(userType) ? { userType } : {}),
+      ...(['web', 'android', 'ios'].includes(platform) ? { platform } : {}),
+      ...(['customer', 'servicepro', 'admin'].includes(app) ? { app } : {}),
+      ...(typeof appVersion === 'string' && /^[0-9A-Za-z.+-]{1,20}$/.test(appVersion) ? { appVersion } : {}),
+      ...(typeof deviceModel === 'string' ? { deviceModel: deviceModel.slice(0, 60) } : {}),
+      ...(typeof osVersion === 'string' || typeof osVersion === 'number' ? { osVersion: String(osVersion).slice(0, 20) } : {}),
       ...(safeUserId(userId) ? { userId: safeUserId(userId) } : {}),
       ...(hasCoord ? { lat, lng } : {}),
     };
