@@ -327,6 +327,8 @@ router.get('/bookings/:id/report', authenticate, ctrl.getBookingReport);
 router.post(
   '/bookings/:id/status',
   authenticate,
+  // Customers approve, reject and cancel through their own endpoints; only the provider side and admin move a job.
+  requireRole('worker', 'shop', 'admin'),
   validate(Joi.object({
     status: Joi.string().max(40).required(),
     reason: Joi.string().max(300).allow('', null),
@@ -434,7 +436,7 @@ router.post(
   otpVerifyLimiter,
   validate(Joi.object({
     kind: Joi.string().valid('start', 'handover', 'return').required(),
-    code: Joi.string().pattern(/^[0-9]{6}$/).required(),
+    code: Joi.string().pattern(/^[0-9]{4,6}$/).required(),
   })),
   ctrl.verifyHandoverCode,
 );
