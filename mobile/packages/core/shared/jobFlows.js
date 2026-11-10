@@ -290,3 +290,22 @@ const PET_SERVICE_CODES = new Set(['pet_grooming', 'pet_walking', 'pet_transport
 export const isPetJob = (kind, service) => kind === 'pet' || PET_SERVICE_CODES.has(service);
 
 export const minsUntil = (at, now) => (at ? Math.max(0, Math.ceil((new Date(at).getTime() - now) / 60000)) : 0);
+
+// Which step a pro's repair job is at, so the page shows only that step's things: go, travel, arrived, work, done.
+export function repairProStep(status) {
+  if (['PROVIDER_ASSIGNED', 'CONFIRMED', 'WORKER_ACCEPTED'].includes(status)) return 'go';
+  if (['ON_THE_WAY', 'PICKUP_SCHEDULED'].includes(status)) return 'travel';
+  if (status === 'ARRIVED') return 'arrived';
+  if (['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'].includes(status)) return 'done';
+  return 'work';
+}
+
+// A code as people read it: words split, repeats and 'req' dropped ("scooter_scooter" becomes "Scooter"); prefer a saved name when there is one.
+export function readableCode(code = '') {
+  const words = String(code).split(/[_\s]+/).filter(Boolean).filter((w) => !['req', 'reqd'].includes(w.toLowerCase()));
+  const once = words.filter((w, i) => i === 0 || w.toLowerCase() !== words[i - 1].toLowerCase());
+  return once.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// "Scooter Scooter" reads "Scooter"; case is kept, so "iPhone 13" stays as it is.
+export const onceWords = (text = '') => String(text).split(/\s+/).filter((w, i, a) => w && (i === 0 || w.toLowerCase() !== a[i - 1].toLowerCase())).join(' ');

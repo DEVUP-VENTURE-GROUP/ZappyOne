@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import useTelemetry from '@shared/hooks/useTelemetry';
+import useChatPopup from '@shared/hooks/useChatPopup';
 import { RequireAuth } from '@shared/components/common/RequireAuth';
 import ConnectionBanner from '@shared/components/common/ConnectionBanner';
 import RouteProgress from '@shared/components/common/RouteProgress';
@@ -65,6 +66,8 @@ const PageLoader = () => (
 );
 
 const homeFor = (role) => HOME[role] || LOGIN;
+const PRO_JOB = { repair: '/worker/repair/', pet: '/worker/pet/' };
+const proChatLink = (kind, id) => (PRO_JOB[kind] ? `${PRO_JOB[kind]}${id}` : null);
 
 export default function App() {
   const { accessToken, role } = useSelector(selectAuth);
@@ -72,6 +75,7 @@ export default function App() {
   // Job changes land on every open screen at once (new work rings via JobOfferHost).
   useJobRealtime();
   useTelemetry({ app: 'servicepro' });
+  useChatPopup({ linkFor: proChatLink });
   const shop = (el) => <RequireAuth role="shop" loginPath={LOGIN}>{el}</RequireAuth>;
   const eventPartner = (el) => <RequireAuth role="event_partner" loginPath={LOGIN}>{el}</RequireAuth>;
 

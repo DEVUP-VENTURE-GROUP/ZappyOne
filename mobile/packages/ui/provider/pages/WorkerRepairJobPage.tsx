@@ -25,13 +25,15 @@ import {
   repairGateFor,
   REPAIR_GATE_COPY,
   REPAIR_CODE_LENGTH,
+  repairProStep,
+  readableCode,
+  onceWords,
   repairNextAction,
   REPAIR_QUOTABLE,
   repairReadyForPayment,
   repairDue,
   canPassBackToShop,
   REPAIR_PHOTO_STAGES,
-  REPAIR_ENDED,
   REPAIR_NO_SOS,
   MOVING_STATUSES,
   tripOf,
@@ -151,17 +153,20 @@ export function WorkerRepairJobPage() {
   // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
   const details: [string, string | undefined][] = [
     ...(terms.packaged ? [[capWord(terms.job), (booking as { repairName?: string }).repairName || booking.repairCode?.replace(/_/g, ' ') || '-'] as [string, string]] : [
-      ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`] as [string, string],
+      [terms.job === 'repair' ? 'Device' : 'Vehicle', onceWords(booking.deviceName || `${booking.brandCode} ${booking.modelCode}`)] as [string, string],
       ...(booking.fuelType ? [['Fuel', booking.fuelType] as [string, string]] : []),
       ...(booking.configurationLabel ? [['Build', booking.configurationLabel] as [string, string]] : []),
-      ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'] as [string, string],
-      ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'] as [string, string],
+      ...(terms.job === 'repair' ? [['Reported', (booking.problemCodes || []).map(readableCode).join(', ') || '-'] as [string, string]] : []),
+      [capWord(terms.job), (booking as { repairName?: string }).repairName || readableCode(booking.repairCode || '') || 'Check first'] as [string, string],
     ]),
     ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
     ['Address', booking.location?.address],
   ];
 
   const codeDue = !ownerWatching && !!action && !!gateKind && !gatePassed;
+  // go, travel, arrived, work or done: each section below shows only at the steps it belongs to.
+  const step = repairProStep(booking.status);
+  const at = (...steps: string[]) => steps.includes(step);
   const codeLength = gateKind ? REPAIR_CODE_LENGTH[gateKind] : 4;
   if (codeDue && codeOpen && gateKind) {
     return (
@@ -196,21 +201,21 @@ export function WorkerRepairJobPage() {
       </View>
 
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxxl }]} keyboardShouldPersistTaps="handled">
-        {booking.returnOldParts && !['COMPLETED', 'CANCELLED'].includes(booking.status) ? (
+        {booking.returnOldParts && at('arrived', 'work') ? (
           <View accessibilityRole="alert" style={styles.oldParts}><Text variant="bodySmall" weight="semibold" color={accent[700]}>The customer asked for the replaced part back. Hand it over before you finish.</Text></View>
         ) : null}
-        {!['COMPLETED', 'CANCELLED'].includes(booking.status) ? <PrivacyPledge who="partner" /> : null}
+        {at('arrived', 'work') ? <PrivacyPledge who="partner" /> : null}
         {onTrip && (!isOwner || ownerGoing) && trip ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
-        <OnSiteCard onSite={booking.onSite} />
-        <ExtrasCard extras={booking.extras} />
-        {isOwner ? (
+        {at('arrived', 'work') ? <OnSiteCard onSite={booking.onSite} /> : null}
+        {at('arrived', 'work') ? <ExtrasCard extras={booking.extras} /> : null}
+        {isOwner && (at('go') || booking.workerId) ? (
           <JobCard>
             <Eyebrow>TECHNICIAN</Eyebrow>
             {!booking.workerId ? <Text variant="caption" color={ink[700]}>You can go yourself: use the steps below and the customer follows you live. Or hand it to one of your technicians.</Text> : null}
             <AssignTechnician jobId={id} workerId={booking.workerId} onDone={refetch} startOpen={!booking.workerId} />
           </JobCard>
         ) : null}
-        {booking.serviceMode !== 'workshop' && !REPAIR_ENDED.includes(booking.status) ? <JobMapCard to={pointOf(booking.location)} live={!isOwner || ownerGoing} /> : null}
+        {booking.serviceMode !== 'workshop' && at('go', 'travel') ? <JobMapCard to={pointOf(booking.location)} live={!isOwner || ownerGoing} /> : null}
 
         <JobCard>
           <Eyebrow>STATUS</Eyebrow>
@@ -268,7 +273,7 @@ export function WorkerRepairJobPage() {
           </JobCard>
         ) : null}
 
-        <GiveBackCard jobId={booking._id} status={booking.status} />
+        {at('go', 'travel', 'arrived') ? <GiveBackCard jobId={booking._id} status={booking.status} /> : null}
 
         {canPassBack ? (
           <JobCard>

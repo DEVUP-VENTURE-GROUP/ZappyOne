@@ -33,9 +33,9 @@ import ArrivalProximity, { useArrivalProximity } from '../../components/common/A
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
 import {
-  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, REPAIR_CODE_LENGTH as CODE_LENGTH, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
+  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, REPAIR_CODE_LENGTH as CODE_LENGTH, repairProStep, readableCode, onceWords, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
   repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions, PART_GRADES,
-  qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
+  qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_NO_SOS,
 } from '../jobFlows';
 import { useLivePoll } from '../../hooks/useSocket';
 import { stageLabel } from '../useProviderJobs';
@@ -495,6 +495,10 @@ export default function WorkerRepairJobPage() {
   }
 
   const codeDue = !ownerWatching && !!action && !!gateKind && !gatePassed;
+  // go, travel, arrived, work or done: each section below shows only at the steps it belongs to (the app's job page).
+  const step = repairProStep(booking.status);
+  const at = (...steps) => steps.includes(step);
+  const words = termsOf(booking.vertical, verticals?.items);
   const codeLength = gateKind ? CODE_LENGTH[gateKind] : 4;
   if (codeDue && codeOpen) {
     return (
@@ -531,16 +535,16 @@ export default function WorkerRepairJobPage() {
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
-        {booking.returnOldParts && !['COMPLETED', 'CANCELLED'].includes(booking.status) && (
+        {booking.returnOldParts && at('arrived', 'work') && (
           <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] font-semibold text-amber-900">
             The customer asked for the replaced part back. Hand it over before you finish.
           </p>
         )}
-        {!['COMPLETED', 'CANCELLED'].includes(booking.status) && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
+        {at('arrived', 'work') && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
         {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
-        <OnSiteCard onSite={booking.onSite} />
-        <ExtrasCard extras={booking.extras} />
-        {isOwner && (
+        {at('arrived', 'work') && <OnSiteCard onSite={booking.onSite} />}
+        {at('arrived', 'work') && <ExtrasCard extras={booking.extras} />}
+        {isOwner && (at('go') || booking.workerId) && (
           <div className="card">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Technician</p>
             {!booking.workerId && (
@@ -552,7 +556,7 @@ export default function WorkerRepairJobPage() {
           </div>
         )}
         {/* Where to go: only while the job is live and someone travels to the customer. */}
-        {booking.serviceMode !== 'workshop' && !REPAIR_ENDED.includes(booking.status) && (
+        {booking.serviceMode !== 'workshop' && at('go', 'travel') && (
           <JobMapCard to={pointOf(booking.location)} live={!isOwner || ownerGoing} />
         )}
         <div className="card">
@@ -590,7 +594,7 @@ export default function WorkerRepairJobPage() {
           {[
             // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
             ...(termsOf(booking.vertical, verticals?.items).packaged ? [[capWord(termsOf(booking.vertical, verticals?.items).job), booking.repairName || booking.repairCode?.replace(/_/g, ' ') || '-']] : [
-            ['Device', booking.deviceName || `${booking.brandCode} ${booking.modelCode}`],
+            [words.job === 'repair' ? 'Device' : 'Vehicle', onceWords(booking.deviceName || `${booking.brandCode} ${booking.modelCode}`)],
             /*
              * The powertrain, where the vertical has one.
              *
@@ -601,8 +605,8 @@ export default function WorkerRepairJobPage() {
              */
             ...(booking.fuelType ? [['Fuel', booking.fuelType]] : []),
             ...(booking.configurationLabel ? [['Build', booking.configurationLabel]] : []),
-            ['Reported', (booking.problemCodes || []).join(', ').replace(/_/g, ' ') || '-'],
-            ['Repair', booking.repairCode?.replace(/_/g, ' ') || 'Diagnosis first'],
+            ...(words.job === 'repair' ? [['Reported', (booking.problemCodes || []).map(readableCode).join(', ') || '-']] : []),
+            [capWord(words.job), booking.repairName || readableCode(booking.repairCode || '') || 'Check first'],
             ]),
             ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
             ['Address', booking.location?.address],
@@ -679,7 +683,7 @@ export default function WorkerRepairJobPage() {
           </div>
         )}
 
-        <GiveBackCard jobId={booking._id} status={booking.status} />
+        {at('go', 'travel', 'arrived') && <GiveBackCard jobId={booking._id} status={booking.status} />}
 
         {canPassBack && (
           <div className="card">

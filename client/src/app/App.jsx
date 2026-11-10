@@ -8,6 +8,7 @@ import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useDisconnectOnLogout, useJobRealtime } from '@shared/hooks/useSocket';
 import { useFCM } from '../features/notifications/useFCM.jsx';
 import useTelemetry from '@shared/hooks/useTelemetry';
+import useChatPopup from '@shared/hooks/useChatPopup';
 import { prefetchMainTabs, onIdle } from '../lib/routePrefetch';
 import { prefetchServiceCatalog } from '../features/catalog/useServiceCatalog';
 import { loadCategories } from '../features/catalog/useCategories';
@@ -94,12 +95,16 @@ function PageLoader() {
   );
 }
 
+const CUSTOMER_JOB = { repair: '/repair/bookings/', pet: '/pet/bookings/', helping: '/helping/tasks/' };
+const customerChatLink = (kind, id) => (CUSTOMER_JOB[kind] ? `${CUSTOMER_JOB[kind]}${id}` : null);
+
 export default function App() {
   useDisconnectOnLogout();
   // Job changes land on every open screen at once.
   useJobRealtime();
   useFCM();
   useTelemetry();
+  useChatPopup({ linkFor: customerChatLink });
   const { accessToken: token, role } = useSelector(selectAuth);
   const location = useLocation();
   useReferralLink({ token, role });

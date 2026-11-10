@@ -37,6 +37,9 @@ import { installGlobalErrorHandlers } from '@zappy/core/lib/errorReporter';
 import { usePushNotifications } from '@zappy/core/hooks/usePushNotifications';
 import { useJobRealtime } from '@zappy/core/hooks/useJobRealtime';
 import { useAppTraffic } from '@zappy/core/hooks/useAppTraffic';
+import { useChatPopup } from './useChatPopup';
+
+const CUSTOMER_JOB: Record<string, string> = { repair: '/repair/bookings/', pet: '/pet/bookings/', helping: '/helping/tasks/' };
 import type { RouteResolver } from '@zappy/core/lib/pushRouting';
 import type { Role } from '@zappy/core/types/api';
 import { fontAssets } from '../theme';
@@ -123,6 +126,8 @@ function Guarded({ roles, home, login, resolveRoute, isPublic, children }: AppRo
   usePushNotifications(resolveRoute);
   useSilentUpdates();
   useAppTraffic();
+  // Customers' chat pop-up; providers get theirs from WorkerFrame.
+  useChatPopup({ enabled: isAuthenticated && role === 'user', linkFor: (kind, id) => (CUSTOMER_JOB[kind] ? CUSTOMER_JOB[kind] + id : null) });
   // Providers get this from WorkerFrame; customers' bookings and plans refresh live here.
   useJobRealtime({ enabled: isAuthenticated && role === 'user', onAccepted: () => toast.success('Your pro accepted. They are getting ready to come to you.') });
 

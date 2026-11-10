@@ -16,6 +16,9 @@ import { toast } from '../components/Toast';
 import { ConnectionBanner } from '../components/common/ConnectionBanner';
 import { JobOfferHost } from '../components/jobs/JobOfferHost';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
+import { useChatPopup } from '../app/useChatPopup';
+
+const PRO_JOB: Record<string, string> = { repair: '/worker/repair/', pet: '/worker/pet/' };
 
 export function WorkerFrame({ kinds }: { kinds: string[] }) {
   const signedIn = useAppSelector((s) => s.auth.isAuthenticated);
@@ -41,6 +44,7 @@ export function WorkerFrame({ kinds }: { kinds: string[] }) {
     enabled: signedIn,
     onTip: (tip) => toast.success(`₹${Math.round(tip / 100)} tip from your customer. It is all yours.`, { duration: 6000 }),
   });
+  useChatPopup({ enabled: signedIn, linkFor: (kind, id) => (PRO_JOB[kind] ? PRO_JOB[kind] + id : null) });
 
   if (!signedIn) return null;
   return (
