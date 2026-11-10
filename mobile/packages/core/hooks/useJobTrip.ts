@@ -34,11 +34,19 @@ export function useMyPosition(enabled: boolean): { lat: number; lng: number } | 
   return pos;
 }
 
+// The ServicePro app's background location listens here, so it can send precise updates while a trip is on (the job page itself stops sending once Maps is in front).
+const tripListeners = new Set<(on: boolean) => void>();
+export function onTripChange(fn: (on: boolean) => void): () => void {
+  tripListeners.add(fn);
+  return () => { tripListeners.delete(fn); };
+}
+
 export function useTripPublish(jobId: string | undefined, active: boolean, { asOwner = false, minIntervalMs = 10000 } = {}): SharingState {
   const [sharing, setSharing] = useState<SharingState>('idle');
   const lastSent = useRef(0);
   useEffect(() => {
     if (!jobId || !active) { setSharing('idle'); return undefined; }
+    tripListeners.forEach((fn) => fn(true));
     let sub: Location.LocationSubscription | null = null;
     let stopped = false;
     setSharing('pending');
@@ -57,7 +65,7 @@ export function useTripPublish(jobId: string | undefined, active: boolean, { asO
       });
       if (stopped) sub.remove();
     })().catch(() => setSharing('pending'));
-    return () => { stopped = true; sub?.remove(); setSharing('idle'); };
+    return () => { stopped = true; sub?.remove(); setSharing('idle'); tripListeners.forEach((fn) => fn(false)); };
   }, [jobId, active, asOwner, minIntervalMs]);
   return sharing;
 }

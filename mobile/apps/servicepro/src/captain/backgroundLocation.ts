@@ -4,6 +4,7 @@ import * as TaskManager from 'expo-task-manager';
 import { Alert, AppState } from 'react-native';
 import { axiosClient } from '@zappy/core/api/axiosClient';
 import { store } from '@zappy/core/store';
+import { onTripChange } from '@zappy/core/hooks/useJobTrip';
 
 export const LOCATION_TASK = 'zappy-background-location';
 
@@ -35,6 +36,33 @@ function explainBackgroundLocation(): Promise<boolean> {
   });
 }
 
+let notice = { title: 'ZappyOne: you are online', body: 'Tap to open ServicePro.' };
+let onTrip = false;
+
+// On a trip the customer is watching: precise and every 12 s; otherwise every 30 s to spare the battery.
+const optionsFor = (trip: boolean): Location.LocationTaskOptions => ({
+  accuracy: trip ? Location.Accuracy.High : Location.Accuracy.Balanced,
+  timeInterval: trip ? 12000 : 30000,
+  distanceInterval: trip ? 20 : 50,
+  pausesUpdatesAutomatically: false,
+  showsBackgroundLocationIndicator: true,
+  foregroundService: { notificationTitle: notice.title, notificationBody: notice.body, notificationColor: '#1F4FD8', killServiceOnDestroy: false },
+});
+
+let pace = false;
+// Android refuses to start a foreground service from the background, so the pace only changes while the app is open.
+async function applyPace() {
+  if (pace === onTrip || AppState.currentState !== 'active') return;
+  try {
+    if (!(await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK))) { pace = onTrip; return; }
+    await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    await Location.startLocationUpdatesAsync(LOCATION_TASK, optionsFor(onTrip));
+    pace = onTrip;
+  } catch { /* tried again when the app is next opened */ }
+}
+onTripChange((trip) => { onTrip = trip; void applyPace(); });
+AppState.addEventListener('change', (s) => { if (s === 'active') void applyPace(); });
+
 /** Starts the service when it may run: location allowed all the time. Returns whether it is running. */
 export async function startBackgroundLocation(title: string, body: string): Promise<boolean> {
   try {
@@ -43,15 +71,10 @@ export async function startBackgroundLocation(title: string, body: string): Prom
       if (!(await explainBackgroundLocation())) return false;
       if ((await Location.requestBackgroundPermissionsAsync()).status !== 'granted') return false;
     }
+    notice = { title, body };
     if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK)) return true;
-    await Location.startLocationUpdatesAsync(LOCATION_TASK, {
-      accuracy: Location.Accuracy.Balanced,
-      timeInterval: 30000,
-      distanceInterval: 50,
-      pausesUpdatesAutomatically: false,
-      showsBackgroundLocationIndicator: true,
-      foregroundService: { notificationTitle: title, notificationBody: body, notificationColor: '#1F4FD8', killServiceOnDestroy: false },
-    });
+    await Location.startLocationUpdatesAsync(LOCATION_TASK, optionsFor(onTrip));
+    pace = onTrip;
     return true;
   } catch { return false; }
 }
