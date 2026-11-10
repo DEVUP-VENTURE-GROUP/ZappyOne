@@ -16,7 +16,7 @@ import JobTrackingPage from '../tracking/JobTrackingPage';
 import RepairWarrantyCard from './RepairWarrantyCard';
 import { repairRebookHref } from '@shared/customer/useMyJobs';
 import { KINDS } from '@shared/customer/jobKinds';
-import { repairStatus } from '@shared/customer/repairStatus';
+import { repairStatus, startCodeCopy } from '@shared/customer/repairStatus';
 import { termsOf } from '@shared/customer/repairBasket';
 import { useJobSOS } from '../tracking/useJobSOS';
 import { formatPaise, billAddOnsPaise } from '@shared/utils/money';
@@ -188,7 +188,7 @@ function QuoteCard({ quote, onDecided }) {
  * nothing here to leak: holding the return code while the device is still being
  * collected would defeat the point of having two.
  */
-function HandoverCode({ booking }) {
+function HandoverCode({ booking, terms }) {
   const closed = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED']
     .includes(booking.status);
   const { data, isLoading } = useRepairHandoverCodeQuery(booking._id, { skip: closed });
@@ -198,10 +198,7 @@ function HandoverCode({ booking }) {
   if (!data?.code) return null;
 
   const COPY = {
-    start: {
-      title: 'Share this to start the repair',
-      hint: 'Your technician needs this before any work begins.',
-    },
+    start: startCodeCopy(terms),
     handover: {
       title: 'Share this when handing your device over',
       hint: 'Proof your device was collected - never give it before this is asked for.',
@@ -428,7 +425,7 @@ export default function RepairBookingPage() {
         cancel={data?.canCancel ? { run: doCancel } : null}
         extras={(
           <>
-            <HandoverCode booking={booking} />
+            <HandoverCode booking={booking} terms={terms} />
             {copy.hint && (
               <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{copy.hint}</p>
             )}

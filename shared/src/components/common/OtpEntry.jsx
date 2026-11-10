@@ -16,9 +16,10 @@ export default function OtpEntry({
   value,
   onChange,
   title = 'Customer code',
-  hint = 'Ask the customer for their 6-digit code',
+  hint = 'Ask the customer for their code',
   tone = 'light',
   autoFocus = true,
+  length = 6,
 }) {
   const inputRef = useRef(null);
   const dark = tone === 'dark';
@@ -46,7 +47,7 @@ export default function OtpEntry({
       </div>
 
       <div className="mb-2 flex justify-center gap-2">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length }).map((_, i) => (
           <button
             key={i}
             type="button"
@@ -73,10 +74,10 @@ export default function OtpEntry({
         className="absolute h-1 w-full opacity-0"
         inputMode="numeric"
         autoComplete="one-time-code"
-        maxLength={6}
+        maxLength={length}
         value={value}
         autoFocus={autoFocus}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, length))}
       />
 
       <button

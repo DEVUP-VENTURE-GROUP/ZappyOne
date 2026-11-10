@@ -33,7 +33,7 @@ import ArrivalProximity, { useArrivalProximity } from '../../components/common/A
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
 import {
-  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
+  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, REPAIR_CODE_LENGTH as CODE_LENGTH, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
   repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions, PART_GRADES,
   qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_ENDED, REPAIR_NO_SOS,
 } from '../jobFlows';
@@ -350,6 +350,8 @@ export default function WorkerRepairJobPage() {
   const [collectCash, { isLoading: collecting }] = useCollectRepairCashMutation();
   const [showQuote, setShowQuote] = useState(false);
   const [otp, setOtp] = useState('');
+  // When a code is due it gets its own page; the pro can step back to the job and return (the app's code screen).
+  const [codeOpen, setCodeOpen] = useState(true);
   const [photos, setPhotos] = useState([]);
   const [attachPhotos] = useAttachRepairCompletionPhotosMutation();
   const [verifyCode, { isLoading: verifying }] = useVerifyRepairHandoverCodeMutation();
@@ -490,6 +492,31 @@ export default function WorkerRepairJobPage() {
       // Surface the server's real reason — e.g. QA still failing.
       toast.error(err?.data?.error || 'Could not update this job');
     }
+  }
+
+  const codeDue = !ownerWatching && !!action && !!gateKind && !gatePassed;
+  const codeLength = gateKind ? CODE_LENGTH[gateKind] : 4;
+  if (codeDue && codeOpen) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] pb-10">
+        <header className="page-header"><div className="page-header-inner">
+          <button onClick={() => setCodeOpen(false)} className="back-btn" aria-label="See the job"><ArrowLeft size={18} strokeWidth={2.5} /></button>
+          <div>
+            <p className="t-label">{booking.reference}</p>
+            <p className="font-semibold text-ink-900">{gateKind === 'return' ? 'Hand it back' : 'Start the job'}</p>
+          </div>
+        </div></header>
+        <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
+          <div className="card">
+            <OtpEntry value={otp} onChange={setOtp} length={codeLength} title={GATE_COPY[gateKind].title} hint={GATE_COPY[gateKind].hint} />
+            <button onClick={confirmCode} disabled={otp.length < codeLength || verifying} className="btn-primary mt-3 w-full disabled:opacity-50">
+              {verifying ? <><Loader2 size={15} className="animate-spin" /> Checking…</> : 'Confirm code'}
+            </button>
+          </div>
+          <button type="button" onClick={() => setCodeOpen(false)} className="mx-auto block text-[14px] font-semibold text-zappy-700 hover:underline">See the job details</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -741,24 +768,8 @@ export default function WorkerRepairJobPage() {
           <p className="card text-center text-sm text-slate-500">Your technician takes the next step from their app: {action.label.toLowerCase()}.</p>
         )}
 
-        {!ownerWatching && action && gateKind && !gatePassed && (
-          <div className="card ring-amber-200">
-            <OtpEntry
-              value={otp}
-              onChange={setOtp}
-              title={GATE_COPY[gateKind].title}
-              hint={GATE_COPY[gateKind].hint}
-            />
-            <button
-              onClick={confirmCode}
-              disabled={otp.length < 6 || verifying}
-              className="btn-primary mt-2 w-full disabled:opacity-50"
-            >
-              {verifying
-                ? <><Loader2 size={15} className="animate-spin" /> Checking…</>
-                : 'Confirm code'}
-            </button>
-          </div>
+        {codeDue && (
+          <button type="button" onClick={() => setCodeOpen(true)} className="btn-primary w-full">Enter the customer's code</button>
         )}
 
         {!ownerWatching && action && (

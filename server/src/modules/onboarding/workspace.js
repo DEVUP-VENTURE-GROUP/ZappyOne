@@ -30,10 +30,19 @@ function termsOf(domain) {
 }
 
 // A service line's words: its trade's, plus what a package service (one priced menu, no real device) changes.
+// Services whose words differ from their category's: a bike wash has a washer, not a mechanic.
+const LINE_TERMS = {
+  bike_wash: { job: 'wash', pro: 'washer', warranty: false },
+  car_wash: { job: 'wash', pro: 'washer', warranty: false },
+  car_detailing: { job: 'detailing', pro: 'detailer', warranty: false },
+  water_tank_care: { job: 'cleaning', pro: 'cleaner', warranty: false },
+};
+
 function lineTerms(line, domain) {
   const types = line?.packageDef?.types || [];
   return {
     ...termsOf(domain),
+    ...(LINE_TERMS[line?.repairVertical] || LINE_TERMS[line?.code] || {}),
     packaged: !!line?.packageDef,
     singleType: types.length <= 1,
     typeWord: line?.typeWord || '',
@@ -46,7 +55,7 @@ const termCache = new Map();
 async function termsForVertical(vertical) {
   const hit = termCache.get(vertical);
   if (hit && hit.at > Date.now() - 60000) return hit.terms;
-  const line = await ServiceLine.findOne({ repairVertical: vertical }).select('name domainCode typeWord packageDef.types').lean();
+  const line = await ServiceLine.findOne({ repairVertical: vertical }).select('code repairVertical name domainCode typeWord packageDef.types').lean();
   const domain = line ? await ServiceDomain.findOne({ code: line.domainCode }).select('code dashboard').lean() : null;
   const terms = line ? lineTerms(line, domain) : { ...REPAIR_TERMS, packaged: false, singleType: false, typeWord: '', name: '' };
   if (termCache.size > 500) termCache.clear();

@@ -24,6 +24,7 @@ import { useTripPublish, useArrivalProximity } from '@zappy/core/hooks/useJobTri
 import {
   repairGateFor,
   REPAIR_GATE_COPY,
+  REPAIR_CODE_LENGTH,
   repairNextAction,
   REPAIR_QUOTABLE,
   repairReadyForPayment,
@@ -79,6 +80,8 @@ export function WorkerRepairJobPage() {
   const [declineJob, { isLoading: passing }] = useDeclineRepairBookingMutation();
   const [showQuote, setShowQuote] = useState<false | 'new' | 'additional'>(false);
   const [otp, setOtp] = useState('');
+  // When a code is due it gets its own screen (boxes at the top, clear of the keyboard); the pro can step back to the job and return.
+  const [codeOpen, setCodeOpen] = useState(true);
   const [photos, setPhotos] = useState<ProofPhoto[]>([]);
   const [askingPass, setAskingPass] = useState(false);
 
@@ -157,6 +160,29 @@ export function WorkerRepairJobPage() {
     ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
     ['Address', booking.location?.address],
   ];
+
+  const codeDue = !ownerWatching && !!action && !!gateKind && !gatePassed;
+  const codeLength = gateKind ? REPAIR_CODE_LENGTH[gateKind] : 4;
+  if (codeDue && codeOpen && gateKind) {
+    return (
+      <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <Pressable onPress={() => setCodeOpen(false)} accessibilityLabel="See the job" hitSlop={8} style={styles.back}><ArrowLeft size={20} color={ink[900]} /></Pressable>
+          <View style={styles.flex}>
+            <Text variant="caption" color={ink[500]}>{booking.reference}</Text>
+            <Text variant="body" weight="semibold">{gateKind === 'return' ? 'Hand it back' : 'Start the job'}</Text>
+          </View>
+        </View>
+        <ScrollView contentContainerStyle={styles.codePage} keyboardShouldPersistTaps="handled">
+          <CodeBoxes value={otp} onChange={setOtp} length={codeLength} title={REPAIR_GATE_COPY[gateKind].title} hint={REPAIR_GATE_COPY[gateKind].hint} />
+          <Button label="Confirm code" onPress={confirmCode} loading={verifying} disabled={otp.length < codeLength} fullWidth size="large" />
+          <Pressable onPress={() => setCodeOpen(false)} accessibilityRole="button" hitSlop={8} style={styles.codeLink}>
+            <Text variant="bodySmall" weight="semibold" color={zappy[600]}>See the job details</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -294,12 +320,7 @@ export function WorkerRepairJobPage() {
 
         {ownerWatching && action ? <JobCard><Text variant="bodySmall" color={ink[500]} style={styles.centerText}>Your technician takes the next step from their app: {action.label.toLowerCase()}.</Text></JobCard> : null}
 
-        {!ownerWatching && action && gateKind && !gatePassed ? (
-          <JobCard tone="amber">
-            <CodeBoxes value={otp} onChange={setOtp} title={REPAIR_GATE_COPY[gateKind].title} hint={REPAIR_GATE_COPY[gateKind].hint} />
-            <Button label="Confirm code" onPress={confirmCode} loading={verifying} disabled={otp.length < 6} fullWidth />
-          </JobCard>
-        ) : null}
+        {codeDue ? <Button label="Enter the customer's code" onPress={() => setCodeOpen(true)} fullWidth size="large" /> : null}
 
         {!ownerWatching && action ? (
           <Button label={action.label} onPress={() => move(action.to)} loading={moving}
@@ -313,6 +334,8 @@ export function WorkerRepairJobPage() {
 }
 
 const styles = StyleSheet.create({
+  codePage: { padding: spacing.lg, gap: spacing.lg },
+  codeLink: { alignSelf: 'center', paddingVertical: spacing.sm },
   oldParts: { padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: '#FDE68A', backgroundColor: '#FFFBEB' },
   page: { flex: 1, backgroundColor: colors.background },
   centerAll: { alignItems: 'center', justifyContent: 'center' },

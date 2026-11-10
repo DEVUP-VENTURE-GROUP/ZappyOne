@@ -29,10 +29,13 @@ export function repairGateFor(nextStatus, serviceMode) {
   return gates[nextStatus].includes(serviceMode) ? kind : null;
 }
 
+// Start and collect use the customer's own 4-digit PIN (server jobs/customer-pin); a device coming back has its own 6-digit code.
+export const REPAIR_CODE_LENGTH = { start: 4, handover: 4, return: 6 };
+
 export const REPAIR_GATE_COPY = {
-  start: { title: 'Code to start work', hint: 'Ask the customer for their 6-digit code' },
-  handover: { title: 'Code to collect the device', hint: 'The customer reads this out as they hand it over' },
-  return: { title: 'Code to hand the device back', hint: 'Let them check the device first, then ask' },
+  start: { title: "Ask for the customer's code", hint: 'It is on their phone: 4 numbers. Type them to start the work.' },
+  handover: { title: "Ask for the customer's code", hint: 'It is on their phone: 4 numbers. Type them as they hand over the item.' },
+  return: { title: 'Code to hand it back', hint: 'Let them check it first, then ask for the 6-number code on their phone.' },
 };
 
 /** The single next step for a repair, from its status AND how it's being done. */

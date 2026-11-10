@@ -6,6 +6,12 @@
 // A booking's status in its own words, for the website and the app alike: header label and what is happening now. Words come from the service (repairBasket termsOf).
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// The customer's start code card, in the service's own words (a bike wash is not a repair).
+export const startCodeCopy = (terms = {}) => ({
+  title: 'Your code to start',
+  hint: `Give these 4 numbers to your ${terms.pro || 'pro'} when they are with you. They need them to start.`,
+});
+
 export function repairStatus(status, terms = {}) {
   const pro = terms.pro || 'technician';
   const job = terms.job || 'repair';

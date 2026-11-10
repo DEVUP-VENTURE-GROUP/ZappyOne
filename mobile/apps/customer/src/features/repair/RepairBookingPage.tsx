@@ -60,7 +60,7 @@ export function RepairBookingPage() {
     <JobTrackingPage job={job} onSOS={sos} rebookHref={repairRebookHref(booking)} cancel={data.canCancel ? { run: doCancel } : null}
       extras={(
         <>
-          <HandoverCode booking={booking} />
+          <HandoverCode booking={booking} terms={terms} />
           {hint ? <View style={styles.hint}><Text variant="caption" color={ink[700]}>{hint}</Text></View> : null}
           {pendingQuote ? <QuoteCard quote={pendingQuote} onDecided={refetch} /> : null}
           <ServiceReport booking={booking} />
