@@ -18,7 +18,7 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
 import {
   useProviderOnboardingStatusQuery, useRepairWorkCatalogQuery, useRepairServiceAreasQuery, useRepairProviderPricingQuery, useRepairVerticalsQuery,
 } from '@zappy/core/api';
-import { EmptyState, Text } from '../../components';
+import { EmptyState, HelpCallButton, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { colors, ink, slate } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -125,6 +125,7 @@ export function ProviderRepairSetupPage() {
             <Text variant="body" weight="bold" numberOfLines={1}>{other ? other.name : `Set up ${active ? lineName(active) : 'your services'}`}</Text>
             <Text variant="caption" color={ink[400]}>A few quick steps. You can come back any time.</Text>
           </View>
+          <HelpCallButton />
           <Pressable onPress={() => router.push('/provider/onboarding' as never)} accessibilityRole="button" accessibilityLabel="Your services and documents" hitSlop={8} style={styles.back}>
             <ShieldCheck size={17} color={ink[700]} />
           </Pressable>

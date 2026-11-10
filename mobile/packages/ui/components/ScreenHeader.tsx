@@ -38,6 +38,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
+import { HelpCallButton } from './common/HelpCallButton';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 
@@ -120,6 +121,7 @@ function ScreenHeaderBase({
           ) : null}
         </View>
 
+        <HelpCallButton />
         {right ? <View style={styles.right}>{right}</View> : null}
       </View>
     </View>

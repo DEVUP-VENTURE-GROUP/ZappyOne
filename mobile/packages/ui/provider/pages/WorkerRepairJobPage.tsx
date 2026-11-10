@@ -41,7 +41,7 @@ import {
 } from '@zappy/core/shared/jobFlows';
 import { PASS_REASONS } from '@zappy/core/shared/jobOffers';
 import { useAppSelector } from '@zappy/core/store/hooks';
-import { Button, EmptyState, ErrorState, LoadingState, Text } from '../../components';
+import { Button, EmptyState, ErrorState, HelpCallButton, LoadingState, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { ArrivalBar } from '../../components/common/ArrivalBar';
 import { CodeBoxes } from '../../components/common/CodeBoxes';
@@ -177,6 +177,7 @@ export function WorkerRepairJobPage() {
             <Text variant="caption" color={ink[500]}>{booking.reference}</Text>
             <Text variant="body" weight="semibold">{gateKind === 'return' ? 'Hand it back' : 'Start the job'}</Text>
           </View>
+          <HelpCallButton />
         </View>
         <ScrollView contentContainerStyle={styles.codePage} keyboardShouldPersistTaps="handled">
           <CodeBoxes value={otp} onChange={setOtp} length={codeLength} title={REPAIR_GATE_COPY[gateKind].title} hint={REPAIR_GATE_COPY[gateKind].hint} />
@@ -197,6 +198,7 @@ export function WorkerRepairJobPage() {
           <Text variant="caption" color={ink[500]}>Repair job</Text>
           <Text variant="body" weight="semibold">{booking.reference}</Text>
         </View>
+        <HelpCallButton />
         <JobChatButton jobId={booking._id} />
       </View>
 

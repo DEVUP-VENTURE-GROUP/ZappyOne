@@ -52,6 +52,7 @@ export type {
 // Moved out of ./Misc once it grew a subtitle, a rule and safe-area handling.
 // The barrel path is unchanged, so existing imports keep working.
 export { ScreenHeader } from './ScreenHeader';
+export { HelpCallButton } from './common/HelpCallButton';
 export type { ScreenHeaderProps } from './ScreenHeader';
 
 export { HScrollRail } from './HScrollRail';

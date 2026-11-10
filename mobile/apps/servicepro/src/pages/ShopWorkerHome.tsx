@@ -13,7 +13,7 @@ import { useGetKycStatusQuery, useGetMyShopQuery, useGetWorkerMeQuery, useGoOffl
 import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
 import { formatPaise } from '@zappy/core/shared/money';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
-import { LoadingState, Text } from '@zappy/ui/components';
+import { HelpCallButton, LoadingState, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
 import { NoticeRow, StagePill } from '@zappy/ui/components/worker/DashboardUI';
 import { MyAreaChip } from '@zappy/ui/components/worker/MyAreaChip';
@@ -92,6 +92,7 @@ export function ShopWorkerHome() {
           <Text variant="caption" color={ink[500]} numberOfLines={1}>{shop ? `Working for ${shop.name}` : 'Loading your shop…'}</Text>
           {onDuty ? <MyAreaChip coordinates={me?.currentLocation?.coordinates} live /> : null}
         </View>
+        <HelpCallButton />
         {shop?.phone ? (
           <Pressable onPress={() => callNumber(shop.phone)} accessibilityRole="button" accessibilityLabel="Call shop owner" style={styles.owner}>
             <Phone size={14} color={ink[700]} /><Text variant="caption" weight="bold" color={ink[700]}>Owner</Text>

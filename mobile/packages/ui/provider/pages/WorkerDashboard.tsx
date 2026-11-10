@@ -39,7 +39,7 @@ import { useSocketEvent } from '@zappy/core/hooks/useSocketEvent';
 import { formatPaise } from '@zappy/core/shared/money';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { last7, weekDeltaPct, hm, ratingLabel, kycBannerText } from '@zappy/core/shared/workerHome';
-import { Avatar, Text } from '../../components';
+import { Avatar, HelpCallButton, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { ProviderServicesCard } from '../../components/provider/ProviderServicesCard';
 import { Panel, LinkButton, StatTile, NoticeRow, inr } from '../../components/worker/DashboardUI';
@@ -186,6 +186,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
           <Text variant="heading3" weight="bold" numberOfLines={1}>Hello, {firstName}</Text>
           {isOnline ? <MyAreaChip label={areaName} coordinates={lastCoords} live /> : null}
         </View>
+        <HelpCallButton />
         <NotifBell onPress={() => go('/worker/notifications')} />
         <Pressable onPress={() => go('/worker/profile')} accessibilityRole="button" accessibilityLabel="Profile">
           <Avatar uri={account?.photoUrl || null} name={me?.name} size={36} />

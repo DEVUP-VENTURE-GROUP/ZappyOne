@@ -15,7 +15,7 @@ import {
 } from '@zappy/core/api';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { last7, weekDeltaPct } from '@zappy/core/shared/workerHome';
-import { Button, ErrorState, LoadingState, Text } from '@zappy/ui/components';
+import { Button, ErrorState, HelpCallButton, LoadingState, Text } from '@zappy/ui/components';
 import { ProviderServicesCard } from '@zappy/ui/components/provider/ProviderServicesCard';
 import { Panel, StatTile, inr } from '@zappy/ui/components/worker/DashboardUI';
 import { EarningsOverview, weekPoints } from '@zappy/ui/components/worker/EarningsOverview';
@@ -100,6 +100,7 @@ export function ShopDashboard() {
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <ZappyWordmark size={22} />
         <View style={styles.flex} />
+        <HelpCallButton />
         <HeaderBell to="/shop/notifications" />
       </View>
 

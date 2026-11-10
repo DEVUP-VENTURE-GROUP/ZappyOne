@@ -31,7 +31,7 @@ import {
 } from '@zappy/core/shared/jobFlows';
 import { formatPaise, billTipPaise } from '@zappy/core/shared/money';
 import { useAppSelector } from '@zappy/core/store/hooks';
-import { Button, EmptyState, ErrorState, LoadingState, Text } from '../../components';
+import { Button, EmptyState, ErrorState, HelpCallButton, LoadingState, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { CollectPaymentCard } from '../../components/common/CollectPaymentCard';
 import { ProofPhotos, readyKeys, type ProofPhoto } from '../../components/common/ProofPhotos';
@@ -119,6 +119,7 @@ export function WorkerPetJobPage() {
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/worker/work' as never))} accessibilityLabel="Back" hitSlop={8} style={styles.back}><ArrowLeft size={20} color={ink[900]} /></Pressable>
         <View style={styles.flex}><Text variant="caption" color={ink[500]}>Pet care</Text><Text variant="body" weight="semibold">{booking.reference}</Text></View>
+        <HelpCallButton />
         <JobChatButton jobId={booking._id} />
       </View>
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxxl }]}>
