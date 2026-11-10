@@ -29,6 +29,7 @@ import {
   readableCode,
   onceWords,
   repairNextAction,
+  repairDirect,
   REPAIR_QUOTABLE,
   repairReadyForPayment,
   repairDue,
@@ -106,7 +107,8 @@ export function WorkerRepairJobPage() {
     );
   }
 
-  const action = repairNextAction(booking.status, booking.serviceMode);
+  const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
+  const action = repairNextAction(booking.status, booking.serviceMode, terms.job);
   const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking.status);
   // Photos saved before a reload count too; the server refuses to move on without one (the website's job page).
   const savedBefore = (booking.completionPhotos || []).length > 0;
@@ -149,7 +151,6 @@ export function WorkerRepairJobPage() {
     } catch (err) { toast.error(errText(err, 'Could not update this job')); }
   }
 
-  const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
   // A packaged service (a dance class) is one line: what was booked. Repairs keep device, problem and repair.
   const details: [string, string | undefined][] = [
     ...(terms.packaged ? [[capWord(terms.job), (booking as { repairName?: string }).repairName || booking.repairCode?.replace(/_/g, ' ') || '-'] as [string, string]] : [
@@ -242,7 +243,7 @@ export function WorkerRepairJobPage() {
           ))}
         </JobCard>
 
-        {transcript.length > 0 || booking.diagnosisSummary ? (
+        {transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(terms.job)) ? (
           <JobCard>
             <Eyebrow>WHAT THE CUSTOMER TOLD US</Eyebrow>
             {transcript.length ? transcript.map((t, i) => (
@@ -275,7 +276,7 @@ export function WorkerRepairJobPage() {
           </JobCard>
         ) : null}
 
-        {at('go', 'travel', 'arrived') ? <GiveBackCard jobId={booking._id} status={booking.status} /> : null}
+        {at('go', 'travel') || (at('arrived') && !booking.otpVerified?.startAt) ? <GiveBackCard jobId={booking._id} status={booking.status} /> : null}
 
         {canPassBack ? (
           <JobCard>

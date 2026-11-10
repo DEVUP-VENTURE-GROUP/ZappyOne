@@ -33,7 +33,7 @@ import ArrivalProximity, { useArrivalProximity } from '../../components/common/A
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
 import {
-  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, REPAIR_CODE_LENGTH as CODE_LENGTH, repairProStep, readableCode, onceWords, repairNextAction as nextAction, REPAIR_QUOTABLE as QUOTABLE,
+  repairGateFor as gateFor, REPAIR_GATE_COPY as GATE_COPY, REPAIR_CODE_LENGTH as CODE_LENGTH, repairProStep, readableCode, onceWords, repairNextAction as nextAction, repairDirect, REPAIR_QUOTABLE as QUOTABLE,
   repairReadyForPayment, repairDue, canPassBackToShop, repairAgreedPaise, quoteTotalPaise, quotePayload, quoteRepairOptions, PART_GRADES,
   qaState, qaPayload, QUOTE_LINE_KINDS, rupeesInput, REPAIR_PHOTO_STAGES, REPAIR_NO_SOS,
 } from '../jobFlows';
@@ -401,7 +401,8 @@ export default function WorkerRepairJobPage() {
     </div>;
   }
 
-  const action = nextAction(booking.status, booking.serviceMode);
+  const words = termsOf(booking.vertical, verticals?.items);
+  const action = nextAction(booking.status, booking.serviceMode, words.job);
 
   /**
    * Evidence is gathered at QA, while the device is still open on the bench —
@@ -498,7 +499,6 @@ export default function WorkerRepairJobPage() {
   // go, travel, arrived, work or done: each section below shows only at the steps it belongs to (the app's job page).
   const step = repairProStep(booking.status);
   const at = (...steps) => steps.includes(step);
-  const words = termsOf(booking.vertical, verticals?.items);
   const codeLength = gateKind ? CODE_LENGTH[gateKind] : 4;
   if (codeDue && codeOpen) {
     return (
@@ -628,7 +628,7 @@ export default function WorkerRepairJobPage() {
           * display black, did it get wet, does the touch still respond. Those
           * answers decide which part to bring.
           */}
-        {(transcript.length > 0 || booking.diagnosisSummary) && (
+        {(transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(words.job))) && (
           <div className="card">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               What the customer told us
@@ -683,7 +683,7 @@ export default function WorkerRepairJobPage() {
           </div>
         )}
 
-        {at('go', 'travel', 'arrived') && <GiveBackCard jobId={booking._id} status={booking.status} />}
+        {(at('go', 'travel') || (at('arrived') && !booking.otpVerified?.startAt)) && <GiveBackCard jobId={booking._id} status={booking.status} />}
 
         {canPassBack && (
           <div className="card">
