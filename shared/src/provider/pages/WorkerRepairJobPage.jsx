@@ -340,6 +340,8 @@ function QAPanel({ bookingId, onDone }) {
 
 /* Page */
 
+const FINISH_STEPS = [['photos', 'Add photos of the finished work'], ['paid', 'Get paid'], ['done', 'Tap Complete job']];
+
 export default function WorkerRepairJobPage() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -418,6 +420,10 @@ export default function WorkerRepairJobPage() {
   // early returns (hooks must run every render). Only the plain derived value
   // is left here.
   const tooFarToArrive = headingToCustomer && !proximity.withinRadius;
+  // The server will not complete an unpaid job, so the button waits for the money instead of failing after the tap.
+  const mustBePaid = action?.to === 'COMPLETED' && booking.paymentStatus !== 'paid' && (booking.priceSnapshot?.totalPaise || 0) > 0;
+  const finishing = action?.to === 'COMPLETED';
+  const finishDone = { photos: !wantsPhotos || !photosBlocked, paid: !mustBePaid, done: false };
 
   // What the next move needs, and whether it has already been given.
   const gateKind = action ? gateFor(action.to, booking.serviceMode) : null;
@@ -563,32 +569,93 @@ export default function WorkerRepairJobPage() {
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</p>
           <p className="font-bold text-[#0F172A] mt-1 capitalize">{stageLabel('repair', booking.status)}</p>
         </div>
-
-        {/*
-          Taking the money is the LAST step, not the first.
-
-          This block used to sit at the top of the screen from the moment a job
-          was accepted - "Collect ₹1,638 in cash" with a button to confirm it,
-          before the technician had left the shop. That invites recording money
-          nobody has handed over, on an estimate that has not survived contact
-          with the device. It now appears only once the work is finished and the
-          customer genuinely owes something.
-
-          The job still cannot be completed until this is recorded, because
-          completion bills the provider their commission on the basis that they
-          were paid.
-        */}
-        {/* Done: the provider rates the customer, once (jobs/customer-rating). */}
-        {booking.status === 'COMPLETED' && <JobEarningsCard jobId={booking._id} />}
-        {booking.status === 'COMPLETED' && <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />}
-
+        {finishing && !ownerWatching && (
+          <div className="card">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">To finish</p>
+            <ol className="space-y-1.5">
+              {FINISH_STEPS.map(([key, label], i) => (
+                <li key={key} className="flex items-center gap-2.5">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-black ${finishDone[key] ? 'bg-zappy-50 text-zappy-600' : 'bg-slate-100 text-slate-500'}`}>{finishDone[key] ? '✓' : i + 1}</span>
+                  <span className={`text-[13px] ${finishDone[key] ? 'text-slate-400' : 'font-bold text-[#0F172A]'}`}>{label}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+        {awaitingCustomer && (
+          <div className="card bg-amber-50 ring-amber-200 flex items-start gap-2.5">
+            <FileText size={16} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-sm text-amber-900">Waiting for customer approval</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Do not start work until they approve the quote.
+              </p>
+            </div>
+          </div>
+        )}
+        {/* How close they are, while they are on their way. */}
+        {booking.status === 'QA_PENDING' && <QAPanel bookingId={id} onDone={refetch} />}
+        {wantsPhotos && (
+          <div className="card">
+            <ProofPhotos
+              photos={photos}
+              onChange={setPhotos}
+              folder="order-proof"
+              title={`Photos of the finished ${words.job}`}
+              hint="The customer sees these. They are also your evidence if the work is questioned later."
+            />
+          </div>
+        )}
         {readyForPayment && (snap.totalPaise || 0) > 0 && (
           <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
             paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id} claim={booking.payClaim} />
         )}
-
-
-
+        {codeDue && (
+          <button type="button" onClick={() => setCodeOpen(true)} className="btn-primary w-full">Enter the customer's code</button>
+        )}
+        {!ownerWatching && mustBePaid && <p className="text-center text-[12px] font-semibold text-amber-700">Get paid first, then complete.</p>}
+        {!ownerWatching && action && (
+          <button
+            onClick={() => move(action.to)}
+            disabled={moving || (gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid}
+            className="btn-primary w-full disabled:opacity-40"
+          >
+            {moving ? <><Loader2 size={15} className="animate-spin" /> Updating…</> : action.label}
+          </button>
+        )}
+        {showQuote ? (
+          <QuoteBuilder
+            bookingId={id}
+            repairCode={booking.repairCode || null}
+            vertical={booking.vertical}
+            additional={showQuote === 'additional'}
+            snapshot={booking.priceSnapshot || {}}
+            onSent={() => { setShowQuote(false); refetch(); }}
+            onCancel={() => setShowQuote(false)}
+          />
+        ) : QUOTABLE.includes(booking.status) && (
+          booking.status === 'REPAIR_IN_PROGRESS' ? (
+            /*
+              Mid-repair the device is already open, so the honest button is not
+              "raise a quote" — it is "I have found something else", which is
+              what actually happened and what the customer will be asked about.
+            */
+            <button onClick={() => setShowQuote('additional')}
+              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-amber-300 text-amber-700 font-bold text-sm py-3 rounded-xl">
+              <AlertTriangle size={15} /> I've found another problem
+            </button>
+          ) : (
+            <button onClick={() => setShowQuote(true)}
+              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-zappy-200 text-zappy-700 font-bold text-sm py-3 rounded-xl">
+              <FileText size={15} /> Raise a quote
+            </button>
+          )
+        )}
+        {ownerWatching && action && (
+          <p className="card text-center text-sm text-slate-500">Your technician takes the next step from their app: {action.label.toLowerCase()}.</p>
+        )}
+        {booking.status === 'COMPLETED' && <JobEarningsCard jobId={booking._id} />}
+        {booking.status === 'COMPLETED' && <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} />}
         <div className="card space-y-2.5">
           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Job</p>
           {[
@@ -617,17 +684,6 @@ export default function WorkerRepairJobPage() {
             </div>
           ))}
         </div>
-
-        {/*
-          * What the customer was actually asked, and what they said.
-          *
-          * This showed one generated sentence — "Based on your answers, the
-          * likely repair is Screen Glass Replacement" — which tells a
-          * technician nothing they could not guess from the repair code. The
-          * useful part is the conversation: is the glass cracked or is the
-          * display black, did it get wet, does the touch still respond. Those
-          * answers decide which part to bring.
-          */}
         {(transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(words.job))) && (
           <div className="card">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -663,28 +719,26 @@ export default function WorkerRepairJobPage() {
             )}
           </div>
         )}
-
+        {!(readyForPayment && (snap.totalPaise || 0) > 0) && (
         <div className="card">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-[#0F172A]">{snap.isEstimate ? 'Estimate' : 'Agreed price'}</span>
             <span className="text-xl font-black text-[#0F172A]">{rupees(snap.totalPaise)}</span>
           </div>
         </div>
-
-        {awaitingCustomer && (
-          <div className="card bg-amber-50 ring-amber-200 flex items-start gap-2.5">
-            <FileText size={16} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-sm text-amber-900">Waiting for customer approval</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Do not start work until they approve the quote.
-              </p>
-            </div>
+        )}
+        {quotes.length > 0 && (
+          <div className="card">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quotes raised</p>
+            {quotes.map((q) => (
+              <div key={q._id} className="flex items-center justify-between text-xs py-1">
+                <span className="text-slate-500">r{q.revision}, {q.status.replace(/_/g, ' ')}</span>
+                <span className="font-semibold text-[#0F172A]">{rupees(q.totalPaise)}</span>
+              </div>
+            ))}
           </div>
         )}
-
         {(at('go', 'travel') || (at('arrived') && !booking.otpVerified?.startAt)) && <GiveBackCard jobId={booking._id} status={booking.status} />}
-
         {canPassBack && (
           <div className="card">
             {askingPassReason ? (
@@ -701,90 +755,6 @@ export default function WorkerRepairJobPage() {
             )}
           </div>
         )}
-
-        {quotes.length > 0 && (
-          <div className="card">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quotes raised</p>
-            {quotes.map((q) => (
-              <div key={q._id} className="flex items-center justify-between text-xs py-1">
-                <span className="text-slate-500">r{q.revision}, {q.status.replace(/_/g, ' ')}</span>
-                <span className="font-semibold text-[#0F172A]">{rupees(q.totalPaise)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {showQuote ? (
-          <QuoteBuilder
-            bookingId={id}
-            repairCode={booking.repairCode || null}
-            vertical={booking.vertical}
-            additional={showQuote === 'additional'}
-            snapshot={booking.priceSnapshot || {}}
-            onSent={() => { setShowQuote(false); refetch(); }}
-            onCancel={() => setShowQuote(false)}
-          />
-        ) : QUOTABLE.includes(booking.status) && (
-          booking.status === 'REPAIR_IN_PROGRESS' ? (
-            /*
-              Mid-repair the device is already open, so the honest button is not
-              "raise a quote" — it is "I have found something else", which is
-              what actually happened and what the customer will be asked about.
-            */
-            <button onClick={() => setShowQuote('additional')}
-              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-amber-300 text-amber-700 font-bold text-sm py-3 rounded-xl">
-              <AlertTriangle size={15} /> I've found another problem
-            </button>
-          ) : (
-            <button onClick={() => setShowQuote(true)}
-              className="w-full flex items-center justify-center gap-2 bg-white ring-1 ring-zappy-200 text-zappy-700 font-bold text-sm py-3 rounded-xl">
-              <FileText size={15} /> Raise a quote
-            </button>
-          )
-        )}
-
-        {booking.status === 'QA_PENDING' && <QAPanel bookingId={id} onDone={refetch} />}
-
-        {/*
-          * The code box stands between the technician and the button.
-          *
-          * The server refuses the move without it either way, but discovering
-          * that by tapping and being rejected is a bad minute for two people
-          * standing in a doorway. Once accepted the box disappears and the
-          * normal button returns.
-          */}
-        {wantsPhotos && (
-          <div className="card">
-            <ProofPhotos
-              photos={photos}
-              onChange={setPhotos}
-              folder="order-proof"
-              title="Photos of the finished repair"
-              hint="The customer sees these. They are also your evidence if the work is questioned later."
-            />
-          </div>
-        )}
-
-        {/* How close they are, while they are on their way. */}
-        {headingToCustomer && <ArrivalProximity metres={proximity.metres} />}
-
-        {ownerWatching && action && (
-          <p className="card text-center text-sm text-slate-500">Your technician takes the next step from their app: {action.label.toLowerCase()}.</p>
-        )}
-
-        {codeDue && (
-          <button type="button" onClick={() => setCodeOpen(true)} className="btn-primary w-full">Enter the customer's code</button>
-        )}
-
-        {!ownerWatching && action && (
-          <button
-            onClick={() => move(action.to)}
-            disabled={moving || (gateKind && !gatePassed) || tooFarToArrive || photosBlocked}
-            className="btn-primary w-full disabled:opacity-40"
-          >
-            {moving ? <><Loader2 size={15} className="animate-spin" /> Updating…</> : action.label}
-          </button>
-        )}
         {/* Safety: on every live job, one hold away. */}
         {!ownerWatching && !REPAIR_NO_SOS.includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
@@ -792,6 +762,25 @@ export default function WorkerRepairJobPage() {
             <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} />
           </div>
         )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {headingToCustomer && <ArrivalProximity metres={proximity.metres} />}
+
+
+
       </div>
     </div>
   );

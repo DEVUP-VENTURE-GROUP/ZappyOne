@@ -69,6 +69,8 @@ import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 import { stageLabel } from '@zappy/core/shared/useProviderJobs';
 import { termsOf, capWord } from '@zappy/core/shared/repairBasket';
 
+const FINISH_STEPS: [string, string][] = [['photos', 'Add photos of the finished work'], ['paid', 'Get paid'], ['done', 'Tap Complete job']];
+
 export function WorkerRepairJobPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -114,6 +116,10 @@ export function WorkerRepairJobPage() {
   const savedBefore = (booking.completionPhotos || []).length > 0;
   const photosBlocked = wantsPhotos && !(photosSettled(photos) || (savedBefore && photosSettled(photos, { min: 0 })));
   const tooFarToArrive = headingToCustomer && !proximity.withinRadius;
+  // The server will not complete an unpaid job, so the button waits for the money instead of failing after the tap.
+  const mustBePaid = action?.to === 'COMPLETED' && booking.paymentStatus !== 'paid' && (booking.priceSnapshot?.totalPaise || 0) > 0;
+  const finishing = action?.to === 'COMPLETED';
+  const finishDone: Record<string, boolean> = { photos: !wantsPhotos || !photosBlocked, paid: !mustBePaid, done: false };
   const gateKind: 'start' | 'handover' | 'return' | null = action ? repairGateFor(action.to, booking.serviceMode) : null;
   const gatePassed = gateKind ? !!booking.otpVerified?.[`${gateKind}At`] : true;
   const snap = booking.priceSnapshot || {};
@@ -225,13 +231,64 @@ export function WorkerRepairJobPage() {
           <Text variant="body" weight="bold" style={styles.capitalize}>{stageLabel('repair', booking.status)}</Text>
         </JobCard>
 
-        {booking.status === 'COMPLETED' ? <JobEarningsCard jobId={booking._id} /> : null}
-        {booking.status === 'COMPLETED' ? <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} /> : null}
+        {finishing && !ownerWatching ? (
+          <JobCard>
+            <Eyebrow>TO FINISH</Eyebrow>
+            {FINISH_STEPS.map(([key, label], i) => (
+              <View key={key} style={styles.row}>
+                <View style={styles.num}><Text variant="caption" weight="black" color={finishDone[key] ? zappy[600] : ink[500]}>{finishDone[key] ? '✓' : i + 1}</Text></View>
+                <Text variant="bodySmall" weight={finishDone[key] ? 'regular' : 'bold'} color={finishDone[key] ? ink[400] : ink[900]} style={styles.flex}>{label}</Text>
+              </View>
+            ))}
+          </JobCard>
+        ) : null}
+
+        {booking.status === 'CUSTOMER_APPROVAL_PENDING' ? (
+          <JobCard tone="amber" style={styles.row}>
+            <FileText size={16} color={accent[600]} />
+            <View style={styles.flex}>
+              <Text variant="bodySmall" weight="bold" color={accent[700]}>Waiting for customer approval</Text>
+              <Text variant="caption" color={accent[700]}>Do not start work until they approve the quote.</Text>
+            </View>
+          </JobCard>
+        ) : null}
+
+        {headingToCustomer ? <ArrivalBar metres={proximity.metres} radius={proximity.radius} /> : null}
+
+        {booking.status === 'QA_PENDING' ? <QAPanel bookingId={id} onDone={refetch} /> : null}
+
+        {wantsPhotos ? (
+          <ProofPhotos photos={photos} onChange={setPhotos} folder="order-proof" title={`Photos of the finished ${terms.job}`}
+            hint="The customer sees these. They are also your evidence if the work is questioned later." />
+        ) : null}
 
         {repairReadyForPayment(booking) && (snap.totalPaise || 0) > 0 ? (
           <CollectPaymentCard amountPaise={duePaise} tipPaise={tipPaise} carriedPaise={carriedPaise} paymentMethod={booking.paymentMethod}
             paid={booking.paymentStatus === 'paid'} collecting={collecting} onCollect={collect} jobId={booking._id}  claim={(booking as { payClaim?: { method?: 'upi' | 'cash'; at?: string } }).payClaim} />
         ) : null}
+
+        {codeDue ? <Button label="Enter the customer's code" onPress={() => setCodeOpen(true)} fullWidth size="large" /> : null}
+
+        {!ownerWatching && mustBePaid ? <Text variant="caption" color={accent[700]} style={styles.centerText}>Get paid first, then complete.</Text> : null}
+
+        {!ownerWatching && action ? (
+          <Button label={action.label} onPress={() => move(action.to)} loading={moving}
+            disabled={(!!gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid} fullWidth size="large" />
+        ) : null}
+
+        {showQuote ? (
+          <QuoteBuilder bookingId={id} bookedRepair={booking.repairCode || null} vertical={booking.vertical} additional={showQuote === 'additional'}
+            snapshot={snap} onSent={() => { setShowQuote(false); refetch(); }} onCancel={() => setShowQuote(false)} />
+        ) : REPAIR_QUOTABLE.includes(booking.status) ? (
+          booking.status === 'REPAIR_IN_PROGRESS'
+            ? <Button variant="outline" icon={<AlertTriangle size={15} color={accent[700]} />} label="I've found another problem" onPress={() => setShowQuote('additional')} fullWidth />
+            : <Button variant="outline" icon={<FileText size={15} color={zappy[700]} />} label="Raise a quote" onPress={() => setShowQuote('new')} fullWidth />
+        ) : null}
+
+        {ownerWatching && action ? <JobCard><Text variant="bodySmall" color={ink[500]} style={styles.centerText}>Your technician takes the next step from their app: {action.label.toLowerCase()}.</Text></JobCard> : null}
+
+        {booking.status === 'COMPLETED' ? <JobEarningsCard jobId={booking._id} /> : null}
+        {booking.status === 'COMPLETED' ? <RateCustomerCard jobId={booking._id} rated={!!booking.customerRating?.stars} /> : null}
 
         <JobCard>
           <Eyebrow>JOB</Eyebrow>
@@ -259,20 +316,24 @@ export function WorkerRepairJobPage() {
           </JobCard>
         ) : null}
 
+        {repairReadyForPayment(booking) && (snap.totalPaise || 0) > 0 ? null : (
         <JobCard>
           <View style={styles.between}>
             <Text variant="bodySmall" weight="bold">{snap.isEstimate ? 'Estimate' : 'Agreed price'}</Text>
             <Text variant="heading2" weight="black">{rupees(snap.totalPaise)}</Text>
           </View>
         </JobCard>
+        )}
 
-        {booking.status === 'CUSTOMER_APPROVAL_PENDING' ? (
-          <JobCard tone="amber" style={styles.row}>
-            <FileText size={16} color={accent[600]} />
-            <View style={styles.flex}>
-              <Text variant="bodySmall" weight="bold" color={accent[700]}>Waiting for customer approval</Text>
-              <Text variant="caption" color={accent[700]}>Do not start work until they approve the quote.</Text>
-            </View>
+        {quotes.length ? (
+          <JobCard>
+            <Eyebrow>QUOTES RAISED</Eyebrow>
+            {quotes.map((q) => (
+              <View key={q._id} style={styles.between}>
+                <Text variant="caption" color={ink[500]}>r{q.revision}, {q.status.replace(/_/g, ' ')}</Text>
+                <Text variant="caption" weight="semibold">{rupees(q.totalPaise)}</Text>
+              </View>
+            ))}
           </JobCard>
         ) : null}
 
@@ -296,46 +357,24 @@ export function WorkerRepairJobPage() {
           </JobCard>
         ) : null}
 
-        {quotes.length ? (
-          <JobCard>
-            <Eyebrow>QUOTES RAISED</Eyebrow>
-            {quotes.map((q) => (
-              <View key={q._id} style={styles.between}>
-                <Text variant="caption" color={ink[500]}>r{q.revision}, {q.status.replace(/_/g, ' ')}</Text>
-                <Text variant="caption" weight="semibold">{rupees(q.totalPaise)}</Text>
-              </View>
-            ))}
-          </JobCard>
-        ) : null}
-
-        {showQuote ? (
-          <QuoteBuilder bookingId={id} bookedRepair={booking.repairCode || null} vertical={booking.vertical} additional={showQuote === 'additional'}
-            snapshot={snap} onSent={() => { setShowQuote(false); refetch(); }} onCancel={() => setShowQuote(false)} />
-        ) : REPAIR_QUOTABLE.includes(booking.status) ? (
-          booking.status === 'REPAIR_IN_PROGRESS'
-            ? <Button variant="outline" icon={<AlertTriangle size={15} color={accent[700]} />} label="I've found another problem" onPress={() => setShowQuote('additional')} fullWidth />
-            : <Button variant="outline" icon={<FileText size={15} color={zappy[700]} />} label="Raise a quote" onPress={() => setShowQuote('new')} fullWidth />
-        ) : null}
-
-        {booking.status === 'QA_PENDING' ? <QAPanel bookingId={id} onDone={refetch} /> : null}
-
-        {wantsPhotos ? (
-          <ProofPhotos photos={photos} onChange={setPhotos} folder="order-proof" title="Photos of the finished repair"
-            hint="The customer sees these. They are also your evidence if the work is questioned later." />
-        ) : null}
-
-        {headingToCustomer ? <ArrivalBar metres={proximity.metres} radius={proximity.radius} /> : null}
-
-        {ownerWatching && action ? <JobCard><Text variant="bodySmall" color={ink[500]} style={styles.centerText}>Your technician takes the next step from their app: {action.label.toLowerCase()}.</Text></JobCard> : null}
-
-        {codeDue ? <Button label="Enter the customer's code" onPress={() => setCodeOpen(true)} fullWidth size="large" /> : null}
-
-        {!ownerWatching && action ? (
-          <Button label={action.label} onPress={() => move(action.to)} loading={moving}
-            disabled={(!!gateKind && !gatePassed) || tooFarToArrive || photosBlocked} fullWidth size="large" />
-        ) : null}
-
         {!ownerWatching && !REPAIR_NO_SOS.includes(booking.status) ? <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} /> : null}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
