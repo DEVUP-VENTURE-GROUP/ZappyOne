@@ -13,14 +13,14 @@ beforeAll(async () => {
 afterAll(async () => { await mongoose.disconnect(); await server.stop(); });
 
 const { seedCatalogAZ } = require('../src/modules/onboarding/run-catalog-az');
-const { AZ_LINES } = require('../src/modules/onboarding/catalog-az.seed');
+const { AZ_DOMAINS, AZ_LINES } = require('../src/modules/onboarding/catalog-az.seed');
 const { ServiceDomain, ServiceLine, KycRequirementSet } = require('../src/modules/onboarding/onboarding.model');
 const { VERTICALS, isValid, loadRegistered } = require('../src/modules/repair/vertical');
 
 test('every domain, line and check lands, and a re-run adds nothing and keeps admin edits', async () => {
   await ServiceDomain.create({ code: 'home_services', name: 'Home Services' });
   const first = await seedCatalogAZ();
-  expect(first).toMatchObject({ domains: 7, renamed: 1, lines: AZ_LINES.length });
+  expect(first).toMatchObject({ domains: AZ_DOMAINS.length - 1, renamed: 1, lines: AZ_LINES.length });
   expect((await ServiceDomain.findOne({ code: 'home_services' }).lean()).name).toBe('Repairs & Maintenance');
 
   await ServiceLine.updateOne({ code: 'carpentry' }, { $set: { name: 'Carpentry by experts' } });

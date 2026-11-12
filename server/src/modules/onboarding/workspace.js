@@ -16,6 +16,7 @@ const DEFAULTS = {
   family_assist: { home: 'visits', modules: ['plans'], labels: { orders: 'Visits', work: 'Services & prices', team: 'Helpers', shop: 'Business & hours' }, terms: { job: 'visit', pro: 'helper', warranty: false } },
   specialist_home: { home: 'visits', modules: ['plans', 'insights'], labels: { orders: 'Jobs', work: 'Services & prices', team: 'Crew', shop: 'Business & hours' }, terms: { job: 'job', pro: 'specialist', warranty: true } },
   local_pros: { home: 'appointments', modules: ['plans'], labels: { orders: 'Sessions', work: 'Classes & prices', team: 'Teachers', shop: 'Profile & hours' }, terms: { job: 'class', pro: 'teacher', warranty: false } },
+  moving: { home: 'visits', modules: ['insights'], labels: { orders: 'Moves', work: 'Services & prices', team: 'Crew', shop: 'Business & hours' }, terms: { job: 'move', pro: 'mover', warranty: false } },
   pet_services: { home: 'visits', modules: ['plans'], labels: { orders: 'Bookings', work: 'Services & prices', team: 'Groomers', shop: 'Business & hours' }, terms: { job: 'booking', pro: 'pet pro', warranty: false } },
 };
 

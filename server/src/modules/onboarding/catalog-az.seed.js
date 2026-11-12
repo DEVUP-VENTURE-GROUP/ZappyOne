@@ -18,12 +18,27 @@ const AZ_DOMAINS = [
   { code: 'family_assist', name: 'Family & Everyday Assistance', icon: 'HeartHandshake', displayOrder: 6, description: 'Elders, escorts, functions and household help' },
   { code: 'specialist_home', name: 'Specialist Home Services', icon: 'ShieldCheck', displayOrder: 7, description: 'Pest control, sofa cleaning, painting and installations' },
   { code: 'local_pros', name: 'Other Local Services', icon: 'GraduationCap', displayOrder: 8, description: 'Tutors, trainers, photographers and local professionals' },
+  { code: 'moving', name: 'Moving & Shifting', icon: 'Truck', displayOrder: 9, description: 'House and office shifting, packing and goods transport' },
 ];
 
 // Names the original seed gave these domains; the version 1 names replace them only while an operator has not renamed them.
 const RENAMED_FROM = { home_services: 'Home Services', vehicles: 'Vehicles', family_assist: 'Family Assist' };
 
 const AZ_LINES = [
+  /* Moving & Shifting */
+  { code: 'packers_movers', name: 'Packers & movers', domainCode: 'moving', icon: 'Truck', typeWord: 'Home size', thing: 'home', types: HOME, isPopular: true,
+    packages: [
+      { code: 'local_shift', name: 'Local house shifting, packed, moved and unpacked', minutes: 480, prices: at(5999, 8999, 12999, 17999) },
+      { code: 'packing_only', name: 'Packing only, boxes and bubble wrap included', minutes: 240, prices: at(2499, 3499, 4499, 5999) },
+      { code: 'unpack_setup', name: 'Unpacking and setting up at the new home', minutes: 240, prices: at(1999, 2799, 3599, 4499) },
+      { code: 'furniture_move', name: 'Heavy furniture moved within the home', minutes: 60, prices: same(HOME, 499) },
+    ] },
+  { code: 'goods_transport', name: 'Mini-truck & goods transport', domainCode: 'moving', icon: 'Package', thing: 'job', types: ONE,
+    packages: [
+      { code: 'mini_truck', name: 'Mini-truck with two helpers, up to 10 km in the city', minutes: 120, prices: one(1499) },
+      { code: 'appliance_move', name: 'Move one appliance or furniture item', minutes: 90, prices: one(799) },
+      { code: 'office_move', name: 'Small office shifting, up to 10 desks', minutes: 480, prices: one(9999) },
+    ] },
   /* 1. Home & Daily Help */
   { code: 'daily_cleaning', name: 'Sweeping, mopping & dusting', domainCode: 'home_daily_help', icon: 'Sparkles', typeWord: 'Home size', thing: 'home', isPopular: true, types: HOME, inHome: true,
     packages: [
@@ -249,6 +264,11 @@ const lineSets = (lineCode, domainCode, label, docs, declarations, kinds = ['sho
 }));
 
 const AZ_REQUIREMENT_SETS = [
+  ...domainSets('moving', 'Moving & Shifting', {
+    shopDocs: [{ code: 'vehicle_rc', label: 'Registration certificate of the truck', required: true }],
+    individualDocs: [{ code: 'driving_licence', label: 'Driving licence', hint: 'For whoever drives the truck', required: true }],
+    declarations: ['I photograph and list every item at pickup and hand it over against the same list.', 'Fragile items are wrapped and marked before they are lifted.'],
+  }),
   ...domainSets('home_daily_help', 'Home & Daily Help', { individualDocs: [PCC], declarations: [IN_HOME] }),
   ...domainSets('beauty_care', 'Beauty & Personal Care', { declarations: ['I use sealed or sanitised tools for every customer.'] }),
   ...domainSets('errands_pickup', 'Errands & Pickup', { declarations: ['I photograph every item at pickup and at handover.', 'I never open a sealed parcel or document cover.'] }),
