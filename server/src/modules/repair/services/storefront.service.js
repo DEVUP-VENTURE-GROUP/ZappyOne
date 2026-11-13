@@ -237,4 +237,4 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
 }
 
 module.exports = {
-  bookableNear, listStorefronts, storefrontMenu, searchMenus, SORTS };
+  bookableNear, listStorefronts, storefrontMenu, searchMenus, SORTS, BOOKABLE };

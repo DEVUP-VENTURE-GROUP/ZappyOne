@@ -84,7 +84,8 @@ export function ShopDashboard() {
   const kycStatus: string = kycData?.kyc?.status || shop?.kyc?.status || 'not_submitted';
   const meta = KYC_META[kycStatus] || KYC_META.not_submitted;
   const hasPin = shop?.address?.location?.coordinates?.length === 2;
-  const isDiscoverable = shop?.isActive && kycStatus === 'approved' && hasPin && Array.isArray(shop?.services) && shop.services.length > 0;
+  // The server's answer (shop.bookable): the same checks customers' search makes, including an approved price.
+  const isDiscoverable = shop?.bookable ? shop.bookable.live : shop?.isActive && kycStatus === 'approved' && hasPin && Array.isArray(shop?.services) && shop.services.length > 0;
   // The server's answer from India's clock; null means hours were never stated, not shut.
   const isOpen: boolean | null = shop?.openNow ?? null;
   const liveNow = isDiscoverable && isOpen !== false;
@@ -106,7 +107,7 @@ export function ShopDashboard() {
 
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={!!liveNow} isOpen={isOpen}
-          blocker={kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null} />
+          blocker={shop?.bookable?.reason || (kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null)} />
         {askingNow > 0 ? (
           <Pressable onPress={() => go('/shop/price-requests')} accessibilityRole="button" style={styles.asking}>
             <View style={styles.flex}>

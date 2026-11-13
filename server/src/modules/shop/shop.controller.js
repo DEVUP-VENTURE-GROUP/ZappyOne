@@ -14,7 +14,8 @@ async function getMe(req, res, next) {
      * out itself in the browser, so the two could disagree about whether the
      * shop was trading.
      */
-    res.json({ shop: shopService.withOpenState(await shopService.resolveShopImages(shop)) });
+    const bookable = await shopService.bookableState(shop).catch(() => null);
+    res.json({ shop: { ...shopService.withOpenState(await shopService.resolveShopImages(shop)), bookable } });
   } catch (err) { next(err); }
 }
 

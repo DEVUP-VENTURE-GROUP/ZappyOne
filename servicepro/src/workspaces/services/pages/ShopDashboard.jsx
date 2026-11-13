@@ -159,7 +159,8 @@ export default function ShopDashboard() {
   const kycStatus = kycData?.kyc?.status || shop?.kyc?.status || 'not_submitted';
   const meta = KYC_META[kycStatus] || KYC_META.not_submitted;
   const hasPin = shop?.address?.location?.coordinates?.length === 2;
-  const isDiscoverable = shop?.isActive && kycStatus === 'approved' && hasPin
+  // The server's answer (shop.bookable): the same checks customers' search makes, including an approved price.
+  const isDiscoverable = shop?.bookable ? shop.bookable.live : shop?.isActive && kycStatus === 'approved' && hasPin
     && Array.isArray(shop?.services) && shop.services.length > 0;
 
   /*
@@ -223,7 +224,7 @@ export default function ShopDashboard() {
       {/* Navigation and sign-out live in the frame (ServiceProShell); this is the shop's day. */}
       <div className="mx-auto max-w-6xl px-4 pt-5">
         <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={liveNow} isOpen={isOpen}
-          blocker={kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null} />
+          blocker={shop?.bookable?.reason || (kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null)} />
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pt-4">

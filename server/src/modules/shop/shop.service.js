@@ -74,6 +74,23 @@ function isLive(shop) {
   return withOpenState(shop).openNow !== false;
 }
 
+// What the owner's dashboard shows as Live: the same checks a customer's search makes, plus one approved price, with the first thing missing in plain words.
+async function bookableState(shop) {
+  const gap = (() => {
+    if (!shop || shop.isActive === false || shop.isBlocked) return 'Your shop is on hold. Call ZappyOne help.';
+    if (shop.kyc?.status !== 'approved') return 'Documents not approved yet';
+    if (shop.address?.location?.coordinates?.length !== 2) return 'Pin your shop address';
+    if (!Array.isArray(shop.services) || !shop.services.length) return 'Waiting for ZappyOne to approve your services';
+    if (shop.takingOrders === false) return 'Your Live switch is off';
+    return null;
+  })();
+  if (gap) return { live: false, reason: gap };
+  const { ProviderPricing } = require('../repair/models/pricing.model');
+  const { BOOKABLE } = require('../repair/services/storefront.service');
+  if (!(await ProviderPricing.exists({ shopId: shop._id, ...BOOKABLE }))) return { live: false, reason: 'Set your prices, or wait for ZappyOne to approve them' };
+  return { live: true, reason: null };
+}
+
 /** The live ones among these shop ids (one read). */
 async function liveShopIds(ids) {
   if (!ids?.length) return new Set();
@@ -472,6 +489,7 @@ async function getShopEarnings(shopId, range = 'today') {
 
 module.exports = {
   isLive,
+  bookableState,
   liveShopIds,
   LIVE_FIELDS,
   findNearbyShops,
