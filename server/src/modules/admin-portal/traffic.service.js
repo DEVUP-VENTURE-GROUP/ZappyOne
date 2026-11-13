@@ -2,8 +2,7 @@
 const { redis } = require('../../config/redis');
 const { VisitorSession } = require('../telemetry/telemetry.model');
 
-const ONLINE_KEY = 'viz:online';
-const LIVE_WINDOW_MS = 60_000;
+const { ONLINE_KEY, ONLINE_WINDOW_MS: LIVE_WINDOW_MS } = require('../telemetry/telemetry.controller');
 const LIVE_CAP = 5000;
 const DAY_MS = 86_400_000;
 const IST_OFFSET_MS = 330 * 60_000;

@@ -17,7 +17,8 @@ import { API_BASE } from '@shared/services/apiBase';
 
 const SESSION_KEY = 'zappy:sid';
 const COORDS_KEY  = 'zappy:lastCoords'; // optionally set by the booking LocationPicker
-const HEARTBEAT_MS = 20_000;
+// Every 2 minutes, only while the tab is visible; the server counts a visitor live for 3 minutes.
+const HEARTBEAT_MS = 120_000;
 
 function getSessionId() {
   try {

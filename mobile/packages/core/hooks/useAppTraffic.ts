@@ -7,7 +7,8 @@ import { axiosClient } from '../api/axiosClient';
 import { APP_ID } from '../config/env';
 import { useAppSelector } from '../store/hooks';
 
-const BEAT_MS = 30_000;
+// Every 2 minutes: at 10,000 open apps that is about 83 calls a second (server telemetry ONLINE_WINDOW_MS is 3 minutes).
+const BEAT_MS = 120_000;
 const NEW_SESSION_AFTER_MS = 30 * 60_000;
 
 const newSession = () => `app_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;

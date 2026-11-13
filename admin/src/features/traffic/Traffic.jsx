@@ -36,7 +36,7 @@ export function LiveNowView() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Active right now" value={count(data.total)} hint="Seen in the last minute" />
+        <Kpi label="Active right now" value={count(data.total)} hint="Seen in the last 3 minutes" />
         {toRows(data.bySurface, SURFACES).slice(0, 3).map((r) => <Kpi key={r.key} label={surfaceName(r.key)} value={count(r.value)} />)}
       </div>
       <div className="grid gap-4 md:grid-cols-3">

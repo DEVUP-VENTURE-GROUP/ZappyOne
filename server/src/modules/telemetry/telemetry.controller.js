@@ -4,7 +4,10 @@ const { redis } = require('../../config/redis');
 const logger = require('../../core/logger');
 
 const ONLINE_KEY = 'viz:online';          // ZSET member=sessionId score=lastSeenMs
-const ONLINE_WINDOW_MS = 60_000;          // "active right now" = seen in last 60s
+// Active right now = seen in the last 3 minutes; it must stay longer than the apps' 2-minute heartbeat.
+const ONLINE_WINDOW_MS = 3 * 60_000;
+// The visit's lastSeen goes to the database at most once per 5 minutes; Redis has every beat.
+const SEEN_WRITE_GAP_S = 300;
 const SESSION_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const OBJECTID_RE = /^[a-f\d]{24}$/i;
 // Only accept a real ObjectId — a bad string would throw a CastError and drop the whole write.
@@ -138,10 +141,10 @@ async function heartbeat(req, res) {
   try {
     const { sessionId } = req.body || {};
     if (!sessionId || !SESSION_RE.test(sessionId)) return;
-    await Promise.all([
-      VisitorSession.updateOne({ sessionId }, { $set: { lastSeen: new Date() } }),
-      touchOnline(sessionId),
-    ]);
+    await touchOnline(sessionId);
+    if (await redis.set(`viz:seen:${sessionId}`, '1', 'EX', SEEN_WRITE_GAP_S, 'NX')) {
+      await VisitorSession.updateOne({ sessionId }, { $set: { lastSeen: new Date() } });
+    }
   } catch (err) {
     logger.warn({ err: err.message }, 'telemetry heartbeat failed');
   }
@@ -228,5 +231,6 @@ module.exports = {
   // shared helpers for the admin intelligence controller
   activeNowCount,
   ONLINE_KEY,
+  ONLINE_WINDOW_MS,
   ONLINE_WINDOW_MS,
 };
