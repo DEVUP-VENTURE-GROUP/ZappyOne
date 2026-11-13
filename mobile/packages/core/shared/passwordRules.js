@@ -18,3 +18,11 @@ export function passwordChecks(pw = '', phone = '') {
 }
 
 export const passwordOk = (pw, phone) => passwordChecks(pw, phone).every((c) => c.ok);
+
+// Mirrors the server's once-a-day rule (account.service PASSWORD_CHANGE_GAP_MS), so the button waits instead of the server refusing.
+export const PASSWORD_CHANGE_GAP_MS = 24 * 3600_000;
+export function passwordChangeOpensAt(passwordSetAt, now = Date.now()) {
+  if (!passwordSetAt) return null;
+  const at = new Date(passwordSetAt).getTime() + PASSWORD_CHANGE_GAP_MS;
+  return at > now ? new Date(at) : null;
+}

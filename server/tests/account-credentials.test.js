@@ -53,8 +53,13 @@ test('password rules and changing it', async () => {
   await expect(svc.setPassword({ role: 'user', id: u._id, newPassword: `x${digits}` })).rejects.toMatchObject({ code: 'WEAK_PASSWORD' });
   const st = await svc.setPassword({ role: 'user', id: u._id, newPassword: 'goodpass1' });
   expect(st.hasPassword).toBe(true);
+  // Once a day: a change right after the last one is refused before any password is checked.
+  await expect(svc.setPassword({ role: 'user', id: u._id, currentPassword: 'goodpass1', newPassword: 'another2' })).rejects.toMatchObject({ code: 'PASSWORD_CHANGED_RECENTLY', status: 429 });
+  await User.updateOne({ _id: u._id }, { $set: { passwordSetAt: new Date(Date.now() - 25 * 3600_000) } });
   await expect(svc.setPassword({ role: 'user', id: u._id, currentPassword: 'wrong', newPassword: 'another2' })).rejects.toMatchObject({ code: 'BAD_CURRENT_PASSWORD' });
+  await expect(svc.setPassword({ role: 'user', id: u._id, currentPassword: 'goodpass1', newPassword: 'goodpass1' })).rejects.toMatchObject({ code: 'SAME_PASSWORD' });
   await svc.setPassword({ role: 'user', id: u._id, currentPassword: 'goodpass1', newPassword: 'another2' });
+  await expect(svc.setPassword({ role: 'user', id: u._id, currentPassword: 'another2', newPassword: 'third3pass' })).rejects.toMatchObject({ code: 'PASSWORD_CHANGED_RECENTLY' });
 });
 
 test('sign in by any phone format; unverified email does not sign in; locks after 8 misses', async () => {

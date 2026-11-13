@@ -822,23 +822,6 @@ async function resetWorkerPassword({ phone, otp, newPassword }) {
   return { ok: true };
 }
 
-async function changeWorkerPassword({ workerId, currentPassword, newPassword }) {
-  if (!newPassword || newPassword.length < 8) {
-    throw Object.assign(new Error('New password must be at least 8 characters'), { status: 400, code: 'WEAK_PASSWORD' });
-  }
-  const worker = await Worker.findById(workerId).select('+passwordHash');
-  if (!worker) throw Object.assign(new Error('Worker not found'), { status: 404 });
-  // If a password already exists, the current one must match. First-time set (no
-  // existing hash) is allowed directly so a worker can create their first password.
-  if (worker.passwordHash) {
-    const ok = await comparePassword(currentPassword || '', worker.passwordHash);
-    if (!ok) throw Object.assign(new Error('Current password is incorrect'), { status: 401, code: 'BAD_CURRENT_PASSWORD' });
-  }
-  worker.passwordHash = await hashPassword(newPassword);
-  await worker.save();
-  return { ok: true };
-}
-
 module.exports = {
   assertWorkerPortal,
   hashPassword,
@@ -850,7 +833,6 @@ module.exports = {
   loginWorkerWithPassword,
   requestWorkerPasswordReset,
   resetWorkerPassword,
-  changeWorkerPassword,
   markOtpActionVerified,
   getOtpStats,
   loginUserWithOtp,

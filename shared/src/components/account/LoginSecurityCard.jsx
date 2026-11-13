@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { KeyRound, Mail, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import { useAccountMeQuery, useSetAccountPasswordMutation, useStartEmailVerificationMutation } from '../../services/api';
 import PasswordField, { passwordOk } from './PasswordField';
+import { passwordChangeOpensAt } from './passwordRules';
 
 /** Password and email after setup: change the password, add or change the email, resend its link. */
 export default function LoginSecurityCard({ className = '' }) {
@@ -15,6 +16,8 @@ export default function LoginSecurityCard({ className = '' }) {
   const [email, setEmail] = useState('');
 
   if (!st) return null;
+  const pwOpensAt = st.hasPassword ? passwordChangeOpensAt(st.passwordSetAt) : null;
+  const samePw = st.hasPassword && !!cur && pw === cur;
 
   async function savePw(e) {
     e.preventDefault();
@@ -47,15 +50,16 @@ export default function LoginSecurityCard({ className = '' }) {
           <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-sunken text-ink-700"><KeyRound size={16} /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-semibold text-ink-900">Password</span>
-            <span className="block text-[12px] text-ink-500">{st.hasPassword ? `Set${st.passwordSetAt ? ` on ${new Date(st.passwordSetAt).toLocaleDateString('en-IN')}` : ''}` : 'Not set: you sign in with an OTP each time'}</span>
+            <span className="block text-[12px] text-ink-500">{st.hasPassword ? `Set${st.passwordSetAt ? ` on ${new Date(st.passwordSetAt).toLocaleDateString('en-IN')}` : ''}${pwOpensAt ? `. You can change it again after ${pwOpensAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : ''}` : 'Not set: you sign in with an OTP each time'}</span>
           </span>
-          <button type="button" onClick={() => setOpen(open === 'password' ? null : 'password')} className="btn-outline min-h-[36px] px-3 text-[13px]">{st.hasPassword ? 'Change' : 'Set'}</button>
+          <button type="button" disabled={!!pwOpensAt} onClick={() => setOpen(open === 'password' ? null : 'password')} className="btn-outline min-h-[36px] px-3 text-[13px] disabled:opacity-40">{st.hasPassword ? 'Change' : 'Set'}</button>
         </div>
         {open === 'password' && (
           <form onSubmit={savePw} className="mt-3 space-y-3">
             {st.hasPassword && <PasswordField id="ls-cur" label="Current password" value={cur} onChange={setCur} autoComplete="current-password" />}
             <PasswordField id="ls-new" label="New password" value={pw} onChange={setPw} showRules phone={st.phone} />
-            <button type="submit" disabled={savingPw || !passwordOk(pw, st.phone) || (st.hasPassword && !cur)} className="btn-primary w-full">
+            {samePw && <p className="text-[12px] font-semibold text-amber-700">Choose a password different from your current one.</p>}
+            <button type="submit" disabled={savingPw || !passwordOk(pw, st.phone) || (st.hasPassword && !cur) || samePw} className="btn-primary w-full">
               {savingPw && <Loader2 size={16} className="animate-spin" />} Save password
             </button>
           </form>

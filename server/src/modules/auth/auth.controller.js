@@ -381,17 +381,10 @@ async function resetWorkerPassword(req, res, next) {
   } catch (err) { next(err); }
 }
 
-async function changeWorkerPassword(req, res, next) {
-  try {
-    const result = await authService.changeWorkerPassword({ workerId: req.auth.sub, ...req.body });
-    res.json(result);
-  } catch (err) { next(err); }
-}
-
 module.exports = {
   serviceproLogin, serviceproRegister,
   requestOtp, resendOtp, loginUser, loginWorker, loginPartner, loginShop, googlePartnerLogin,
   loginAdmin, refresh, logout, revokeAll, verifySensitiveOtp, requestSensitiveOtp,
   setWorkerCredentials, loginWorkerPassword, forgotWorkerPassword,
-  resetWorkerPassword, changeWorkerPassword, loginWithPassword,
+  resetWorkerPassword, loginWithPassword,
 };

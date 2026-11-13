@@ -32,6 +32,7 @@ const newToken = () => crypto.randomBytes(32).toString('base64url');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const VERIFY_TTL_MS = 24 * 3600_000;
 const RESET_TTL_MS = 30 * 60_000;
+const PASSWORD_CHANGE_GAP_MS = 24 * 3600_000;
 
 function roleCfg(role) {
   const cfg = ROLES[role];
@@ -163,8 +164,13 @@ async function notifyPasswordChanged(role, a) {
 async function setPassword({ role, id, currentPassword, newPassword }) {
   const a = await load(role, id);
   if (a.passwordHash) {
+    // Once a day; Forgot password still works any time for someone locked out.
+    if (a.passwordSetAt && Date.now() - new Date(a.passwordSetAt).getTime() < PASSWORD_CHANGE_GAP_MS) {
+      throw err(429, 'PASSWORD_CHANGED_RECENTLY', 'You changed your password in the last 24 hours. Try again tomorrow, or use Forgot password if you are locked out.');
+    }
     const ok = await comparePassword(currentPassword || '', a.passwordHash);
     if (!ok) throw err(401, 'BAD_CURRENT_PASSWORD', 'Your current password is not right');
+    if (await comparePassword(newPassword || '', a.passwordHash)) throw err(400, 'SAME_PASSWORD', 'Your new password must be different from your current one');
   }
   checkPassword(newPassword, a);
   const first = !a.passwordHash;

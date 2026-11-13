@@ -94,17 +94,6 @@ router.post(
   ctrl.resetWorkerPassword,
 );
 
-// Change password — authenticated worker.
-router.post(
-  '/worker/change-password',
-  authenticate,
-  requireRole('worker'),
-  validate(Joi.object({
-    currentPassword: Joi.string().max(100).allow('', null).optional(),
-    newPassword:     Joi.string().min(8).max(100).required(),
-  })),
-  ctrl.changeWorkerPassword,
-);
 
 router.post(
   '/partner/login',

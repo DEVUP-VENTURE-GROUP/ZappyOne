@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { CheckCircle2, Clock, KeyRound, Mail } from 'lucide-react-native';
 import { useAccountMeQuery, useSetAccountPasswordMutation, useStartEmailVerificationMutation } from '@zappy/core/api';
-import { passwordOk } from '@zappy/core/shared/passwordRules';
+import { passwordChangeOpensAt, passwordOk } from '@zappy/core/shared/passwordRules';
 import { Button, Text } from '..';
 import { errText } from '../../lib/feedback';
 import { EMAIL_RE } from '../../lib/validation';
@@ -25,6 +25,8 @@ export function LoginSecurityCard() {
   const [pw, setPw] = useState('');
   const [email, setEmail] = useState('');
   if (!st) return null;
+  const pwOpensAt = st.hasPassword ? passwordChangeOpensAt(st.passwordSetAt) : null;
+  const samePw = st.hasPassword && !!cur && pw === cur;
 
   async function savePw() {
     try {
@@ -53,15 +55,16 @@ export function LoginSecurityCard() {
           <View style={styles.iconBox}><KeyRound size={16} color={ink[700]} /></View>
           <View style={styles.flex}>
             <Text variant="bodySmall" weight="semibold">Password</Text>
-            <Text variant="caption" color={ink[500]}>{st.hasPassword ? `Set${st.passwordSetAt ? ` on ${new Date(st.passwordSetAt).toLocaleDateString('en-IN')}` : ''}` : 'Not set: you sign in with an OTP each time'}</Text>
+            <Text variant="caption" color={ink[500]}>{st.hasPassword ? `Set${st.passwordSetAt ? ` on ${new Date(st.passwordSetAt).toLocaleDateString('en-IN')}` : ''}${pwOpensAt ? `. You can change it again after ${pwOpensAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : ''}` : 'Not set: you sign in with an OTP each time'}</Text>
           </View>
-          <Button label={st.hasPassword ? 'Change' : 'Set'} size="small" variant="outline" onPress={() => setOpen(open === 'password' ? null : 'password')} />
+          <Button label={st.hasPassword ? 'Change' : 'Set'} size="small" variant="outline" disabled={!!pwOpensAt} onPress={() => setOpen(open === 'password' ? null : 'password')} />
         </View>
         {open === 'password' ? (
           <View style={styles.gap}>
             {st.hasPassword ? <PasswordField label="Current password" value={cur} onChange={setCur} autoComplete="current-password" /> : null}
             <PasswordField label="New password" value={pw} onChange={setPw} showRules phone={st.phone} />
-            <Button label="Save password" onPress={savePw} loading={savingPw} disabled={!passwordOk(pw, st.phone) || (st.hasPassword && !cur)} fullWidth />
+            {samePw ? <Text variant="caption" weight="semibold" color={accent[700]}>Choose a password different from your current one.</Text> : null}
+            <Button label="Save password" onPress={savePw} loading={savingPw} disabled={!passwordOk(pw, st.phone) || (st.hasPassword && !cur) || samePw} fullWidth />
           </View>
         ) : null}
       </View>
