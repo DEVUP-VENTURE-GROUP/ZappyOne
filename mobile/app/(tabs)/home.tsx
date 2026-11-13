@@ -1,94 +1,53 @@
 /**
- * Home — the landing tab.
+ * Home — the landing tab, redesigned to match the website's Home.
  * ----------------------------------------------------------------------------
- * The catalog on this screen now speaks the SAME model as the Services tab,
- * the category screen and service detail:
+ *   header · search · Book a service / Local stores · live booking · hero ·
+ *   services · ZappyOne stores · popular · campaigns · stores near you ·
+ *   offers · book again · recent activity
  *
- *     DOMAIN → SERVICE → COVERAGE heading → PROBLEMS
+ * ── DATA (all existing endpoints, read-only) ───────────────────────────────
+ *   live catalogue   GET /provider/onboarding/catalog — what can be booked;
+ *                    a tap opens `/service/{code}` exactly as before.
+ *   banners          GET /ads/placement/home_banner — admin Homepage → Banners
+ *                    (hero / campaign / offer). No banners → the hero shows
+ *                    one slide per live service area instead.
+ *   stores           GET /shops/nearby — verified shops within 10 km. Only when
+ *                    location permission is ALREADY granted; Home never prompts.
+ *   offers           offer banners + GET /promos/available
+ *   book again /     GET /orders/mine — this app books through orders, so the
+ *   recent activity  customer's own orders drive both. Rebook goes through
+ *                    `POST /orders/{id}/rebook`, unchanged (see handleRebook).
  *
- * ── WHAT CHANGED AND WHY ───────────────────────────────────────────────────
- * Home used to render three catalog sections off `/catalog/services` and
- * `/catalog/categories`: a character grid, a "Featured services" rail, and
- * per-category rails assembled with a client-side matcher. All three produced
- * links in the OLD code namespace, so a tap from Home could land on a service
- * the rest of the app no longer knows about — that was the integration gap
- * left open at the end of the catalog rebuild.
- *
- * They are replaced by the live catalog, which is what the website's own home
- * page renders (`<LiveServices />` in `client/src/pages/HomePage.jsx` — the
- * very same component its services page uses). A service reaches this list
- * only when it is live AND some provider holds an approved enrolment, so
- * every link from Home now resolves in the same catalog the destination
- * screens read.
- *
- * No compatibility shim was left behind: there is no `ServiceCatalogItem`, no
- * static service list and no `matchCategory` lookup in this file any more.
- *
- * ── HOME IS A DIGEST, NOT THE WHOLE CATALOG ────────────────────────────────
- * The website renders every domain here. On a phone that is a very long
- * scroll in front of the rest of Home, so this shows the first
- * `HOME_DOMAINS` domains — in the server's own `displayOrder`, not a
- * curation of ours — and hands off to the Services tab for the rest. The
- * ordering decision stays server-side; the truncation is purely presentation.
- *
- * ── BOOKING BOUNDARY ───────────────────────────────────────────────────────
- * Two namespaces meet on this screen and they are NOT interchangeable:
- *
- *   catalog `service.code`  → a SERVICE LINE   (`mobile_repair`)
- *   `Order.service`         → a concrete JOB   (`screen_replacement`)
- *
- * The catalog sections above speak the first. "Book again" speaks the second,
- * and re-places the past order by ID so no translation is needed at all — see
- * `handleRebook`. Nothing here maps one onto the other, because the data model
- * does not contain that mapping.
+ * Nothing on this screen is a number the API did not return.
  * ----------------------------------------------------------------------------
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArrowRight, Bell, ChevronRight, MapPin, PackageSearch, Search, Store,
-} from 'lucide-react-native';
-import { useSelector } from 'react-redux';
-import {
-  Badge,
-  Card,
-  EmptyState,
-  ErrorState,
-  Heading,
-  IconButton,
-  ScalePressable,
-  SectionHeader,
-  SectionTitle,
-  Skeleton,
-  Text,
-  ZappyLogo,
-  formatRupees,
-} from '../../components/ui';
+import { PackageSearch } from 'lucide-react-native';
+import { EmptyState, ErrorState, Skeleton, Text } from '../../components/ui';
 import { humanizeCode } from '../../components/catalog/categoryIcons';
-import { LiveServiceCard } from '../../components/catalog/LiveServiceCard';
-import { allServices, iconFor } from '../../components/catalog/liveCatalog';
-import { HomeHero } from '../../components/home/HomeHero';
-import { ServiceIllustration } from '../../components/catalog/ServiceIllustration';
-import { illustrationFor } from '../../components/catalog/illustrations/resolve';
+import {
+  BannerCard, BookAgainList, CampaignBanners, HeroCarousel, HomeTopBar, ModeSwitch, OffersRail, PopularServices,
+  RecentActivity, SearchTrigger, ServiceGrid, StoresRail, ZappyOnePromo, openBannerLink, pickPopular,
+  type ActivityItem, type HomeService, type NearbyShop,
+} from '../../components/home/HomeSections';
 import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery, useRebookOrderMutation } from '../../services/api/ordersApi';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import { useGetAddressesQuery } from '../../services/api/authApi';
-import { getApiErrorBody, getApiErrorMessage } from '../../services/api/apiSlice';
-import type { RootState } from '../../store';
-import { colors, indigo, zappy } from '../../theme/colors';
-import { radius } from '../../theme/radius';
-import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
+import { useNearbyShopsQuery } from '../../services/api/shopApi';
 import {
-  ACTIVE_ORDER_STATUSES,
-  type LiveCatalogCategory,
-  type LiveCatalogService,
-  type Order,
-} from '../../types/api';
+  useGetAvailablePromosQuery, useGetHomeBannersQuery, useTrackBannerClickMutation, useTrackBannerImpressionMutation,
+  type HomeBanner,
+} from '../../services/api/homeApi';
+import { getApiErrorBody, getApiErrorMessage } from '../../services/api/apiSlice';
+import { brand, ink, surface } from '../../theme/brand';
+import { bottomNavClearance } from '../../theme/spacing';
+import { ACTIVE_ORDER_STATUSES, type Order } from '../../types/api';
 
 const STATUS_LABEL: Record<string, string> = {
   created: 'Booking placed',
@@ -97,52 +56,33 @@ const STATUS_LABEL: Record<string, string> = {
   on_the_way: 'On the way',
   arrived: 'Pro has arrived',
   in_progress: 'Service in progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  failed: 'Could not be completed',
 };
 
-/** Domains shown on Home before handing off to the Services tab. */
-const HOME_DOMAINS = 2;
+const PAD = 20;
+const seenBanners = new Set<string>(); // impressions once per app session
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { width: screenWidth } = useWindowDimensions();
+  const contentWidth = Math.min(screenWidth, 720) - PAD * 2;
+  const push = useCallback((href: string) => router.push(href as never), [router]);
 
-  const {
-    data: domains,
-    isLoading: catalogLoading,
-    isError: catalogError,
-    error: catalogErrorObj,
-    refetch: refetchCatalog,
-  } = useGetLiveCatalogQuery();
-
-  const {
-    data: ordersPage,
-    isLoading: ordersLoading,
-    refetch: refetchOrders,
-    isFetching,
-  } = useListOrdersQuery(1);
+  /* Data */
+  const catalog = useGetLiveCatalogQuery();
+  const orders = useListOrdersQuery(1);
   const { data: notifData } = useListNotificationsQuery({ unreadOnly: true, page: 1 });
   const { data: savedAddresses } = useGetAddressesQuery();
+  const banners = useGetHomeBannersQuery();
+  const { data: promos = [] } = useGetAvailablePromosQuery();
+  const [trackImpression] = useTrackBannerImpressionMutation();
+  const [trackClick] = useTrackBannerClickMutation();
 
-  const [gpsLabel, setGpsLabel] = useState<string | null>(null);
-
-  /**
-   * What the header shows, in order of how well it reflects intent.
-   *
-   * GPS wins when we have it, but it must not be the ONLY source: a customer
-   * who declined location, or simply has no last-known fix yet, still has a
-   * saved default address that the rest of the app books against. The header
-   * should not claim ignorance of a location the booking screen already uses.
-   */
-  const locationLabel = useMemo(() => {
-    if (gpsLabel) return gpsLabel;
-    const list = savedAddresses?.addresses ?? [];
-    const preferred = list.find((a) => a.isDefault) ?? list[0];
-    if (!preferred) return null;
-    return preferred.label || preferred.address || null;
-  }, [gpsLabel, savedAddresses]);
-
-  // Best-effort location label. A denied permission just leaves the fallback.
+  /* Location: label for the header, coordinates for nearby stores. */
+  const [gps, setGps] = useState<{ label: string | null; lat: number; lng: number } | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -151,546 +91,266 @@ export default function HomeScreen() {
         if (status !== Location.PermissionStatus.GRANTED) return;
         const position = await Location.getLastKnownPositionAsync();
         if (!position || cancelled) return;
-        const [place] = await Location.reverseGeocodeAsync({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        if (place && !cancelled) {
-          setGpsLabel(
-            [place.name, place.district ?? place.city].filter(Boolean).join(', ') || null,
-          );
-        }
+        const { latitude: lat, longitude: lng } = position.coords;
+        let label: string | null = null;
+        try {
+          const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+          label = place ? [place.name, place.district ?? place.city].filter(Boolean).join(', ') || null : null;
+        } catch { /* coordinates are still useful without a name */ }
+        if (!cancelled) setGps({ label, lat, lng });
       } catch {
-        // Location is a nicety here; the saved address covers the real need.
+        // Location is a nicety here; the saved address covers the header.
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  const orders = ordersPage?.orders ?? [];
+  const locationLabel = useMemo(() => {
+    if (gps?.label) return gps.label;
+    const list = savedAddresses?.addresses ?? [];
+    const preferred = list.find((a) => a.isDefault) ?? list[0];
+    return preferred ? preferred.label || preferred.address || null : null;
+  }, [gps, savedAddresses]);
+
+  const shopsQuery = useNearbyShopsQuery(
+    gps ? { lat: gps.lat, lng: gps.lng, radiusKm: 10 } : ({} as never),
+    { skip: !gps },
+  );
+  const shops = useMemo(() => ((shopsQuery.data ?? []) as unknown as NearbyShop[]).slice(0, 8), [shopsQuery.data]);
+
+  /* Catalogue */
+  const domains = catalog.data ?? [];
+  const services: HomeService[] = useMemo(
+    () => domains.flatMap((d) => d.services.map((svc) => ({ ...svc, domainCode: d.code }))),
+    [domains],
+  );
+  const popular = useMemo(() => pickPopular(services), [services]);
+  const openService = useCallback((svc: HomeService) => push(`/service/${svc.code}`), [push]);
+
+  /* Banners */
+  const { hero = [], campaign = [], offer = [] } = banners.data ?? {};
+  useEffect(() => {
+    for (const ad of [...hero, ...campaign, ...offer]) {
+      if (seenBanners.has(ad._id)) continue;
+      seenBanners.add(ad._id);
+      trackImpression(ad._id);
+    }
+  }, [hero, campaign, offer, trackImpression]);
+  // Uploaded images are signed links that last 6 hours; on a failed load, fetch
+  // fresh links — at most once a minute.
+  const lastBannerRefresh = useRef(0);
+  const onBannerImageError = useCallback(() => {
+    if (Date.now() - lastBannerRefresh.current < 60000) return;
+    lastBannerRefresh.current = Date.now();
+    banners.refetch();
+  }, [banners]);
+
+  const openBanner = useCallback((ad: HomeBanner) => {
+    if (!ad.content.ctaLink) return;
+    trackClick(ad._id);
+    openBannerLink(push, ad.content.ctaLink);
+  }, [push, trackClick]);
+
+  /* The customer's own orders */
+  const orderList = orders.data?.orders ?? [];
   const activeOrder = useMemo(
-    () => orders.find((o) => (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status)),
-    [orders],
+    () => orderList.find((o) => (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status)),
+    [orderList],
   );
-  const recentCompleted = useMemo(
-    () => orders.filter((o) => o.status === 'completed').slice(0, 3),
-    [orders],
-  );
-
-  const unreadCount = notifData?.unread ?? 0;
-
-  const catalog = domains ?? [];
-  const shownDomains = catalog.slice(0, HOME_DOMAINS);
-  // Real figure off the real catalog — not the old "50+" decoration, which was
-  // counted against the retired endpoint and had stopped being true.
-  const serviceCount = allServices(catalog).length;
-
-  const openService = useCallback(
-    (service: LiveCatalogService) => router.push(`/service/${service.code}` as never),
-    [router],
-  );
-
-  // Heading codes are scoped per service — "display" exists for phones AND
-  // laptops — so the owning service always travels with the link.
-  const openCategory = useCallback(
-    (category: LiveCatalogCategory, service: LiveCatalogService) =>
-      router.push(`/category/${category.code}?service=${service.code}` as never),
-    [router],
-  );
-
-  const refreshAll = useCallback(() => {
-    refetchOrders();
-    refetchCatalog();
-  }, [refetchOrders, refetchCatalog]);
+  const completed = useMemo(() => {
+    const seen = new Set<string>();
+    return orderList.filter((o) => o.status === 'completed' && !seen.has(o.service) && seen.add(o.service)).slice(0, 3);
+  }, [orderList]);
+  const activity: ActivityItem[] = useMemo(() => orderList
+    .filter((o) => o !== activeOrder)
+    .slice(0, 3)
+    .map((o) => ({
+      id: o._id,
+      title: humanizeCode(o.service),
+      subtitle: [STATUS_LABEL[o.status] ?? humanizeCode(o.status), o.createdAt
+        ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '']
+        .filter(Boolean).join(' · '),
+      state: (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status) ? 'active'
+        : o.status === 'completed' ? 'completed' : 'closed',
+      onPress: () => push(`/tracking/order/${o._id}`),
+    })), [orderList, activeOrder, push]);
 
   /**
    * Book again — re-place a past order by its ID.
    *
-   * ── WHY BY ID AND NOT BY SERVICE CODE ──────────────────────────────────
-   * This used to push `/book/{order.service}`, which quietly assumed the
-   * order's service code and the catalog's service code were the same thing.
-   * They are not. `Order.service` is an enum of 79 concrete JOBS
-   * (`screen_replacement`, `laptop_slow`); the live catalog's codes are
-   * SERVICE LINES (`mobile_repair`, `laptop_repair`) — a line contains many
-   * jobs. Only 3 of the 14 live line codes even appear in the order enum, and
-   * those three (`pet_grooming`, `pet_transport`, `pet_vet_assist`) belong to
-   * the pet booking pipeline, so treating them as order codes would create
-   * the wrong KIND of booking while looking like it worked.
-   *
-   * `POST /orders/{id}/rebook` sidesteps the whole question: the server clones
-   * the past order itself, so no code is ever re-derived or re-validated
-   * against any catalog. This is the same approach the website takes, and the
-   * same mutation this app already uses on the tracking screen.
+   * `Order.service` is a concrete JOB code (`screen_replacement`), not a
+   * catalogue SERVICE LINE (`mobile_repair`), so this never re-derives a code:
+   * `POST /orders/{id}/rebook` clones the past order on the server. Unchanged
+   * from the previous Home; see the git history for the full rationale.
    */
   const [rebookOrder] = useRebookOrderMutation();
   const [rebookingId, setRebookingId] = useState<string | null>(null);
-  /**
-   * Synchronous latch. RTK Query's `isLoading` only flips on the NEXT render,
-   * so a fast double-tap fires two rebooks before it turns true — the same
-   * trap the booking screen documents. A ref is updated immediately.
-   */
-  const rebooking = useRef(false);
+  const rebooking = useRef(false); // synchronous latch against a fast double-tap
 
-  const handleRebook = useCallback(
-    async (order: Order) => {
-      if (rebooking.current) return;
-      rebooking.current = true;
-      setRebookingId(order._id);
-
-      try {
-        const next = await rebookOrder(order._id).unwrap();
-        router.push(`/tracking/order/${next._id}` as never);
-      } catch (err) {
-        const message = getApiErrorMessage(err, 'Please try again.');
-        // The server attaches `activeOrderId` to its 409 and the error
-        // middleware spreads unknown fields into the body, so it reaches us —
-        // it just isn't in the shared `ApiErrorBody` type, hence the narrow.
-        const activeOrderId = (getApiErrorBody(err) as { activeOrderId?: string } | null)
-          ?.activeOrderId;
-
-        if (activeOrderId) {
-          Alert.alert('You already have a booking', message);
-          router.push(`/tracking/order/${activeOrderId}` as never);
-        } else {
-          // Same fallback as the website: drop the customer into the normal
-          // booking flow for that service rather than stranding them.
-          Alert.alert('Could not rebook', message);
-          router.push(`/book/${order.service}` as never);
-        }
-      } finally {
-        // Home stays mounted behind the pushed screen, so the latch has to be
-        // released or a returning customer could never rebook again.
-        rebooking.current = false;
-        setRebookingId(null);
+  const handleRebook = useCallback(async (orderId: string) => {
+    const order = orderList.find((o: Order) => o._id === orderId);
+    if (!order || rebooking.current) return;
+    rebooking.current = true;
+    setRebookingId(order._id);
+    try {
+      const next = await rebookOrder(order._id).unwrap();
+      push(`/tracking/order/${next._id}`);
+    } catch (err) {
+      const message = getApiErrorMessage(err, 'Please try again.');
+      const activeOrderId = (getApiErrorBody(err) as { activeOrderId?: string } | null)?.activeOrderId;
+      if (activeOrderId) {
+        Alert.alert('You already have a booking', message);
+        push(`/tracking/order/${activeOrderId}`);
+      } else {
+        Alert.alert('Could not rebook', message);
+        push(`/book/${order.service}`);
       }
-    },
-    [rebookOrder, router],
-  );
+    } finally {
+      rebooking.current = false;
+      setRebookingId(null);
+    }
+  }, [orderList, rebookOrder, push]);
+
+  const refreshAll = useCallback(() => {
+    orders.refetch();
+    catalog.refetch();
+    banners.refetch();
+    if (gps) shopsQuery.refetch();
+  }, [orders, catalog, banners, gps, shopsQuery]);
+
+  const unread = notifData?.unread ?? 0;
 
   return (
     <View style={styles.root}>
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingTop: insets.top + spacing.sm,
-            paddingBottom: bottomNavClearance + insets.bottom,
-          },
-        ]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12, paddingBottom: bottomNavClearance + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isFetching && !ordersLoading}
-            onRefresh={refreshAll}
-            tintColor={colors.primary}
-          />
+          <RefreshControl refreshing={orders.isFetching && !orders.isLoading} onRefresh={refreshAll} tintColor={brand[600]} />
         }
       >
-        {/* ── Header ───────────────────────────────────────────────────── */}
-        <View style={styles.header}>
-          <View style={styles.brandMark}>
-            <ZappyLogo size={26} color={colors.textInverse} />
-          </View>
+        <View style={styles.column}>
+          <HomeTopBar
+            location={locationLabel}
+            onPickLocation={() => push('/location/picker')}
+            unread={unread}
+            onBell={() => push('/notifications')}
+            onProfile={() => push('/(tabs)/profile')}
+          />
 
-          <ScalePressable
-            style={styles.location}
-            accessibilityRole="button"
-            onPress={() => router.push('/location/picker' as never)}
-            accessibilityLabel={
-              locationLabel ? `Current location: ${locationLabel}` : 'Set your location'
-            }
-            accessibilityHint="Opens the location picker"
-          >
-            <Text variant="label" numberOfLines={1} color={colors.primary}>
-              DELIVERING TO
-            </Text>
-            <View style={styles.locationRow}>
-              <MapPin size={14} color={colors.primary} />
-              <Text
-                variant="bodySmall"
-                weight="semibold"
-                color={colors.textHeading}
-                numberOfLines={1}
-              >
-                {locationLabel ?? 'Set location'}
-              </Text>
+          <View style={styles.gapSm}><SearchTrigger onPress={() => push('/(tabs)/services')} /></View>
+          <View style={styles.gapSm}><ModeSwitch onStores={() => push('/shops')} /></View>
+
+          {activeOrder ? (
+            <View style={styles.gap}>
+              <BannerCard
+                variant="campaign"
+                width={contentWidth}
+                onPress={() => push(`/tracking/order/${activeOrder._id}`)}
+                ad={{
+                  _id: activeOrder._id,
+                  type: 'live',
+                  content: {
+                    badgeText: 'Live now',
+                    headline: humanizeCode(activeOrder.service),
+                    body: STATUS_LABEL[activeOrder.status] ?? activeOrder.status,
+                    ctaText: 'Track',
+                    ctaLink: `/tracking/order/${activeOrder._id}`,
+                    backgroundColor: brand[700],
+                  },
+                }}
+              />
             </View>
-          </ScalePressable>
+          ) : null}
 
-          <View>
-            <IconButton
-              icon={<Bell size={20} color={colors.textHeading} />}
-              onPress={() => router.push('/notifications' as never)}
-              variant="surface"
-              accessibilityLabel={
-                unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
-              }
-            />
-            {unreadCount > 0 ? <Badge count={unreadCount} style={styles.bellBadge} /> : null}
+          <View style={styles.gap}>
+            {catalog.isLoading && banners.isLoading ? (
+              <Skeleton width="100%" height={188} borderRadius={20} />
+            ) : (
+              <HeroCarousel banners={hero} services={services} width={contentWidth} onOpenBanner={openBanner} onOpenService={openService} onImageError={onBannerImageError} />
+            )}
           </View>
-        </View>
 
-        {/* ── Greeting ─────────────────────────────────────────────────── */}
-        <View style={styles.greeting}>
-          <Text variant="muted">Hi {user?.name?.split(' ')[0] ?? 'there'},</Text>
-          <Heading level={1}>What do you need today?</Heading>
-        </View>
+          <View style={styles.gapLg}>
+            {catalog.isLoading ? (
+              <View style={styles.skelGrid} accessibilityLabel="Loading services" accessibilityRole="progressbar">
+                {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} width={72} height={72} borderRadius={18} />)}
+              </View>
+            ) : catalog.isError ? (
+              <ErrorState message={getApiErrorMessage(catalog.error)} onRetry={catalog.refetch} />
+            ) : services.length === 0 ? (
+              <EmptyState
+                icon={<PackageSearch size={26} color={brand[600]} />}
+                title="No services available yet"
+                message="Services appear here as soon as we have verified providers for them."
+              />
+            ) : (
+              <ServiceGrid services={services} width={contentWidth} onOpen={openService} onViewAll={() => push('/(tabs)/services')} />
+            )}
+          </View>
 
-        {/* ── Search entry ─────────────────────────────────────────────── */}
-        <ScalePressable
-          style={styles.searchTrigger}
-          onPress={() => router.push('/(tabs)/services')}
-          accessibilityRole="search"
-          accessibilityLabel="Search for a service"
-        >
-          <Search size={18} color={colors.textMuted} />
-          <Text variant="body" color={colors.textMuted} style={styles.flex}>
-            Search for a service
-          </Text>
-          {serviceCount > 0 ? (
-            <View style={styles.countPill}>
-              <Text variant="caption" weight="bold" color={colors.primary}>
-                {serviceCount}
+          <View style={styles.gapLg}><ZappyOnePromo onExplore={() => push('/shops')} /></View>
+
+          {popular.length ? (
+            <View style={styles.gapLg}><PopularServices services={popular} onOpen={openService} onViewAll={() => push('/(tabs)/services')} /></View>
+          ) : null}
+
+          {campaign.length ? (
+            <View style={styles.gapLg}><CampaignBanners ads={campaign} width={contentWidth} onOpen={openBanner} onImageError={onBannerImageError} /></View>
+          ) : null}
+
+          {gps && !shopsQuery.isError ? (
+            <View style={styles.gapLg}>
+              <StoresRail shops={shops} loading={shopsQuery.isLoading} onOpenShop={(id) => push(`/shops/${id}`)} onViewAll={() => push('/shops')} />
+            </View>
+          ) : null}
+
+          {offer.length || promos.length ? (
+            <View style={styles.gapLg}>
+              <OffersRail ads={offer} promos={promos} onOpenAd={openBanner} onImageError={onBannerImageError}
+                onCopy={(code) => Alert.alert(`Code ${code}`, 'Enter this code at checkout to apply the offer.')} />
+            </View>
+          ) : null}
+
+          {completed.length ? (
+            <View style={styles.gapLg}>
+              <BookAgainList
+                items={completed.map((o) => ({ id: o._id, title: humanizeCode(o.service), date: o.createdAt, code: o.service }))}
+                busyId={rebookingId}
+                onRebook={handleRebook}
+                onViewAll={() => push('/(tabs)/bookings')}
+              />
+            </View>
+          ) : null}
+
+          {activity.length ? (
+            <View style={styles.gapLg}><RecentActivity items={activity} onViewAll={() => push('/(tabs)/bookings')} /></View>
+          ) : null}
+
+          {!orders.isLoading && orderList.length === 0 ? (
+            <View style={[styles.gapLg, styles.firstBooking]}>
+              <Text variant="bodySmall" weight="semibold" color={ink[900]}>Your bookings will show here</Text>
+              <Text variant="caption" color={ink[500]} style={styles.firstBookingBody}>
+                Book a service above and track it live from this screen.
               </Text>
             </View>
           ) : null}
-        </ScalePressable>
-
-        {/* ── Active booking ───────────────────────────────────────────── */}
-        {activeOrder ? (
-          <View style={styles.section}>
-            <SectionTitle>Live booking</SectionTitle>
-            <Card
-              variant="hero"
-              onPress={() => router.push(`/tracking/order/${activeOrder._id}`)}
-              accessibilityLabel={`Live booking: ${humanizeCode(activeOrder.service)}, ${
-                STATUS_LABEL[activeOrder.status] ?? activeOrder.status
-              }`}
-              accessibilityHint="Opens live tracking"
-            >
-              <View style={styles.liveRow}>
-                <View style={styles.livePulse} />
-                <Text variant="label" color="rgba(255,255,255,0.85)">
-                  Live now
-                </Text>
-              </View>
-              <Text variant="heading2" color={colors.textInverse} style={styles.liveTitle}>
-                {humanizeCode(activeOrder.service)}
-              </Text>
-              <View style={styles.liveFooter}>
-                <Text variant="bodySmall" color="rgba(255,255,255,0.85)">
-                  {STATUS_LABEL[activeOrder.status] ?? activeOrder.status}
-                </Text>
-                <ChevronRight size={16} color="rgba(255,255,255,0.85)" />
-              </View>
-            </Card>
-          </View>
-        ) : null}
-
-        {/* ── Hero banner ──────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <HomeHero />
         </View>
-
-        {/* ── Live catalog ─────────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <SectionHeader
-            title="What we can do for you"
-            onSeeAll={catalog.length ? () => router.push('/(tabs)/services') : undefined}
-          />
-
-          {catalogLoading ? (
-            <HomeCatalogSkeleton />
-          ) : catalogError ? (
-            <ErrorState message={getApiErrorMessage(catalogErrorObj)} onRetry={refetchCatalog} />
-          ) : catalog.length === 0 ? (
-            <EmptyState
-              icon={<PackageSearch size={26} color={colors.primary} />}
-              title="No services available yet"
-              message="Services appear here as soon as we have verified providers for them."
-            />
-          ) : (
-            <>
-              {shownDomains.map((domain) => {
-                const Icon = iconFor(domain.icon);
-                return (
-                  <View key={domain.code} style={styles.domain}>
-                    <View style={styles.domainHead}>
-                      <View style={styles.domainIcon}>
-                        <Icon size={17} strokeWidth={2} color={indigo[500]} />
-                      </View>
-                      <View style={styles.flex}>
-                        <Text variant="heading3" weight="black" numberOfLines={2}>
-                          {domain.name}
-                        </Text>
-                        {domain.description ? (
-                          <Text variant="bodySmall" numberOfLines={1}>
-                            {domain.description}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </View>
-
-                    <View style={styles.services}>
-                      {domain.services.map((service) => (
-                        <LiveServiceCard
-                          key={service.code}
-                          service={service}
-                          onPress={openService}
-                          onPressCategory={openCategory}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                );
-              })}
-
-              {catalog.length > HOME_DOMAINS ? (
-                <ScalePressable
-                  onPress={() => router.push('/(tabs)/services')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`See all ${serviceCount} services`}
-                  style={styles.seeAllCard}
-                >
-                  <Card variant="outline" padding={spacing.base}>
-                    <View style={styles.seeAllRow}>
-                      <Text variant="bodySmall" weight="bold" color={colors.primary}>
-                        See all {serviceCount} services
-                      </Text>
-                      <ArrowRight size={15} color={colors.primary} />
-                    </View>
-                  </Card>
-                </ScalePressable>
-              ) : null}
-            </>
-          )}
-        </View>
-
-        {/* ── Nearby Shops ── verified local businesses, browse + Pick & Go ── */}
-        <View style={styles.section}>
-          <ScalePressable
-            onPress={() => router.push('/shops' as never)}
-            accessibilityRole="button"
-            accessibilityLabel="Nearby Shops — verified local repair shops"
-          >
-            <Card style={styles.shopsPromo}>
-              <View style={styles.shopsPromoRow}>
-                <View style={styles.shopsPromoIcon}>
-                  <Store size={22} color={colors.primary} strokeWidth={1.75} />
-                </View>
-                <View style={styles.flex}>
-                  <Text variant="bodySmall" weight="black">Nearby Shops</Text>
-                  <Text variant="caption" color={colors.textSecondary}>
-                    Verified local repair shops — visit, or have their worker come to you
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={colors.primaryLight} />
-              </View>
-            </Card>
-          </ScalePressable>
-        </View>
-
-        {/* ── Book again ───────────────────────────────────────────────────
-            Re-places the past order by ID via `POST /orders/{id}/rebook`.
-            See `handleRebook` for why this cannot go through the catalog. */}
-        {recentCompleted.length > 0 ? (
-          <View style={styles.section}>
-            <SectionHeader
-              title="Book again"
-              onSeeAll={() => router.push('/(tabs)/bookings')}
-            />
-
-            <View style={styles.stack}>
-              {recentCompleted.map((order) => {
-                const drawing = illustrationFor({ code: order.service }, null);
-                const busy = rebookingId === order._id;
-                return (
-                  <Card
-                    key={order._id}
-                    padding={spacing.md}
-                    // Disabled while any rebook is in flight, matching how the
-                    // tracking screen withholds its own rebook handler.
-                    onPress={rebookingId ? undefined : () => handleRebook(order)}
-                    accessibilityLabel={
-                      busy
-                        ? `Rebooking ${humanizeCode(order.service)}`
-                        : `Book ${humanizeCode(order.service)} again`
-                    }
-                  >
-                    <View style={styles.rebookRow}>
-                      <View style={styles.rebookIcon}>
-                        <ServiceIllustration name={drawing} size={28} />
-                      </View>
-                      <View style={styles.flex}>
-                        <Text variant="heading3" numberOfLines={1}>
-                          {humanizeCode(order.service)}
-                        </Text>
-                        <Text variant="caption">
-                          {order.createdAt
-                            ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                              })
-                            : ''}
-                        </Text>
-                      </View>
-                      {busy ? (
-                        <Text variant="bodySmall" weight="bold" color={colors.primary}>
-                          Rebooking…
-                        </Text>
-                      ) : order.pricing?.total != null ? (
-                        <Text variant="body" weight="bold" color={colors.textHeading}>
-                          {formatRupees(order.pricing.total)}
-                        </Text>
-                      ) : null}
-                    </View>
-                  </Card>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
       </ScrollView>
     </View>
   );
 }
 
-/** Shape-matched: an icon chip, two text lines and the coverage strip. */
-function HomeCatalogSkeleton() {
-  return (
-    <View accessibilityLabel="Loading services" accessibilityRole="progressbar">
-      {[0, 1].map((i) => (
-        <View key={i} style={[styles.skelCard, i > 0 && { marginTop: spacing.md }]}>
-          <View style={styles.skelRow}>
-            <Skeleton width={48} height={48} borderRadius={radius.medium} />
-            <View style={styles.flex}>
-              <Skeleton width="60%" height={14} />
-              <Skeleton width="85%" height={11} style={{ marginTop: spacing.sm }} />
-            </View>
-          </View>
-          <View style={styles.skelRail}>
-            {[0, 1, 2].map((t) => (
-              <Skeleton key={t} width={116} height={145} borderRadius={radius.medium} />
-            ))}
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: screenPadding },
-  flex: { flex: 1, minWidth: 0 },
-
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  brandMark: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.button,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  root: { flex: 1, backgroundColor: surface.page },
+  content: { paddingHorizontal: PAD, alignItems: 'center' },
+  column: { width: '100%', maxWidth: 720 - PAD * 2 },
+  gapSm: { marginTop: 14 },
+  gap: { marginTop: 18 },
+  gapLg: { marginTop: 28 },
+  skelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'space-between' },
+  firstBooking: {
+    padding: 16, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: surface.line,
   },
-  location: { flex: 1 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  bellBadge: { position: 'absolute', top: -2, right: -2 },
-
-  greeting: { marginTop: spacing.lg, gap: spacing.xxs },
-
-  searchTrigger: {
-    marginTop: spacing.base,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    height: 50,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.base,
-  },
-  countPill: {
-    backgroundColor: colors.primaryTint,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-
-  section: { marginTop: spacing.xl },
-
-  liveRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  livePulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
-  liveTitle: { marginTop: spacing.xs },
-  liveFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.sm,
-  },
-
-  domain: { marginTop: spacing.lg },
-  domainHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  domainIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.button,
-    backgroundColor: colors.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  services: { marginTop: spacing.md, gap: spacing.md },
-  seeAllCard: { marginTop: spacing.lg },
-  seeAllRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-
-  shopsPromo: { backgroundColor: colors.primaryTint },
-  shopsPromoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  shopsPromoIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.medium,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  stack: { gap: spacing.md, marginTop: spacing.sm },
-  rebookRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  rebookIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.medium,
-    backgroundColor: zappy[50],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  skelCard: {
-    marginTop: spacing.md,
-    borderRadius: radius.large,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  skelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.base,
-    padding: spacing.base,
-  },
-  skelRail: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: spacing.base,
-    paddingBottom: 14,
-  },
+  firstBookingBody: { marginTop: 2 },
 });

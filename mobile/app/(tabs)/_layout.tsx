@@ -1,25 +1,21 @@
 /**
  * Customer tab bar.
  * ----------------------------------------------------------------------------
- * Matches the website's bottom nav: five slots — Home, Bookings, a raised
- * Book Now disc, Track, Profile — on a white bar with rounded top corners.
+ * Matches the website's bottom nav: Home, Services, Stores, Bookings,
+ * Profile — five even slots on a white bar, in the brand blue (theme/brand.ts).
  *
  * ── WHY A CUSTOM BAR ───────────────────────────────────────────────────────
- * The centre disc has to overflow ABOVE the bar and carry its own label. A
- * stock `tabBarIcon` is clipped to its slot, so the raised button is only
- * possible with a custom `tabBar`. Everything else — routing, focus state,
- * accessibility roles — still comes from React Navigation's descriptors; this
- * only draws them.
+ * Stores is not a tab route: it opens the existing `/shops` stack screen. A
+ * custom `tabBar` lets one slot be an action while the rest stay real tabs —
+ * routing, focus state and accessibility roles still come from the
+ * navigator's descriptors; this only draws them.
  *
  * ── ROUTES ─────────────────────────────────────────────────────────────────
- * Book Now is an ACTION, not a tab: it pushes the services catalogue, which is
- * where a booking actually starts. `services` and `chat` therefore stay
- * registered but hidden (`href: null`) — both are still reached from Home,
- * category tiles and the tracking screen, and dropping their files would break
- * those links.
- *
- * `track` is a new screen that resolves the customer's active order and
- * forwards to `/tracking/order/[id]`; see it for why it exists.
+ * `track` and `chat` stay registered but hidden (`href: null`): Track is
+ * reached from the live-booking card on Home and from Bookings, chat from the
+ * tracking screen, and dropping their files would break those links.
+ * `track` resolves the customer's active order and forwards to
+ * `/tracking/order/[id]`.
  * ----------------------------------------------------------------------------
  */
 
@@ -30,27 +26,29 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ClipboardList,
   Home,
-  MapPin,
+  LayoutGrid,
+  Store,
   User,
   type LucideIcon,
 } from 'lucide-react-native';
 import { Text } from '../../components/ui/Text';
 import { useAppSelector } from '../../store/hooks';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
-import {
-  BOOK_NOW_LIFT,
-  BookNowButton,
-} from '../../components/navigation/BookNowButton';
-import { colors, danger, slate, zappy } from '../../theme/colors';
-import { radius } from '../../theme/radius';
-import { shadows } from '../../theme/shadows';
+import { colors, danger, slate } from '../../theme/colors';
+import { brand } from '../../theme/brand';
 import { spacing } from '../../theme/spacing';
 
-/** The four real tabs, in bar order. Book Now is injected between 2 and 3. */
-const ITEMS: { name: string; label: string; Icon: LucideIcon }[] = [
+/**
+ * Bar order — the website's bottom nav: Home, Services, Stores, Bookings,
+ * Profile. Stores opens the existing `/shops` screen (a stack screen, not a
+ * tab), so it carries `href` instead of a route name. Live tracking is reached
+ * from the live-booking card on Home and from Bookings.
+ */
+const ITEMS: { name: string; label: string; Icon: LucideIcon; href?: string }[] = [
   { name: 'home', label: 'Home', Icon: Home },
+  { name: 'services', label: 'Services', Icon: LayoutGrid },
+  { name: 'stores', label: 'Stores', Icon: Store, href: '/shops' },
   { name: 'bookings', label: 'Bookings', Icon: ClipboardList },
-  { name: 'track', label: 'Track', Icon: MapPin },
   { name: 'profile', label: 'Profile', Icon: User },
 ];
 
@@ -77,10 +75,14 @@ function TabBar({ state, navigation }: TabBarProps) {
 
   const renderItem = (item: (typeof ITEMS)[number]) => {
     const routeIndex = state.routes.findIndex((r: { name: string }) => r.name === item.name);
-    const focused = state.index === routeIndex;
+    const focused = routeIndex >= 0 && state.index === routeIndex;
     const { Icon } = item;
 
     const onPress = () => {
+      if (item.href) {
+        router.push(item.href as never);
+        return;
+      }
       const route = state.routes[routeIndex];
       const event = navigation.emit({
         type: 'tabPress',
@@ -108,7 +110,7 @@ function TabBar({ state, navigation }: TabBarProps) {
           <Icon
             size={22}
             strokeWidth={focused ? 2.5 : 2}
-            color={focused ? zappy[600] : slate[400]}
+            color={focused ? brand[600] : slate[400]}
           />
           {item.name === 'profile' && unread > 0 ? (
             <View style={styles.badge}>
@@ -120,7 +122,7 @@ function TabBar({ state, navigation }: TabBarProps) {
         </View>
         <Text
           variant="navLabel"
-          color={focused ? zappy[600] : slate[400]}
+          color={focused ? brand[600] : slate[400]}
           numberOfLines={1}
         >
           {item.label}
@@ -136,16 +138,7 @@ function TabBar({ state, navigation }: TabBarProps) {
         { paddingBottom: insets.bottom, height: BAR_HEIGHT + insets.bottom },
       ]}
     >
-      {renderItem(ITEMS[0])}
-      {renderItem(ITEMS[1])}
-
-      <BookNowButton
-        barHeight={BAR_HEIGHT}
-        onPress={() => router.push('/(tabs)/services')}
-      />
-
-      {renderItem(ITEMS[2])}
-      {renderItem(ITEMS[3])}
+      {ITEMS.map(renderItem)}
     </View>
   );
 }
@@ -173,12 +166,12 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="services" options={{ title: 'Services' }} />
       <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
-      <Tabs.Screen name="track" options={{ title: 'Track' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
 
       {/* Registered but not in the bar — still reachable by route. */}
-      <Tabs.Screen name="services" options={{ href: null, title: 'Services' }} />
+      <Tabs.Screen name="track" options={{ href: null, title: 'Track' }} />
       <Tabs.Screen name="chat" options={{ href: null, title: 'Chats' }} />
     </Tabs>
   );
@@ -233,6 +226,3 @@ const styles = StyleSheet.create({
     height: BAR_HEIGHT,
   },
 });
-
-/** Exported so screens can clear the raised disc when padding their content. */
-export const TAB_BAR_LIFT = BOOK_NOW_LIFT;

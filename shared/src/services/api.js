@@ -919,6 +919,10 @@ export const api = createApi({
       query: ({ id, note }) => ({ url: adminApiPath(`/ads/${id}/reject`), method: 'POST', body: { note } }),
       invalidatesTags: ['Ad'],
     }),
+    // Homepage banner image: a short-lived presigned PUT into the banner prefix.
+    adminBannerUploadUrl: b.mutation({
+      query: (body) => ({ url: adminApiPath('/ads/banner-upload'), method: 'POST', body }),
+    }),
     adminAdWallets: b.query({
       query: ({ page = 1 } = {}) => adminApiPath(`/ads/wallets?page=${page}`),
       providesTags: ['Ad'],

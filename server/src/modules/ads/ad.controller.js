@@ -1,5 +1,28 @@
 const adService = require('./ad.service');
 const AdWallet  = require('./ad-wallet.model');
+const s3        = require('../../core/storage/s3');
+
+/* Banner images: stored as a private S3 key, served as a short-lived signed link */
+
+/** Every response that carries ads signs `content.imageUrl` on the way out. */
+async function withSignedImage(ad) {
+  if (!ad) return ad;
+  const doc = typeof ad.toObject === 'function' ? ad.toObject() : ad;
+  if (!doc.content) return doc;
+  return { ...doc, content: { ...doc.content, imageUrl: await s3.signBannerImage(doc.content.imageUrl) } };
+}
+const withSignedImages = (ads = []) => Promise.all(ads.map(withSignedImage));
+
+/**
+ * Admin writes store a banner key or an https link — never a temporary signed
+ * URL. Throws 400. (Dotted keys such as 'content.imageUrl' never reach here:
+ * the global sanitizer strips them.)
+ */
+function normalizeImageOnWrite(body) {
+  if (body?.content && typeof body.content === 'object' && 'imageUrl' in body.content) {
+    body.content.imageUrl = s3.normalizeBannerImage(body.content.imageUrl);
+  }
+}
 
 // Public / user-facing
 
@@ -11,7 +34,7 @@ async function getActive(req, res, next) {
     if (await adsOff()) return res.json({ ads: [] });
     const audience = req.auth?.role === 'worker' ? 'workers' : 'users';
     const ads = await adService.getActiveAds({ audience, limit: 8 });
-    res.json({ ads });
+    res.json({ ads: await withSignedImages(ads) });
   } catch (err) { next(err); }
 }
 
@@ -29,7 +52,9 @@ async function getByPlacement(req, res, next) {
       userId:     req.auth?.sub,
       limit:      Math.min(Number(limit) || 3, 10),
     });
-    res.json({ ads });
+    // Signed per request, after the 5-minute candidate cache, so a cached
+    // result never hands out an expired link.
+    res.json({ ads: await withSignedImages(ads) });
   } catch (err) { next(err); }
 }
 
@@ -226,19 +251,38 @@ async function adminList(req, res, next) {
   try {
     const { status, audience, page = 1 } = req.query;
     const result = await adService.listAll({ status, audience, page: Number(page) });
-    res.json(result);
+    res.json({ ...result, ads: await withSignedImages(result.ads) });
+  } catch (err) { next(err); }
+}
+
+/**
+ * POST /api/:slug/ads/banner-upload — a short-lived link to upload ONE banner
+ * image straight to S3. Admin origin, admin role and marketing write access
+ * are enforced by the admin mount; type, extension and size are checked here
+ * and again in the signed request itself.
+ */
+async function adminBannerUploadUrl(req, res, next) {
+  try {
+    const { contentType, size, filename } = req.body;
+    const ext = String(filename || '').toLowerCase().split('.').pop();
+    if (!(s3.BANNER_TYPES[contentType] || []).includes(ext)) {
+      return res.status(400).json({ error: 'The file extension does not match the image type.', code: 'BANNER_EXTENSION' });
+    }
+    res.json(await s3.getBannerUploadUrl({ contentType, size }));
   } catch (err) { next(err); }
 }
 
 async function adminCreate(req, res, next) {
   try {
+    normalizeImageOnWrite(req.body);
     const ad = await adService.create({ ...req.body, createdBy: req.auth.sub, status: req.body.status || 'active' });
-    res.status(201).json({ ad });
+    res.status(201).json({ ad: await withSignedImage(ad) });
   } catch (err) { next(err); }
 }
 
 async function adminUpdate(req, res, next) {
   try {
+    normalizeImageOnWrite(req.body);
     const ad = await adService.update(req.params.id, req.body);
     if (!ad) return res.status(404).json({ error: 'Not found' });
     // Bust cache on status change
@@ -246,7 +290,7 @@ async function adminUpdate(req, res, next) {
       const { redis } = require('../../config/redis');
       await redis.keys('ads:p:*').then(ks => ks.length && redis.del(...ks)).catch(() => {});
     }
-    res.json({ ad });
+    res.json({ ad: await withSignedImage(ad) });
   } catch (err) { next(err); }
 }
 
@@ -306,7 +350,7 @@ module.exports = {
   myList, myCreate, myUpdate, myAnalytics,
   myWallet, createTopUpOrder, verifyTopUp,
   // Admin
-  adminList, adminCreate, adminUpdate, adminDelete,
+  adminList, adminCreate, adminUpdate, adminDelete, adminBannerUploadUrl,
   adminApprove, adminReject, adminCampaignAnalytics,
   adminAllWallets, adminAdjustWallet,
 };

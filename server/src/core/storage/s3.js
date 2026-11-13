@@ -204,7 +204,90 @@ async function deleteObject(key) {
   await s3.send(new DeleteObjectCommand({ Bucket: config.aws.bucket, Key: key }));
 }
 
+/* Homepage banner artwork */
+
+/**
+ * Banner artwork lives under its own prefix, apart from customer, provider and
+ * catalog uploads, with keys the server mints: homepage-banners/YYYY/MM/<uuid>.<ext>.
+ * The client never names a key, so nothing it sends can point a banner at
+ * another file in the bucket.
+ */
+const BANNER_PREFIX = 'homepage-banners/';
+const BANNER_TYPES = { 'image/jpeg': ['jpg', 'jpeg'], 'image/png': ['png'], 'image/webp': ['webp'] };
+const BANNER_MAX_BYTES = 5 * 1024 * 1024;
+const BANNER_UPLOAD_TTL_SEC = 300;       // the upload link is good for 5 minutes
+const BANNER_READ_TTL_SEC = 6 * 60 * 60; // a served image link is good for 6 hours
+const BANNER_KEY_RE = /^homepage-banners\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+
+const isBannerKey = (key) => typeof key === 'string' && BANNER_KEY_RE.test(key);
+
+/**
+ * A presigned PUT for one banner image. Content-Type AND Content-Length are
+ * signed, so S3 itself refuses a different type or a different size than the
+ * one validated here. Callers validate type, extension and size first; this
+ * re-checks so it is safe on its own.
+ */
+async function getBannerUploadUrl({ contentType, size }) {
+  const exts = BANNER_TYPES[contentType];
+  if (!exts) throw Object.assign(new Error('Use a JPG, PNG or WebP image.'), { status: 400, code: 'BANNER_TYPE' });
+  if (!Number.isInteger(size) || size < 1 || size > BANNER_MAX_BYTES) {
+    throw Object.assign(new Error('The image must be 5 MB or smaller.'), { status: 400, code: 'BANNER_SIZE' });
+  }
+  const now = new Date();
+  const key = `${BANNER_PREFIX}${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${uuid()}.${exts[0]}`;
+  const cmd = new PutObjectCommand({ Bucket: config.aws.bucket, Key: key, ContentType: contentType, ContentLength: size });
+  try {
+    const uploadUrl = await getSignedUrl(s3, cmd, {
+      expiresIn: BANNER_UPLOAD_TTL_SEC,
+      signableHeaders: new Set(['content-type', 'content-length']),
+    });
+    return { uploadUrl, key, expiresIn: BANNER_UPLOAD_TTL_SEC, headers: { 'Content-Type': contentType } };
+  } catch (err) {
+    throw Object.assign(
+      new Error('File upload service is temporarily unavailable. Please try again in a moment.'),
+      { status: 503, code: 'S3_UNAVAILABLE', cause: err.message },
+    );
+  }
+}
+
+/**
+ * What a banner's stored image becomes on the way out.
+ *   banner key        → a signed read link (6 h)
+ *   our signed link   → its key, signed afresh (a stale link saved by mistake)
+ *   external https    → unchanged (links pasted before uploads existed)
+ *   anything else     → '' — never sign a key outside the banner prefix, so a
+ *                        banner can't be used to read another stored file.
+ */
+async function signBannerImage(ref) {
+  if (!ref || typeof ref !== 'string') return '';
+  const value = keyFromMedia(ref);
+  if (/^https:\/\//i.test(value)) return value;
+  if (!isBannerKey(value)) return '';
+  try { return await getViewUrl(value, BANNER_READ_TTL_SEC); } catch { return ''; }
+}
+
+/**
+ * What may be STORED as a banner image: '', a banner key, or an external https
+ * link. A signed link of ours is reduced to its key, so a temporary URL is
+ * never saved. Returns the value to store, or throws 400.
+ */
+function normalizeBannerImage(ref) {
+  if (ref == null || ref === '') return '';
+  if (typeof ref !== 'string') throw Object.assign(new Error('Invalid banner image'), { status: 400, code: 'BANNER_IMAGE_INVALID' });
+  const value = keyFromMedia(ref.trim());
+  if (isBannerKey(value)) return value;
+  if (/^https:\/\//i.test(value)) {
+    try { new URL(value); return value; } catch { /* fall through */ }
+  }
+  throw Object.assign(
+    new Error('Banner images must be uploaded here, or be a public https:// link.'),
+    { status: 400, code: 'BANNER_IMAGE_INVALID' },
+  );
+}
+
 module.exports = {
+  getBannerUploadUrl, signBannerImage, normalizeBannerImage, isBannerKey,
+  BANNER_PREFIX, BANNER_TYPES, BANNER_MAX_BYTES, BANNER_UPLOAD_TTL_SEC, BANNER_READ_TTL_SEC,
   getUploadUrl, getViewUrl, getDownloadUrl,
   signMedia, signMediaList, signDocMedia, signDocsMedia,
   keyFromMedia, normalizeDocMedia,

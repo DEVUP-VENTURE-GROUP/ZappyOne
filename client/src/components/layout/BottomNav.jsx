@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, MapPin, User, LayoutGrid } from 'lucide-react';
+import { Home, ClipboardList, Store, User, LayoutGrid } from 'lucide-react';
 import { api, useListNotificationsQuery } from '@shared/services/api';
 import { useSelector } from 'react-redux';
 import { selectIsAuthed } from '@shared/modules/auth/authSlice';
@@ -8,12 +8,13 @@ import { useT } from '@shared/i18n/I18nProvider';
 
 // Five even tabs. Booking starts from Services (or search on Home) like any
 // other destination; no raised button competing with the content above it.
+// Live tracking is reached from the in-progress card on Home and from Bookings.
 const TABS = [
-  { key: 'home',     label: 'Home',     tKey: 'nav.home',     path: '/',        Icon: Home },
-  { key: 'services', label: 'Services', tKey: 'nav.services', path: '/services', Icon: LayoutGrid },
-  { key: 'bookings', label: 'Bookings', tKey: 'nav.bookings', path: '/orders',  Icon: ClipboardList },
-  { key: 'track',    label: 'Track',    tKey: 'nav.track',    path: '/track',   Icon: MapPin },
-  { key: 'profile',  label: 'Profile',  tKey: 'nav.profile',  path: '/profile', Icon: User },
+  { key: 'home',     label: 'Home',     tKey: 'nav.home',     path: '/',             Icon: Home },
+  { key: 'services', label: 'Services', tKey: 'nav.services', path: '/services',     Icon: LayoutGrid },
+  { key: 'stores',   label: 'Stores',   tKey: 'nav.stores',   path: '/nearby-shops', Icon: Store, also: ['/shops/'] },
+  { key: 'bookings', label: 'Bookings', tKey: 'nav.bookings', path: '/orders',       Icon: ClipboardList, also: ['/track'] },
+  { key: 'profile',  label: 'Profile',  tKey: 'nav.profile',  path: '/profile',      Icon: User },
 ];
 
 function Tab({ t, isActive, onPress, onWarm, badge = 0 }) {
@@ -46,14 +47,16 @@ export default function BottomNav({ active }) {
   const tr         = useT();
   const isAuthed   = useSelector(selectIsAuthed);
   const path       = loc.pathname;
-  const currentKey = active || TABS.find((t) => (t.path === '/' ? path === '/' || path === '/home' : path.startsWith(t.path)))?.key
+  const currentKey = active || TABS.find((t) => (t.path === '/'
+    ? path === '/' || path === '/home'
+    : path.startsWith(t.path) || (t.also || []).some((p) => path.startsWith(p))))?.key
     || (path.startsWith('/book') ? 'services' : 'home');
 
   const { data: notifData } = useListNotificationsQuery(
     { page: 1, unreadOnly: true },
     { skip: !isAuthed, pollingInterval: 60000 }
   );
-  const unreadCount = notifData?.notifications?.length || 0;
+  const unreadCount = notifData?.unread ?? notifData?.notifications?.length ?? 0;
 
   // Prefetch a tab's data into the RTK cache so the page shows real content,
   // not a skeleton, by the time the navigation completes.

@@ -36,6 +36,10 @@ import {
   LineChart,
   Percent,
   Star,
+  LayoutTemplate,
+  Image as ImageIcon,
+  Rows3,
+  Eye,
 } from 'lucide-react';
 import Hub from '../ui/Hub';
 
@@ -82,6 +86,9 @@ const P = {
   Notifications: page(() => import('../features/marketing/Notifications')),
   HelpContent: page(() => import('../features/marketing/content/HelpContent')),
   CityPages: page(() => import('../features/marketing/content/CityPages')),
+  HomepageBanners: page(() => import('../features/marketing/homepage/HomepageBanners')),
+  HomepageSections: page(() => import('../features/marketing/homepage/HomepageSections')),
+  HomepagePreview: page(() => import('../features/marketing/homepage/HomepagePreview')),
   Alerts: page(() => import('../features/system/Alerts')),
   Infrastructure: page(() => import('../features/system/Infrastructure')),
   FeatureFlags: page(() => import('../features/system/FeatureFlags')),
@@ -119,6 +126,11 @@ const HUBS = {
   areas: hub('Service areas', 'Where ZappyOne serves, and where customers are asking for it', [
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },
     { id: 'demand', label: 'Launch demand', icon: BellRing, Comp: P.LaunchDemand },
+  ]),
+  homepage: hub('Homepage', 'Banners and sections on the customer homepage, with a preview before publishing', [
+    { id: 'banners', label: 'Banners', icon: ImageIcon, Comp: P.HomepageBanners },
+    { id: 'sections', label: 'Sections', icon: Rows3, Comp: P.HomepageSections },
+    { id: 'preview', label: 'Preview', icon: Eye, Comp: P.HomepagePreview },
   ]),
   content: hub('Content & SEO', 'Help articles and the public city pages', [
     { id: 'help', label: 'Help content', icon: FileText, Comp: P.HelpContent },
@@ -173,6 +185,7 @@ export const NAV_GROUPS = [
     { id: 'fraud', area: 'operations', label: 'Fraud detection', icon: ShieldAlert, Comp: P.Fraud },
     { id: 'cancellation', area: 'operations', label: 'Cancellation policy', icon: XCircle, Comp: P.CancellationPolicy },
     { id: 'notifications', area: 'marketing', label: 'Notifications', icon: Bell, Comp: P.Notifications },
+    { id: 'homepage', area: 'marketing', label: 'Homepage', icon: LayoutTemplate, Comp: HUBS.homepage },
     { id: 'content', area: 'marketing', label: 'Content & SEO', icon: FileText, Comp: HUBS.content },
   ] },
   { label: 'System', items: [
@@ -201,4 +214,5 @@ export const REDIRECTS = {
   intervention: ['liveops', 'stuck'],
   zones: ['areas', 'zones'], cities: ['content', 'cities'],
   health: ['status', 'infra'], alerts: ['status', 'alerts'],
+  banners: ['homepage', 'banners'], 'content-management': ['homepage', 'banners'],
 };

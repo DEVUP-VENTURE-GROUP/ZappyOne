@@ -163,7 +163,8 @@ function fromRepair(b) {
      */
     iconCode: [b.vertical, b.repairCode].filter(Boolean).join(' '),
     // Mirrors how the repair routes are actually shaped in App.jsx.
-    rebookHref: b.vertical ? (b.vertical === 'mobile' ? '/repair' : `/repair/${b.vertical}`) : null,
+    // Routes are hyphenated (/repair/two-wheeler); the vertical code is underscored.
+    rebookHref: b.vertical ? (b.vertical === 'mobile' ? '/repair' : `/repair/${b.vertical.replace(/_/g, '-')}`) : null,
     canInvoice: false,
     createdAt: b.createdAt,
     href: `/repair/bookings/${b._id}`,

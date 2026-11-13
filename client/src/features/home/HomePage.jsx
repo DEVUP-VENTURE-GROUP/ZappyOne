@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
+import { setLocation } from '@shared/store/locationSlice';
 import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery } from '@shared/services/api';
 import { useGeolocation, loadGeoLocation } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
@@ -11,10 +12,8 @@ import { reverseGeocode } from '@shared/utils/reverseGeocode';
 import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../catalog/serviceability/NotInYourArea';
 import ClosedNowBanner from '../catalog/serviceability/ClosedNowBanner';
-import ServiceShowcase from './ServiceShowcase';
 import HeroCarousel from './HeroCarousel';
-import { foldIntoHub } from '@shared/components/home/serviceArt';
-import AdBanner from '../../components/marketing/AdBanner';
+import { artFor, foldIntoHub } from '@shared/components/home/serviceArt';
 import Footer from '../../components/layout/Footer';
 import SpotlightSearch from '../catalog/SpotlightSearch';
 import LensModal from '../catalog/LensModal';
@@ -23,21 +22,34 @@ import { trackSearch } from '../../hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
-import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
+import {
+  ModeSwitch, ZappyOnePromo, PopularServices, pickPopular, CampaignBanners, LocalStores,
+  OffersDeals, BookAgain, RecentActivity,
+} from './HomeRails';
+import { useHomeAds } from './useHomeAds';
 import { eventPhoto } from '../events/eventPhotos';
 
 /**
  * Home — what a customer can get done, right where they are.
  *
- *   location + live status → search → anything in progress
- *   → every live service → common problems → offers → book again → shops, events
+ *   header + search → book a service / local stores → anything in progress
+ *   → hero → services → ZappyOne stores → popular → campaigns → stores near you
+ *   → offers → book again → recent activity
  *
- * What each service covers in detail lives one tap in (the service and All
- * Services pages) — repeating it here made Home five screens of the same list.
- *
- * One layout from a small phone to a wide desktop; nothing here is a claim
- * the data doesn't back (services, offers, events and counts are all live).
+ * Banners come from Homepage → Banners in admin (the ads `home_banner`
+ * placement); services from the live catalogue; stores from verified shops;
+ * offers from offer banners and live promo codes; the last two sections from
+ * the customer's own bookings. Nothing here is a claim the data doesn't back.
  */
+
+/** The picture for a past booking, from the characters already shipped. */
+function jobArt(job) {
+  const raw = job.raw || {};
+  if (job.kind === 'repair') return artFor(raw.vertical)?.still || null;
+  if (job.kind === 'pet') return artFor(null, 'pet_services')?.still || null;
+  if (job.kind === 'helping') return artFor(null, 'helping_services')?.still || null;
+  return null;
+}
 
 /** Whatever is happening right now comes first — it is why most people open the app. */
 function ActiveJobCard({ job, onOpen }) {
@@ -75,6 +87,7 @@ function SkeletonGrid() {
 
 export default function HomePage() {
   const nav = useNavigate();
+  const dispatch = useDispatch();
   const { profile } = useSelector(selectAuth);
   const isAuthed = useSelector(selectIsAuthed);
   const [spotOpen, setSpotOpen] = useState(false);
@@ -134,6 +147,13 @@ export default function HomePage() {
     setLoc({ primary, secondary, loading: false, lat, lng });
     setLocSheet(false);
   }
+
+  // One location for the whole app: Local stores and the booking flows read the
+  // shared slice, which otherwise only hydrates on a full page load.
+  useEffect(() => {
+    if (loc.lat == null || loc.lng == null || loc.loading) return;
+    dispatch(setLocation({ lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') }));
+  }, [loc.lat, loc.lng, loc.loading, loc.primary, loc.secondary, dispatch]);
 
   /* What we serve here. */
   // A failed check must not hold the grid in skeletons forever: once it has
@@ -199,8 +219,12 @@ export default function HomePage() {
     nav(path || s.path);
   }
 
+  /* Admin banners (hero, campaign, offer). */
+  const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
+  const popular = useMemo(() => pickPopular(services), [services]);
+
   /* The customer's own jobs. */
-  const { current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
+  const { jobs, current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
   // Anything they've had done before, of any kind, reopens its booking flow.
   const quickRebooks = useMemo(() => {
     const seen = new Set();
@@ -208,11 +232,16 @@ export default function HomePage() {
     for (const j of pastJobs) {
       if (j.outcome !== 'completed' || !j.rebookHref || seen.has(j.rebookHref)) continue;
       seen.add(j.rebookHref);
-      out.push({ key: j.rebookHref, title: j.title, href: j.rebookHref, date: j.raw.completedAt || j.createdAt });
+      out.push({ key: j.rebookHref, title: j.title, href: j.rebookHref, date: j.raw.completedAt || j.createdAt, art: jobArt(j) });
       if (out.length === 3) break;
     }
     return out;
   }, [pastJobs]);
+  // The latest few, live ones first; the live one already has its own card above.
+  const recent = useMemo(() => {
+    const ordered = [...jobs.filter((j) => j.active), ...jobs.filter((j) => !j.active)];
+    return ordered.filter((j) => j !== activeJob).slice(0, 3);
+  }, [jobs, activeJob]);
 
   const notHere = svc?.status === 'not_here';
   const searchBar = (
@@ -241,7 +270,7 @@ export default function HomePage() {
       />
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
-      <div className="min-h-screen w-full overflow-x-clip bg-canvas">
+      <div className="min-h-screen w-full overflow-x-clip bg-[#F7F8FB]">
         <HomeHeader
           loc={loc}
           isAuthed={isAuthed}
@@ -251,11 +280,13 @@ export default function HomePage() {
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
-        <div className="sticky top-0 z-30 rounded-b-sheet bg-zappy-100 md:hidden">
-          <div className="px-4 pb-4 pt-1">{searchBar}</div>
+        <div className="sticky top-0 z-30 bg-white pb-3 pt-1 shadow-[0_6px_12px_-10px_rgba(16,24,40,0.18)] md:hidden">
+          <div className="px-4">{searchBar}</div>
         </div>
 
-        <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
+        <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-4 pb-10 pt-4 sm:gap-10 sm:px-6 sm:pt-7">
+          <ModeSwitch onStores={() => nav('/nearby-shops')} />
+
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
 
           {/* Inside Telangana every service shows; outside it, we say we are
@@ -273,21 +304,29 @@ export default function HomePage() {
             <>
               {svc?.status === 'closed_now' && <ClosedNowBanner nextOpening={svc.nextOpening} />}
 
-              {!loadingCatalog && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {loadingCatalog && !heroBanners.length
+                ? <div className="h-[188px] animate-pulse rounded-[20px] bg-sunken sm:h-[300px] lg:h-[340px]" aria-hidden="true" />
+                : <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />}
 
-              {/* Intent first: the problem in their words, then the services. */}
-              <ProblemChips services={services} />
               {loadingCatalog || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={domains} onOpen={openService} />}
+                : <ServiceGrid domains={domains} onOpen={openService} onViewAll={() => nav('/services')} />}
+              {/* The problem in the customer's own words, straight into its flow. */}
+              <ProblemChips services={services} />
 
-              {/* Personal and real only: their own past bookings, live offers. */}
-              <BookAgainRail items={quickRebooks} onOpen={nav} />
-              <OffersRail isAuthed={isAuthed} />
+              <ZappyOnePromo onExplore={() => nav('/nearby-shops')} />
 
-              {!loadingCatalog && <ServiceShowcase domains={allDomains} onOpen={openService} />}
-              <AdBanner />
-              <NearbyShopsLink />
+              {!loadingCatalog && <PopularServices services={popular} onOpen={openService} onViewAll={() => nav('/services')} />}
+
+              <CampaignBanners ads={campaignBanners} onOpen={openBanner} onImageError={onBannerImageError} />
+
+              <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => nav(`/shops/${id}`)} onViewAll={() => nav('/nearby-shops')} />
+
+              <OffersDeals ads={offerBanners} isAuthed={isAuthed} onOpenAd={openBanner} onViewAll={() => nav('/promos')} onImageError={onBannerImageError} />
+
+              {/* Personal and real only: the customer's own bookings. */}
+              <BookAgain items={quickRebooks} onOpen={nav} onViewAll={() => nav('/orders')} />
+              <RecentActivity jobs={recent} onOpen={nav} onViewAll={() => nav('/orders')} />
             </>
           )}
         </main>

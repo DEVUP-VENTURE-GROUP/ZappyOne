@@ -31,6 +31,8 @@ export const translations = {
     'nav.bookings': 'बुकिंग',
     'nav.book': 'बुक करें',
     'nav.track': 'ट्रैक',
+    'nav.services': 'सेवाएं',
+    'nav.stores': 'स्टोर',
     'nav.profile': 'प्रोफ़ाइल',
     // Home
     'home.greeting': 'क्या ठीक करवाना है',
@@ -364,6 +366,8 @@ export const translations = {
     'nav.bookings': 'బుకింగ్‌లు',
     'nav.book': 'బుక్ చేయండి',
     'nav.track': 'ట్రాక్',
+    'nav.services': 'సేవలు',
+    'nav.stores': 'స్టోర్లు',
     'nav.profile': 'ప్రొఫైల్',
     // Home
     'home.greeting': 'ఏం రిపేర్ చేయాలి',

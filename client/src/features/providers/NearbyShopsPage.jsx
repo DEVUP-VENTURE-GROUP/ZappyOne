@@ -25,8 +25,8 @@ export default function NearbyShopsPage() {
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav(-1)} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
         <div>
-          <p className="t-label">Trusted Local Businesses</p>
-          <p className="font-semibold text-[#0F172A]">Nearby Shops</p>
+          <p className="t-label">Verified on ZappyOne</p>
+          <p className="font-semibold text-[#0F172A]">Local stores</p>
         </div>
       </div></header>
 
@@ -85,9 +85,11 @@ export default function NearbyShopsPage() {
                   </div>
                   <p className="text-xs text-slate-400 truncate">{(s.services || []).map((x) => x.name).join(' · ') || s.category}</p>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    {s.rating > 0 && (
+                    {/* A new shop's rating is the schema default (5), not a review. */}
+                    {s.reviewCount > 0 && (
                       <span className="flex items-center gap-0.5 text-[11px] font-bold text-slate-600">
-                        <Star size={11} className="text-amber-400 fill-amber-400" /> {s.rating.toFixed(1)}
+                        <Star size={11} className="text-amber-400 fill-amber-400" /> {Number(s.rating).toFixed(1)}
+                        <span className="font-medium text-slate-400">({s.reviewCount})</span>
                       </span>
                     )}
                     {s.completedJobs > 0 && <span className="text-[11px] text-slate-400">{s.completedJobs} jobs done</span>}

@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, ChevronDown, Loader2, MapPin, ScanLine, Search, UserRound } from 'lucide-react';
 import { useListNotificationsQuery } from '@shared/services/api';
-import { ZappyWordmark, ZAPPY_MARK } from '@shared/components/common/ZappyLogo';
+import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import VoiceSearchButton from '../../components/common/VoiceSearchButton';
 import { prefetchRoute } from '../../lib/routePrefetch';
 
 /**
- * The top of Home, the way people already read Blinkit, Zepto and Swiggy:
- * where the pro will come to (bold, tappable), what is live there, and search.
+ * The top of Home: brand, where the pro will come to (bold, tappable), the
+ * bell with the real unread count, the account, and search.
  *
- *   phone    a light header that scrolls away; search stays pinned below it
+ *   phone    a white header that scrolls away; search stays pinned below it
  *   desktop  one sticky white bar — logo, location, wide search, links, account
  *
  * Every word is derived from real state (serviceability, catalog, notifications);
@@ -108,7 +108,7 @@ function SearchHint({ terms }) {
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-x-0 truncate text-[14px] text-slate-500 sm:text-[15px]"
         >
-          {term ? <>Search <span className="font-semibold text-navy">“{term}”</span></> : 'Search for a service or problem'}
+          {term ? <>Search <span className="font-semibold text-navy">“{term}”</span></> : 'Search for services or problems…'}
         </motion.span>
       </AnimatePresence>
     </span>
@@ -117,7 +117,7 @@ function SearchHint({ terms }) {
 
 export function SearchBar({ terms, onOpen, onVoice, onLens }) {
   return (
-    <div className="flex h-12 w-full items-center gap-2 rounded-btn border border-zappy-100 bg-white pl-3.5 pr-1.5 transition-colors duration-150 hover:border-zappy-200 focus-within:border-zappy-600">
+    <div className="flex h-[52px] w-full items-center gap-2 rounded-full border border-line bg-white pl-4 pr-2 shadow-soft transition-colors duration-150 hover:border-zappy-200 focus-within:border-zappy-600">
       <button type="button" onClick={onOpen} className="flex h-full min-w-0 flex-1 items-center gap-3 text-left" aria-label="Search services">
         <Search size={18} strokeWidth={2.4} className="shrink-0 text-slate-500" />
         <SearchHint terms={terms} />
@@ -132,115 +132,59 @@ export function SearchBar({ terms, onOpen, onVoice, onLens }) {
   );
 }
 
-/**
- * Phone: the brand and the place share one slot and take turns, sliding up
- * every few seconds. Tapping the brand shows the place at once; tapping the
- * place opens the picker. With reduced motion they simply sit side by side.
- */
-const FLIP_MS = 5000;
-
-function BrandOrPlace({ loc, onPickLocation }) {
-  const reduce = useReducedMotion();
-  const [face, setFace] = useState('brand');
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    if (reduce) return undefined;
-    const id = setTimeout(() => setFace((f) => (f === 'brand' ? 'place' : 'brand')), FLIP_MS);
-    return () => clearTimeout(id);
-  }, [face, tick, reduce]);
-
-  if (reduce) {
-    return (
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <ZappyWordmark size={26} />
-        <div className="flex min-w-0 flex-1 justify-end"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact align="right" /></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative h-12 min-w-0 flex-1 overflow-hidden">
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={face}
-          initial={{ y: '100%', opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '-100%', opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 flex items-center"
-        >
-          {face === 'brand' ? (
-            <button type="button" onClick={() => { setFace('place'); setTick((t) => t + 1); }}
-              aria-label="ZappyOne. Show your service location" className="flex items-center gap-2">
-              {/* The runner sprints in, then the name follows. */}
-              <motion.img src={ZAPPY_MARK} alt="" style={{ height: 34, width: 'auto' }}
-                initial={{ x: -48, skewX: -12, opacity: 0 }} animate={{ x: 0, skewX: 0, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 18 }} />
-              <motion.span className="text-[23px] font-extrabold leading-none tracking-[-0.02em]"
-                initial={{ x: -8, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.18, ease: 'easeOut' }}>
-                <span className="text-zappy-600">Zappy</span><span className="text-amber-500">One</span>
-              </motion.span>
-            </button>
-          ) : (
-            <LocationBlock loc={loc} onPickLocation={onPickLocation} dropPin />
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-}
-
 const LINKS = [
+  { to: '/services', label: 'Services' },
+  { to: '/nearby-shops', label: 'Local stores' },
   { to: '/orders', label: 'Bookings' },
-  { to: '/track', label: 'Track' },
 ];
 
 export default function HomeHeader({ loc, isAuthed, avatar, onPickLocation, search }) {
   const nav = useNavigate();
   const unread = useUnread(isAuthed);
+  const bell = (
+    <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
+      <Bell size={18} />
+    </IconButton>
+  );
 
   return (
     <>
-      {/* Desktop: one sticky bar. (DesktopNav steps aside on Home.) */}
-      <header className="sticky top-0 z-40 hidden border-b border-zappy-100 bg-zappy-50 md:block">
-        <div className="mx-auto flex h-[76px] w-full max-w-6xl items-center gap-5 px-6">
+      {/* Desktop: one sticky white bar. (DesktopNav steps aside on Home.) */}
+      <header className="sticky top-0 z-40 hidden border-b border-line bg-white/95 backdrop-blur md:block">
+        <div className="mx-auto flex h-[72px] w-full max-w-6xl items-center gap-5 px-6">
           <NavLink to="/" aria-label="ZappyOne home" className="flex shrink-0 items-center">
             <ZappyWordmark size={30} />
           </NavLink>
-          <span className="h-9 w-px bg-zappy-100" aria-hidden="true" />
-          <div className="w-[210px] shrink-0"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
+          <span className="h-9 w-px bg-line" aria-hidden="true" />
+          <div className="w-[200px] shrink-0"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
           {/* Inline from laptop width; on a tablet it takes its own row below. */}
           <div className="hidden min-w-0 flex-1 lg:block">{search}</div>
           <div className="flex-1 lg:hidden" aria-hidden="true" />
           <nav className="flex shrink-0 items-center" aria-label="Main">
             {LINKS.map((l) => (
               <NavLink key={l.to} to={l.to} onMouseEnter={() => prefetchRoute(l.to)}
-                className="rounded-btn px-2.5 py-2 text-[14px] font-medium text-zappy-700 transition hover:bg-white lg:px-3">
+                className="rounded-btn px-2.5 py-2 text-[14px] font-semibold text-ink-700 transition hover:bg-zappy-50 hover:text-zappy-700 lg:px-3">
                 {l.label}
               </NavLink>
             ))}
           </nav>
-          <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
-            <Bell size={17} />
-          </IconButton>
+          {isAuthed && bell}
           <Avatar isAuthed={isAuthed} avatar={avatar} />
         </div>
         <div className="mx-auto w-full max-w-6xl px-6 pb-3 lg:hidden">{search}</div>
       </header>
 
-      {/* Phone: light header, scrolls away; search is pinned by the page below it. */}
-      <div className="bg-zappy-100 md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        {/* Brand and place take turns in one slot. Profile lives in the bottom
-            bar, so the phone header keeps the bell (signed in) or Sign in. */}
-        <div className="flex items-center gap-2.5 px-4 pb-2.5 pt-4">
-          <BrandOrPlace loc={loc} onPickLocation={onPickLocation} />
-          {isAuthed ? (
-            <IconButton label={unread ? `${unread} unread notifications` : 'Notifications'} onClick={() => nav('/notifications')} badge={unread}>
-              <Bell size={17} />
-            </IconButton>
-          ) : <Avatar isAuthed={false} avatar={avatar} compact />}
+      {/* Phone: brand above the place, bell and profile on the right; scrolls away. */}
+      <div className="bg-white md:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+          <div className="min-w-0 flex-1">
+            <NavLink to="/" aria-label="ZappyOne home" className="inline-flex">
+              <ZappyWordmark size={28} />
+            </NavLink>
+            <div className="mt-1"><LocationBlock loc={loc} onPickLocation={onPickLocation} compact /></div>
+          </div>
+          {isAuthed && bell}
+          <Avatar isAuthed={isAuthed} avatar={avatar} compact />
         </div>
       </div>
     </>

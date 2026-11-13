@@ -12,35 +12,60 @@ import { problemPhoto } from '@shared/components/home/problemArt';
  * address comes first, then the rest in catalog order. Every tile looks the
  * same so nothing competes by tint; the picture and the name do the work.
  */
+/**
+ * Soft tints, one per service area, so the grid reads in groups at a glance.
+ * Light surfaces only — the icon or character carries the colour.
+ */
+export const DOMAIN_TINT = {
+  electronics: { bg: 'bg-violet-50', fg: 'text-violet-600' },
+  vehicles: { bg: 'bg-sky-50', fg: 'text-sky-600' },
+  home_services: { bg: 'bg-cyan-50', fg: 'text-cyan-600' },
+  pet_services: { bg: 'bg-orange-50', fg: 'text-orange-500' },
+  helping_services: { bg: 'bg-emerald-50', fg: 'text-emerald-600' },
+  family_assist: { bg: 'bg-rose-50', fg: 'text-rose-500' },
+  events: { bg: 'bg-pink-50', fg: 'text-pink-500' },
+};
+const DEFAULT_TINT = { bg: 'bg-zappy-50', fg: 'text-zappy-600' };
+export const tintFor = (domainCode) => DOMAIN_TINT[domainCode] || DEFAULT_TINT;
+
 function Tile({ service, character, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
+  const tint = tintFor(service.domainCode);
   // An admin-set picture wins; then the service's ZappyOne character; then its icon.
   const art = service.imageUrl || character?.still;
   return (
     <button type="button" onClick={onOpen}
-      className="group flex flex-col items-center gap-2 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
-      <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-sunken transition-colors duration-150 group-active:bg-line">
+      className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
+      <span className={`flex aspect-square w-full max-w-[88px] items-center justify-center overflow-hidden rounded-[18px] ${tint.bg} ring-1 ring-inset ring-black/[0.03] transition-transform duration-150 group-hover:-translate-y-0.5 group-active:scale-95 group-focus-visible:ring-4 group-focus-visible:ring-zappy-600/25`}>
         {art
-          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain mix-blend-multiply pt-1.5'}`} />
-          : <Icon strokeWidth={1.6} className="h-[36%] w-[36%] text-ink-700" />}
+          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain p-1.5 mix-blend-multiply'}`} />
+          : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
       </span>
-      <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{service.name}</span>
+      <span className="line-clamp-2 text-[12px] font-semibold leading-[1.25] text-ink-900 sm:text-[13px]">{service.name}</span>
     </button>
   );
 }
 
-export function ServiceGrid({ domains, onOpen }) {
+export function ServiceGrid({ domains, onOpen, onViewAll }) {
   const all = domains.flatMap((d) => d.services);
   if (!all.length) return null;
   // Bookable here first; the sort is stable, so catalog order holds within each group.
   const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
   const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
 
-  // Phones: three even columns. Wider: one fixed tile size, as many per row as fit.
+  // Phones: four columns. Wider: one fixed tile size, as many per row as fit.
   return (
     <section aria-labelledby="home-services">
-      <h2 id="home-services" className="h-section">Services</h2>
-      <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-[repeat(auto-fill,112px)] sm:gap-x-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="home-services" className="h-section">Explore services</h2>
+        {onViewAll && (
+          <button type="button" onClick={onViewAll} className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600 hover:text-zappy-800">
+            View all <ChevronRight size={15} strokeWidth={2.4} />
+          </button>
+        )}
+      </div>
+      {/* auto-fit: a short catalogue spreads across the row instead of huddling left. */}
+      <div className="mt-4 grid grid-cols-4 justify-items-center gap-x-2 gap-y-5 sm:grid-cols-[repeat(auto-fit,minmax(104px,1fr))] sm:gap-x-4">
         {tiles.map((s) => (
           <Tile key={s.code} service={s} character={characters.get(s.code)} onOpen={() => onOpen(s)} />
         ))}
