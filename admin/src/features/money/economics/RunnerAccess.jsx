@@ -34,7 +34,7 @@ export default function RunnerAccess() {
         <div className="flex items-start justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-slate-800">Errand runner pass</h3>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">Runners keep the whole errand fare: no commission. Instead, in each window where they finish enough errands, a small pass is added to what they owe. ZappyOne staff never pay it.</p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">Runners keep the whole errand fare: no commission. Instead, in each window where they finish enough errands, a small pass is added to what they owe. If an errand that counted is later lost in a dispute and the window falls below, the pass is returned. ZappyOne staff never pay it.</p>
           </div>
           <button type="button" onClick={submit} disabled={!dirty || !valid || saving}
             className="inline-flex min-w-[72px] items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400">

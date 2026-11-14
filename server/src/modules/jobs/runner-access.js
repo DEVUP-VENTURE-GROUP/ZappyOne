@@ -19,27 +19,52 @@ async function exempt(workerId) {
 
 const errandFilter = () => ({ serviceType: { $nin: require('../helping/models/config.model').FAMILY_ASSIST_TYPES } });
 
-// Called when a runner finishes an errand: the fee once per window, from the job that reaches the minimum (the key makes a second charge impossible).
-async function onJobDone(workerId, at = new Date()) {
+// Errands that count toward a window: finished, and not lost in a dispute afterwards.
+const COUNTED = { status: { $nin: ['FAILED', 'CANCELLED'] } };
+
+/**
+ * Brings one window's pass in line with its errands: charged once it reaches the minimum, returned if a counted errand later fails and it falls below.
+ * Each charge and refund has its own numbered key, so a repeat or two at once never double up; the window of an earlier charge is kept even if admin changed the window length since.
+ */
+async function reconcile(workerId, at = new Date()) {
   const s = await settings();
-  if (!s.on || !(s.feePaise > 0) || !workerId || await exempt(workerId)) return null;
-  const w = windowOf(at, s.windowHours);
+  if (!workerId || await exempt(workerId)) return null;
+  const rows = await Transaction.find({
+    'owner.id': workerId, reason: { $in: [Transaction.REASONS.RUNNER_ACCESS_FEE, Transaction.REASONS.RUNNER_ACCESS_REFUND] },
+    'metadata.from': { $lte: at }, 'metadata.to': { $gt: at },
+  }).select('reason amountPaise metadata').lean();
+  const w = rows[0] ? { from: new Date(rows[0].metadata.from), to: new Date(rows[0].metadata.to) } : windowOf(at, s.windowHours);
+  const fees = rows.filter((r) => r.reason === Transaction.REASONS.RUNNER_ACCESS_FEE);
+  const refunds = rows.filter((r) => r.reason === Transaction.REASONS.RUNNER_ACCESS_REFUND);
+  const net = fees.reduce((a, r) => a - r.amountPaise, 0) - refunds.reduce((a, r) => a + r.amountPaise, 0);
   const { HelpingTask } = require('../helping/models/task.model');
-  const jobs = await HelpingTask.countDocuments({ workerId, completedAt: { $gte: w.from, $lt: w.to }, ...errandFilter() });
-  if (jobs < s.minJobs) return null;
-  const idempotencyKey = `runner-access:${workerId}:${w.from.toISOString()}`;
-  // Already charged for this window: one read, before relying on the ledger's unique key alone.
-  if (await Transaction.exists({ idempotencyKey })) return null;
-  await require('../wallet/wallet.service').apply({
-    kind: 'worker', id: workerId, type: 'debit', amountPaise: s.feePaise, allowDebt: true,
-    reason: Transaction.REASONS.RUNNER_ACCESS_FEE,
-    idempotencyKey,
-    description: `Errand pass: ${s.minJobs}+ errands done in this ${s.windowHours}-hour window`,
-    metadata: { from: w.from, to: w.to, jobs },
-  });
-  await alertIfOver(workerId, s);
-  return { feePaise: s.feePaise, window: w, jobs };
+  const jobs = await HelpingTask.countDocuments({ workerId, completedAt: { $gte: w.from, $lt: w.to }, ...COUNTED, ...errandFilter() });
+  const wallet = require('../wallet/wallet.service');
+  const base = `${workerId}:${w.from.toISOString()}`;
+  const meta = { from: w.from, to: w.to, jobs };
+  if (jobs >= s.minJobs && net <= 0 && s.on && s.feePaise > 0) {
+    // The first charge keeps the plain key, so a window charged before refunds existed is recognised.
+    await wallet.apply({
+      kind: 'worker', id: workerId, type: 'debit', amountPaise: s.feePaise, allowDebt: true, reason: Transaction.REASONS.RUNNER_ACCESS_FEE,
+      idempotencyKey: `runner-access:${base}${fees.length ? `:n${fees.length + 1}` : ''}`,
+      description: `Errand pass: ${s.minJobs}+ errands done in this ${s.windowHours}-hour window`, metadata: meta,
+    });
+    await alertIfOver(workerId, s);
+    return { charged: s.feePaise, window: w, jobs };
+  }
+  if (jobs < s.minJobs && net > 0) {
+    await wallet.apply({
+      kind: 'worker', id: workerId, type: 'credit', amountPaise: net, reason: Transaction.REASONS.RUNNER_ACCESS_REFUND,
+      idempotencyKey: `runner-access-refund:${base}:r${refunds.length + 1}`,
+      description: 'Errand pass returned: an errand in this window no longer counts', metadata: meta,
+    });
+    return { refunded: net, window: w, jobs };
+  }
+  return null;
 }
+
+// Called when a runner finishes an errand.
+const onJobDone = (workerId, at = new Date()) => reconcile(workerId, at);
 
 // At the runner limit: one push and email, then no new errands until they pay (assertCanTakeErrand).
 async function alertIfOver(workerId, s) {
@@ -68,4 +93,4 @@ async function commissionFree() {
   return !!(await settings()).on;
 }
 
-module.exports = { windowOf, onJobDone, assertCanTakeErrand, commissionFree };
+module.exports = { windowOf, reconcile, onJobDone, assertCanTakeErrand, commissionFree };

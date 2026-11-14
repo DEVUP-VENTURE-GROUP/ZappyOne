@@ -19,6 +19,7 @@ const REASONS = {
   NO_SHOW_CREDIT: 'no_show_credit',          // our apology when a pro did not turn up (Economics, Cancellations)
   REFERRAL_REWARD: 'referral_reward',
   REFUND: 'refund',
+  RUNNER_ACCESS_REFUND: 'runner_access_refund', // a window's errand pass returned: a counted errand later failed (jobs/runner-access)
   WALLET_TOPUP: 'wallet_topup',
   ADMIN_ADJUSTMENT_CREDIT: 'admin_adjustment_credit',
   DUES_PAYMENT: 'dues_payment',

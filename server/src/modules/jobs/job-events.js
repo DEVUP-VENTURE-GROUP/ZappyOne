@@ -89,6 +89,8 @@ async function announce(kind, doc, status) {
 
   // A finished errand may complete the runner's pass for this window (jobs/runner-access).
   if (kind === 'helping' && status === 'COMPLETED' && doc.workerId) require('./runner-access').onJobDone(doc.workerId).catch(() => {});
+  // A finished errand lost in a dispute stops counting: its window's pass may be returned.
+  if (kind === 'helping' && status === 'FAILED' && doc.workerId && doc.completedAt) require('./runner-access').reconcile(doc.workerId, new Date(doc.completedAt)).catch(() => {});
 
   // A job that just started waiting is offered to auto-accept pros at once (jobs/waves).
   require('./waves').kick(kind, doc).catch(() => {});

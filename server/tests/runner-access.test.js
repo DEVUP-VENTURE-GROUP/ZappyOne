@@ -21,14 +21,14 @@ const ist = (h) => new Date(Date.UTC(2026, 10, 14, h, 30) - 330 * 60000);
 const done = (workerId, at, serviceType = 'shopping') => HelpingTask.collection.insertOne({
   workerId, serviceType, status: 'COMPLETED', completedAt: at, reference: `ZH${Math.random().toString(36).slice(2, 8)}`,
 });
-const owed = async (workerId) => -((await Wallet.findOne({ 'owner.id': workerId }).lean())?.balancePaise || 0);
+const owed = async (workerId) => (0 - ((await Wallet.findOne({ 'owner.id': workerId }).lean())?.balancePaise || 0)) || 0;
 
 test('the pass is charged once per window, only from the minimum number of errands', async () => {
   const s = await cfg.runnerAccessSettings();
   const w = new mongoose.Types.ObjectId();
   for (let i = 1; i < s.minJobs; i += 1) { await done(w, ist(9)); expect(await ra.onJobDone(w, ist(9))).toBeNull(); }
   await done(w, ist(10));
-  expect((await ra.onJobDone(w, ist(10))).feePaise).toBe(s.feePaise);
+  expect((await ra.onJobDone(w, ist(10))).charged).toBe(s.feePaise);
   await done(w, ist(11));
   await ra.onJobDone(w, ist(11));
   expect(await owed(w)).toBe(s.feePaise);
@@ -57,4 +57,32 @@ test('at the runner limit no new errand can be taken', async () => {
 test('windows line up with India midnight', () => {
   const w = ra.windowOf(ist(13), 12);
   expect(w.from.toISOString()).toBe(new Date(Date.UTC(2026, 10, 14, 12, 0) - 330 * 60000).toISOString());
+});
+
+test('a counted errand lost in a dispute returns the pass once; a later errand brings it back once', async () => {
+  const s = await cfg.runnerAccessSettings();
+  const w = new mongoose.Types.ObjectId();
+  const ids = [];
+  for (let i = 0; i < s.minJobs; i += 1) ids.push((await done(w, ist(9))).insertedId);
+  await ra.onJobDone(w, ist(9));
+  expect(await owed(w)).toBe(s.feePaise);
+
+  await HelpingTask.collection.updateOne({ _id: ids[0] }, { $set: { status: 'FAILED' } });
+  expect((await ra.reconcile(w, ist(9))).refunded).toBe(s.feePaise);
+  expect(await owed(w)).toBe(0);
+  expect(await ra.reconcile(w, ist(9))).toBeNull();
+  expect(await owed(w)).toBe(0);
+
+  await done(w, ist(10));
+  expect((await ra.onJobDone(w, ist(10))).charged).toBe(s.feePaise);
+  expect(await ra.onJobDone(w, ist(10))).toBeNull();
+  expect(await owed(w)).toBe(s.feePaise);
+});
+
+test('the same window asked twice at once is charged once', async () => {
+  const s = await cfg.runnerAccessSettings();
+  const w = new mongoose.Types.ObjectId();
+  for (let i = 0; i < s.minJobs; i += 1) await done(w, ist(20));
+  await Promise.all([ra.onJobDone(w, ist(20)), ra.onJobDone(w, ist(20))]);
+  expect(await owed(w)).toBe(s.feePaise);
 });
