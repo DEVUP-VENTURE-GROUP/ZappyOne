@@ -243,6 +243,8 @@ const KINDS = {
       statuses: ['CONFIRMED', 'WORKER_SEARCHING'],
       start: (t) => place(t.pickupLocation),
       listPath: '/worker/work',
+      // Runners at the runner limit are not rung (jobs/runner-access).
+      fits: (t, providers) => require('./runner-access').withinLimit(providers),
       summary: (t) => ({
         title: t.title || ((t.items || []).length ? `${t.items.length} item${t.items.length > 1 ? 's' : ''}` : 'Errand'),
         service: t.serviceType || 'helping',

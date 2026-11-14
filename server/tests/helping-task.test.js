@@ -623,7 +623,8 @@ describe('a runner fare, set by ZappyOne like a ride app', () => {
     const { task } = await taskService.createTask(baseTask());
     expect(task.charge.baseFeePaise).toBe((await HelpingConfig.findOne({ serviceType: 'shopping', isActive: true }).lean()).baseFeePaise);
     const { KINDS } = require('../src/modules/jobs/kinds');
-    expect(KINDS.helping.open.fits).toBeUndefined();
+    // No rate card to compare: the only filter left is the runner limit.
+    expect((await KINDS.helping.open.fits(task, [{ kind: 'worker', id: String(near) }])).length).toBe(1);
     const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
     await ProviderEnrolment.deleteMany({ domainCode: 'family_assist' });
     await expect(taskService.createTask(baseTask({ idempotencyKey: 'nobody-near' }))).rejects.toMatchObject({ code: 'NO_PROVIDER_PRICE' });

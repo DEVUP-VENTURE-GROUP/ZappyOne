@@ -88,9 +88,19 @@ async function assertCanTakeErrand(workerId) {
   return require('../worker/worker-dues.service').assertCanWork(workerId, s.on ? { limitPaise: s.limitPaise } : {});
 }
 
+// Of the runners an errand would ring, those under the runner limit (one read for all of them), so a blocked runner is never rung only to be refused.
+async function withinLimit(providers) {
+  const s = await settings();
+  const workers = providers.filter((p) => p.kind === 'worker').map((p) => p.id);
+  if (!s.on || !workers.length) return providers;
+  const Wallet = require('../wallet/wallet.model');
+  const blocked = new Set((await Wallet.find({ 'owner.kind': 'worker', 'owner.id': { $in: workers }, balancePaise: { $lte: -s.limitPaise } }).select('owner.id').lean()).map((w) => String(w.owner.id)));
+  return providers.filter((p) => p.kind !== 'worker' || !blocked.has(String(p.id)));
+}
+
 // Partner errands carry no commission while the pass is on.
 async function commissionFree() {
   return !!(await settings()).on;
 }
 
-module.exports = { windowOf, reconcile, onJobDone, assertCanTakeErrand, commissionFree };
+module.exports = { windowOf, reconcile, onJobDone, assertCanTakeErrand, commissionFree, withinLimit };

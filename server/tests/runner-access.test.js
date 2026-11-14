@@ -86,3 +86,11 @@ test('the same window asked twice at once is charged once', async () => {
   await Promise.all([ra.onJobDone(w, ist(20)), ra.onJobDone(w, ist(20))]);
   expect(await owed(w)).toBe(s.feePaise);
 });
+
+test('a runner at the limit is left out of errand rings; others still get them', async () => {
+  const s = await cfg.runnerAccessSettings();
+  const [a, b] = [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()];
+  await require('../src/modules/wallet/wallet.service').apply({ kind: 'worker', id: a, type: 'debit', amountPaise: s.limitPaise, allowDebt: true, reason: 'runner_access_fee', idempotencyKey: `lim-${a}` });
+  const out = await ra.withinLimit([{ kind: 'worker', id: String(a) }, { kind: 'worker', id: String(b) }, { kind: 'shop', id: 'x' }]);
+  expect(out.map((p) => p.id)).toEqual([String(b), 'x']);
+});
