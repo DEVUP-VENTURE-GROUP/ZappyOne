@@ -87,6 +87,9 @@ async function announce(kind, doc, status) {
     if (provider && (provider.kind === 'worker' ? accepted && !doc.shopId : firstHold)) require('./fairness').recordTaken(provider).catch(() => {});
   }
 
+  // A finished errand may complete the runner's pass for this window (jobs/runner-access).
+  if (kind === 'helping' && status === 'COMPLETED' && doc.workerId) require('./runner-access').onJobDone(doc.workerId).catch(() => {});
+
   // A job that just started waiting is offered to auto-accept pros at once (jobs/waves).
   require('./waves').kick(kind, doc).catch(() => {});
 

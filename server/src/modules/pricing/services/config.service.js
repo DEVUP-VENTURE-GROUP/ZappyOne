@@ -102,6 +102,15 @@ const TRAVEL_DEFAULTS = {
   waitMaxPaise: 6000,           // waiting never above this
 };
 
+// Errand runners pay no commission; a pass per window with enough errands instead (jobs/runner-access).
+const RUNNER_ACCESS_DEFAULTS = {
+  on: true,
+  feePaise: 5000,        // per window
+  windowHours: 12,       // 00:00 to 12:00 and 12:00 to 24:00, India time
+  minJobs: 3,            // errands finished in the window before the pass is charged
+  limitPaise: 50000,     // at this much owed: an alert, and no new errands until paid
+};
+
 const SURGE_DEFAULTS = {
   // Always automatic, every service where someone travels to the customer.
   // Nothing to switch per service; the kill switch is the one emergency stop.
@@ -124,6 +133,7 @@ function toView(doc) {
     workforce: { ...WORKFORCE_DEFAULTS, ...((doc.workforce && typeof doc.workforce === 'object') ? doc.workforce : {}) },
     partnerCommission: { ...PARTNER_COMMISSION_DEFAULTS, ...((doc.partnerCommission && typeof doc.partnerCommission === 'object') ? doc.partnerCommission : {}) },
     travel: { ...TRAVEL_DEFAULTS, ...((doc.travel && typeof doc.travel === 'object') ? doc.travel : {}) },
+    runnerAccess: { ...RUNNER_ACCESS_DEFAULTS, ...((doc.runnerAccess && typeof doc.runnerAccess === 'object') ? doc.runnerAccess : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -400,6 +410,11 @@ async function workforceSettings() {
   return { ...WORKFORCE_DEFAULTS, ...(cfg.workforce || {}) };
 }
 
+async function runnerAccessSettings() {
+  const cfg = await getActiveConfig();
+  return { ...RUNNER_ACCESS_DEFAULTS, ...(cfg.runnerAccess || {}) };
+}
+
 async function travelSettings() {
   const cfg = await getActiveConfig();
   return { ...TRAVEL_DEFAULTS, ...(cfg.travel || {}) };
@@ -417,6 +432,8 @@ module.exports = {
   PARTNER_COMMISSION_DEFAULTS,
   partnerCommissionSettings,
   TRAVEL_DEFAULTS,
+  RUNNER_ACCESS_DEFAULTS,
+  runnerAccessSettings,
   WAIT_GRACE_CHOICES,
   travelSettings,
   fastAssignSettings,

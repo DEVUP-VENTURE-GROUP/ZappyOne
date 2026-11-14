@@ -171,6 +171,8 @@ export function endpoints(b, { adminApiPath }) {
     adminPartnerCommission: b.query({ query: () => adminApiPath('/economics/partner-commission'), providesTags: ['PricingCfg'] }),
     adminUpdatePartnerCommission: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/partner-commission'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminTravel: b.query({ query: () => adminApiPath('/economics/travel'), providesTags: ['PricingCfg'] }),
+    adminRunnerAccess: b.query({ query: () => adminApiPath('/economics/runner-access'), providesTags: ['PricingCfg'] }),
+    adminUpdateRunnerAccess: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/runner-access'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminUpdateTravel: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/travel'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminPartnerRate: b.query({ query: ({ kind, id }) => adminApiPath(`/economics/partner-commission/${kind}/${id}`), providesTags: ['PartnerRates'] }),
     adminSetPartnerRate: b.mutation({ query: ({ kind, id, ...body }) => ({ url: adminApiPath(`/economics/partner-commission/${kind}/${id}`), method: 'PUT', body }), invalidatesTags: ['PartnerRates', 'ShopWorkers'] }),

@@ -35,6 +35,7 @@ const REASONS = {
   PLATFORM_FEE: 'platform_fee',
   SUBSCRIPTION_REVENUE: 'subscription_revenue',
   SURGE_REVENUE: 'surge_revenue',
+  RUNNER_ACCESS_FEE: 'runner_access_fee',   // an errand runner's pass for a window with enough errands (jobs/runner-access)
   PROVIDER_PENALTY: 'provider_penalty',       // a shop or event partner backed out; owed to ZappyOne, taken from their payouts             // ZappyOne's share of a surge, rain or night fee (jobs/surge)
 
   // Worker Cancellation Shield Fund

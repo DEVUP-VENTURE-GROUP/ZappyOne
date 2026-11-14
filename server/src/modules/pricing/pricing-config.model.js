@@ -50,6 +50,8 @@ const pricingConfigSchema = new mongoose.Schema(
     partnerCommission: { type: mongoose.Schema.Types.Mixed, default: undefined },
     // The pro's journey and waiting at the door, for every service (config.service TRAVEL_DEFAULTS); Economics → Travel & waiting.
     travel: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    // Errand runners' pass instead of commission (config.service RUNNER_ACCESS_DEFAULTS); Economics → Errand runners.
+    runnerAccess: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },

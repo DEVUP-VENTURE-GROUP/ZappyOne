@@ -117,15 +117,16 @@ async function getDuesStatus(workerId, { detail = false } = {}) {
   return { ...out, recent, claims };
 }
 
-/** Throws when the worker is at the limit. Wherever a worker is about to receive new work. */
-async function assertCanWork(workerId) {
+/** Throws when the worker is at the limit (or a tighter one for this kind of work, such as errand runners'). Wherever a worker is about to receive new work. */
+async function assertCanWork(workerId, { limitPaise = null } = {}) {
   // Staff hold the day's cash until they deposit it at the hub; that never stops them mid-shift.
   if (await require('../workforce/staff').isStaff(workerId)) return;
   const dues = await getDuesStatus(workerId);
-  if (dues.isBlocked) {
+  const limit = limitPaise != null ? Math.min(limitPaise, dues.limitPaise) : dues.limitPaise;
+  if (dues.isBlocked || dues.duesPaise >= limit) {
     const r = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
     throw Object.assign(
-      new Error(`You owe ZappyOne ${r(dues.duesPaise)}. Pay at least ${r(dues.duesPaise - dues.limitPaise + 100)} to take new jobs again.`),
+      new Error(`You owe ZappyOne ${r(dues.duesPaise)}. Pay at least ${r(dues.duesPaise - limit + 100)} to take new jobs again.`),
       { status: 402, code: 'WALLET_BLOCKED', dues },
     );
   }

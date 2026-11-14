@@ -75,8 +75,10 @@ async function refreeze(kind, doc) {
   if (!money || money.commissionBasePaise == null) return 0;
   const holder = fresh.shopId ? `shop:${fresh.shopId}` : fresh.workerId ? `worker:${fresh.workerId}` : null;
   const frozen = money.partnerRate?.holder === holder ? money.partnerRate.pct : null;
-  const pct = frozen ?? await pctFor(fresh);
-  if (pct == null) return 0;
+  const raw = frozen ?? await pctFor(fresh);
+  if (raw == null) return 0;
+  // A partner's errand carries no commission while the runner pass is on (jobs/runner-access).
+  const pct = kind === 'helping' && await require('../jobs/runner-access').commissionFree() ? 0 : raw;
   // The rate is frozen, the tier is not: extras that grow the job move it out of the small-job tier.
   const next = Math.round((money.commissionBasePaise * await forBase(pct, money.commissionBasePaise)) / 100);
   const change = next - (money.commissionPaise || 0);

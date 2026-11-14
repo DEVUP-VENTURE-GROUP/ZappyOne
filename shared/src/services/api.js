@@ -441,6 +441,8 @@ export const {
   useAdminUpdateDispatchMutation,
   useAdminPartnerCommissionQuery,
   useAdminTravelQuery,
+  useAdminRunnerAccessQuery,
+  useAdminUpdateRunnerAccessMutation,
   useAdminUpdateTravelMutation,
   useAdminUpdatePartnerCommissionMutation,
   useAdminPartnerRateQuery,

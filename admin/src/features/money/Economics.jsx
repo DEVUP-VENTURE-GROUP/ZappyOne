@@ -12,6 +12,7 @@ import Dispatch from './economics/Dispatch';
 import PartnerCommission from './economics/PartnerCommission';
 import SmallJobs from './economics/SmallJobs';
 import Travel from './economics/Travel';
+import RunnerAccess from './economics/RunnerAccess';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -193,11 +194,12 @@ const TABS = [
   ['travel', '2. Travel & waiting', 'Per km, traffic hours and waiting at the door, for every service'],
   ['partners', '3. Partner commission', 'What shops, agencies, companies and individual providers pay ZappyOne on each job'],
   ['smalljobs', '4. Small jobs', 'Smaller jobs pay a smaller commission, by price'],
-  ['surge', '5. Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
-  ['boost', '6. Boost & tips', 'What customers may add for a faster match, and tip after a job'],
-  ['cancellations', '7. Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
-  ['dispatch', '8. Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
-  ['dues', '9. Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
+  ['runners', '5. Errand runners', 'Runners keep the whole fare and pay a pass per window instead of commission'],
+  ['surge', '6. Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
+  ['boost', '7. Boost & tips', 'What customers may add for a faster match, and tip after a job'],
+  ['cancellations', '8. Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
+  ['dispatch', '9. Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
+  ['dues', '10. Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
 ];
 
 export default function Economics() {
@@ -221,6 +223,7 @@ export default function Economics() {
       {tab === 'partners' && <PartnerCommission />}
       {tab === 'smalljobs' && <SmallJobs />}
       {tab === 'travel' && <Travel />}
+      {tab === 'runners' && <RunnerAccess />}
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
       {tab === 'boost' && <BoostTips />}

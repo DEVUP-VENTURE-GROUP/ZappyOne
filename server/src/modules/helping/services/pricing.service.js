@@ -152,8 +152,10 @@ async function quote({
    * platform fee and tax — Zappy does not take a commission on its own fee or
    * on the government's tax. And never, under any circumstance, on item money.
    */
-  // The errand type's rate until someone takes it; a partner's own rate (with the small-job tier) replaces it when they do (shop/partner-commission refreeze).
-  const commissionPaise = Math.round((feesPaise * (cfg.commissionPct ?? 0)) / 100);
+  // Runners pay a pass instead of commission (jobs/runner-access); Family Assist is ZappyOne's own staff product and keeps its rate.
+  const { FAMILY_ASSIST_TYPES } = require('../models/config.model');
+  const free = !FAMILY_ASSIST_TYPES.includes(serviceType) && await require('../../jobs/runner-access').commissionFree();
+  const commissionPaise = free ? 0 : Math.round((feesPaise * (cfg.commissionPct ?? 0)) / 100);
   const workerEarningPaise = Math.max(0, feesPaise - commissionPaise);
 
   return {

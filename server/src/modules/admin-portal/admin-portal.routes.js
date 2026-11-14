@@ -396,6 +396,31 @@ router.put('/economics/travel',
     } catch (err) { next(err); }
   });
 
+/* Economics → Errand runners: a pass per window with enough errands instead of commission (jobs/runner-access) */
+
+router.get('/economics/runner-access', async (req, res, next) => {
+  try { res.json({ runnerAccess: await require('../pricing/services/config.service').runnerAccessSettings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/runner-access',
+  validate(Joi.object({
+    on: Joi.boolean(),
+    feePaise: Joi.number().integer().min(0).max(100000),
+    windowHours: Joi.number().valid(6, 8, 12, 24),
+    minJobs: Joi.number().integer().min(1).max(50),
+    limitPaise: Joi.number().integer().min(0).max(1000000),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const cfg = require('../pricing/services/config.service');
+      const before = await cfg.runnerAccessSettings();
+      await cfg.updateActiveConfig({ runnerAccess: { ...before, ...req.body } }, req.auth.sub);
+      const after = await cfg.runnerAccessSettings();
+      await auditService.fromRequest(req, 'economics.runner_access', { kind: 'system', id: null }, before, after);
+      res.json({ runnerAccess: after });
+    } catch (err) { next(err); }
+  });
+
 /* Economics → Partner commission: percent taken from each kind of partner (shop/partner-commission) */
 
 router.get('/economics/partner-commission', async (req, res, next) => {

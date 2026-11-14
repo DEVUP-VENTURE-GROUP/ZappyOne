@@ -201,11 +201,12 @@ describe('item money and service money never mix', () => {
 
   it('never commissions the item money', async () => {
     const { task } = await taskService.createTask(baseTask());
-    // The errand type's rate on the fees only, never on the ₹350 of goods; whoever takes it later pays their own partner rate instead (refreeze).
+    // Never on the ₹350 of goods: on the fees only, and none at all while runners pay a pass instead (jobs/runner-access).
     const { HelpingConfig } = require('../src/modules/helping/models/config.model');
     const { commissionPct } = await HelpingConfig.findOne({ serviceType: 'shopping', isActive: true }).lean();
     const fees = task.charge.commissionBasePaise;
-    expect(task.charge.commissionPaise).toBe(Math.round((fees * commissionPct) / 100));
+    const free = await require('../src/modules/jobs/runner-access').commissionFree();
+    expect(task.charge.commissionPaise).toBe(free ? 0 : Math.round((fees * commissionPct) / 100));
     expect(task.charge.workerEarningPaise).toBe(fees - task.charge.commissionPaise);
   });
 
@@ -242,7 +243,7 @@ describe('item money and service money never mix', () => {
     expect(earnings).toBe(settled.charge.workerEarningPaise);
   });
 
-  it('a cash fee is not paid to the helper again: they are billed the commission instead', async () => {
+  it('a cash fee is not paid to the helper again: they are billed only ZappyOne’s share (no commission while the runner pass is on)', async () => {
     const { task } = await taskService.createTask(baseTask({ paymentModel: 'worker_advance' }));
     const doc = await HelpingTask.findById(task._id);
     doc.workerId = workerId;
@@ -264,9 +265,12 @@ describe('item money and service money never mix', () => {
 
     const rows = await Transaction.find({ refHelpingTaskId: task._id }).lean();
     expect(rows.some((r) => r.reason === Transaction.REASONS.WORKER_EARNING)).toBe(false);
+    const zappy = paid.charge.serviceChargePaise - paid.charge.workerEarningPaise;
+    const free = await require('../src/modules/jobs/runner-access').commissionFree();
+    if (free) expect(paid.charge.commissionPaise).toBe(0);
     const commission = rows.find((r) => r.reason === Transaction.REASONS.PLATFORM_COMMISSION);
-    expect(commission).toBeTruthy();
-    expect(Math.abs(commission.amountPaise)).toBe(paid.charge.serviceChargePaise - paid.charge.workerEarningPaise);
+    if (zappy > 0) expect(Math.abs(commission.amountPaise)).toBe(zappy);
+    else expect(commission).toBeUndefined();
   });
 
   it('returns unspent budget rather than keeping it', async () => {
