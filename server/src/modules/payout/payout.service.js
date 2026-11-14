@@ -32,6 +32,22 @@ const notificationService = require('../notification/notification.service');
 const MIN_PAYOUT_PAISE = 5000;     // ₹50
 const MAX_PAYOUT_PAISE = 2500000;  // ₹25,000
 
+// Money only goes to a destination the pro saved (UPI checked on save); the app sends the masked number, so the real one comes from here.
+async function savedDestination(workerId, d) {
+  const w = await require('../worker/worker.model').findById(workerId).select('savedUpiIds savedBankAccounts').lean();
+  if (d.method === 'upi') {
+    const u = (w?.savedUpiIds || []).find((x) => x.upiId.toLowerCase() === String(d.upiId).trim().toLowerCase());
+    if (u) return { method: 'upi', upiId: u.upiId, ...(u.verifiedName ? { accountName: u.verifiedName } : {}) };
+  } else {
+    const ifsc = String(d.bankIfsc).trim().toUpperCase();
+    const last4 = String(d.bankAccount).replace(/\s/g, '').slice(-4);
+    const exact = String(d.bankAccount).replace(/\s/g, '');
+    const b = (w?.savedBankAccounts || []).find((x) => x.ifsc === ifsc && (x.accountNumber === exact || (/^X+\d{4}$/.test(exact) && x.accountNumber.endsWith(last4))));
+    if (b) return { method: 'bank', bankAccount: b.accountNumber, bankIfsc: b.ifsc, accountName: b.accountName };
+  }
+  throw Object.assign(new Error('Add this payout method in Bank & UPI first, then withdraw to it'), { status: 400, code: 'PAYOUT_UNKNOWN_DESTINATION' });
+}
+
 /**
  * Worker requests a withdrawal.
  *
@@ -62,6 +78,7 @@ async function requestPayout({ workerId, amountPaise, destination }) {
   if (destination.method === 'bank' && (!destination.bankAccount || !destination.bankIfsc)) {
     throw Object.assign(new Error('Bank account + IFSC required'), { status: 400, code: 'PAYOUT_NO_BANK' });
   }
+  if (destination.method !== 'manual') destination = await savedDestination(workerId, destination);
 
   // Check balance — must have at least this much available (positive balance only).
   // We don't reserve here; reservation happens on approve.

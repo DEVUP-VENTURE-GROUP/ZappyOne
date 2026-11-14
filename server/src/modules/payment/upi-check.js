@@ -2,6 +2,7 @@
 const config = require('../../config');
 const logger = require('../../core/logger');
 
+let offLogged = false;
 const FORMAT = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$/;
 
 /** { status: 'verified', name } | { status: 'invalid' } | { status: 'unchecked' } */
@@ -16,6 +17,11 @@ async function checkUpi(raw) {
     return { status: 'unchecked' };
   } catch (err) {
     if (/invalid.*(vpa|upi)|(vpa|upi).*(invalid|not (valid|found|exist))/i.test(err.message || '')) return { status: 'invalid' };
+    // Razorpay answers this until it switches UPI checks on for the account.
+    if (/requested URL was not found/i.test(err.message || '')) {
+      if (!offLogged) { offLogged = true; logger.warn('[upi-check] Razorpay has not switched on UPI ID checks for this account: UPI IDs are saved unchecked'); }
+      return { status: 'unchecked', reason: 'not_enabled' };
+    }
     logger.warn({ err: err.message, code: err.code }, '[upi-check] Razorpay could not check a UPI ID');
     return { status: 'unchecked' };
   }
