@@ -38,6 +38,9 @@ beforeAll(async () => {
   await startMongo();
   await Promise.all([PetBooking.init(), Worker.init()]);
   shop = await Shop.create({ businessName: 'Sri Sai Services', ownerName: 'Srinivas', phone: phone(), partnerType: 'agency' });
+  // These cases are about partner rates and their freezing; the small-job tiers have their own tests, so they are off here.
+  const pcfg = require('../src/modules/pricing/services/config.service');
+  await pcfg.updateActiveConfig({ partnerCommission: { ...pcfg.PARTNER_COMMISSION_DEFAULTS, smallJobs: [] } }, null);
 });
 afterAll(stopMongo);
 
@@ -139,11 +142,11 @@ describe('partner commission', () => {
 
   test('admin rates apply by kind of partner; individual providers have their own', async () => {
     const cfg = require('../src/modules/pricing/services/config.service');
-    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 8, company: 5, individual: 3 } }, null);
+    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 8, company: 5, individual: 3, smallJobs: [] } }, null);
     expect(await commission.pctFor({ shopId: shop._id })).toBe(8);
     const solo = await Worker.create({ name: 'Solo', phone: phone(), kyc: { status: 'approved' } });
     expect(await commission.pctFor({ workerId: solo._id })).toBe(3);
-    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5 } }, null);
+    await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5, smallJobs: [] } }, null);
   });
 
   test('a booking priced before the base was frozen keeps its commission', async () => {
@@ -166,10 +169,10 @@ test('the partner rate is frozen when the job is taken; a later admin change doe
   await PetBooking.deleteMany({});
   const id = await heldPet({ pricing: { totalPaise: 50000, subtotalPaise: 45000, commissionPaise: 4000, commissionBasePaise: 40000, providerAmountPaise: 41000 } });
   await commission.refreeze('pet', await PetBooking.findById(id));
-  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 9, company: 5, individual: 5 } }, null);
+  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 9, company: 5, individual: 5, smallJobs: [] } }, null);
   expect(await commission.refreeze('pet', await PetBooking.findById(id))).toBe(0);
   expect((await PetBooking.findById(id).lean()).pricing).toMatchObject({ commissionPaise: 2000, partnerRate: { holder: `shop:${shop._id}`, pct: 5 } });
-  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5 } }, null);
+  await cfg.updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5, smallJobs: [] } }, null);
 });
 
 describe('an agreed rate for one partner', () => {
