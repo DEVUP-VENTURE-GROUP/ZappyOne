@@ -75,7 +75,7 @@ export default function TodoBell({ onOpen }) {
         {total > 0 && <span className={`rounded-full px-1.5 text-[10.5px] font-black text-white ${urgent ? 'bg-red-500' : 'bg-indigo-500'}`}>{total > 99 ? '99+' : total}</span>}
       </button>
       {open && (alerts.length > 0 || items.length > 0) && (
-        <ul className="mt-1.5 space-y-0.5 rounded-lg p-1" style={{ background: 'rgba(255,255,255,0.03)' }} aria-live="polite">
+        <ul className="mt-1.5 max-h-[45vh] space-y-0.5 overflow-y-auto overscroll-contain rounded-lg p-1" style={{ background: 'rgba(255,255,255,0.03)' }} aria-live="polite">
           {alerts.map((a) => (
             <li key={a.id} className={`rounded-md px-2 py-1.5 ${a.urgent ? 'bg-red-500/10' : 'bg-white/5'}`}>
               <div className="flex items-start gap-2">
