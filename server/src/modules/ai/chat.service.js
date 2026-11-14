@@ -8,13 +8,12 @@ async function chat(messages, { maxTokens = 4000, timeoutMs = 60000 } = {}) {
   if (!enabled()) return null;
   for (const model of config.ai.textModels) {
     try {
-      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const r = await require('../../core/resilience/breaker').fetchVia('openrouter', 'https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${config.ai.apiKey}`, 'Content-Type': 'application/json', 'X-Title': 'ZappyOne admin' },
         // Reasoning models otherwise spend the whole budget thinking and return no text.
         body: JSON.stringify({ model, max_tokens: maxTokens, temperature: 0.2, reasoning: { effort: 'low', exclude: true }, messages }),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
+      }, { timeoutMs });
       const d = await r.json().catch(() => ({}));
       const text = d.choices?.[0]?.message?.content?.trim();
       if (r.ok && text) return { text, model: d.model || model };

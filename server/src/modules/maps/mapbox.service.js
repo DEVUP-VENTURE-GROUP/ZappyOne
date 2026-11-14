@@ -9,7 +9,7 @@ async function geocode(q, params, ttlSec) {
   const cached = await redis.get(key).catch(() => null);
   if (cached) return JSON.parse(cached);
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?country=in&language=en${params}&access_token=${TOKEN()}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+  const r = await require('../../core/resilience/breaker').fetchVia('mapbox', url, {}, { timeoutMs: 6000 });
   if (!r.ok) throw Object.assign(new Error(`Map search failed (${r.status})`), { status: 502, code: 'MAPS_FAILED' });
   const features = (await r.json()).features || [];
   await redis.set(key, JSON.stringify(features), 'EX', ttlSec).catch(() => {});
@@ -51,7 +51,7 @@ async function driveTimes(origins, to) {
   // Mapbox needs at least two pairs, so a single pro also asks door to door (unused).
   const sources = (from.length === 1 ? [0, 1] : from.map((_, i) => i)).join(';');
   const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving-traffic/${coords}?sources=${sources}&destinations=${from.length}&annotations=duration,distance&access_token=${TOKEN()}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  const r = await require('../../core/resilience/breaker').fetchVia('mapbox', url, {}, { timeoutMs: 4000 });
   if (!r.ok) throw Object.assign(new Error(`Route times failed (${r.status})`), { status: 502, code: 'MAPS_FAILED' });
   const body = await r.json();
   const out = from.map((_, i) => {

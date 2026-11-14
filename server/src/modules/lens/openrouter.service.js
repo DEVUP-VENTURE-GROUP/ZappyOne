@@ -112,7 +112,7 @@ async function analyzeImage({ imageUrls, catalog, model }) {
     const timer = setTimeout(() => controller.abort(), config.lens.timeoutMs);
     try {
       const payload = useSchema ? body : { ...body, response_format: { type: 'json_object' } };
-      const res = await fetch(OPENROUTER_URL, {
+      const res = await require('../../core/resilience/breaker').fetchVia('openrouter', OPENROUTER_URL, {
         method: 'POST',
         signal: controller.signal,
         headers: {

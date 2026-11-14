@@ -143,7 +143,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null
       };
       if (imageUrl && message.notification) message.notification.imageUrl = imageUrl;
 
-      const result = await messaging.sendEachForMulticast(message);
+      const result = await require('../core/resilience/breaker').call('fcm', () => messaging.sendEachForMulticast(message));
       successCount += result.successCount;
       failureCount += result.failureCount;
 
@@ -197,7 +197,7 @@ async function sendSms({ phone, message }) {
       `&To=${digits}` +
       `&Msg=${encodeURIComponent(message)}`;
 
-    const res = await fetch(url);
+    const res = await require('../core/resilience/breaker').fetchVia('sms', url, {}, { timeoutMs: 8000 });
     const text = await res.text().catch(() => '');
     const ok = res.ok && text.includes('Success');
 
