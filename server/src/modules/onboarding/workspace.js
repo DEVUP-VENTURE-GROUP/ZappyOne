@@ -39,6 +39,32 @@ const LINE_TERMS = {
   water_tank_care: { job: 'cleaning', pro: 'cleaner', warranty: false },
 };
 
+// What a job in this trade goes through, beyond its words: a diagnosis before the work, quotes for extra work, photos of the finished work. Repairs by default; a category, then a service, narrows it; admin can set a category's own (domain.dashboard.flow).
+const REPAIR_FLOW = { diagnosis: true, quote: true, photos: true };
+const DOMAIN_FLOW = {
+  home_services: { diagnosis: false },
+  home_daily_help: { diagnosis: false, quote: false },
+  specialist_home: { diagnosis: false },
+  beauty_care: { diagnosis: false, quote: false, photos: false },
+  local_pros: { diagnosis: false, quote: false, photos: false },
+  moving: { diagnosis: false },
+};
+const LINE_FLOW = {
+  bike_wash: { diagnosis: false, quote: false },
+  car_wash: { diagnosis: false, quote: false },
+  car_detailing: { diagnosis: false, quote: false },
+  home_cleaning: { quote: false },
+  appliance_repair: { diagnosis: true },
+  gadget_repair: { diagnosis: true },
+};
+const FLOW_KEYS = ['diagnosis', 'quote', 'photos'];
+function flowOf(line, domain) {
+  const flow = { ...REPAIR_FLOW, ...(DOMAIN_FLOW[domain?.code] || {}) };
+  const own = domain?.dashboard?.flow || {};
+  for (const k of FLOW_KEYS) if (typeof own[k] === 'boolean') flow[k] = own[k];
+  return { ...flow, ...(LINE_FLOW[line?.repairVertical] || LINE_FLOW[line?.code] || {}) };
+}
+
 function lineTerms(line, domain) {
   const types = line?.packageDef?.types || [];
   return {
@@ -48,6 +74,7 @@ function lineTerms(line, domain) {
     singleType: types.length <= 1,
     typeWord: line?.typeWord || '',
     name: line?.name || '',
+    flow: flowOf(line, domain),
   };
 }
 
@@ -58,7 +85,7 @@ async function termsForVertical(vertical) {
   if (hit && hit.at > Date.now() - 60000) return hit.terms;
   const line = await ServiceLine.findOne({ repairVertical: vertical }).select('code repairVertical name domainCode typeWord packageDef.types').lean();
   const domain = line ? await ServiceDomain.findOne({ code: line.domainCode }).select('code dashboard').lean() : null;
-  const terms = line ? lineTerms(line, domain) : { ...REPAIR_TERMS, packaged: false, singleType: false, typeWord: '', name: '' };
+  const terms = line ? lineTerms(line, domain) : { ...REPAIR_TERMS, packaged: false, singleType: false, typeWord: '', name: '', flow: { ...REPAIR_FLOW } };
   if (termCache.size > 500) termCache.clear();
   termCache.set(vertical, { at: Date.now(), terms });
   return terms;
@@ -88,4 +115,4 @@ async function workspaceFor(owner) {
   };
 }
 
-module.exports = { workspaceFor, configOf, termsOf, lineTerms, termsForVertical, REPAIR_TERMS, DEFAULTS, OPTIONAL, HOMES };
+module.exports = { workspaceFor, configOf, termsOf, lineTerms, termsForVertical, flowOf, REPAIR_FLOW, REPAIR_TERMS, DEFAULTS, OPTIONAL, HOMES };

@@ -37,6 +37,10 @@ async function submitQuote({
   const booking = await RepairBooking.findById(bookingId);
   if (!booking) throw httpError('Booking not found', 404, 'NOT_FOUND');
   assertActorMayAct(booking, actorRole, actorId);
+  // A trade priced as a fixed menu (a wash, a class, a beauty visit) takes no quotes; extras go through the extras list instead.
+  if ((await require('../../../onboarding/workspace').termsForVertical(booking.vertical).catch(() => null))?.flow?.quote === false) {
+    throw httpError('This service is booked at a fixed price, so it takes no quotes. Add anything extra as an extra for the customer to approve.', 409, 'QUOTES_NOT_USED');
+  }
 
   if (idempotencyKey) {
     const dup = await RepairQuote.findOne({ idempotencyKey }).lean();

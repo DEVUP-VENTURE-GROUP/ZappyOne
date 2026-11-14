@@ -122,14 +122,14 @@ test('pet care: the pro sets a price per pet size; the customer is quoted their 
   expect(q.body.quote.commissionPaise).toBeLessThan(39900);
 });
 
-test('helping: a staff errand quotes the ZappyOne staff price until a partner helper own cheaper rate beats it', async () => {
+test('helping: an errand is ZappyOne’s runner fare, offered only when staff or an approved helper is near; helpers set no rates', async () => {
   const { KINDS } = require('../src/modules/jobs/kinds');
   const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
   const line = await KINDS.helping.line({ serviceType: 'grocery_run' });
   const ask = () => request(app).post('/api/helping/quote').set(tok(customer._id, 'user')).send({ serviceType: 'grocery_run', pickupLocation: at, destination: at });
   const { ServiceLine } = require('../src/modules/onboarding/onboarding.model');
   await ServiceLine.updateOne({ code: line }, { $setOnInsert: { code: line, name: 'Grocery run', domainCode: 'family_assist', status: 'live' }, $set: { staffOnly: true } }, { upsert: true });
-  // Version 1 (own staff off): nobody priced it, so the customer is told so; with staff on, ZappyOne's staff price applies.
+  // Nobody can take it: the customer is told so. Staff on: ZappyOne's fare.
   const flags = require('../src/modules/feature-flags/feature-flag.service');
   await flags.set('own_staff', false, null);
   expect((await ask()).status).toBe(409);
@@ -137,15 +137,9 @@ test('helping: a staff errand quotes the ZappyOne staff price until a partner he
   const staffPrice = await ask();
   expect(staffPrice.status).toBe(200);
   expect(staffPrice.body.charge.baseFeePaise).toBe(14900);
+  // A partner helper joining changes nothing about the fare, and there is no rate card to set.
   await ProviderEnrolment.create({ providerKind: 'individual', workerId: worker._id, domainCode: 'family_assist', lineCode: line, status: 'approved' });
-  const pro = tok(worker._id, 'worker');
-  const card = await request(app).get(`/api/helping/provider/rates/${line}`).set(pro);
-  expect(card.status).toBe(200);
-  expect(card.body.types.map((t) => t.serviceType)).toContain('grocery_run');
-  expect((await request(app).put(`/api/helping/provider/rates/${line}/grocery_run`).set(pro).send({ baseFeePaise: 12900, perKmPaise: 1000 })).status).toBe(200);
+  expect((await request(app).get(`/api/helping/provider/rates/${line}`).set(tok(worker._id, 'worker'))).status).toBe(404);
   const q = await ask();
-  expect(q.status).toBe(200);
-  expect(q.body.charge.baseFeePaise).toBe(12900);
-  expect(q.body.charge.commissionPaise).toBeLessThan(12900);
-  expect(mongoose.isValidObjectId(String(worker._id))).toBe(true);
+  expect(q.body.charge.baseFeePaise).toBe(14900);
 });

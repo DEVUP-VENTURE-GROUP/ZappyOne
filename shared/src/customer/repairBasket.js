@@ -81,7 +81,8 @@ export const STAGE_LABEL = {
 };
 
 // A service's words from GET /repair/verticals (server onboarding/workspace lineTerms); repair words for a vertical not in the list.
-const REPAIR_TERMS = { job: 'repair', pro: 'technician', warranty: true, packaged: false, singleType: false, typeWord: '', name: '' };
+// `flow` arrives with the server's terms (onboarding/workspace flowOf); null until then, and screens fall back to the job word.
+const REPAIR_TERMS = { job: 'repair', pro: 'technician', warranty: true, packaged: false, singleType: false, typeWord: '', name: '', flow: /** @type {{ diagnosis: boolean, quote: boolean, photos: boolean } | null} */ (null) };
 export const termsOf = (vertical, items = []) => ({ ...REPAIR_TERMS, ...(items.find((i) => i.vertical === vertical)?.terms || {}) });
 
 export const capWord = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);

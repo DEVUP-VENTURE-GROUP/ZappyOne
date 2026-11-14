@@ -43,14 +43,18 @@ export const REPAIR_GATE_COPY = {
   return: { title: 'Code to hand it back', hint: 'Let them check it first, then ask for the 6-number code on their phone.' },
 };
 
-// A wash, a cleaning or a visit has nothing to diagnose: after the start code the work itself begins.
-export const repairDirect = (job = 'repair') => !['repair', 'service'].includes(job);
+// A trade with no diagnosis step (a wash, a cleaning, a class): after the start code the work itself begins. From the server's flow profile (onboarding/workspace flowOf), else from the job word on an older server.
+export const repairDirect = (terms = 'repair') => {
+  const t = typeof terms === 'string' ? { job: terms } : (terms || {});
+  return t.flow ? !t.flow.diagnosis : !['repair', 'service'].includes(t.job || 'repair');
+};
 
-/** The single next step for a repair, from its status AND how it's being done. */
-export function repairNextAction(status, serviceMode, job = 'repair') {
+/** The single next step for a repair, from its status AND how it's being done; `terms` is the service's (job word and flow profile). */
+export function repairNextAction(status, serviceMode, terms = 'repair') {
   const collecting = serviceMode === 'pickup_repair';
-  if (repairDirect(job) && status === 'ARRIVED') return { to: 'REPAIR_IN_PROGRESS', label: `Start the ${job}` };
-  if (repairDirect(job) && status === 'REPAIR_IN_PROGRESS') return { to: 'QA_PENDING', label: `Finish the ${job}` };
+  const job = (typeof terms === 'string' ? terms : terms?.job) || 'repair';
+  if (repairDirect(terms) && status === 'ARRIVED') return { to: 'REPAIR_IN_PROGRESS', label: `Start the ${job}` };
+  if (repairDirect(terms) && status === 'REPAIR_IN_PROGRESS') return { to: 'QA_PENDING', label: `Finish the ${job}` };
   const map = {
     PROVIDER_ASSIGNED: { to: 'WORKER_ACCEPTED', label: 'Accept job' },
     WORKER_ACCEPTED: collecting ? { to: 'PICKUP_SCHEDULED', label: 'Schedule the pickup' } : { to: 'ON_THE_WAY', label: 'Start trip' },

@@ -619,6 +619,9 @@ async function getQAChecklist(req, res, next) {
     const checklist = codes.length
       ? await QAChecklist.findOne({ code: { $in: codes }, vertical: booking.vertical, isActive: true }).lean()
       : null;
+    // A trade that takes no photos (a class, a beauty visit) is never asked to tick one; pass or fail is worked out from these same items.
+    const flow = (await require('../../onboarding/workspace').termsForVertical(booking.vertical).catch(() => null))?.flow;
+    if (checklist && flow?.photos === false) checklist.items = (checklist.items || []).filter((i) => !/photo/i.test(`${i.code} ${i.label}`));
 
     res.json({ checklist });
   } catch (err) { next(err); }

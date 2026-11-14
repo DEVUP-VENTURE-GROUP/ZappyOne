@@ -407,13 +407,14 @@ export default function WorkerRepairJobPage() {
   }
 
   const words = termsOf(booking.vertical, verticals?.items);
-  const action = nextAction(booking.status, booking.serviceMode, words.job);
+  const action = nextAction(booking.status, booking.serviceMode, words);
 
   /**
    * Evidence is gathered at QA, while the device is still open on the bench —
    * not remembered afterwards from the van.
    */
-  const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking?.status);
+  // Only a trade that photographs its work (flow profile): never a class or a beauty visit.
+  const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking?.status) && words.flow?.photos !== false;
   // A photo still uploading, or one that failed, is not evidence.
   // Photos saved before a reload count too; the server refuses to move on without one (repair lifecycle PHOTO_REQUIRED).
   const savedBefore = (booking.completionPhotos || []).length > 0;
@@ -578,7 +579,7 @@ export default function WorkerRepairJobPage() {
           <div className="card">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">To finish</p>
             <ol className="space-y-1.5">
-              {FINISH_STEPS.map(([key, label], i) => (
+              {FINISH_STEPS.filter(([key]) => key !== 'photos' || words.flow?.photos !== false).map(([key, label], i) => (
                 <li key={key} className="flex items-center gap-2.5">
                   <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-black ${finishDone[key] ? 'bg-zappy-50 text-zappy-600' : 'bg-slate-100 text-slate-500'}`}>{finishDone[key] ? '✓' : i + 1}</span>
                   <span className={`text-[13px] ${finishDone[key] ? 'text-slate-400' : 'font-bold text-[#0F172A]'}`}>{label}</span>
@@ -642,7 +643,7 @@ export default function WorkerRepairJobPage() {
             onSent={() => { setShowQuote(false); refetch(); }}
             onCancel={() => setShowQuote(false)}
           />
-        ) : QUOTABLE.includes(booking.status) && (
+        ) : words.flow?.quote !== false && QUOTABLE.includes(booking.status) && (
           booking.status === 'REPAIR_IN_PROGRESS' ? (
             /*
               Mid-repair the device is already open, so the honest button is not
@@ -693,7 +694,7 @@ export default function WorkerRepairJobPage() {
             </div>
           ))}
         </div>
-        {(transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(words.job))) && (
+        {(transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(words))) && (
           <div className="card">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               What the customer told us

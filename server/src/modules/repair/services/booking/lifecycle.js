@@ -54,7 +54,9 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
   }
 
   // Photos of the finished work are evidence for both sides: a pro or shop cannot move past QA without at least one (admin may).
-  if (['QA_PENDING', 'READY_FOR_RETURN'].includes(booking.status) && ['worker', 'shop'].includes(actorRole) && !(booking.completionPhotos || []).length) {
+  // Only where the trade photographs its work (onboarding/workspace flow): never a class or a beauty visit.
+  if (['QA_PENDING', 'READY_FOR_RETURN'].includes(booking.status) && ['worker', 'shop'].includes(actorRole) && !(booking.completionPhotos || []).length
+    && (await require('../../../onboarding/workspace').termsForVertical(booking.vertical).catch(() => null))?.flow?.photos !== false) {
     throw httpError('Add at least one photo of the finished work first.', 409, 'PHOTO_REQUIRED');
   }
 

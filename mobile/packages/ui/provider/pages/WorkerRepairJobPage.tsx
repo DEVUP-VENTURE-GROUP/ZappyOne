@@ -113,8 +113,9 @@ export function WorkerRepairJobPage() {
   }
 
   const terms = termsOf(booking.vertical, (verticals as { items?: unknown[] } | undefined)?.items);
-  const action = repairNextAction(booking.status, booking.serviceMode, terms.job);
-  const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking.status);
+  const action = repairNextAction(booking.status, booking.serviceMode, terms);
+  // Only a trade that photographs its work (flow profile): never a class or a beauty visit.
+  const wantsPhotos = REPAIR_PHOTO_STAGES.includes(booking.status) && terms.flow?.photos !== false;
   // Photos saved before a reload count too; the server refuses to move on without one (the website's job page).
   const savedBefore = (booking.completionPhotos || []).length > 0;
   const photosBlocked = wantsPhotos && !(photosSettled(photos) || (savedBefore && photosSettled(photos, { min: 0 })));
@@ -239,7 +240,7 @@ export function WorkerRepairJobPage() {
         {finishing && !ownerWatching ? (
           <JobCard>
             <Eyebrow>TO FINISH</Eyebrow>
-            {FINISH_STEPS.map(([key, label], i) => (
+            {FINISH_STEPS.filter(([key]) => key !== 'photos' || terms.flow?.photos !== false).map(([key, label], i) => (
               <View key={key} style={styles.row}>
                 <View style={styles.num}><Text variant="caption" weight="black" color={finishDone[key] ? zappy[600] : ink[500]}>{finishDone[key] ? '✓' : i + 1}</Text></View>
                 <Text variant="bodySmall" weight={finishDone[key] ? 'regular' : 'bold'} color={finishDone[key] ? ink[400] : ink[900]} style={styles.flex}>{label}</Text>
@@ -287,7 +288,7 @@ export function WorkerRepairJobPage() {
         {showQuote ? (
           <QuoteBuilder bookingId={id} bookedRepair={booking.repairCode || null} vertical={booking.vertical} additional={showQuote === 'additional'}
             snapshot={snap} onSent={() => { setShowQuote(false); refetch(); }} onCancel={() => setShowQuote(false)} />
-        ) : REPAIR_QUOTABLE.includes(booking.status) ? (
+        ) : terms.flow?.quote !== false && REPAIR_QUOTABLE.includes(booking.status) ? (
           booking.status === 'REPAIR_IN_PROGRESS'
             ? <Button variant="outline" icon={<AlertTriangle size={15} color={accent[700]} />} label="I've found another problem" onPress={() => setShowQuote('additional')} fullWidth />
             : <Button variant="outline" icon={<FileText size={15} color={zappy[700]} />} label="Raise a quote" onPress={() => setShowQuote('new')} fullWidth />
@@ -308,7 +309,7 @@ export function WorkerRepairJobPage() {
           ))}
         </JobCard>
 
-        {transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(terms.job)) ? (
+        {transcript.length > 0 || (booking.diagnosisSummary && !repairDirect(terms)) ? (
           <JobCard>
             <Eyebrow>WHAT THE CUSTOMER TOLD US</Eyebrow>
             {transcript.length ? transcript.map((t, i) => (
