@@ -5,6 +5,7 @@ import {
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import AssignTechnician from '@shared/provider/components/AssignTechnician';
 import { formatPaise } from '@shared/utils/money';
+import { useT } from '@shared/i18n/I18nProvider';
 
 /**
  * The shop's open work — every kind it takes — and who is doing each job.
@@ -18,6 +19,7 @@ const KIND_ICON = { repair: Wrench, pet: PawPrint };
 
 export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
   const nav = useNavigate();
+  const t = useT();
   const { mine: jobs, isLoading, refetch } = useProviderJobs({ kinds });
 
   if (isLoading) {
@@ -28,8 +30,8 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
         <Wrench size={20} className="mx-auto text-slate-300" />
-        <p className="mt-2 text-sm font-bold text-slate-700">No open jobs</p>
-        <p className="mt-0.5 text-xs text-slate-500">Jobs appear here, and ring, the moment a customer books your shop.</p>
+        <p className="mt-2 text-sm font-bold text-slate-700">{t('sp.jobs.none', 'No open jobs')}</p>
+        <p className="mt-0.5 text-xs text-slate-500">{t('sp.jobs.noneBody', 'Jobs appear here, and ring, the moment a customer books your shop.')}</p>
       </div>
     );
   }
@@ -58,11 +60,11 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
                 <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                   {j.valuePaise > 0 && <span className="text-[11px] font-semibold text-[#0F172A]">{formatPaise(j.valuePaise)}</span>}
                   {j.cashDue && (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700"><Banknote size={10} /> collect cash</span>
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700"><Banknote size={10} /> {t('sp.jobs.cash', 'collect cash')}</span>
                   )}
-                  {j.late && <span className="flex items-center gap-1 text-[11px] font-semibold text-red-600"><Clock size={10} /> running late</span>}
+                  {j.late && <span className="flex items-center gap-1 text-[11px] font-semibold text-red-600"><Clock size={10} /> {t('sp.jobs.late', 'running late')}</span>}
                   {!j.workerId && (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700"><UserX size={10} /> nobody on it</span>
+                    <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700"><UserX size={10} /> {t('sp.jobs.nobody', 'nobody on it')}</span>
                   )}
                 </span>
               </span>

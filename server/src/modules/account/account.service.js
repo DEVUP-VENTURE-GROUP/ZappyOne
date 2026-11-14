@@ -152,12 +152,25 @@ async function notifyPasswordChanged(role, a) {
   mailer.sendMail({ to: a.email, ...t }).catch(() => {});
 }
 
+const PASSWORD_CHANGE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+/** ServicePro accounts (shop owners and shop workers): a change must really change it, and at most once a day. */
+async function assertPasswordChange(a, newPassword) {
+  if (await comparePassword(newPassword, a.passwordHash)) {
+    throw err(400, 'SAME_PASSWORD', 'Your new password must be different from your current one');
+  }
+  if (a.passwordSetAt && Date.now() - new Date(a.passwordSetAt).getTime() < PASSWORD_CHANGE_COOLDOWN_MS) {
+    throw err(429, 'PASSWORD_CHANGE_LIMIT', 'You can change your password once every 24 hours');
+  }
+}
+
 /** First password: no current one needed. Changing it: the current one must match. */
 async function setPassword({ role, id, currentPassword, newPassword }) {
   const a = await load(role, id);
   if (a.passwordHash) {
     const ok = await comparePassword(currentPassword || '', a.passwordHash);
     if (!ok) throw err(401, 'BAD_CURRENT_PASSWORD', 'Your current password is not right');
+    if (role === 'shop' || (role === 'worker' && a.shopId)) await assertPasswordChange(a, newPassword);
   }
   checkPassword(newPassword, a);
   const first = !a.passwordHash;
@@ -330,6 +343,6 @@ async function completeSetup({ role, id }) {
 
 module.exports = { setPhoto, skipPhoto, markReleaseSeen, PHOTO_FIELD,
   ROLES, checkPassword, phoneVariants, setupStatus,
-  getStatus, setPassword, setName, startEmailVerification, confirmEmail,
+  getStatus, setPassword, assertPasswordChange, setName, startEmailVerification, confirmEmail,
   loginWithPassword, requestPasswordReset, resetWithToken, resetWithOtp, completeSetup,
 };

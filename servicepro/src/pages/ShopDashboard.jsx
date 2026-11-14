@@ -13,6 +13,7 @@ import ProviderServicesCard from '@shared/components/provider/ProviderServicesCa
 import ShopJobs from '../components/ShopJobs';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
+import { useI18n } from '@shared/i18n/I18nProvider';
 
 /**
  * The shop owner's dashboard.
@@ -36,11 +37,11 @@ import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared
  */
 
 const KYC_META = {
-  not_submitted: { label: 'Verification pending', tone: 'bg-slate-100 text-slate-600', Icon: AlertTriangle },
-  pending_review: { label: 'Under review', tone: 'bg-amber-50 text-amber-700', Icon: Clock },
-  approved: { label: 'Verified', tone: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
-  rejected: { label: 'Verification rejected', tone: 'bg-red-50 text-red-700', Icon: XCircle },
-  suspended: { label: 'Verification suspended', tone: 'bg-red-50 text-red-700', Icon: XCircle },
+  not_submitted: { label: 'Verification pending', tk: 'sp.kyc.pending', tone: 'bg-slate-100 text-slate-600', Icon: AlertTriangle },
+  pending_review: { label: 'Under review', tk: 'sp.underReview', tone: 'bg-amber-50 text-amber-700', Icon: Clock },
+  approved: { label: 'Verified', tk: 'sp.verified', tone: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
+  rejected: { label: 'Verification rejected', tk: 'sp.kyc.rejected', tone: 'bg-red-50 text-red-700', Icon: XCircle },
+  suspended: { label: 'Verification suspended', tk: 'sp.kyc.suspended', tone: 'bg-red-50 text-red-700', Icon: XCircle },
 };
 
 /** Every kind of work a shop can be booked for. */
@@ -54,6 +55,7 @@ const SHOP_KINDS = ['repair', 'pet'];
  * open jobs each is carrying, which is what makes an assignment decision.
  */
 function TeamPanel({ workers, jobs, onManage }) {
+  const { t } = useI18n();
   const loadByWorker = useMemo(() => {
     const map = new Map();
     for (const job of jobs) {
@@ -66,22 +68,22 @@ function TeamPanel({ workers, jobs, onManage }) {
 
   return (
     <Panel
-      title="Your team"
+      title={t('sp.dash.team', 'Your team')}
       action={(
         <button onClick={onManage} className="flex items-center gap-1 text-[12px] font-bold text-zappy-600">
-          Manage <ChevronRight size={13} strokeWidth={3} />
+          {t('sp.manage', 'Manage')} <ChevronRight size={13} strokeWidth={3} />
         </button>
       )}
     >
       {!workers.length ? (
         <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center">
           <UserPlus size={20} className="mx-auto text-slate-300" />
-          <p className="mt-2 text-[13px] font-bold text-slate-700">No technicians yet</p>
+          <p className="mt-2 text-[13px] font-bold text-slate-700">{t('sp.dash.noTechs', 'No technicians yet')}</p>
           <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">
-            Add your technicians so you can hand jobs to them instead of doing every one yourself.
+            {t('sp.dash.noTechsBody', 'Add your technicians so you can hand jobs to them instead of doing every one yourself.')}
           </p>
           <button onClick={onManage} className="mt-3 rounded-xl bg-zappy-600 px-4 py-2 text-[12px] font-bold text-white">
-            Add a technician
+            {t('sp.dash.addTech', 'Add a technician')}
           </button>
         </div>
       ) : (
@@ -100,14 +102,14 @@ function TeamPanel({ workers, jobs, onManage }) {
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
                   load ? 'bg-zappy-50 text-zappy-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
-                  {load ? `${load} job${load === 1 ? '' : 's'}` : 'Free'}
+                  {load ? (load === 1 ? t('sp.oneJob', '1 job') : t('sp.nJobs', '{n} jobs').replace('{n}', load)) : t('sp.dash.free', 'Free')}
                 </span>
               </div>
             );
           })}
           {workers.length > 5 && (
             <button onClick={onManage} className="w-full pt-1 text-[11.5px] font-bold text-zappy-600">
-              +{workers.length - 5} more
+              {t('sp.dash.more', '+{n} more').replace('{n}', workers.length - 5)}
             </button>
           )}
         </div>
@@ -118,6 +120,7 @@ function TeamPanel({ workers, jobs, onManage }) {
 
 export default function ShopDashboard() {
   const nav = useNavigate();
+  const { t, lang } = useI18n();
   const { data, isLoading } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();
   const { data: earnings } = useShopEarningsQuery('today');
@@ -198,26 +201,26 @@ export default function ShopDashboard() {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const key = istKey(d);
     return {
-      label: d.toLocaleDateString('en-IN', { weekday: 'short' }),
+      label: d.toLocaleDateString(`${lang}-IN`, { weekday: 'short' }),
       value: Math.round((byDatePaise[key] || 0) / 100),
     };
   });
   const weekRs = Math.round(thisWeekPaise / 100);
 
   const perfItems = [
-    { label: 'Jobs This Week', value: weekEarnings?.jobs ?? 0, sub: `${earnings?.jobs ?? 0} today` },
-    { label: 'Technicians', value: workers.length, sub: 'On your team' },
-    { label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews` },
-    { label: 'Completed', value: shop?.completedJobs ?? 0, sub: 'All time' },
+    { label: t('sp.dash.jobsWeek', 'Jobs This Week'), value: weekEarnings?.jobs ?? 0, sub: t('sp.dash.nToday', '{n} today').replace('{n}', earnings?.jobs ?? 0) },
+    { label: t('sp.dash.techs', 'Technicians'), value: workers.length, sub: t('sp.dash.onTeam', 'On your team') },
+    { label: t('sp.dash.rating', 'Rating'), value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: t('sp.nReviews', '{n} reviews').replace('{n}', shop?.reviewCount || 0) },
+    { label: t('sp.dash.completed', 'Completed'), value: shop?.completedJobs ?? 0, sub: t('sp.dash.allTime', 'All time') },
   ];
 
   const statCards = [
-    { Icon: IndianRupee, tone: 'green', label: "Today's Earnings", value: inr(earnings?.earningsRupees || 0), sub: 'View details', onClick: () => nav('/shop/earnings') },
-    { Icon: Briefcase, tone: 'amber', label: "Today's Jobs", value: earnings?.jobs || 0, sub: 'View all', onClick: () => nav('/shop/earnings') },
-    { Icon: Wrench, tone: 'blue', label: 'Needs action', value: needsAction.length, sub: needsAction.length ? 'Assign now' : null, subTone: 'text-zappy-600' },
-    { Icon: Users, tone: 'violet', label: 'Technicians', value: workers.length, sub: 'Manage team', onClick: () => nav('/shop/workers') },
-    { Icon: Star, tone: 'cyan', label: 'Rating', value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: `${shop?.reviewCount || 0} reviews`, onClick: () => nav('/shop/reviews') },
-    { Icon: ShieldCheck, tone: 'rose', label: 'Awaiting approval', value: pendingApprovals, sub: pendingApprovals ? 'Skills & prices' : null },
+    { Icon: IndianRupee, tone: 'green', label: t('sp.dash.todayEarnings', 'Today\'s Earnings'), value: inr(earnings?.earningsRupees || 0), sub: t('sp.dash.viewDetails', 'View details'), onClick: () => nav('/shop/earnings') },
+    { Icon: Briefcase, tone: 'amber', label: t('sp.dash.todayJobs', 'Today\'s Jobs'), value: earnings?.jobs || 0, sub: t('sp.dash.viewAll', 'View all'), onClick: () => nav('/shop/earnings') },
+    { Icon: Wrench, tone: 'blue', label: t('sp.dash.needsAction', 'Needs action'), value: needsAction.length, sub: needsAction.length ? t('sp.dash.assignNow', 'Assign now') : null, subTone: 'text-zappy-600' },
+    { Icon: Users, tone: 'violet', label: t('sp.dash.techs', 'Technicians'), value: workers.length, sub: t('sp.dash.manageTeam', 'Manage team'), onClick: () => nav('/shop/workers') },
+    { Icon: Star, tone: 'cyan', label: t('sp.dash.rating', 'Rating'), value: shop?.rating ? Number(shop.rating).toFixed(1) : '—', sub: t('sp.nReviews', '{n} reviews').replace('{n}', shop?.reviewCount || 0), onClick: () => nav('/shop/reviews') },
+    { Icon: ShieldCheck, tone: 'rose', label: t('sp.dash.awaiting', 'Awaiting approval'), value: pendingApprovals, sub: pendingApprovals ? t('sp.dash.skillsPrices', 'Skills & prices') : null },
   ];
 
   return (
@@ -225,7 +228,7 @@ export default function ShopDashboard() {
       {/* Navigation and sign-out live in the frame (ServiceProShell); this is the shop's day. */}
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 pt-5">
         <div className="min-w-0 flex-1">
-          <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">Shop partner</p>
+          <p className="text-[10.5px] font-black uppercase tracking-[0.12em] text-slate-400">{t('sp.shopPartner', 'Shop partner')}</p>
           <h1 className="truncate text-[20px] font-black tracking-tight text-[#0F172A]">{shop?.businessName}</h1>
         </div>
         {/* Whether customers can find you, stated where it cannot be missed. */}
@@ -234,7 +237,7 @@ export default function ShopDashboard() {
         }`}>
           <span className={`h-2 w-2 rounded-full ${liveNow ? 'bg-emerald-500' : 'bg-slate-300'}`} />
           <span className={`text-[12px] font-bold ${liveNow ? 'text-emerald-700' : 'text-slate-500'}`}>
-            {liveNow ? 'Live' : isOpen === false ? 'Closed now' : 'Not live'}
+            {liveNow ? t('sp.dash.live', 'Live') : isOpen === false ? t('sp.dash.closedNow', 'Closed now') : t('sp.dash.notLive', 'Not live')}
           </span>
         </span>
       </div>
@@ -254,29 +257,29 @@ export default function ShopDashboard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-black text-[#0F172A]">
-                  {kycStatus === 'approved' ? 'Almost there' : meta.label}
+                  {kycStatus === 'approved' ? t('sp.dash.almost', 'Almost there') : t(meta.tk, meta.label)}
                 </p>
                 <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-600">
                   {kycStatus === 'approved'
-                    ? 'Your documents are approved. Finish your profile so customers can find you.'
+                    ? t('sp.dash.approvedBody', 'Your documents are approved. Finish your profile so customers can find you.')
                     : kycStatus === 'pending_review' || verificationInFlight
-                      ? "We'll notify you within 24 hours."
-                      : 'Submit your documents to start receiving bookings.'}
+                      ? t('sp.dash.notify24', 'We\'ll notify you within 24 hours.')
+                      : t('sp.dash.submitDocs', 'Submit your documents to start receiving bookings.')}
                 </p>
 
                 {/* What exactly is missing — a checklist beats "complete your profile". */}
                 {kycStatus === 'approved' && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {!hasPin && <Gap label="Shop address" onClick={() => nav('/shop/profile')} />}
-                    {!shop?.services?.length && <Gap label="Services" onClick={() => nav('/provider/onboarding')} />}
-                    {!shop?.hours?.length && <Gap label="Opening hours" onClick={() => nav('/shop/profile')} />}
+                    {!hasPin && <Gap label={t('sp.dash.shopAddress', 'Shop address')} onClick={() => nav('/shop/profile')} />}
+                    {!shop?.services?.length && <Gap label={t('sp.dash.services', 'Services')} onClick={() => nav('/provider/onboarding')} />}
+                    {!shop?.hours?.length && <Gap label={t('sp.dash.hours', 'Opening hours')} onClick={() => nav('/shop/profile')} />}
                   </div>
                 )}
               </div>
 
               {(kycStatus === 'not_submitted' || kycStatus === 'rejected') && !verificationInFlight && (
                 <button onClick={() => nav('/shop/kyc')} className="shrink-0 rounded-xl bg-[#0F172A] px-4 py-2.5 text-[12.5px] font-bold text-white">
-                  Verify
+                  {t('sp.dash.verify', 'Verify')}
                 </button>
               )}
             </div>
@@ -292,10 +295,10 @@ export default function ShopDashboard() {
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             <Panel
-              title="Jobs"
+              title={t('sp.dash.jobs', 'Jobs')}
               action={needsAction.length ? (
                 <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-700">
-                  {needsAction.length} need{needsAction.length === 1 ? 's' : ''} you
+                  {t('sp.dash.needYou', '{n} need you').replace('{n}', needsAction.length)}
                 </span>
               ) : null}
             >
@@ -311,7 +314,7 @@ export default function ShopDashboard() {
               onViewDetails={() => nav('/shop/earnings')}
             />
 
-            <Panel title="Performance">
+            <Panel title={t('sp.dash.performance', 'Performance')}>
               <PerformanceGrid items={perfItems} />
             </Panel>
           </div>

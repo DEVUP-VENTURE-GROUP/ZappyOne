@@ -1,13 +1,14 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star,
+  LayoutDashboard, Wrench, Users, IndianRupee, Store, ShieldCheck, PlusCircle, Bell, UserRound, Star, Repeat,
 } from 'lucide-react';
 import PortalShell from '@shared/components/worker/PortalShell';
 import { selectAuth, logout } from '@shared/modules/auth/authSlice';
 import {
   useShopMeQuery, useGetWorkerMeQuery, useGetMyShopQuery, useLogoutMutation,
 } from '@shared/services/api';
+import { useT } from '@shared/i18n/I18nProvider';
 
 /**
  * ServicePro's frame for both people who use it. The owner runs the shop; a
@@ -21,6 +22,7 @@ const OWNER_PAGES = [
   { key: 'team', label: 'Team', Icon: Users, to: '/shop/workers', primary: true },
   { key: 'earnings', label: 'Earnings', Icon: IndianRupee, to: '/shop/earnings', primary: true },
   { key: 'shop', label: 'Shop & hours', Icon: Store, to: '/shop/profile', primary: true },
+  { key: 'plans', label: 'Plans', Icon: Repeat, to: '/shop/plans' },
   { key: 'reviews', label: 'Reviews', Icon: Star, to: '/shop/reviews' },
   { key: 'kyc', label: 'Verification', Icon: ShieldCheck, to: '/shop/kyc' },
   { key: 'services', label: 'Add a service', Icon: PlusCircle, to: '/provider/onboarding' },
@@ -43,6 +45,7 @@ export default function ServiceProShell() {
   const { data: workerMe } = useGetWorkerMeQuery(undefined, { skip: !isTech });
   const { data: myShop } = useGetMyShopQuery(undefined, { skip: !isTech });
   const [callLogout] = useLogoutMutation();
+  const t = useT();
 
   async function signOut() {
     try { await callLogout().unwrap(); } catch { /* signing out locally regardless */ }
@@ -55,10 +58,10 @@ export default function ServiceProShell() {
 
   return (
     <PortalShell
-      items={isOwner ? OWNER_PAGES : TECHNICIAN_PAGES}
-      label={isOwner ? 'Shop partner' : 'Shop team'}
+      items={(isOwner ? OWNER_PAGES : TECHNICIAN_PAGES).map((p) => ({ ...p, label: t(`sp.nav.${p.key}`, p.label) }))}
+      label={isOwner ? t('sp.shopPartner', 'Shop partner') : t('sp.shopTeam', 'Shop team')}
       title={isOwner ? shopMe?.shop?.businessName : workerMe?.worker?.name}
-      subtitle={isOwner ? shopMe?.shop?.phone : myShop?.shop?.name && `Working for ${myShop.shop.name}`}
+      subtitle={isOwner ? shopMe?.shop?.phone : myShop?.shop?.name && t('sp.workingFor', 'Working for {name}').replace('{name}', myShop.shop.name)}
       onSignOut={signOut}
     >
       <Outlet />

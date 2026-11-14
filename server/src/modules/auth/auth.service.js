@@ -823,8 +823,10 @@ async function changeWorkerPassword({ workerId, currentPassword, newPassword }) 
   if (worker.passwordHash) {
     const ok = await comparePassword(currentPassword || '', worker.passwordHash);
     if (!ok) throw Object.assign(new Error('Current password is incorrect'), { status: 401, code: 'BAD_CURRENT_PASSWORD' });
+    if (worker.shopId) await require('../account/account.service').assertPasswordChange(worker, newPassword);
   }
   worker.passwordHash = await hashPassword(newPassword);
+  worker.passwordSetAt = new Date();
   await worker.save();
   return { ok: true };
 }

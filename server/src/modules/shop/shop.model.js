@@ -97,6 +97,19 @@ const shopSchema = new mongoose.Schema(
     bio: { type: String, maxlength: 1000 },
     yearsActive: Number,
 
+    /** Packs the shop sells: a monthly plan or a one-day pack. Drafts stay hidden until published. */
+    plans: {
+      type: [{
+        kind: { type: String, enum: ['monthly', 'one_day'], default: 'monthly' },
+        title: { type: String, trim: true, maxlength: 80, default: '' },
+        services: { type: [String], default: [] },
+        pricePaise: { type: Number, min: 0, default: 0 },
+        perk: { type: String, trim: true, maxlength: 200, default: '' },
+        status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+      }],
+      default: [],
+    },
+
     rating: { type: Number, default: 5, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
     completedJobs: { type: Number, default: 0 },

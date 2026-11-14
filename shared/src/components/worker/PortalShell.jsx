@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X, LogOut, ChevronRight } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
 import { WorkerSidebar, WorkerBottomNav } from './DashboardUI';
+import { useI18n } from '../../i18n/I18nProvider';
 
 /**
  * The frame around a provider portal: sidebar on a computer; on a phone a top
@@ -41,10 +42,23 @@ function Account({ title, subtitle }) {
   );
 }
 
+function LanguageSelect() {
+  const { lang, setLang, languages, t } = useI18n();
+  return (
+    <label className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-3 py-2 text-[12.5px] font-semibold text-slate-500">
+      {t('sp.language', 'Language')}
+      <select value={lang} onChange={(e) => setLang(e.target.value)} className="bg-transparent text-[13px] font-bold text-navy-900 outline-none">
+        {languages.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}
+      </select>
+    </label>
+  );
+}
+
 export default function PortalShell({ items, label, title, subtitle, onSignOut, children }) {
   const nav = useNavigate();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useI18n();
 
   const activeKey = activeKeyFor(items, pathname);
   const primary = items.filter((i) => i.primary);
@@ -58,10 +72,11 @@ export default function PortalShell({ items, label, title, subtitle, onSignOut, 
       <WorkerSidebar
         items={items}
         label={label}
-        account={<Account title={title} subtitle={subtitle} />}
+        account={<><Account title={title} subtitle={subtitle} /><LanguageSelect /></>}
         activeKey={activeKey}
         onNavigate={go}
         onSignOut={onSignOut}
+        signOutLabel={t('sp.signOut', 'Sign out')}
       />
 
       {/* Phone top bar */}
@@ -90,7 +105,7 @@ export default function PortalShell({ items, label, title, subtitle, onSignOut, 
                   <X size={18} className="text-slate-600" />
                 </button>
               </div>
-              <div className="px-4 pb-3"><Account title={title} subtitle={subtitle} /></div>
+              <div className="px-4 pb-3"><Account title={title} subtitle={subtitle} /><LanguageSelect /></div>
               <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
                 {rest.map((item) => (
                   <button key={item.key} type="button" onClick={() => go(item)}
@@ -105,7 +120,7 @@ export default function PortalShell({ items, label, title, subtitle, onSignOut, 
               {onSignOut && (
                 <div className="border-t border-slate-200 p-3">
                   <button type="button" onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-slate-500 hover:bg-rose-50 hover:text-rose-600">
-                    <LogOut size={18} strokeWidth={2.2} /> Sign out
+                    <LogOut size={18} strokeWidth={2.2} /> {t('sp.signOut', 'Sign out')}
                   </button>
                 </div>
               )}

@@ -56,6 +56,16 @@ test('password rules and changing it', async () => {
   await svc.setPassword({ role: 'user', id: u._id, currentPassword: 'goodpass1', newPassword: 'another2' });
 });
 
+test('ServicePro shop: no reusing the password, and one change a day', async () => {
+  const { insertedId: id } = await Shop.collection.insertOne({ businessName: 'Pass Shop', ownerName: 'Om', phone: '+919811100077' });
+  await svc.setPassword({ role: 'shop', id, newPassword: 'goodpass1' });
+  await expect(svc.setPassword({ role: 'shop', id, currentPassword: 'goodpass1', newPassword: 'goodpass1' })).rejects.toMatchObject({ code: 'SAME_PASSWORD' });
+  await expect(svc.setPassword({ role: 'shop', id, currentPassword: 'goodpass1', newPassword: 'another2' })).rejects.toMatchObject({ code: 'PASSWORD_CHANGE_LIMIT' });
+  await Shop.updateOne({ _id: id }, { $set: { passwordSetAt: new Date(Date.now() - 25 * 3600 * 1000) } });
+  await svc.setPassword({ role: 'shop', id, currentPassword: 'goodpass1', newPassword: 'another2' });
+  await expect(svc.setPassword({ role: 'shop', id, currentPassword: 'another2', newPassword: 'third3pass' })).rejects.toMatchObject({ code: 'PASSWORD_CHANGE_LIMIT' });
+});
+
 test('sign in by any phone format; unverified email does not sign in; locks after 8 misses', async () => {
   const u = await customer({ name: 'Kiran' });
   await svc.setPassword({ role: 'user', id: u._id, newPassword: 'secret123' });

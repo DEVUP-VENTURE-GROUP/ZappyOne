@@ -10,6 +10,7 @@ import ResendOtp from '@shared/components/auth/ResendOtp';
 import { setAuth } from '@shared/modules/auth/authSlice';
 import toast from 'react-hot-toast';
 import LoginRoleSwitch from '../components/LoginRoleSwitch';
+import { useT } from '@shared/i18n/I18nProvider';
 
 function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {
   return (
@@ -26,6 +27,7 @@ function OtpBox({ value, onChange, onKeyDown, inputRef, filled }) {
 export default function ShopLoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const t = useT();
   const [step, setStep] = useState('phone'); // phone -> otp -> register
   useScrollTopOnChange(step);
   const [phone, setPhone] = useState('');
@@ -45,22 +47,22 @@ export default function ShopLoginPage() {
       role: 'shop',
       profile: { name: res.shop.businessName, phone: res.shop.phone, _id: res.shop._id },
     }));
-    toast.success(`Welcome, ${res.shop.businessName}!`);
+    toast.success(t('sp.lg.welcome', 'Welcome, {name}!').replace('{name}', res.shop.businessName));
     navigate('/shop', { replace: true });
   }
 
   async function handleSendOtp(e) {
     e.preventDefault();
-    if (phone.length < 10) return toast.error('Enter a valid phone number');
+    if (phone.length < 10) return toast.error(t('sp.badPhone', 'Enter a valid phone number'));
     try {
       const res = await requestOtp({ phone, role: 'shop' }).unwrap();
       setIsNew(!!res.isNewUser);
       setOtpMeta({ cooldownSec: res.cooldownSec ?? 30, resendsLeft: res.resendsLeft ?? 3 });
       setStep('otp');
-      toast.success('OTP sent');
+      toast.success(t('sp.lg.otpSent', 'OTP sent'));
       setTimeout(() => otpRefs.current[0]?.focus(), 200);
     } catch (err) {
-      toast.error(err?.data?.error || 'Failed to send OTP');
+      toast.error(err?.data?.error || t('sp.lg.otpFail', 'Failed to send OTP'));
     }
   }
 
@@ -80,7 +82,7 @@ export default function ShopLoginPage() {
    */
   async function handleVerify(codeOverride) {
     const code = typeof codeOverride === 'string' ? codeOverride : otp;
-    if (code.length < 6) return toast.error('Enter all 6 digits');
+    if (code.length < 6) return toast.error(t('sp.lg.all6', 'Enter all 6 digits'));
     if (isNew && step === 'otp') { setStep('register'); return; }
     await doLogin({}, code);
   }
@@ -93,7 +95,7 @@ export default function ShopLoginPage() {
       finishLogin(res);
     } catch (err) {
       if (err?.data?.code === 'SHOP_ONBOARDING_REQUIRED') { setStep('register'); return; }
-      toast.error(err?.data?.error || 'Invalid OTP');
+      toast.error(err?.data?.error || t('sp.lg.badOtp', 'Invalid OTP'));
       setDigits(['', '', '', '', '', '']);
       setStep('otp');
       setTimeout(() => otpRefs.current[0]?.focus(), 200);
@@ -102,7 +104,7 @@ export default function ShopLoginPage() {
 
   async function handleRegister(e) {
     e.preventDefault();
-    if (!regForm.businessName || !regForm.ownerName) return toast.error('Fill in all required fields');
+    if (!regForm.businessName || !regForm.ownerName) return toast.error(t('sp.lg.fillAll', 'Fill in all required fields'));
     await doLogin(regForm);
   }
 
@@ -140,8 +142,8 @@ export default function ShopLoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-zappy-600 flex items-center justify-center shadow-lg shadow-zappy-200 mb-4">
             <Store size={26} className="text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-[22px] font-black text-slate-900 tracking-tight">Zappy Shop Partner</h1>
-          <p className="text-[13px] text-slate-500 font-medium mt-1">Manage your shop, workers & earnings</p>
+          <h1 className="text-[22px] font-black text-slate-900 tracking-tight">{t('sp.lg.brand', 'Zappy Shop Partner')}</h1>
+          <p className="text-[13px] text-slate-500 font-medium mt-1">{t('sp.lg.tagline', 'Manage your shop, workers & earnings')}</p>
         </div>
 
         <div className="bg-white rounded-card shadow-[0_8px_40px_rgba(0,0,0,0.06)] p-8">
@@ -149,35 +151,35 @@ export default function ShopLoginPage() {
             {step === 'phone' && (
               <motion.form key="phone" onSubmit={handleSendOtp} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 mb-1">Log in or register</h2>
-                  <p className="text-sm text-slate-500">Enter your shop's mobile number</p>
+                  <h2 className="text-lg font-bold text-slate-900 mb-1">{t('sp.lg.loginOrRegister', 'Log in or register')}</h2>
+                  <p className="text-sm text-slate-500">{t('sp.lg.enterPhone', 'Enter your shop\'s mobile number')}</p>
                 </div>
                 <div className="mb-8">
                   <div className="flex items-center border border-slate-200 rounded-xl px-3 sm:px-4 py-3 focus-within:border-zappy-500 focus-within:ring-1 focus-within:ring-zappy-500 transition-all bg-white overflow-hidden">
                     <span className="text-[13px] font-bold text-slate-700 mr-2 flex items-center gap-1 shrink-0">+91 <ChevronLeft size={12} className="-rotate-90 text-slate-400" /></span>
                     <div className="w-px h-5 bg-slate-200 mx-1 sm:mx-2 shrink-0" />
                     <input type="tel" value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="Mobile number" autoFocus
+                      placeholder={t('sp.lg.mobile', 'Mobile number')} autoFocus
                       className="flex-1 w-full min-w-0 text-[13px] font-medium text-slate-900 placeholder-slate-400 outline-none bg-transparent" />
                   </div>
                 </div>
                 <button type="submit" disabled={sending || phone.length < 10}
                   className="w-full py-3.5 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[14px] flex items-center justify-center transition-all disabled:opacity-50 relative">
-                  {sending ? <Loader2 size={18} className="animate-spin" /> : <span>Get OTP</span>}
+                  {sending ? <Loader2 size={18} className="animate-spin" /> : <span>{t('sp.lg.getOtp', 'Get OTP')}</span>}
                   {!sending && <ArrowRight size={16} className="absolute right-4" />}
                 </button>
                 <button type="button" onClick={() => setStep('password')} className="mt-4 text-center text-[14px] font-semibold text-zappy-600">
-                  Sign in with password
+                  {t('sp.lg.withPassword', 'Sign in with password')}
                 </button>
                 <p className="text-center text-[12px] font-medium text-slate-500 mt-4">
-                  New shop? You'll set up your business right after verification.
+                  {t('sp.lg.newShop', 'New shop? You\'ll set up your business right after verification.')}
                 </p>
               </motion.form>
             )}
 
             {step === 'password' && (
               <motion.div key="password" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="mb-4 text-lg font-bold text-slate-900">Sign in with password</h2>
+                <h2 className="mb-4 text-lg font-bold text-slate-900">{t('sp.lg.withPassword', 'Sign in with password')}</h2>
                 <PasswordLogin role="shop" onSuccess={finishLogin} onUseOtp={() => setStep('phone')} />
               </motion.div>
             )}
@@ -185,11 +187,11 @@ export default function ShopLoginPage() {
             {step === 'otp' && (
               <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <button onClick={() => setStep('phone')} className="self-start flex items-center gap-1 text-[13px] font-bold text-zappy-600 mb-6 hover:underline">
-                  <ChevronLeft size={16} /> Back
+                  <ChevronLeft size={16} /> {t('sp.back', 'Back')}
                 </button>
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">Verify Mobile</h3>
-                  <p className="text-sm text-slate-500">OTP sent to +91 {phone}</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">{t('sp.lg.verifyMobile', 'Verify Mobile')}</h3>
+                  <p className="text-sm text-slate-500">{t('sp.lg.otpTo', 'OTP sent to +91 {phone}').replace('{phone}', phone)}</p>
                 </div>
                 <div className="flex gap-1.5 sm:gap-2 justify-between mb-8">
                   {digits.map((d, i) => (
@@ -202,7 +204,7 @@ export default function ShopLoginPage() {
                 <ResendOtp phone={phone} tone="light" cooldownSec={otpMeta.cooldownSec} resendsLeft={otpMeta.resendsLeft} onResent={handleResent} onStartOver={startOver} />
                 <button onClick={handleVerify} disabled={otp.length < 6 || logging}
                   className="w-full mt-6 py-4 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><ArrowRight size={18} className="mr-2" /><span>{isNew ? 'Continue' : 'Enter Dashboard'}</span></>}
+                  {logging ? <Loader2 size={20} className="animate-spin" /> : <><ArrowRight size={18} className="mr-2" /><span>{isNew ? t('sp.continue', 'Continue') : t('sp.lg.enterDash', 'Enter Dashboard')}</span></>}
                 </button>
               </motion.div>
             )}
@@ -210,13 +212,13 @@ export default function ShopLoginPage() {
             {step === 'register' && (
               <motion.form key="register" onSubmit={handleRegister} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">Set up your shop 🎉</h3>
-                  <p className="text-sm text-slate-500">You can add services, address & KYC after this</p>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">{t('sp.lg.setupShop', 'Set up your shop 🎉')}</h3>
+                  <p className="text-sm text-slate-500">{t('sp.lg.setupLater', 'You can add services, address & KYC after this')}</p>
                 </div>
                 <div className="space-y-4 mb-8">
                   {[
-                    { k: 'businessName', label: 'Shop / Business Name', placeholder: 'e.g. Sharma Mobile Repair' },
-                    { k: 'ownerName', label: 'Your Name', placeholder: 'e.g. Ramesh Sharma' },
+                    { k: 'businessName', label: t('sp.lg.bizName', 'Shop / Business Name'), placeholder: t('sp.pf.bizNameEg', 'e.g. Sharma Mobile Repair') },
+                    { k: 'ownerName', label: t('sp.lg.yourName', 'Your Name'), placeholder: t('sp.lg.yourNameEg', 'e.g. Ramesh Sharma') },
                   ].map(({ k, label, placeholder }) => (
                     <div key={k}>
                       <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{label} <span className="text-red-500">*</span></label>
@@ -228,7 +230,7 @@ export default function ShopLoginPage() {
                 </div>
                 <button type="submit" disabled={logging || !regForm.businessName || !regForm.ownerName}
                   className="w-full py-4 bg-zappy-600 hover:bg-zappy-700 text-white rounded-xl font-bold text-[15px] flex items-center justify-center transition-all disabled:opacity-50 shadow-md">
-                  {logging ? <Loader2 size={20} className="animate-spin" /> : <span>Create Shop Account</span>}
+                  {logging ? <Loader2 size={20} className="animate-spin" /> : <span>{t('sp.lg.create', 'Create Shop Account')}</span>}
                 </button>
               </motion.form>
             )}
@@ -237,9 +239,9 @@ export default function ShopLoginPage() {
 
         <div className="flex items-center justify-center gap-6 mt-6">
           {[
-            { icon: Wrench, label: 'Add services' },
-            { icon: Users, label: 'Add workers' },
-            { icon: ShieldCheck, label: 'Get verified' },
+            { icon: Wrench, label: t('sp.lg.addServices', 'Add services') },
+            { icon: Users, label: t('sp.lg.addWorkers', 'Add workers') },
+            { icon: ShieldCheck, label: t('sp.lg.getVerified', 'Get verified') },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-1.5">
               <div className="w-9 h-9 rounded-full bg-white shadow-sm border border-zappy-100 flex items-center justify-center text-zappy-600">

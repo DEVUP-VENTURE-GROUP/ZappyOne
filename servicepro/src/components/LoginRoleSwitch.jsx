@@ -1,19 +1,21 @@
 import { useNavigate } from 'react-router-dom';
 import { Store, Wrench } from 'lucide-react';
+import { useT } from '@shared/i18n/I18nProvider';
 
 const ROLES = [
-  { key: 'owner', label: 'Shop owner', to: '/shop/login', Icon: Store },
-  { key: 'worker', label: 'Shop worker', to: '/shop/worker/login', Icon: Wrench },
+  { key: 'owner', label: 'Shop owner', tk: 'sp.lg.owner', to: '/shop/login', Icon: Store },
+  { key: 'worker', label: 'Shop worker', tk: 'sp.lg.worker', to: '/shop/worker/login', Icon: Wrench },
 ];
 
 /** Bottom of both servicepro sign-in screens: the same shop, two ways in. */
 export default function LoginRoleSwitch({ active }) {
   const nav = useNavigate();
+  const t = useT();
   return (
     <div className="mx-auto w-full max-w-sm">
-      <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Signing in as</p>
+      <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{t('sp.lg.signingAs', 'Signing in as')}</p>
       <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
-        {ROLES.map(({ key, label, to, Icon }) => (
+        {ROLES.map(({ key, label, tk, to, Icon }) => (
           <button
             key={key}
             role="tab"
@@ -23,7 +25,7 @@ export default function LoginRoleSwitch({ active }) {
               active === key ? 'bg-white text-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            <Icon size={14} /> {label}
+            <Icon size={14} /> {t(tk, label)}
           </button>
         ))}
       </div>

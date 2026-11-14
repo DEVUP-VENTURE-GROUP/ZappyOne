@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Wrench, Clock, Check, AlertTriangle, Ban } from 'lucide-react';
 import { useProviderOnboardingStatusQuery } from '../../services/api';
+import { useServiceProT } from '../../i18n/I18nProvider';
 
 /**
  * Where this provider stands, on their own dashboard.
@@ -24,16 +25,17 @@ const TONE = {
 };
 
 const STATUS_CHIP = {
-  draft: { label: 'Not submitted', tone: 'none', Icon: AlertTriangle },
-  pending_review: { label: 'Under review', tone: 'pending', Icon: Clock },
-  approved: { label: 'Approved', tone: 'approved', Icon: Check },
-  rejected: { label: 'Needs changes', tone: 'attention', Icon: AlertTriangle },
-  suspended: { label: 'Paused', tone: 'attention', Icon: Ban },
+  draft: { label: 'Not submitted', tk: 'sp.svc.notSubmitted', tone: 'none', Icon: AlertTriangle },
+  pending_review: { label: 'Under review', tk: 'sp.underReview', tone: 'pending', Icon: Clock },
+  approved: { label: 'Approved', tk: 'sp.svc.approved', tone: 'approved', Icon: Check },
+  rejected: { label: 'Needs changes', tk: 'sp.svc.needsChanges', tone: 'attention', Icon: AlertTriangle },
+  suspended: { label: 'Paused', tk: 'sp.svc.paused', tone: 'attention', Icon: Ban },
 };
 
 export default function ProviderServicesCard({ className = '' }) {
   const nav = useNavigate();
   const { data, isLoading } = useProviderOnboardingStatusQuery();
+  const t = useServiceProT();
 
   if (isLoading) {
     return <div className={`h-[76px] animate-pulse rounded-2xl bg-slate-100 ${className}`} />;
@@ -45,18 +47,18 @@ export default function ProviderServicesCard({ className = '' }) {
 
   // The headline is whichever fact the provider most needs to act on.
   const headline = !enrolments.length
-    ? { title: 'Choose what you work on', body: 'Pick your services to start receiving jobs.', tone: 'none' }
+    ? { title: t('sp.svc.choose', 'Choose what you work on'), body: t('sp.svc.chooseBody', 'Pick your services to start receiving jobs.'), tone: 'none' }
     : next?.code === 'AWAITING_REVIEW'
-      ? { title: "We're reviewing your documents", body: 'Usually within a day — we\'ll notify you.', tone: 'pending' }
+      ? { title: t('sp.svc.reviewing', 'We\'re reviewing your documents'), body: t('sp.svc.reviewingBody', 'Usually within a day — we\'ll notify you.'), tone: 'pending' }
       : next?.code === 'FIX_REJECTED'
-        ? { title: 'Verification needs changes', body: next.label, tone: 'attention' }
+        ? { title: t('sp.svc.fix', 'Verification needs changes'), body: next.label, tone: 'attention' }
         : next?.code === 'COMPLETE_VERIFICATION'
-          ? { title: 'Finish your verification', body: next.label, tone: 'pending' }
+          ? { title: t('sp.svc.finish', 'Finish your verification'), body: next.label, tone: 'pending' }
           : {
             title: approved.length === 1
-              ? `Approved for ${approved[0].line?.name || approved[0].lineCode}`
-              : `Approved for ${approved.length} services`,
-            body: 'Tap to add another service or update your details.',
+              ? t('sp.svc.approvedFor', 'Approved for {name}').replace('{name}', approved[0].line?.name || approved[0].lineCode)
+              : t('sp.svc.approvedForN', 'Approved for {n} services').replace('{n}', approved.length),
+            body: t('sp.svc.tapToAdd', 'Tap to add another service or update your details.'),
             tone: 'approved',
           };
 

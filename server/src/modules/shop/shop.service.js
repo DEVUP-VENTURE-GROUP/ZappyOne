@@ -437,7 +437,79 @@ async function getShopEarnings(shopId, range = 'today') {
   };
 }
 
+/* Plans */
+
+async function listPlans(shopId) {
+  const shop = await Shop.findById(shopId).select('plans services').lean();
+  if (!shop) throw Object.assign(new Error('Shop not found'), { status: 404 });
+  const ServiceCatalog = require('../service/service-catalog.model');
+  const services = await ServiceCatalog.find({ code: { $in: shop.services } }).select('code name -_id').lean();
+  return { plans: shop.plans || [], services };
+}
+
+/** Create (no planId) or update a plan. The route has already checked what publishing needs. */
+async function savePlan(shopId, planId, body) {
+  const shop = await Shop.findById(shopId).select('plans services');
+  if (!shop) throw Object.assign(new Error('Shop not found'), { status: 404 });
+  const unknown = (body.services || []).filter((c) => !shop.services.includes(c));
+  if (unknown.length) throw Object.assign(new Error('Pick only services your shop offers'), { status: 400 });
+  let plan = planId ? shop.plans.id(planId) : null;
+  if (planId && !plan) throw Object.assign(new Error('Plan not found'), { status: 404 });
+  if (!plan) plan = shop.plans[shop.plans.push({}) - 1];
+  plan.set(body);
+  await shop.save();
+  return plan.toObject();
+}
+
+async function deletePlan(shopId, planId) {
+  const res = await Shop.updateOne({ _id: shopId }, { $pull: { plans: { _id: planId } } });
+  if (!res.modifiedCount) throw Object.assign(new Error('Plan not found'), { status: 404 });
+}
+
+/* Monthly statements */
+
+const STATEMENTS_FROM = '2026-11'; // launch month: nothing to show before it
+
+/** One month's earnings ('YYYY-MM', India's calendar), plus the months a statement exists for. */
+async function getShopStatement(shopId, month) {
+  const { toIst, IST_OFFSET } = require('../../core/time/ist');
+  const { finishedJobs } = require('../jobs/earnings');
+  const shop = await Shop.findById(shopId).select('createdAt').lean();
+  if (!shop) throw Object.assign(new Error('Shop not found'), { status: 404 });
+
+  const ym = (d) => toIst(d).toISOString().slice(0, 7);
+  const first = [STATEMENTS_FROM, ym(shop.createdAt || new Date())].sort()[1];
+  const months = [];
+  for (let m = ym(new Date()); m >= first;) {
+    months.push(m);
+    const [y, mo] = m.split('-').map(Number);
+    m = mo === 1 ? `${y - 1}-12` : `${y}-${String(mo - 1).padStart(2, '0')}`;
+  }
+  const pick = month || months[0];
+  if (!months.includes(pick)) throw Object.assign(new Error('No statement for that month'), { status: 400 });
+
+  const [y, mo] = pick.split('-').map(Number);
+  const start = new Date(Date.UTC(y, mo - 1, 1) - IST_OFFSET);
+  const end = new Date(Date.UTC(y, mo, 1) - IST_OFFSET);
+  const sid = mongoose.Types.ObjectId.createFromHexString(String(shopId));
+  const workerIds = (await Worker.find({ shopId: sid }).select('_id').lean()).map((w) => w._id);
+  const [orders] = workerIds.length
+    ? await Order.aggregate([
+      { $match: { workerId: { $in: workerIds }, status: 'completed', completedAt: { $gte: start, $lt: end } } },
+      { $group: { _id: null, jobs: { $sum: 1 }, paise: { $sum: { $ifNull: ['$earnings.workerPaise', 0] } } } },
+    ])
+    : [];
+  const mine = { $or: [{ shopId: sid }, ...(workerIds.length ? [{ workerId: { $in: workerIds } }] : [])] };
+  const jobs = (await finishedJobs(mine, start)).filter((f) => f.at && new Date(f.at) < end);
+  const earningsPaise = Math.round((orders?.paise || 0) + jobs.reduce((a, f) => a + f.paise, 0));
+  return { months, month: pick, jobs: (orders?.jobs || 0) + jobs.length, earningsPaise };
+}
+
 module.exports = {
+  listPlans,
+  savePlan,
+  deletePlan,
+  getShopStatement,
   findNearbyShops,
   getShopProfile,
   updateProfile,

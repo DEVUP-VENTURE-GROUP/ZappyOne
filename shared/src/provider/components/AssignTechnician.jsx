@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, Loader2, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useShopWorkersQuery, useAssignJobTechnicianMutation } from '../../services/api';
+import { useServiceProT } from '../../i18n/I18nProvider';
 
 /**
  * Pick which of the shop's own technicians does this job — any kind of job.
@@ -18,6 +19,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
   const { data } = useShopWorkersQuery();
   const [assign, { isLoading }] = useAssignJobTechnicianMutation();
   const [open, setOpen] = useState(startOpen);
+  const t = useServiceProT();
 
   const workers = [...(data?.workers || [])]
     .filter((w) => !w.isBlocked)
@@ -27,24 +29,24 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
   async function give(id) {
     try {
       const res = await assign({ id: jobId, workerId: id }).unwrap();
-      toast.success(`${res.workerName || 'Technician'} has the job — they have been told`);
+      toast.success(t('sp.assign.done', '{name} has the job — they have been told').replace('{name}', res.workerName || t('sp.wh.tech', 'Technician')));
       setOpen(false);
       onDone?.();
     } catch (err) {
-      toast.error(err?.data?.error || 'Could not assign that technician');
+      toast.error(err?.data?.error || t('sp.assign.fail', 'Could not assign that technician'));
     }
   }
 
   if (!data) return null;
   if (!workers.length) {
-    return <p className="mt-2 text-[11px] text-slate-400">Add technicians to your team to hand jobs to them.</p>;
+    return <p className="mt-2 text-[11px] text-slate-400">{t('sp.assign.noTeam', 'Add technicians to your team to hand jobs to them.')}</p>;
   }
 
   return (
     <div className="mt-2">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[11.5px] font-bold text-zappy-600">
         <UserPlus size={12} />
-        {current ? `On ${current.name} · change` : 'Assign a technician'}
+        {current ? t('sp.assign.on', 'On {name} · change').replace('{name}', current.name) : t('sp.assign.pick', 'Assign a technician')}
       </button>
 
       {open && (
@@ -65,7 +67,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
                 <span className={`h-2 w-2 shrink-0 rounded-full ${w.isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                 <span className="min-w-0 flex-1 truncate font-semibold text-slate-700">{w.name}</span>
                 <span className="shrink-0 text-[10.5px] text-slate-400">
-                  {w.isOnline ? 'online' : 'offline'}{load ? ` · ${load} job${load === 1 ? '' : 's'}` : ''}
+                  {w.isOnline ? t('sp.online', 'online') : t('sp.offline', 'offline')}{load ? ` · ${load === 1 ? t('sp.oneJob', '1 job') : t('sp.nJobs', '{n} jobs').replace('{n}', load)}` : ''}
                 </span>
                 {isCurrent
                   ? <Check size={12} className="shrink-0 text-emerald-600" />

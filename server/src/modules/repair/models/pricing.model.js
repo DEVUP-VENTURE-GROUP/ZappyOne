@@ -109,6 +109,8 @@ const providerPricingSchema = new mongoose.Schema(
 
     /** What the customer would pay this provider, before platform fees/tax. */
     totalPaise: { type: Number, required: true, min: 0 },
+    /** The provider's own price before an all-prices % change; null = totalPaise is the normal price. */
+    normalPaise: { type: Number, default: null, min: 0 },
 
     warrantyDays: { type: Number, default: 0, min: 0 },
     estimatedDurationMin: { type: Number, default: null },

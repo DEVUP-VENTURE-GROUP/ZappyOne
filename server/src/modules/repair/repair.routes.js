@@ -509,6 +509,18 @@ router.post(
   provider.bulkPricing,
 );
 
+/** Every live price up or down by a %, from its normal price; 0 = back to normal. */
+router.post(
+  '/provider/pricing/adjust',
+  authenticate,
+  requireRole('shop'), // ServicePro shop owners only
+  validate(Joi.object({
+    vertical: Joi.string().valid(...VERTICALS),
+    percent: Joi.number().integer().min(-50).max(100).required(),
+  })),
+  provider.adjustPricing,
+);
+
 /* Device custody + QA (provider side) */
 
 router.post(

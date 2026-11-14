@@ -26,7 +26,7 @@ import {
   useSaveRepairCapabilitiesMutation,
   useRequestRepairCatalogAdditionMutation,
   useRepairServiceAreasQuery, useUpsertRepairServiceAreaMutation,
-  useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation,
+  useRepairProviderPricingQuery, useBulkRepairProviderPricingMutation, useAdjustRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
   useRepairModelsQuery,
 } from '../../services/api';
@@ -56,6 +56,9 @@ import BrandLogo from '../../components/common/BrandLogo';
  */
 
 const rupees = formatPaise;
+/** Only Service Pro gets this; Rakshak is built from the same page and stays as it was. */
+const IN_SERVICEPRO = import.meta.env.VITE_CLIENT_SURFACE === 'servicepro';
+
 
 const BASE_STEPS = [
   { key: 'brands', label: 'Brands', Icon: Store },
@@ -944,6 +947,8 @@ function PricingStep({ vertical, onBack, onNext }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
   const { data: pricing, isLoading, refetch } = useRepairProviderPricingQuery(vertical);
   const [bulkSave, { isLoading: saving }] = useBulkRepairProviderPricingMutation();
+  const [adjustAll, { isLoading: adjusting }] = useAdjustRepairProviderPricingMutation();
+  const [percent, setPercent] = useState('');
   const [fetchSuggested, { isFetching: suggesting }] = useLazyRepairProviderSuggestedPricingQuery();
 
   const brandCodes = catalog?.brands || [];
@@ -1080,6 +1085,18 @@ function PricingStep({ vertical, onBack, onNext }) {
     }
   }
 
+  /** All prices up/down by a %, or back to normal (0). Always from the normal price, so changes never stack. */
+  async function adjustPrices(pct) {
+    if (!Number.isInteger(pct) || pct < -50 || pct > 100) return toast.error('Enter a whole number from -50 to 100');
+    try {
+      const res = await adjustAll({ vertical, percent: pct }).unwrap();
+      toast.success(res.note);
+      setPercent('');
+    } catch (err) {
+      toast.error(err?.data?.error || 'Could not change prices');
+    }
+  }
+
   async function saveSheet() {
     const rows = [];
     for (const [key, raw] of Object.entries(values)) {
@@ -1171,6 +1188,30 @@ function PricingStep({ vertical, onBack, onNext }) {
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
     >
+      {IN_SERVICEPRO && !!pricing?.pricing?.length && (
+        <div className="mb-3 rounded-2xl border border-slate-200 bg-white p-3">
+          <p className="text-sm font-bold text-slate-800">Change all prices</p>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="number" inputMode="numeric" min={-50} max={100} placeholder="10"
+              value={percent} onChange={(e) => setPercent(e.target.value)}
+              className="input w-24 text-sm" aria-label="Percent change"
+            />
+            <span className="text-sm font-bold text-slate-500">%</span>
+            <button type="button" disabled={adjusting || !percent} onClick={() => adjustPrices(Number(percent))}
+              className="rounded-xl bg-zappy-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
+              Apply
+            </button>
+          </div>
+          {pricing.pricing.some((r) => r.normalPaise != null) && (
+            <button type="button" disabled={adjusting} onClick={() => adjustPrices(0)}
+              className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold text-slate-700 disabled:opacity-50">
+              Back to normal prices
+            </button>
+          )}
+          <p className="mt-1.5 text-[11px] text-slate-500">Use a minus for a discount, e.g. -10.</p>
+        </div>
+      )}
       {!brandCodes.length && (
         <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
           <p className="text-sm font-bold text-slate-700">No brands chosen yet</p>

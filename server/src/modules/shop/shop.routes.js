@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const ctrl = require('./shop.controller');
+const shopService = require('./shop.service');
 const { authenticate, requireRole } = require('../../middlewares/auth');
 const { validate } = require('../../middlewares/validate');
 
@@ -84,5 +85,30 @@ router.get(
   validate(Joi.object({ range: Joi.string().valid('today', 'week', 'month').optional() }), 'query'),
   ctrl.getEarnings,
 );
+
+router.get(
+  '/me/statement',
+  validate(Joi.object({ month: Joi.string().pattern(/^\d{4}-(0[1-9]|1[0-2])$/).optional() }), 'query'),
+  async (req, res, next) => { try { res.json(await shopService.getShopStatement(req.auth.sub, req.query.month)); } catch (e) { next(e); } },
+);
+
+// A draft can be half-filled; publishing needs a name, at least one service and a price.
+const planBody = Joi.object({
+  kind: Joi.string().valid('monthly', 'one_day').required(),
+  title: Joi.string().trim().max(80).allow('').when('status', { is: 'published', then: Joi.string().min(1).required() }),
+  services: Joi.array().items(Joi.string().max(60)).max(50).when('status', { is: 'published', then: Joi.array().min(1).required() }),
+  pricePaise: Joi.number().integer().min(0).max(10000000).when('status', { is: 'published', then: Joi.number().min(100).required() }),
+  perk: Joi.string().trim().max(200).allow(''),
+  status: Joi.string().valid('draft', 'published').required(),
+});
+const planId = Joi.object({ planId: Joi.string().hex().length(24).required() });
+const handle = (fn) => async (req, res, next) => { try { res.json(await fn(req)); } catch (e) { next(e); } };
+
+router.get('/me/plans', handle((req) => shopService.listPlans(req.auth.sub)));
+router.post('/me/plans', validate(planBody), handle(async (req) => ({ plan: await shopService.savePlan(req.auth.sub, null, req.body) })));
+router.put('/me/plans/:planId', validate(planId, 'params'), validate(planBody),
+  handle(async (req) => ({ plan: await shopService.savePlan(req.auth.sub, req.params.planId, req.body) })));
+router.delete('/me/plans/:planId', validate(planId, 'params'),
+  handle(async (req) => { await shopService.deletePlan(req.auth.sub, req.params.planId); return { ok: true }; }));
 
 module.exports = router;

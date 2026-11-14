@@ -6,6 +6,7 @@ import { LogOut,
   ShieldCheck, ShoppingBag, Scale,
 } from 'lucide-react';
 import { ZappyLogo } from '../common/ZappyLogo';
+import { useServiceProT } from '../../i18n/I18nProvider';
 
 /**
  * Presentational building blocks for the worker dashboard.
@@ -132,7 +133,7 @@ export function OnlineControl({ isOnline, busy, onToggle }) {
 export const WorkerSidebar = memo(function WorkerSidebar({
   activeKey, unread, onNavigate, onGoOnline, isOnline, onSignOut,
   // Other portals pass their own pages; Rakshak uses NAV_ITEMS.
-  items = NAV_ITEMS, label = 'Worker', account = null,
+  items = NAV_ITEMS, label = 'Worker', account = null, signOutLabel = 'Sign out',
 }) {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
@@ -189,7 +190,7 @@ export const WorkerSidebar = memo(function WorkerSidebar({
             onClick={onSignOut}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
           >
-            <LogOut size={18} strokeWidth={2.2} /> Sign out
+            <LogOut size={18} strokeWidth={2.2} /> {signOutLabel}
           </button>
         </div>
       )}
@@ -361,24 +362,25 @@ export function EarningsChart({ points }) {
 
 /* Earnings overview panel */
 export function EarningsOverview({ weekRupees, deltaPct, points, onViewDetails }) {
+  const t = useServiceProT();
   const up = deltaPct >= 0;
   return (
     <Panel
       id="earnings"
-      title="Earnings Overview"
+      title={t('sp.dash.earningsOverview', 'Earnings Overview')}
       action={
         <button type="button" onClick={onViewDetails} className="text-[12.5px] font-bold text-zappy-600 hover:underline">
-          View details
+          {t('sp.dash.viewDetails', 'View details')}
         </button>
       }
     >
-      <p className="text-[11.5px] font-semibold text-slate-500">This Week</p>
+      <p className="text-[11.5px] font-semibold text-slate-500">{t('sp.week', 'This Week')}</p>
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-[26px] font-black leading-tight text-navy-900">{inr(weekRupees)}</p>
           <p className={`mt-0.5 flex items-center gap-1 text-[12px] font-bold ${up ? 'text-emerald-600' : 'text-rose-600'}`}>
             {up ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-            {up ? '+' : ''}{deltaPct}% from last week
+            {t('sp.dash.fromLastWeek', '{n}% from last week').replace('{n}', `${up ? '+' : ''}${deltaPct}`)}
           </p>
         </div>
       </div>

@@ -1415,6 +1415,16 @@ export const api = createApi({
       query: (range = 'today') => `/shops/me/earnings?range=${range}`,
       providesTags: ['Shop'],
     }),
+    shopStatement: b.query({
+      query: (month) => ({ url: '/shops/me/statement', params: month ? { month } : {} }),
+      providesTags: ['Shop'],
+    }),
+    shopPlans: b.query({ query: () => '/shops/me/plans', providesTags: ['Plans'] }),
+    saveShopPlan: b.mutation({
+      query: ({ _id, ...body }) => ({ url: _id ? `/shops/me/plans/${_id}` : '/shops/me/plans', method: _id ? 'PUT' : 'POST', body }),
+      invalidatesTags: ['Plans'],
+    }),
+    deleteShopPlan: b.mutation({ query: (id) => ({ url: `/shops/me/plans/${id}`, method: 'DELETE' }), invalidatesTags: ['Plans'] }),
 
     // Shops (customer-facing discovery)
     nearbyShops: b.query({
@@ -2057,6 +2067,10 @@ export const api = createApi({
       }),
       invalidatesTags: ['RepairProvider'],
     }),
+    adjustRepairProviderPricing: b.mutation({
+      query: ({ vertical = 'mobile', percent }) => ({ url: '/repair/provider/pricing/adjust', method: 'POST', body: { vertical, percent } }),
+      invalidatesTags: ['RepairProvider'],
+    }),
 
     // --- Admin: Fraud Detection ---
     adminFraudSummary: b.query({
@@ -2527,6 +2541,10 @@ export const {
   useAddShopWorkerMutation,
   useRemoveShopWorkerMutation,
   useShopEarningsQuery,
+  useShopStatementQuery,
+  useShopPlansQuery,
+  useSaveShopPlanMutation,
+  useDeleteShopPlanMutation,
   useNearbyShopsQuery,
   useGetShopProfileQuery,
   useAdminShopsQuery,
@@ -2627,6 +2645,7 @@ export const {
   useUpsertRepairServiceAreaMutation,
   useRepairProviderPricingQuery,
   useBulkRepairProviderPricingMutation,
+  useAdjustRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
   useRepairCancellationQuoteQuery,
   useRepairHandoverCodeQuery,
