@@ -43,6 +43,7 @@ import {
 import { PASS_REASONS } from '@zappy/core/shared/jobOffers';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { Button, EmptyState, ErrorState, HelpCallButton, LoadingState, Text } from '../../components';
+import { SwipeToConfirm } from '../../components/common/SwipeToConfirm';
 import { toast } from '../../components/Toast';
 import { ArrivalBar } from '../../components/common/ArrivalBar';
 import { CodeBoxes } from '../../components/common/CodeBoxes';
@@ -271,8 +272,11 @@ export function WorkerRepairJobPage() {
 
         {!ownerWatching && mustBePaid ? <Text variant="caption" color={accent[700]} style={styles.centerText}>Get paid first, then complete.</Text> : null}
 
-        {!ownerWatching && action ? (
-          <Button label={action.label} onPress={() => move(action.to)} loading={moving}
+        {/* Finishing is a slide, never a tap that can happen by accident; every other step stays a button. */}
+        {!ownerWatching && action ? (action.to === 'COMPLETED'
+          ? <SwipeToConfirm label={action.label} onConfirm={() => move(action.to)} loading={moving}
+            disabled={(!!gateKind && !gatePassed) || photosBlocked || mustBePaid} />
+          : <Button label={action.label} onPress={() => move(action.to)} loading={moving}
             disabled={(!!gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid} fullWidth size="large" />
         ) : null}
 

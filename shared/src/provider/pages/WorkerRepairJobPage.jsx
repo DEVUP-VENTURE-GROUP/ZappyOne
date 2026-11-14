@@ -29,6 +29,7 @@ import SOSButton from '../../components/worker/SOSButton';
 import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation, useRepairWorkCatalogQuery } from '../../services/api';
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
+import SwipeToConfirm from '../../components/common/SwipeToConfirm';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
@@ -614,7 +615,11 @@ export default function WorkerRepairJobPage() {
           <button type="button" onClick={() => setCodeOpen(true)} className="btn-primary w-full">Enter the customer's code</button>
         )}
         {!ownerWatching && mustBePaid && <p className="text-center text-[12px] font-semibold text-amber-700">Get paid first, then complete.</p>}
-        {!ownerWatching && action && (
+        {/* Finishing is a slide, never a click that can happen by accident; every other step stays a button. */}
+        {!ownerWatching && action && (action.to === 'COMPLETED' ? (
+          <SwipeToConfirm label={action.label} onConfirm={() => move(action.to)} loading={moving}
+            disabled={(gateKind && !gatePassed) || photosBlocked || mustBePaid} />
+        ) : (
           <button
             onClick={() => move(action.to)}
             disabled={moving || (gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid}
@@ -622,7 +627,7 @@ export default function WorkerRepairJobPage() {
           >
             {moving ? <><Loader2 size={15} className="animate-spin" /> Updating…</> : action.label}
           </button>
-        )}
+        ))}
         {showQuote ? (
           <QuoteBuilder
             bookingId={id}
