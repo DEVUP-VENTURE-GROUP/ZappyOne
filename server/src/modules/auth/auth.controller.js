@@ -14,7 +14,7 @@ const RT_COOKIE_OPTS = {
   secure:   true,   // always true — 'none' requires secure
   sameSite: config.env === 'production' ? 'none' : 'lax',
   path:     '/api/auth',
-  maxAge:   30 * 24 * 60 * 60 * 1000, // 30 days in ms — matches RT_EXPIRES_SEC
+  maxAge:   7 * 24 * 60 * 60 * 1000, // matches RT_EXPIRES_SEC: renewed on every refresh
 };
 
 // Each web portal keeps its session in its own cookie and only for the roles

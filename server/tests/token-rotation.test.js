@@ -19,37 +19,34 @@ describe('refresh-token rotation + reuse detection', () => {
     expect(keys).toHaveLength(1);
   });
 
-  // TODO(test-restore): rotateTokenPair has an 8s concurrent-race grace window
-  // (token.service.js) that re-issues instead of flagging RT_REUSE when the old
-  // gen is presented within 8s of a rotation. This test expects immediate reuse
-  // detection; align it (fake timers past the window) after the security review
-  // of that window. See CI/CD report. FLAGGED as a security consideration.
-  test.skip('rotate issues a new pair and invalidates the old gen', async () => {
+  const later = (ms) => { const now = Date.now(); jest.spyOn(Date, 'now').mockReturnValue(now + ms); };
+  afterEach(() => jest.restoreAllMocks());
+
+  test('a reply lost on a weak network: the old token works again within 2 minutes', async () => {
     const first = await tokenService.issueTokenPair(payload);
     const second = await tokenService.rotateTokenPair(first.refreshToken);
+    later(90 * 1000);
+    const again = await tokenService.rotateTokenPair(first.refreshToken);
+    expect(again.accessToken).toBeTruthy();
     expect(second.refreshToken).not.toBe(first.refreshToken);
-
-    // Presenting gen-0 again must now fail with RT_REUSE
-    await expect(tokenService.rotateTokenPair(first.refreshToken)).rejects.toMatchObject({
-      code: 'RT_REUSE',
-    });
   });
 
-  // TODO(test-restore): same 8s concurrent-race window as above — reuse within
-  // the window re-issues rather than revoking the family. FLAGGED for review.
-  test.skip('after reuse detection the whole family is revoked', async () => {
+  test('an old token replayed after 2 minutes is reuse: the whole family is revoked', async () => {
     const first = await tokenService.issueTokenPair(payload);
-    await tokenService.rotateTokenPair(first.refreshToken); // rotate once
-    try {
-      await tokenService.rotateTokenPair(first.refreshToken); // reuse → triggers purge
-    } catch { /* expected */ }
+    const second = await tokenService.rotateTokenPair(first.refreshToken);
+    later(3 * 60 * 1000);
+    await expect(tokenService.rotateTokenPair(first.refreshToken)).rejects.toMatchObject({ code: 'RT_REUSE' });
+    await expect(tokenService.rotateTokenPair(second.refreshToken)).rejects.toMatchObject({ code: 'RT_REVOKED' });
+  });
 
-    // Even the new (legitimate) refresh token should now be useless
-    const legitimate = await tokenService.issueTokenPair(payload); // fresh family
-    expect(legitimate.refreshToken).toBeTruthy();
-    const keys = await redis.keys('rt:user123:*');
-    // Only the newly-issued family is present; the previous (now-revoked) family is gone
-    expect(keys).toHaveLength(1);
+  test('signed out after 7 days unused; every use renews the 7 days', async () => {
+    const first = await tokenService.issueTokenPair(payload);
+    const [key] = await redis.keys('rt:user123:*');
+    expect(await redis.ttl(key)).toBeLessThanOrEqual(7 * 24 * 3600);
+    expect(await redis.ttl(key)).toBeGreaterThan(7 * 24 * 3600 - 60);
+    await redis.expire(key, 3600);
+    await tokenService.rotateTokenPair(first.refreshToken);
+    expect(await redis.ttl(key)).toBeGreaterThan(7 * 24 * 3600 - 60);
   });
 
   test('revokeRefreshToken hard-kills the family', async () => {

@@ -117,6 +117,8 @@ onAccessTokenChange((token) => {
   }
 });
 
+const sessionGone = (err: unknown) => (err as AxiosError)?.response?.status === 401;
+
 /** Announce the end of the session exactly once per session. */
 function endSession(reason: 'refresh_failed'): void {
   if (sessionDead) return;
@@ -221,10 +223,10 @@ axiosClient.interceptors.response.use(
       processQueue(null, data.accessToken);
       return await axiosClient(originalRequest);
     } catch (refreshError) {
-      // Refresh genuinely failed: expired, revoked, or reuse detected. The
-      // server has already invalidated the family — drop everything locally.
-      log.warn('token refresh failed - ending session');
       processQueue(refreshError, null);
+      // Only the server saying the session is gone signs out; a restart or weak network keeps it.
+      if (!sessionGone(refreshError)) { log.warn('token refresh did not get through - keeping session'); return Promise.reject(refreshError); }
+      log.warn('token refresh refused - ending session');
       await clearSession();
       endSession('refresh_failed');
       return Promise.reject(refreshError);
@@ -272,6 +274,7 @@ export async function refreshAccessToken(): Promise<string | null> {
   } catch (err) {
     log.warn('on-demand token refresh failed');
     processQueue(err, null);
+    if (!sessionGone(err)) return null;
     await clearSession();
     endSession('refresh_failed');
     return null;

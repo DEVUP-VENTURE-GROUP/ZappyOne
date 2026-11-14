@@ -33,7 +33,15 @@ function jwtClaims(token) {
 // A stalled request on a weak mobile network must never hold the app on its boot screen.
 const RESTORE_TIMEOUT_MS = 8000;
 
+// A server restart answers 5xx or drops the call for a few seconds: try again before opening signed out.
 async function restoreSession(store, roles) {
+  for (let i = 0; i < 3; i += 1) {
+    if ((await restoreOnce(store, roles)) !== 'retry') return;
+    await new Promise((ok) => setTimeout(ok, 1500));
+  }
+}
+
+async function restoreOnce(store, roles) {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), RESTORE_TIMEOUT_MS);
   try {
@@ -44,7 +52,7 @@ async function restoreSession(store, roles) {
       headers: { 'Content-Type': 'application/json', ...(SURFACE && { 'X-Client-Type': SURFACE }) },
       body: '{}',
     });
-    if (!res.ok) return;
+    if (!res.ok) return res.status >= 500 ? 'retry' : undefined;
     const data = await res.json();
     const claims = jwtClaims(data.accessToken);
     const role = data.role ?? claims?.role ?? null;
@@ -54,7 +62,7 @@ async function restoreSession(store, roles) {
     // A new tab has no cached profile; the token still names the account and its phone (the OTP checks on money details need it).
     const profile = { ...(cached || {}), sub: cached?.sub ?? claims?.sub, ...(!cached?.phone && claims?.phone && { phone: claims.phone }) };
     store.dispatch(setAuth({ accessToken: data.accessToken, profile, role }));
-  } catch { /* offline or too slow: open signed out; the next request restores the session */ } finally { clearTimeout(timer); }
+  } catch { return abort.signal.aborted ? undefined : 'retry'; } finally { clearTimeout(timer); }
 }
 
 // Whether this browser was signed in last time; a visitor known to be signed out need not wait for the session check.

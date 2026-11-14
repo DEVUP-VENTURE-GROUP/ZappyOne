@@ -104,8 +104,8 @@ const baseQueryWithReauthRaw = async (args, api, extraOptions) => {
       _lastCrossTabToken = newAt;
       _lastCrossTabTs    = Date.now();
       result = await rawBaseQuery(args, api, extraOptions);
-    } else {
-      // Refresh failed (RT_REUSE, RT_REVOKED, expired). Log the user out.
+    } else if (refreshRes.error?.status === 401) {
+      // Only the server saying the session is gone signs out; a restart or weak network keeps it.
       api.dispatch(logout());
     }
   } finally {

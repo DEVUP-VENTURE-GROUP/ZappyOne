@@ -3,7 +3,7 @@
  * ----------------------------------------------------------------------------
  * Two-token authentication:
  *   - Access token: short-lived (15 min), stateless JWT
- *   - Refresh token: long-lived (30 d), stateful (Redis), rotates on use
+ *   - Refresh token: 7 days since last use (sliding), stateful (Redis), rotates on use
  *
  * Rotation + reuse detection:
  *   Refresh tokens have a "family" ID and a monotonically-incrementing generation.
@@ -24,7 +24,7 @@ const { redis } = require('../../config/redis');
 const logger = require('../../core/logger');
 
 const AT_EXPIRES = '15m';
-const RT_EXPIRES_SEC = 60 * 60 * 24 * 30; // 30 days
+const RT_EXPIRES_SEC = 60 * 60 * 24 * 7; // signed out after 7 days unused; every use renews it
 
 function signAccessToken(payload) {
   return jwt.sign(payload, config.jwt.secret, { expiresIn: AT_EXPIRES });
@@ -141,12 +141,12 @@ async function rotateTokenPair(presentedRefreshToken) {
   if (stored.currentGen !== gen) {
     // Check if this is a multi-tab concurrent-rotation race vs actual token theft.
     // A concurrent race looks like: stored.currentGen === gen + 1 AND the last
-    // rotation happened within the past 8 seconds. In this case the "winner" tab
+    // rotation happened within the past 2 minutes (also covers a reply lost on a weak network). In this case the "winner" tab
     // already rotated; re-issue tokens for the current gen without burning the family.
     const isConcurrentRace =
       stored.currentGen === gen + 1 &&
       stored.rotatedAt &&
-      Date.now() - stored.rotatedAt < 8000;
+      Date.now() - stored.rotatedAt < 120000;
 
     if (!isConcurrentRace) {
       logger.warn({ sub, family, presentedGen: gen, currentGen: stored.currentGen }, 'RT reuse detected - revoking family');
