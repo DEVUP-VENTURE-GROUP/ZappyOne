@@ -38,12 +38,13 @@ function explainBackgroundLocation(): Promise<boolean> {
 
 let notice = { title: 'ZappyOne: you are online', body: 'Tap to open ServicePro.' };
 let onTrip = false;
+let refreshedThisRun = false;
 
-// On a trip the customer is watching: precise and every 12 s; otherwise every 30 s to spare the battery.
+// On a trip the customer is watching: precise, every 12 s. Otherwise every 2 minutes even when standing still, so the server never prices a job from a stale position (matching LIVE_FRESH_MS is 15 minutes).
 const optionsFor = (trip: boolean): Location.LocationTaskOptions => ({
   accuracy: trip ? Location.Accuracy.High : Location.Accuracy.Balanced,
-  timeInterval: trip ? 12000 : 30000,
-  distanceInterval: trip ? 20 : 50,
+  timeInterval: trip ? 12000 : 120000,
+  distanceInterval: trip ? 20 : 0,
   pausesUpdatesAutomatically: false,
   showsBackgroundLocationIndicator: true,
   foregroundService: { notificationTitle: notice.title, notificationBody: notice.body, notificationColor: '#1F4FD8', killServiceOnDestroy: false },
@@ -72,7 +73,12 @@ export async function startBackgroundLocation(title: string, body: string): Prom
       if ((await Location.requestBackgroundPermissionsAsync()).status !== 'granted') return false;
     }
     notice = { title, body };
-    if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK)) return true;
+    // Already running from an earlier launch: restarted once per launch so it picks up the current pace (an update may have changed it).
+    if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK)) {
+      if (refreshedThisRun) return true;
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK);
+    }
+    refreshedThisRun = true;
     await Location.startLocationUpdatesAsync(LOCATION_TASK, optionsFor(onTrip));
     pace = onTrip;
     return true;

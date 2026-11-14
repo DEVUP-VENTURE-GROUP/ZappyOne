@@ -111,8 +111,8 @@ async function distanceFor({ shopId = null, workerId = null, lat, lng }) {
   if (!shopId && !workerId) return null;
   const { ProviderServiceArea } = require('../models/config.model');
   const rows = await ProviderServiceArea.find({ ...(shopId ? { shopId } : { workerId }), isActive: true }).select('shopId workerId center radiusKm').lean();
-  // Priced from the shop's own base, not where the owner happens to be, so the booked price is the quoted one.
-  const dists = (await withBase(rows, { live: false })).filter((a) => a.base?.length === 2).map((a) => ({ km: haversineKm(lat, lng, a.base[1], a.base[0]), covers: haversineKm(lat, lng, a.base[1], a.base[0]) <= (a.radiusKm || 0) }));
+  // The same base matching found them from (a Live owner's fresh position, else the shop's pin), so the booked journey is the quoted one and never the shop's distant address.
+  const dists = (await withBase(rows)).filter((a) => a.base?.length === 2).map((a) => ({ km: haversineKm(lat, lng, a.base[1], a.base[0]), covers: haversineKm(lat, lng, a.base[1], a.base[0]) <= (a.radiusKm || 0) }));
   if (!dists.length) return null;
   const pool = dists.some((d) => d.covers) ? dists.filter((d) => d.covers) : dists;
   return Math.min(...pool.map((d) => d.km));

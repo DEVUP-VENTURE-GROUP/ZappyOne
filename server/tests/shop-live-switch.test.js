@@ -38,6 +38,9 @@ test('ON needs the location; with it, orders near the owner come, wherever the s
   expect(r.status).toBe(200);
   expect(r.body).toMatchObject({ takingOrders: true });
   expect(await found()).toBe(true);
+  // Reported live: found from the owner's position but priced from the shop's address 48.9 km away. The booked journey is from the owner too.
+  const km = await matching.distanceFor({ shopId: shop._id, ...GACHIBOWLI });
+  expect(km).toBeLessThan(2);
 });
 
 test('OFF: no new orders, even in opening hours and with the owner right there', async () => {
