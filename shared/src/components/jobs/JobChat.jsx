@@ -7,6 +7,7 @@ import { selectAuth } from '../../modules/auth/authSlice';
 import { getSocket } from '../../services/socket';
 import { api, useJobChatQuery, useSendJobChatMutation } from '../../services/api';
 import { CHAT_QUICK as QUICK } from '../../provider/jobFlows';
+import StayOnZappyOne from './StayOnZappyOne';
 
 /**
  * Messages about one job, between the customer and whoever is doing it. A
@@ -71,6 +72,8 @@ export default function JobChat({ jobId, title = 'Messages', onClose }) {
           </span>
           <button type="button" onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-btn hover:bg-sunken"><X size={18} /></button>
         </header>
+        {/* Where an offer to go outside the app usually comes: the reminder sits above every chat. */}
+        <StayOnZappyOne audience={role === 'user' ? 'customer' : 'pro'} compact />
 
         <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto bg-canvas px-4 py-4">
           {isLoading ? (

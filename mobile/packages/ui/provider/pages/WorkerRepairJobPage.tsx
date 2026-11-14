@@ -45,6 +45,7 @@ import { useAppSelector } from '@zappy/core/store/hooks';
 import { Button, EmptyState, ErrorState, HelpCallButton, LoadingState, Text } from '../../components';
 import { SwipeToConfirm } from '../../components/common/SwipeToConfirm';
 import { WaitingMeter } from '../../components/jobs/WaitingMeter';
+import { StayOnZappyOne } from '../../components/jobs/StayOnZappyOne';
 import { toast } from '../../components/Toast';
 import { ArrivalBar } from '../../components/common/ArrivalBar';
 import { CodeBoxes } from '../../components/common/CodeBoxes';
@@ -364,6 +365,7 @@ export function WorkerRepairJobPage() {
           </JobCard>
         ) : null}
 
+        {step !== 'done' ? <StayOnZappyOne audience="pro" /> : null}
         {!ownerWatching && !REPAIR_NO_SOS.includes(booking.status) ? <SOSButton jobId={booking._id} kind="repair" service={booking.vertical} /> : null}
 
 

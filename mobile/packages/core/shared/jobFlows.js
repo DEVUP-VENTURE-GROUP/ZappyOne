@@ -320,3 +320,17 @@ export const PRICE_NOTICE = 'Customers see and book exactly the price you enter 
 
 // Errands are a runner product: shown where a helper would otherwise set prices.
 export const RUNNER_NOTICE = 'ZappyOne sets the fare for every errand, like a ride app. You see what you earn on each errand before you accept it.';
+
+// Keeping jobs on ZappyOne: what each side gets by staying, and the line not to cross (chat, booking page, job page).
+export const STAY_ON_ZAPPYONE = {
+  customer: {
+    title: 'Book and pay only on ZappyOne',
+    body: 'Your pro is verified, your payment is protected and our team stands behind every job. If anyone asks you to book or pay outside ZappyOne, say no and tell us.',
+    short: 'Book and pay only on ZappyOne, so you stay protected. Asked to go outside the app? Tell us.',
+  },
+  pro: {
+    title: 'Take every job through ZappyOne',
+    body: 'ZappyOne brings you customers, guarantees your payment, backs you in any dispute and grows your rating. A job taken outside the app has none of that, and taking a ZappyOne customer outside ends your account.',
+    short: 'Keep every job on ZappyOne: guaranteed payment, support and your rating. Taking a customer outside ends your account.',
+  },
+};

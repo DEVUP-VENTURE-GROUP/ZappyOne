@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useRepairHandoverCodeQuery } from '@shared/services/api';
 import HandoverCodeCard from '../tracking/cards/HandoverCodeCard';
 import WaitingMeter from '@shared/components/jobs/WaitingMeter';
+import StayOnZappyOne from '@shared/components/jobs/StayOnZappyOne';
 import { useRateRepairBookingMutation } from '@shared/services/api';
 import JobTrackingPage from '../tracking/JobTrackingPage';
 import RepairWarrantyCard from './RepairWarrantyCard';
@@ -427,6 +428,7 @@ export default function RepairBookingPage() {
         extras={(
           <>
             <WaitingMeter booking={booking} audience="customer" pro={terms?.pro} />
+            {booking.status !== 'COMPLETED' && <StayOnZappyOne audience="customer" />}
             <HandoverCode booking={booking} terms={terms} />
             {copy.hint && (
               <p className="rounded-2xl bg-white px-4 py-3 text-[13px] leading-relaxed text-slate-600 ring-1 ring-slate-100">{copy.hint}</p>

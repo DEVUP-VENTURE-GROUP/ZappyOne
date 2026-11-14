@@ -30,6 +30,7 @@ import { RepairWarrantyCard } from './booking/RepairWarrantyCard';
 import { ServiceReport } from './booking/ServiceReport';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 import { WaitingMeter } from '@zappy/ui/components/jobs/WaitingMeter';
+import { StayOnZappyOne } from '@zappy/ui/components/jobs/StayOnZappyOne';
 
 export function RepairBookingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -62,6 +63,7 @@ export function RepairBookingPage() {
       extras={(
         <>
           <WaitingMeter booking={booking} audience="customer" pro={terms?.pro} />
+          {booking.status !== 'COMPLETED' ? <StayOnZappyOne audience="customer" /> : null}
           <HandoverCode booking={booking} terms={terms} />
           {hint ? <View style={styles.hint}><Text variant="caption" color={ink[700]}>{hint}</Text></View> : null}
           {pendingQuote ? <QuoteCard quote={pendingQuote} onDecided={refetch} /> : null}

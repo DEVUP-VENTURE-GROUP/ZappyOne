@@ -26,6 +26,7 @@ import { colors, zappy, ink } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { toast } from '../Toast';
+import { StayOnZappyOne } from './StayOnZappyOne';
 
 const clock = (at: string) => new Date(at).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
 
@@ -64,6 +65,8 @@ export function JobChat({ jobId, title, onClose }: { jobId: string; title: strin
           </View>
           <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={10} style={styles.iconBtn}><X size={18} color={ink[700]} /></Pressable>
         </View>
+        {/* Where an offer to go outside the app usually comes: the reminder sits above every chat. */}
+        <StayOnZappyOne audience={role === 'user' ? 'customer' : 'pro'} compact />
         <FlatList
           ref={list}
           data={messages}

@@ -31,6 +31,7 @@ import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
 import SwipeToConfirm from '../../components/common/SwipeToConfirm';
 import WaitingMeter from '../../components/jobs/WaitingMeter';
+import StayOnZappyOne from '../../components/jobs/StayOnZappyOne';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
@@ -763,6 +764,7 @@ export default function WorkerRepairJobPage() {
             )}
           </div>
         )}
+        {step !== 'done' && <StayOnZappyOne audience="pro" />}
         {/* Safety: on every live job, one hold away. */}
         {!ownerWatching && !REPAIR_NO_SOS.includes(booking.status) && (
           <div className="space-y-1.5 pt-2">
