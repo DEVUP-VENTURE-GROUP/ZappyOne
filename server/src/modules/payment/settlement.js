@@ -233,9 +233,24 @@ async function settleSafely(args) {
     return result;
   } catch (err) {
     logger.error({ err: err.message, source: args.source, bookingId: String(args.booking._id) },
-      `[${args.source}] SETTLEMENT FAILED - provider not credited, needs reconciliation`);
-    return { settled: false, reason: 'error', error: err.message };
+      `[${args.source}] SETTLEMENT FAILED - retrying on the payments queue`);
+    await queueResettle(args).catch((e) => logger.error({ err: e.message, bookingId: String(args.booking._id) }, `[${args.source}] SETTLEMENT RETRY NOT QUEUED - needs reconciliation`));
+    return { settled: false, reason: 'error', error: err.message, retrying: true };
   }
 }
 
-module.exports = { settleProviderShare, settleSafely, settleCash };
+// A payout that failed part way is run again on the payments queue (5 tries, growing delays): every step has its own ledger key, so a rerun skips what was done and finishes the rest. One job per booking.
+async function queueResettle({ booking, ...args }) {
+  const { paymentsQueue } = require('../../jobs');
+  await paymentsQueue.add('resettle', { ...args, bookingId: String(booking._id) }, { jobId: `resettle:${args.source}:${booking._id}` });
+}
+
+// The payments worker's side: the booking read fresh, then the same payout; a failure throws so the queue tries again.
+async function resettle({ bookingId, ...args }) {
+  const kind = require('../jobs/kinds').KINDS[args.source];
+  const booking = kind ? await kind.model().findById(bookingId) : null;
+  if (!booking) return { settled: false, reason: 'not_found' };
+  return settleProviderShare({ ...args, booking });
+}
+
+module.exports = { settleProviderShare, settleSafely, settleCash, queueResettle, resettle };

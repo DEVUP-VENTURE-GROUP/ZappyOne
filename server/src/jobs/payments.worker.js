@@ -21,6 +21,8 @@ async function processPaymentsJob(job) {
   const { name, data } = job;
 
   if (name === 'refund') return handleRefund(data);
+  // A payout that failed part way (payment/settlement queueResettle).
+  if (name === 'resettle') return require('../modules/payment/settlement').resettle(data);
   logger.warn({ name }, '[PAYMENTS] Unknown job name - skipping');
   return { skipped: true };
 }
