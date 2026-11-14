@@ -183,74 +183,45 @@ router.get('/alerts/search-demand', async (req, res, next) => {
 
 /* Insights: the business from the bookings taken today (repair, pet, helping, events) */
 
+// Insight reports are cached two minutes per filter (admin/lib/cached-analytics): every admin and every refresh in that time reads one computed answer. Live views stay uncached.
+const report = (name, fn, ttlSec = 120) => async (req, res, next) => {
+  try { res.json(await require('../admin/lib/cached-analytics')(`report:${name}:${JSON.stringify(req.query).slice(0, 200)}`, ttlSec, () => fn(req))); } catch (err) { next(err); }
+};
+
 // Where bookings go wrong: made, finished, cancelled, no provider, waiting, and acceptance time (admin-portal/booking-health).
-router.get('/insights/booking-health', async (req, res, next) => {
-  try { res.json(await require('./booking-health.service').bookingHealth({ days: req.query.days })); } catch (err) { next(err); }
-});
+router.get('/insights/booking-health', report('booking-health', (req) => require('./booking-health.service').bookingHealth({ days: req.query.days })));
 
 // App & traffic: live now, daily traffic by surface, versions and phones (admin-portal/traffic).
 router.get('/insights/traffic/live', async (req, res, next) => {
   try { res.json(await require('./traffic.service').live()); } catch (err) { next(err); }
 });
-router.get('/insights/traffic/summary', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').summary({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/versions', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').versions({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/funnel', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').funnel({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/notifications', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').notifications({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/partners', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').partners({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/searches', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').searches({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/sources', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').sources({ days: req.query.days })); } catch (err) { next(err); }
-});
-router.get('/insights/traffic/retention', async (req, res, next) => {
-  try { res.json(await require('./traffic.service').retention({ weeks: req.query.weeks })); } catch (err) { next(err); }
-});
+router.get('/insights/traffic/summary', report('traffic/summary', (req) => require('./traffic.service').summary({ days: req.query.days })));
+router.get('/insights/traffic/versions', report('traffic/versions', (req) => require('./traffic.service').versions({ days: req.query.days })));
+router.get('/insights/traffic/funnel', report('traffic/funnel', (req) => require('./traffic.service').funnel({ days: req.query.days })));
+router.get('/insights/traffic/notifications', report('traffic/notifications', (req) => require('./traffic.service').notifications({ days: req.query.days })));
+router.get('/insights/traffic/partners', report('traffic/partners', (req) => require('./traffic.service').partners({ days: req.query.days })));
+router.get('/insights/traffic/searches', report('traffic/searches', (req) => require('./traffic.service').searches({ days: req.query.days })));
+router.get('/insights/traffic/sources', report('traffic/sources', (req) => require('./traffic.service').sources({ days: req.query.days })));
+router.get('/insights/traffic/retention', report('traffic/retention', (req) => require('./traffic.service').retention({ weeks: req.query.weeks })));
 router.get('/insights/traffic/speed', async (req, res, next) => {
   try { res.json(await require('./traffic.service').speed()); } catch (err) { next(err); }
 });
 
-router.get('/insights/overview', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').overview({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
-});
+router.get('/insights/overview', report('overview', (req) => require('./analytics.service').overview({ days: Number(req.query.days) || 7 })));
 
-router.get('/insights/supply', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').supply({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
-});
+router.get('/insights/supply', report('supply', (req) => require('./analytics.service').supply({ days: Number(req.query.days) || 7 })));
 
-router.get('/insights/funnel', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').funnel({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
-});
+router.get('/insights/funnel', report('funnel', (req) => require('./analytics.service').funnel({ days: Number(req.query.days) || 7 })));
 
-router.get('/insights/customers', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').customers({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
-});
+router.get('/insights/customers', report('customers', (req) => require('./analytics.service').customers({ days: Number(req.query.days) || 30 })));
 
-router.get('/insights/money', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').money({ days: Number(req.query.days) || 30 })); } catch (err) { next(err); }
-});
+router.get('/insights/money', report('money', (req) => require('./analytics.service').money({ days: Number(req.query.days) || 30 })));
 
-router.get('/insights/live', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').live()); } catch (err) { next(err); }
-});
+router.get('/insights/live', report('live', () => require('./analytics.service').live(), 15));
 
-router.get('/insights/geo', async (req, res, next) => {
-  try { res.json(await require('./analytics.service').geo({ days: Number(req.query.days) || 30, service: req.query.service || null })); } catch (err) { next(err); }
-});
+router.get('/insights/geo', report('geo', (req) => require('./analytics.service').geo({ days: Number(req.query.days) || 30, service: req.query.service || null })));
 
-router.get('/insights/demand', async (req, res, next) => {
-  try { res.json(await require('./search-demand.service').demand({ days: Number(req.query.days) || 7 })); } catch (err) { next(err); }
-});
+router.get('/insights/demand', report('demand', (req) => require('./search-demand.service').demand({ days: Number(req.query.days) || 7 })));
 
 /* Reviews: reported and auto-flagged reviews, and the admin's decision */
 
