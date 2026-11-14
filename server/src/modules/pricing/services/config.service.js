@@ -86,6 +86,8 @@ const FAST_ASSIGN_DEFAULTS = {
 };
 
 // The pro's journey to the door and the wait there, for every service; a provider's own travel price still wins.
+// Free waiting is picked from these, in Economics → Travel & waiting.
+const WAIT_GRACE_CHOICES = [3, 5, 8, 10];
 const TRAVEL_DEFAULTS = {
   baseFeePaise: 0,              // to turn up, on every journey
   perKmPaise: 800,              // per road km after the free distance
@@ -94,7 +96,8 @@ const TRAVEL_DEFAULTS = {
   maxPaise: 15000,              // journey never above this; 0 = no cap
   trafficExtraPerKmPaise: 100,  // added per km inside traffic hours
   trafficHours: [{ startHour: 8, endHour: 11 }, { startHour: 17, endHour: 21 }], // IST
-  waitFreeMin: 10,              // minutes at the door before waiting is charged
+  waitFreeMinNow: 5,            // free minutes at the door for an on-demand job (one of WAIT_GRACE_CHOICES)
+  waitFreeMin: 10,              // free minutes for a job booked for later
   waitPerMinPaise: 200,         // after that, per minute, all to the pro
   waitMaxPaise: 6000,           // waiting never above this
 };
@@ -414,6 +417,7 @@ module.exports = {
   PARTNER_COMMISSION_DEFAULTS,
   partnerCommissionSettings,
   TRAVEL_DEFAULTS,
+  WAIT_GRACE_CHOICES,
   travelSettings,
   fastAssignSettings,
   SURGE_DEFAULTS,

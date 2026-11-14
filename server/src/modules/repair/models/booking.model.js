@@ -137,6 +137,8 @@ const priceSnapshotSchema = new mongoose.Schema(
     trafficHours: { type: Boolean, default: false },
     waitingMin: { type: Number, default: 0, min: 0 },
     waitingPaise: { type: Number, default: 0, min: 0 },
+    // The waiting rule frozen at booking, so a later change in Economics never changes it for this job.
+    waitRule: { freeMin: Number, perMinPaise: Number, maxPaise: Number },
     rangeMinPaise: { type: Number, default: null },
     rangeMaxPaise: { type: Number, default: null },
 

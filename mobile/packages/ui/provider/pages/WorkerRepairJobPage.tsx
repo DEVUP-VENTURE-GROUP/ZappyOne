@@ -44,6 +44,7 @@ import { PASS_REASONS } from '@zappy/core/shared/jobOffers';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { Button, EmptyState, ErrorState, HelpCallButton, LoadingState, Text } from '../../components';
 import { SwipeToConfirm } from '../../components/common/SwipeToConfirm';
+import { WaitingMeter } from '../../components/jobs/WaitingMeter';
 import { toast } from '../../components/Toast';
 import { ArrivalBar } from '../../components/common/ArrivalBar';
 import { CodeBoxes } from '../../components/common/CodeBoxes';
@@ -188,6 +189,7 @@ export function WorkerRepairJobPage() {
           <HelpCallButton />
         </View>
         <ScrollView contentContainerStyle={styles.codePage} keyboardShouldPersistTaps="handled">
+          {gateKind === 'start' ? <WaitingMeter booking={booking} /> : null}
           <CodeBoxes value={otp} onChange={setOtp} length={codeLength} title={REPAIR_GATE_COPY[gateKind].title} hint={REPAIR_GATE_COPY[gateKind].hint} />
           <Button label="Confirm code" onPress={confirmCode} loading={verifying} disabled={otp.length < codeLength} fullWidth size="large" />
           <Pressable onPress={() => setCodeOpen(false)} accessibilityRole="button" hitSlop={8} style={styles.codeLink}>
@@ -215,6 +217,7 @@ export function WorkerRepairJobPage() {
           <View accessibilityRole="alert" style={styles.oldParts}><Text variant="bodySmall" weight="semibold" color={accent[700]}>The customer asked for the replaced part back. Hand it over before you finish.</Text></View>
         ) : null}
         {at('arrived', 'work') ? <PrivacyPledge who="partner" /> : null}
+        {at('arrived') && !ownerWatching ? <WaitingMeter booking={booking} /> : null}
         {onTrip && (!isOwner || ownerGoing) && trip ? <TripSharingBanner sharing={sharing} to={trip.to} toCustomer={trip.toCustomer} /> : null}
         {at('arrived', 'work') ? <OnSiteCard onSite={booking.onSite} /> : null}
         {at('arrived', 'work') ? <ExtrasCard extras={booking.extras} /> : null}

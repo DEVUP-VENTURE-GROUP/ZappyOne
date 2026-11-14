@@ -30,6 +30,7 @@ import { useVerifyRepairHandoverCodeMutation, useDeclineRepairBookingMutation, u
 import PassReasonPicker from '../../components/worker/PassReasonPicker';
 import OtpEntry from '../../components/common/OtpEntry';
 import SwipeToConfirm from '../../components/common/SwipeToConfirm';
+import WaitingMeter from '../../components/jobs/WaitingMeter';
 import ArrivalProximity, { useArrivalProximity } from '../../components/common/ArrivalProximity';
 import ProofPhotos, { readyKeys, photosSettled } from '../../components/common/ProofPhotos';
 import { useAttachRepairCompletionPhotosMutation } from '../../services/api';
@@ -519,6 +520,7 @@ export default function WorkerRepairJobPage() {
         </div></header>
         <div className="mx-auto max-w-md space-y-4 px-4 pt-6">
           <div className="card">
+            {gateKind === 'start' && <div className="mb-4"><WaitingMeter booking={booking} /></div>}
             <OtpEntry value={otp} onChange={setOtp} length={codeLength} title={GATE_COPY[gateKind].title} hint={GATE_COPY[gateKind].hint} />
             <button onClick={confirmCode} disabled={otp.length < codeLength || verifying} className="btn-primary mt-3 w-full disabled:opacity-50">
               {verifying ? <><Loader2 size={15} className="animate-spin" /> Checking…</> : 'Confirm code'}
@@ -548,6 +550,7 @@ export default function WorkerRepairJobPage() {
           </p>
         )}
         {at('arrived', 'work') && <p className="px-1 text-[11.5px] font-semibold text-slate-500">{PRIVACY_PLEDGE.partner}</p>}
+        {at('arrived') && !ownerWatching && <WaitingMeter booking={booking} />}
         {onTrip && (!isOwner || ownerGoing) && <TripSharingBanner sharing={sharingLocation} {...tripOf('repair', booking)} />}
         {at('arrived', 'work') && <OnSiteCard onSite={booking.onSite} />}
         {at('arrived', 'work') && <ExtrasCard extras={booking.extras} />}

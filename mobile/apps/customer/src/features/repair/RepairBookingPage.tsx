@@ -29,6 +29,7 @@ import { termsOf } from '@zappy/core/shared/repairBasket';
 import { RepairWarrantyCard } from './booking/RepairWarrantyCard';
 import { ServiceReport } from './booking/ServiceReport';
 import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
+import { WaitingMeter } from '@zappy/ui/components/jobs/WaitingMeter';
 
 export function RepairBookingPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -60,6 +61,7 @@ export function RepairBookingPage() {
     <JobTrackingPage job={job} onSOS={sos} rebookHref={repairRebookHref(booking)} cancel={data.canCancel ? { run: doCancel } : null}
       extras={(
         <>
+          <WaitingMeter booking={booking} audience="customer" pro={terms?.pro} />
           <HandoverCode booking={booking} terms={terms} />
           {hint ? <View style={styles.hint}><Text variant="caption" color={ink[700]}>{hint}</Text></View> : null}
           {pendingQuote ? <QuoteCard quote={pendingQuote} onDecided={refetch} /> : null}

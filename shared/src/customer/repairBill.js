@@ -71,3 +71,30 @@ export function billWords(terms = {}) {
     cash: (inspection) => `Pay the ${pro} directly once the ${inspection ? 'inspection' : job} is done.`,
   };
 }
+
+/**
+ * The wait at the door right now, from the rule frozen on the booking (server lifecycle freezeWaiting does the same sums), or null when there is nothing to show.
+ * @param {any} booking
+ * @param {number} [now]
+ */
+export function waitingNow(booking, now = Date.now()) {
+  const rule = booking?.priceSnapshot?.waitRule;
+  if (!rule?.perMinPaise || booking.status !== 'ARRIVED' || booking.paymentStatus === 'paid') return null;
+  const at = [...(booking.statusHistory || [])].reverse().find((h) => h.status === 'ARRIVED')?.at;
+  if (!at) return null;
+  const stoppedAt = booking.otpVerified?.startAt ? new Date(booking.otpVerified.startAt).getTime() : null;
+  const sec = Math.max(0, Math.floor(((stoppedAt ?? now) - new Date(at).getTime()) / 1000));
+  const billableMin = Math.max(0, Math.floor(sec / 60) - rule.freeMin);
+  const raw = billableMin * rule.perMinPaise;
+  return {
+    freeLeftSec: Math.max(0, rule.freeMin * 60 - sec),
+    billableMin,
+    paise: rule.maxPaise > 0 ? Math.min(raw, rule.maxPaise) : raw,
+    capped: rule.maxPaise > 0 && raw >= rule.maxPaise,
+    rule,
+    stopped: stoppedAt != null,
+  };
+}
+
+/** Seconds as m:ss for a countdown. */
+export const mmss = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;

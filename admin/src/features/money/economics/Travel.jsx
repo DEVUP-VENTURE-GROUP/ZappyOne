@@ -18,13 +18,14 @@ const STEPS = [
   { title: 'Step 2. Traffic', hint: 'Inside these hours (India time) each km costs more, because the trip takes longer.', fields: [
     ['trafficExtraPerKmPaise', 'Extra per km in traffic hours', '₹', 0, 50, 0.5],
   ], hours: true },
-  { title: 'Step 3. Waiting at the door', hint: 'From the pro tapping Arrived to the customer giving their code. All of it goes to the pro. Customers are told the rule before they book.', fields: [
-    ['waitFreeMin', 'Free waiting', 'min', 0, 120, 1],
+  { title: 'Step 3. Waiting at the door', hint: 'From the pro tapping Arrived to the customer giving their code. All of it goes to the pro. Customers are told the rule before they book, and each booking keeps the rule it was made with.', grace: true, fields: [
     ['waitPerMinPaise', 'Then per minute', '₹', 0, 50, 0.5],
     ['waitMaxPaise', 'Waiting never above (0 = no cap)', '₹', 0, 1000, 5],
   ] },
 ];
-const KEYS = STEPS.flatMap((s) => s.fields.map(([k]) => k));
+const GRACE = [3, 5, 8, 10];
+const GRACE_ROWS = [['waitFreeMinNow', 'Free waiting, job wanted now'], ['waitFreeMin', 'Free waiting, job booked for later']];
+const KEYS = [...STEPS.flatMap((s) => s.fields.map(([k]) => k)), ...GRACE_ROWS.map(([k]) => k)];
 const toForm = (t) => Object.fromEntries(KEYS.map((k) => [k, String(MONEY.includes(k) ? t[k] / 100 : t[k])]));
 const toBody = (f, hours) => ({ ...Object.fromEntries(KEYS.map((k) => [k, MONEY.includes(k) ? Math.round(Number(f[k]) * 100) : Number(f[k])])), trafficHours: hours });
 
@@ -73,6 +74,16 @@ export default function Travel() {
             <h3 className="text-sm font-bold text-slate-800">{step.title}</h3>
             <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{step.hint}</p>
           </div>
+          {step.grace && GRACE_ROWS.map(([k, label]) => (
+            <Setting key={k} title={label}>
+              <div className="flex gap-1 rounded-lg bg-slate-100 p-1" role="radiogroup" aria-label={label}>
+                {GRACE.map((m) => (
+                  <button key={m} type="button" role="radio" aria-checked={Number(form[k]) === m} onClick={() => setForm((f) => ({ ...f, [k]: String(m) }))}
+                    className={`rounded-md px-3 py-1 text-[12.5px] font-bold ${Number(form[k]) === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{m} min</button>
+                ))}
+              </div>
+            </Setting>
+          ))}
           {step.fields.map(([k, label, unit, min, max, stepBy]) => (
             <Setting key={k} title={label}>
               <UnitInput value={form[k]} onChange={(v) => setForm((f) => ({ ...f, [k]: v }))} label={label} unit={unit} min={min} max={max} step={stepBy} />
@@ -111,7 +122,7 @@ export default function Travel() {
               );
             })}
           </ul>
-          <p className="mt-3 text-[12px] text-slate-500">Waiting 25 minutes at the door: {rupees(body.waitMaxPaise > 0 ? Math.min(Math.max(0, 25 - body.waitFreeMin) * body.waitPerMinPaise, body.waitMaxPaise) : Math.max(0, 25 - body.waitFreeMin) * body.waitPerMinPaise)}.</p>
+          <p className="mt-3 text-[12px] text-slate-500">A customer 20 minutes late on a job wanted now: {rupees(body.waitMaxPaise > 0 ? Math.min(Math.max(0, 20 - body.waitFreeMinNow) * body.waitPerMinPaise, body.waitMaxPaise) : Math.max(0, 20 - body.waitFreeMinNow) * body.waitPerMinPaise)} for the pro.</p>
         </Card>
       )}
     </div>

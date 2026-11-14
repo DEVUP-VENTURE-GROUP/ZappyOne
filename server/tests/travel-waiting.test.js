@@ -40,6 +40,7 @@ const booking = (minutesWaited, extra = {}) => {
 
 test('waiting: free minutes first, measured to the customer code, capped, all on the bill', async () => {
   const t = await cfg.travelSettings();
+  t.waitFreeMin = t.waitFreeMinNow; // these bookings are on demand (no scheduled time)
   const short = booking(t.waitFreeMin - 1);
   await lifecycle.freezeWaiting(short);
   expect(short.priceSnapshot.waitingPaise).toBe(0);
@@ -57,6 +58,7 @@ test('waiting: free minutes first, measured to the customer code, capped, all on
 
 test('waiting is never added to a bill already paid online, nor to a visit to the shop', async () => {
   const t = await cfg.travelSettings();
+  t.waitFreeMin = t.waitFreeMinNow;
   const paid = booking(t.waitFreeMin + 15, { paymentStatus: 'paid' });
   await lifecycle.freezeWaiting(paid);
   expect(paid.priceSnapshot.waitingPaise).toBe(0);
@@ -64,4 +66,18 @@ test('waiting is never added to a bill already paid online, nor to a visit to th
   const shop = booking(t.waitFreeMin + 15, { serviceMode: 'workshop' });
   await lifecycle.freezeWaiting(shop);
   expect(shop.priceSnapshot.waitingPaise).toBe(0);
+});
+
+test('free minutes: on demand and booked for later each have their own, picked from 3, 5, 8 or 10', async () => {
+  const t = await cfg.travelSettings();
+  expect(cfg.WAIT_GRACE_CHOICES).toEqual(expect.arrayContaining([t.waitFreeMinNow, t.waitFreeMin]));
+  expect(pricing.waitRuleOf(t, null).freeMin).toBe(t.waitFreeMinNow);
+  expect(pricing.waitRuleOf(t, new Date(Date.now() + 3 * 3600000)).freeMin).toBe(t.waitFreeMin);
+});
+
+test('the rule frozen on the booking wins over a later change in Economics', async () => {
+  const frozen = { freeMin: 3, perMinPaise: 500, maxPaise: 0 };
+  const b = booking(13, { priceSnapshot: { totalPaise: 20900, taxPaise: 0, waitingPaise: 0, waitRule: frozen } });
+  await lifecycle.freezeWaiting(b);
+  expect(b.priceSnapshot.waitingPaise).toBe(10 * 500);
 });

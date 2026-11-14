@@ -402,6 +402,13 @@ const logisticsFeePaise = (cfg, distanceKm, legacyFlatPaise) => distanceFeePaise
 // IST hour, for the traffic hours admin sets.
 const istHour = (at) => new Date(new Date(at).getTime() + 330 * 60000).getUTCHours();
 
+// The free minutes depend on how the job was booked: on demand (now) or for later.
+function waitRuleOf(travel, at = null) {
+  if (!travel || !(travel.waitPerMinPaise > 0)) return null;
+  const later = at && new Date(at).getTime() - Date.now() > 15 * 60000;
+  return { freeMin: (later ? travel.waitFreeMin : travel.waitFreeMinNow ?? travel.waitFreeMin) || 0, perMinPaise: travel.waitPerMinPaise, maxPaise: travel.waitMaxPaise || 0 };
+}
+
 /** The provider's journey to a doorstep or roadside job (Economics → Travel & waiting): road distance, the traffic rate inside traffic hours, capped. */
 async function journeyFee(distanceKm, at = new Date()) {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return null;
@@ -555,7 +562,7 @@ async function buildPriceSnapshot({
     // Road km and whether the traffic rate applied, so both bills can say why the journey costs what it does.
     travelKm: journey?.roadKm ?? null,
     trafficHours: !!journey?.traffic,
-    waitRule: travel && travel.waitPerMinPaise > 0 ? { freeMin: travel.waitFreeMin || 0, perMinPaise: travel.waitPerMinPaise, maxPaise: travel.waitMaxPaise || 0 } : null,
+    waitRule: waitRuleOf(travel, at),
     /** How far the journey is (the device's, or the provider's), when that shaped the price. */
     distanceKm: serviceMode === 'pickup_repair' || ON_LOCATION_MODES.includes(serviceMode) ? distanceKm : null,
     resolutionPath: providerPrice?.resolutionPath || referencePrice?.resolutionPath || 'unresolved',
@@ -675,6 +682,7 @@ function referencePriceAsProvider(ref) {
 
 module.exports = {
   journeyFee,
+  waitRuleOf,
   getConfig,
   invalidateConfigCache,
   resolveReferencePrice,

@@ -176,11 +176,13 @@ async function freezeWaiting(booking) {
   const arrivedAt = [...(booking.statusHistory || [])].reverse().find((h) => h.status === 'ARRIVED')?.at;
   if (!arrivedAt) return;
   const end = booking.otpVerified?.startAt || new Date();
-  const t = await require('../../../pricing/services/config.service').travelSettings();
+  // The rule frozen on the booking; a booking made before rules were frozen takes today's.
+  const t = snap.waitRule?.perMinPaise != null ? snap.waitRule
+    : require('../pricing.service').waitRuleOf(await require('../../../pricing/services/config.service').travelSettings(), booking.scheduledAt) || {};
   const minutes = Math.max(0, Math.floor((new Date(end) - new Date(arrivedAt)) / 60000));
-  const billable = Math.max(0, minutes - (t.waitFreeMin || 0));
-  const raw = billable * (t.waitPerMinPaise || 0);
-  const paise = t.waitMaxPaise > 0 ? Math.min(raw, t.waitMaxPaise) : raw;
+  const billable = Math.max(0, minutes - (t.freeMin || 0));
+  const raw = billable * (t.perMinPaise || 0);
+  const paise = t.maxPaise > 0 ? Math.min(raw, t.maxPaise) : raw;
   snap.waitingMin = minutes;
   if (!paise || booking.paymentStatus === 'paid') return;
   const cfg = await require('../pricing.service').getConfig(booking.vertical);
