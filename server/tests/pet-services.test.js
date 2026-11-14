@@ -337,6 +337,18 @@ describe('pricing is size- and breed-aware, and configuration-driven', () => {
     expect(after.totalPaise).toBe(inr(1500));
   });
 
+  it('charges the journey by the shared Travel & waiting rule when the pro travels, never when the pet is brought to them', async () => {
+    const dog = await makeDog({ size: 'small' });
+    const where = { serviceLocation: [78.42, 17.44], providerLocation: [78.38, 17.44] };
+    const pets = [{ pet: dog, variantCode: 'pg_full_grooming', addonCodes: [] }];
+    const home = await pricingService.quote({ categoryCode: 'pet_grooming', serviceMode: 'doorstep', pets, ...where });
+    const km = require('../src/core/geo/distance').kmBetween(where.providerLocation, where.serviceLocation);
+    expect(home.travelPaise).toBe((await require('../src/modules/repair/services/pricing.service').journeyFee(km)).paise);
+    expect(home.travelPaise).toBeGreaterThan(0);
+    const brought = await pricingService.quote({ categoryCode: 'pet_grooming', serviceMode: 'provider_location', pets, ...where });
+    expect(brought.travelPaise).toBe(0);
+  });
+
   it('never takes commission from anything but the service money', async () => {
     const dog = await makeDog({ size: 'small' });
     const q = await pricingService.quote({

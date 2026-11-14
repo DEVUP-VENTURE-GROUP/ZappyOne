@@ -156,6 +156,7 @@ async function createBooking({
     specialHandling,
     couponPaise,
     packageCode,
+    scheduledAt,
   };
   // The chosen provider's own prices; with nobody chosen, the cheapest provider near the customer who can take it.
   let pricing;

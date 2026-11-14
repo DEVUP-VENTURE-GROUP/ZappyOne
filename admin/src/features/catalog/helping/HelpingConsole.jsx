@@ -197,8 +197,6 @@ function ConfigForm({ config }) {
   const [save, { isLoading }] = useAdminUpdateHelpingConfigMutation();
   const [form, setForm] = useState({
     baseFee: rupees(config.baseFeePaise),
-    freeWaitingMinutes: config.freeWaitingMinutes,
-    waitingPerMinute: rupees(config.waitingPerMinutePaise),
     includedStops: config.includedStops,
     additionalStopFee: rupees(config.additionalStopFeePaise),
     maxStops: config.maxStops,
@@ -229,8 +227,6 @@ function ConfigForm({ config }) {
       await save({
         serviceType: config.serviceType,
         baseFeePaise: paise(form.baseFee),
-        freeWaitingMinutes: Number(form.freeWaitingMinutes),
-        waitingPerMinutePaise: paise(form.waitingPerMinute),
         includedStops: Number(form.includedStops),
         additionalStopFeePaise: paise(form.additionalStopFee),
         maxStops: Number(form.maxStops),
@@ -269,12 +265,7 @@ function ConfigForm({ config }) {
           <FormRow label="Base fee (₹)">
             <Input type="number" value={form.baseFee} onChange={(e) => set('baseFee', e.target.value)} />
           </FormRow>
-          <FormRow label="Free waiting (minutes)" hint="Metered only after this">
-            <Input type="number" value={form.freeWaitingMinutes} onChange={(e) => set('freeWaitingMinutes', e.target.value)} />
-          </FormRow>
-          <FormRow label="Waiting per minute (₹)">
-            <Input type="number" value={form.waitingPerMinute} onChange={(e) => set('waitingPerMinute', e.target.value)} />
-          </FormRow>
+          <p className="self-end text-[12px] leading-relaxed text-slate-500 sm:col-span-2">Waiting, and the per-km charge beyond this errand&apos;s free distance, follow Economics → Travel &amp; waiting, the same for every service.</p>
           <FormRow label="Included stops">
             <Input type="number" value={form.includedStops} onChange={(e) => set('includedStops', e.target.value)} />
           </FormRow>

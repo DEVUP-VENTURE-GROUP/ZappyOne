@@ -232,6 +232,8 @@ async function quote({
   overtimeMinutes = 0,
   couponPaise = 0,
   packageCode = null,
+  // When the visit happens, for traffic hours and the free waiting minutes.
+  scheduledAt = null,
   isPeak = false,
   isHoliday = false,
   waivePlatformFee = false,
@@ -312,16 +314,19 @@ async function quote({
   // regardless of how many animals are at the other end.
   const sharedRule = await resolveRule({ categoryCode, cityCode });
 
-  // On the provider's own prices their travel is in their price, and pickup and return are their own fees.
-  const travelPaise = !ownPricing && distanceKm != null
-    ? Math.round(sharedRule.perKmPaise * Math.max(0, distanceKm - (sharedRule.includedKm || 0)))
-    : 0;
+  // When the pro travels to the pet (doorstep, home visit), the journey and the wait follow Economics → Travel & waiting, the rule every service shares, whoever's prices they are; a pet brought to the pro pays only the pro's own pickup and return.
+  const proTravels = ['doorstep', 'home_visit'].includes(serviceMode);
+  const repairPricing = require('../../repair/services/pricing.service');
+  const visitAt = scheduledAt || checkInAt || null;
+  const journey = proTravels && distanceKm != null ? await repairPricing.journeyFee(distanceKm, visitAt || new Date()) : null;
+  const travelPaise = journey?.paise || 0;
   const pickupPaise = needsPickup ? (ownPricing ? capability.pickupPaise || 0 : sharedRule.pickupPaise) : 0;
   const returnPaise = needsReturn ? (ownPricing ? capability.returnPaise || 0 : sharedRule.returnPaise) : 0;
   const specialHandlingPaise = specialHandling && !ownPricing ? sharedRule.specialHandlingPaise : 0;
 
-  const billableWaiting = Math.max(0, waitingMinutes - (sharedRule.waitingFreeMinutes || 0));
-  const waitingPaise = ownPricing ? 0 : billableWaiting * (sharedRule.waitingPerMinutePaise || 0);
+  const wait = proTravels ? repairPricing.waitRuleOf(await require('../../pricing/services/config.service').travelSettings(), visitAt) : null;
+  const rawWaiting = wait ? Math.max(0, waitingMinutes - wait.freeMin) * wait.perMinPaise : 0;
+  const waitingPaise = wait?.maxPaise > 0 ? Math.min(rawWaiting, wait.maxPaise) : rawWaiting;
 
   const overtimeBlocks = overtimeMinutes > 0
     ? Math.ceil(overtimeMinutes / (sharedRule.overtimeBlockMinutes || 15))
