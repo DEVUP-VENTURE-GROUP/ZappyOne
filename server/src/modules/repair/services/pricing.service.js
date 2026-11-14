@@ -410,7 +410,7 @@ function waitRuleOf(travel, at = null) {
 }
 
 /** The provider's journey to a doorstep or roadside job (Economics → Travel & waiting): road distance, the traffic rate inside traffic hours, capped. */
-async function journeyFee(distanceKm, at = new Date()) {
+async function journeyFee(distanceKm, at = new Date(), { capped = true, freeStraightKm = 0 } = {}) {
   if (distanceKm == null || !Number.isFinite(distanceKm)) return null;
   const t = await require('../../pricing/services/config.service').travelSettings();
   // Charged on the exact road distance; rounded only for showing.
@@ -419,7 +419,9 @@ async function journeyFee(distanceKm, at = new Date()) {
   const h = istHour(at || new Date());
   const traffic = (t.trafficHours || []).some((r) => h >= r.startHour && h < r.endHour);
   const perKmPaise = (t.perKmPaise || 0) + (traffic ? t.trafficExtraPerKmPaise || 0 : 0);
-  return { paise: distanceFeePaise({ basePaise: t.baseFeePaise || 0, perKmPaise, freeKm: t.freeKm || 0, capPaise: t.maxPaise || 0 }, exactKm, 0), roadKm, traffic };
+  // A product's own free zone (an errand type's first free slab), in road km, when wider than the shared one.
+  const freeKm = Math.max(t.freeKm || 0, freeStraightKm * (Number(t.roadFactor) || 1));
+  return { paise: distanceFeePaise({ basePaise: t.baseFeePaise || 0, perKmPaise, freeKm, capPaise: capped ? t.maxPaise || 0 : 0 }, exactKm, 0), roadKm, traffic };
 }
 
 async function buildPriceSnapshot({

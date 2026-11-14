@@ -90,7 +90,6 @@ beforeEach(async () => {
   await Wallet.deleteMany({});
   await seedConfig();
   // Every errand is priced at a helper's own rates; this one mirrors the config above.
-  await require('../src/modules/helping/models/provider-rate.model').deleteMany({});
   await require('./helpers').ratedHelper({ serviceTypes: ['shopping', 'return', 'exchange'], at: HERE.coordinates });
 });
 
@@ -111,35 +110,38 @@ const baseTask = (over = {}) => ({
 /* Pricing comes from config, never from code */
 
 describe('pricing is configuration, not code', () => {
-  it('prices an errand from the configured slabs', async () => {
+  it('prices an errand as a runner fare: the type’s base plus the trip by Travel & waiting, uncapped', async () => {
     const q = await pricingService.quote({
       serviceType: 'shopping', pickupLocation: HERE, destination: THERE,
     });
-    // ~2.5 km → the 2–5 km slab.
-    expect(q.distanceFeePaise).toBe(inr(30));
+    const { HelpingConfig } = require('../src/modules/helping/models/config.model');
+    const free = pricingService.freeZoneKm(await HelpingConfig.findOne({ serviceType: 'shopping', isActive: true }).lean());
+    const trip = await require('../src/modules/repair/services/pricing.service').journeyFee(q.distanceKm, new Date(), { capped: false, freeStraightKm: free });
+    expect(q.distanceFeePaise).toBe(trip.paise);
     expect(q.baseFeePaise).toBe(inr(80));
-    expect(q.serviceChargePaise).toBe(inr(110));
+    expect(q.serviceChargePaise).toBe(inr(80) + trip.paise + q.platformFeePaise + q.taxPaise);
   });
 
   it('changes the price when an operator changes the config — no deploy', async () => {
+    const before = await pricingService.quote({ serviceType: 'shopping', pickupLocation: HERE, destination: THERE });
     await seedConfig({ baseFeePaise: inr(140) });
     const q = await pricingService.quote({
       serviceType: 'shopping', pickupLocation: HERE, destination: THERE,
     });
-    expect(q.serviceChargePaise).toBe(inr(170));
+    expect(q.serviceChargePaise - before.serviceChargePaise).toBe(inr(60) + (q.taxPaise - before.taxPaise));
   });
 
-  it('gives the first 10 waiting minutes away and meters the rest', async () => {
+  it('gives the free waiting minutes away and meters the rest, by the shared waiting rule', async () => {
+    const t = await require('../src/modules/pricing/services/config.service').travelSettings();
     const free = await pricingService.quote({
-      serviceType: 'shopping', pickupLocation: HERE, destination: THERE, waitingMinutes: 10,
+      serviceType: 'shopping', pickupLocation: HERE, destination: THERE, waitingMinutes: t.waitFreeMinNow,
     });
     expect(free.waitingFeePaise).toBe(0);
 
     const paid = await pricingService.quote({
-      serviceType: 'shopping', pickupLocation: HERE, destination: THERE, waitingMinutes: 25,
+      serviceType: 'shopping', pickupLocation: HERE, destination: THERE, waitingMinutes: t.waitFreeMinNow + 15,
     });
-    // 15 billable minutes × ₹2
-    expect(paid.waitingFeePaise).toBe(inr(30));
+    expect(paid.waitingFeePaise).toBe(Math.min(15 * t.waitPerMinPaise, t.waitMaxPaise || Infinity));
   });
 
   it('charges only for stops beyond the included one', async () => {
@@ -182,27 +184,29 @@ describe('item money and service money never mix', () => {
     const { task } = await taskService.createTask(baseTask());
     // ₹250 + (₹50 × 2) = ₹350 of goods…
     expect(task.itemMoney.budgetPaise).toBe(inr(350));
-    // …and the errand itself is priced entirely separately.
-    // The helper's own base fee; their rate has no per-km charge for this short trip.
-    expect(task.charge.serviceChargePaise).toBe(inr(80));
-    expect(task.charge.serviceChargePaise).not.toBe(inr(460));
+    // …and the errand itself is priced entirely separately: its fees, the platform fee and tax, never the goods.
+    const c = task.charge;
+    expect(c.serviceChargePaise).toBe(c.commissionBasePaise + c.platformFeePaise + c.taxPaise - (c.discountPaise || 0));
+    expect(c.commissionBasePaise).toBe(c.baseFeePaise + c.distanceFeePaise + c.waitingFeePaise + c.multiStopFeePaise + c.timeExtensionPaise + c.specialHandlingPaise);
   });
 
   it('presents the authorisation as two numbers, never one', async () => {
     const { task } = await taskService.createTask(baseTask());
     const auth = pricingService.authorisationTotal(task.charge, task.itemMoney.budgetPaise);
-    expect(auth.serviceChargePaise).toBe(inr(80));
+    expect(auth.serviceChargePaise).toBe(task.charge.serviceChargePaise);
     expect(auth.itemBudgetPaise).toBe(inr(350));
-    expect(auth.maxAuthorisationPaise).toBe(inr(430));
+    expect(auth.maxAuthorisationPaise).toBe(task.charge.serviceChargePaise + inr(350));
     expect(auth.note).toMatch(/separate/i);
   });
 
   it('never commissions the item money', async () => {
     const { task } = await taskService.createTask(baseTask());
-    // The helper's 20% partner rate (this suite's fixture), lowered by the configured small-job tier, on the ₹80 fee only, never on the ₹350 of goods.
-    const pct = await require('../src/modules/shop/partner-commission').forBase(20, inr(80));
-    expect(task.charge.commissionPaise).toBe(Math.round((inr(80) * pct) / 100));
-    expect(task.charge.workerEarningPaise).toBe(inr(80) - task.charge.commissionPaise);
+    // The errand type's rate on the fees only, never on the ₹350 of goods; whoever takes it later pays their own partner rate instead (refreeze).
+    const { HelpingConfig } = require('../src/modules/helping/models/config.model');
+    const { commissionPct } = await HelpingConfig.findOne({ serviceType: 'shopping', isActive: true }).lean();
+    const fees = task.charge.commissionBasePaise;
+    expect(task.charge.commissionPaise).toBe(Math.round((fees * commissionPct) / 100));
+    expect(task.charge.workerEarningPaise).toBe(fees - task.charge.commissionPaise);
   });
 
   it('pays the helper their fee and their money back as SEPARATE ledger rows', async () => {
@@ -608,20 +612,17 @@ describe('restricted items', () => {
   });
 });
 
-describe('every helper charges their own rates; ZappyOne sets none', () => {
-  it('prices an errand at the cheapest nearby helper\'s rates, and offers it only to helpers whose rates fit', async () => {
-    const Rate = require('../src/modules/helping/models/provider-rate.model');
-    await Rate.deleteMany({});
-    const dear = await require('./helpers').ratedHelper({ serviceTypes: ['shopping'], at: HERE.coordinates });
-    const cheap = await require('./helpers').ratedHelper({ serviceTypes: ['shopping'], at: HERE.coordinates });
-    await Rate.updateOne({ workerId: dear }, { $set: { baseFeePaise: inr(150) } });
-    await Rate.updateOne({ workerId: cheap }, { $set: { baseFeePaise: inr(60) } });
+describe('a runner fare, set by ZappyOne like a ride app', () => {
+  it('prices every errand at the fare for its type, offers it to every approved helper nearby, and says so when nobody is near', async () => {
+    const { HelpingConfig } = require('../src/modules/helping/models/config.model');
+    const near = await require('./helpers').ratedHelper({ serviceTypes: ['shopping'], at: HERE.coordinates });
     const { task } = await taskService.createTask(baseTask());
-    expect(task.charge.baseFeePaise).toBe(inr(60));
+    expect(task.charge.baseFeePaise).toBe((await HelpingConfig.findOne({ serviceType: 'shopping', isActive: true }).lean()).baseFeePaise);
     const { KINDS } = require('../src/modules/jobs/kinds');
-    const fit = await KINDS.helping.open.fits(task, [{ kind: 'worker', id: String(dear) }, { kind: 'worker', id: String(cheap) }]);
-    expect(fit.map((p) => p.id)).toEqual([String(cheap)]);
-    await Rate.deleteMany({});
-    await expect(taskService.createTask(baseTask({ idempotencyKey: 'none-priced' }))).rejects.toMatchObject({ code: 'NO_PROVIDER_PRICE' });
+    expect(KINDS.helping.open.fits).toBeUndefined();
+    const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+    await ProviderEnrolment.deleteMany({ domainCode: 'family_assist' });
+    await expect(taskService.createTask(baseTask({ idempotencyKey: 'nobody-near' }))).rejects.toMatchObject({ code: 'NO_PROVIDER_PRICE' });
+    expect(near).toBeTruthy();
   });
 });

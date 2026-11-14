@@ -243,17 +243,6 @@ const KINDS = {
       statuses: ['CONFIRMED', 'WORKER_SEARCHING'],
       start: (t) => place(t.pickupLocation),
       listPath: '/worker/work',
-      // Only helpers whose own rates come to no more than the agreed charge.
-      fits: async (t, providers) => {
-        const pricing = require('../helping/services/pricing.service');
-        const near = await pricing.ratedHelpersNear(t.serviceType, null);
-        const ok = new Set();
-        for (const { rate } of near) {
-          const q = await pricing.quote({ serviceType: t.serviceType, pickupLocation: t.pickupLocation, destination: t.destination, stops: t.stops || [], specialHandling: !!t.specialHandling, rate }).catch(() => null);
-          if (q && q.commissionBasePaise <= (t.charge?.commissionBasePaise ?? Infinity)) ok.add(String(rate.workerId || rate.shopId));
-        }
-        return providers.filter((p) => ok.has(String(p.id)));
-      },
       summary: (t) => ({
         title: t.title || ((t.items || []).length ? `${t.items.length} item${t.items.length > 1 ? 's' : ''}` : 'Errand'),
         service: t.serviceType || 'helping',

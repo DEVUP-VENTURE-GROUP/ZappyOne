@@ -116,22 +116,15 @@ async function pricedShopNear({ lng, lat, vertical = 'mobile', lineCode = 'mobil
   return shop;
 }
 
-// A verified helper next to `at` whose own rates mirror ZappyOne's old config for these errands, so a task has a price and amounts read as before.
+// An approved helper next to `at` for these errands, so a task can be booked (the fare is ZappyOne's runner fare, whoever takes it).
 async function ratedHelper({ serviceTypes, at = [78.4867, 17.385] }) {
-  const { HelpingConfig } = require('../src/modules/helping/models/config.model');
-  const Rate = require('../src/modules/helping/models/provider-rate.model');
   const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
   const { KINDS } = require('../src/modules/jobs/kinds');
   const workerId = new mongoose.Types.ObjectId();
   await mongoose.connection.collection('workers').insertOne({ _id: workerId, name: 'Rated Helper', phone: `96${String(Date.now()).slice(-8)}`, currentLocation: { type: 'Point', coordinates: at } });
   for (const serviceType of serviceTypes) {
-    const cfg = await HelpingConfig.findOne({ serviceType }).lean();
     const lineCode = await KINDS.helping.line({ serviceType });
     if (lineCode) await ProviderEnrolment.updateOne({ workerId, lineCode }, { $setOnInsert: { providerKind: 'individual', workerId, domainCode: 'family_assist', lineCode, status: 'approved' } }, { upsert: true });
-    await Rate.create({
-      workerId, serviceType, baseFeePaise: cfg?.baseFeePaise || 9900, waitingPerMinutePaise: cfg?.waitingPerMinutePaise || 0,
-      extraStopPaise: cfg?.additionalStopFeePaise || 0, specialHandlingPaise: cfg?.specialHandlingFeePaise || 0,
-    });
   }
   return workerId;
 }

@@ -2169,8 +2169,6 @@ export function endpoints(b, { adminApiPath }) {
     petProviderRates: b.query({ query: () => '/pet/provider/rates', providesTags: ['ProviderMenu'] }),
     savePetProviderRates: b.mutation({ query: (body) => ({ url: '/pet/provider/rates', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
     // A helper's own rates per errand (helping/services/provider-rates).
-    helpingProviderRates: b.query({ query: (lineCode) => `/helping/provider/rates/${lineCode}`, providesTags: ['ProviderMenu'] }),
-    saveHelpingProviderRate: b.mutation({ query: ({ lineCode, serviceType, ...body }) => ({ url: `/helping/provider/rates/${lineCode}/${serviceType}`, method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
     providerMenu: b.query({ query: (vertical) => ({ url: '/repair/provider/menu', params: { vertical } }), providesTags: ['ProviderMenu'] }),
     saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),

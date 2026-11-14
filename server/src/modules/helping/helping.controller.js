@@ -79,11 +79,11 @@ async function quote(req, res, next) {
       (sum, i) => sum + (i.maxApprovedPricePaise || 0) * (i.quantity || 1), 0,
     );
 
-    const charge = await pricingService.cheapestNearby({
+    const charge = await pricingService.fareNearby({
       serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise,
       waivePlatformFee: (await require('../jobs/member').perks(req.auth?.sub)).waivePlatformFee,
     });
-    if (!charge) return res.status(409).json({ error: 'No helper near you has set a price for this yet.', code: 'NO_PROVIDER_PRICE' });
+    if (!charge) return res.status(409).json({ error: 'No helper is near you right now. Try again a little later.', code: 'NO_PROVIDER_PRICE' });
 
     res.json({
       charge,

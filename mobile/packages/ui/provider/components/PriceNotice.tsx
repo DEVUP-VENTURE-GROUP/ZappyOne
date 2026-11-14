@@ -6,11 +6,11 @@ import { PRICE_NOTICE } from '@zappy/core/shared/jobFlows';
 import { Text } from '../../components';
 import { zappy } from '../../theme/colors';
 
-export function PriceNotice() {
+export function PriceNotice({ text = PRICE_NOTICE }: { text?: string }) {
   return (
     <View accessibilityRole="text" style={styles.box}>
       <BadgeIndianRupee size={17} color={zappy[700]} />
-      <Text variant="bodySmall" weight="semibold" color={zappy[800]} style={styles.text}>{PRICE_NOTICE}</Text>
+      <Text variant="bodySmall" weight="semibold" color={zappy[800]} style={styles.text}>{text}</Text>
     </View>
   );
 }

@@ -29,7 +29,8 @@ import { HoursStep } from '../components/setup/HoursStep';
 import { MenuEditor } from '../components/menu/MenuEditor';
 import { InspectionFeeCard } from '../components/setup/InspectionFeeCard';
 import { PetRateCard } from '../components/setup/PetRateCard';
-import { HelpingRateCard } from '../components/setup/HelpingRateCard';
+import { PriceNotice } from '../components/PriceNotice';
+import { RUNNER_NOTICE } from '@zappy/core/shared/jobFlows';
 import { PricingStep } from '../components/setup/PricingStep';
 import { ReadyService } from '../components/setup/ReadyService';
 import { StepRail } from '../components/setup/StepRail';
@@ -143,7 +144,7 @@ export function ProviderRepairSetupPage() {
       </View>
 
       <View style={styles.flex}>
-        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} />} /> : !active ? null : (
+        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <View style={{ gap: spacing.lg }}><PriceNotice text={RUNNER_NOTICE} /><ReadyService name={other.name} isShop={isShop} onHours={() => router.push((isShop ? '/shop/profile' : '/worker/hours') as never)} /></View> : !active ? null : (
           <>
             {/* Menu services choose their inspection fee too: every service needs one. */}
             {step === 'menu' ? <MenuEditor key={active} vertical={active} top={<InspectionFeeCard vertical={active} />} onNext={() => setStep('area')} /> : null}

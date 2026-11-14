@@ -92,8 +92,8 @@ async function quote({
   discountPaise = 0,
   itemBudgetPaise = 0,
   waivePlatformFee = false,
-  // A helper's own rates (helping/models/provider-rate): their fees replace ZappyOne's; the platform fee, tax and commission stay.
-  rate = null,
+  // When the errand happens (booked for later), for traffic hours and the free waiting minutes.
+  at = null,
 }) {
   const cfg = await getConfig(serviceType);
 
@@ -110,26 +110,30 @@ async function quote({
   }
 
   const distanceKm = tripDistanceKm({ pickupLocation, destination, stops });
-  // A trip past the last band is still quoted by a person, whoever's rates price it.
-  const banded = cfg.distanceFeeFor(distanceKm);
-  const distanceFeePaise = rate ? Math.round(rate.perKmPaise * Math.max(0, (distanceKm || 0) - (rate.includedKm || 0))) : banded.feePaise;
-  const requiresQuote = banded.requiresQuote;
+  // A runner fare, set by ZappyOne like a ride app's: the trip and the wait use Economics → Travel & waiting, the one rule every service shares; the errand type sets the base, stops and handling.
+  // A trip past the last band is still quoted by a person.
+  const requiresQuote = cfg.distanceFeeFor(distanceKm).requiresQuote;
+  // Each errand type keeps its free zone (its first free slabs, so a listed price holds nearby); beyond it the shared per-km rule applies. Every slab free = a flat errand.
+  const metered = (cfg.distanceSlabs || []).some((x) => x.feePaise > 0);
+  const repairPricing = require('../../repair/services/pricing.service');
+  const trip = metered ? await repairPricing.journeyFee(distanceKm, at || new Date(), { capped: false, freeStraightKm: freeZoneKm(cfg) }) : null;
+  const distanceFeePaise = trip?.paise || 0;
 
-  // Only minutes BEYOND the free allowance are billable.
-  const billableWaiting = Math.max(0, waitingMinutes - cfg.freeWaitingMinutes);
-  const waitingFeePaise = billableWaiting * (rate ? rate.waitingPerMinutePaise || 0 : cfg.waitingPerMinutePaise);
+  const wait = (metered && repairPricing.waitRuleOf(await require('../../pricing/services/config.service').travelSettings(), at)) || { freeMin: 0, perMinPaise: 0, maxPaise: 0 };
+  const rawWaiting = Math.max(0, waitingMinutes - wait.freeMin) * wait.perMinPaise;
+  const waitingFeePaise = wait.maxPaise > 0 ? Math.min(rawWaiting, wait.maxPaise) : rawWaiting;
 
   // The first stop is the errand itself; extras are extra work.
   const extraStops = Math.max(0, stops.length - cfg.includedStops);
-  const multiStopFeePaise = extraStops * (rate ? rate.extraStopPaise || 0 : cfg.additionalStopFeePaise);
+  const multiStopFeePaise = extraStops * cfg.additionalStopFeePaise;
 
   const blocks = overtimeMinutes > 0
     ? Math.ceil(overtimeMinutes / cfg.timeExtensionBlockMinutes)
     : 0;
-  const timeExtensionPaise = rate ? 0 : blocks * cfg.timeExtensionFeePaise;
+  const timeExtensionPaise = blocks * cfg.timeExtensionFeePaise;
 
-  const specialHandlingPaise = specialHandling ? (rate ? rate.specialHandlingPaise || 0 : cfg.specialHandlingFeePaise) : 0;
-  const baseFeePaise = rate ? rate.baseFeePaise : cfg.baseFeePaise;
+  const specialHandlingPaise = specialHandling ? cfg.specialHandlingFeePaise : 0;
+  const baseFeePaise = cfg.baseFeePaise;
 
   const feesPaise = baseFeePaise
     + distanceFeePaise
@@ -148,10 +152,8 @@ async function quote({
    * platform fee and tax — Zappy does not take a commission on its own fee or
    * on the government's tax. And never, under any circumstance, on item money.
    */
-  // A partner at their own rates pays their partner commission (shop/partner-commission); the service's rate is for ZappyOne staff.
-  const pc = require('../../shop/partner-commission');
-  const partnerPct = rate ? await pc.forBase(await pc.pctFor(rate.shopId ? { shopId: rate.shopId } : { workerId: rate.workerId }), feesPaise) : null;
-  const commissionPaise = Math.round((feesPaise * (partnerPct ?? cfg.commissionPct ?? 0)) / 100);
+  // The errand type's rate until someone takes it; a partner's own rate (with the small-job tier) replaces it when they do (shop/partner-commission refreeze).
+  const commissionPaise = Math.round((feesPaise * (cfg.commissionPct ?? 0)) / 100);
   const workerEarningPaise = Math.max(0, feesPaise - commissionPaise);
 
   return {
@@ -223,48 +225,48 @@ async function withinTolerance(serviceType, approvedPaise, actualPaise) {
   return actualPaise <= ceiling;
 }
 
-// Helpers verified for this errand near its start who set their own rates, each with their rate.
-async function ratedHelpersNear(serviceType, at) {
-  const Rate = require('../models/provider-rate.model');
+// How far an errand type goes free: the end of its leading free slabs.
+function freeZoneKm(cfg) {
+  let km = 0;
+  for (const s of [...(cfg.distanceSlabs || [])].sort((a, b) => a.fromKm - b.fromKm)) {
+    if (s.fromKm > km || s.feePaise > 0 || s.toKm == null) break;
+    km = s.toKm;
+  }
+  return km;
+}
+
+// Approved runners for this errand near where it starts (workers by their live position, shops by their address); the fare does not depend on who.
+async function runnersNear(serviceType, at) {
   const cfg = await getConfig(serviceType);
   const line = await require('../../jobs/kinds').KINDS.helping.line({ serviceType });
   const approved = line ? await require('../../onboarding/eligibility').approvedProviders(line).catch(() => []) : [];
-  const workerIds = approved.filter((p) => p.kind === 'worker').map((p) => p.id);
-  const shopIds = approved.filter((p) => p.kind === 'shop').map((p) => p.id);
-  if (!workerIds.length && !shopIds.length) return [];
-  const rates = await Rate.find({ serviceType, $or: [{ workerId: { $in: workerIds } }, { shopId: { $in: shopIds } }] }).lean();
-  if (!at?.coordinates?.length) return rates.map((rate) => ({ rate }));
+  if (!approved.length || !at?.coordinates?.length) return approved;
   const [Worker, Shop] = [require('../../worker/worker.model'), require('../../shop/shop.model')];
   const [workers, shops] = await Promise.all([
-    Worker.find({ _id: { $in: rates.filter((r) => r.workerId).map((r) => r.workerId) } }).select('currentLocation').lean(),
-    Shop.find({ _id: { $in: rates.filter((r) => r.shopId).map((r) => r.shopId) } }).select('address.location').lean(),
+    Worker.find({ _id: { $in: approved.filter((p) => p.kind === 'worker').map((p) => p.id) } }).select('currentLocation').lean(),
+    Shop.find({ _id: { $in: approved.filter((p) => p.kind === 'shop').map((p) => p.id) } }).select('address.location').lean(),
   ]);
-  const where = new Map([...workers.map((w) => [String(w._id), w.currentLocation?.coordinates]), ...shops.map((s) => [String(s._id), s.address?.location?.coordinates])]);
-  return rates.filter((r) => {
-    const c = where.get(String(r.workerId || r.shopId));
+  const where = new Map([...workers.map((w) => [String(w._id), w.currentLocation?.coordinates]), ...shops.map((x) => [String(x._id), x.address?.location?.coordinates])]);
+  return approved.filter((p) => {
+    const c = where.get(String(p.id));
     return !c || c.length !== 2 || kmBetween(c, at.coordinates) <= (cfg.matchRadiusKm || 15);
-  }).map((rate) => ({ rate }));
+  });
 }
 
-// The cheapest quote among nearby helpers' own rates, for an errand any of them may take; null when nobody has priced it.
-async function cheapestNearby(args) {
-  const near = await ratedHelpersNear(args.serviceType, args.pickupLocation);
-  // An errand ZappyOne's own staff do is offered at ZappyOne's price for its staff, beside any partner's own rates.
+// The fare for an errand, when ZappyOne's staff or an approved runner can take it near where it starts; null when nobody can.
+async function fareNearby(args) {
   const line = await require('../../jobs/kinds').KINDS.helping.line({ serviceType: args.serviceType });
   const { ServiceLine } = require('../../onboarding/onboarding.model');
   const staffOn = await require('../../feature-flags/feature-flag.service').isEnabled('own_staff');
   const staffDone = staffOn && line && await ServiceLine.exists({ code: line, $or: [{ staffOnly: true }, { staffDoes: true }] });
-  let best = staffDone ? await quote(args).catch(() => null) : null;
-  for (const { rate } of near) {
-    const q = await quote({ ...args, rate }).catch(() => null);
-    if (q && (!best || q.serviceChargePaise < best.serviceChargePaise)) best = q;
-  }
-  return best;
+  if (!staffDone && !(await runnersNear(args.serviceType, args.pickupLocation)).length) return null;
+  return quote(args);
 }
 
 module.exports = {
-  ratedHelpersNear,
-  cheapestNearby,
+  freeZoneKm,
+  runnersNear,
+  fareNearby,
   maxMatchRadiusKm,
   getConfig,
   invalidateConfigCache,

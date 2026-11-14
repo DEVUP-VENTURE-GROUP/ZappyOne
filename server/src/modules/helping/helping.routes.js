@@ -84,14 +84,6 @@ router.post('/quote',
 
 /* Worker — literal paths first */
 
-// A helper's own rates per errand (helping/services/provider-rates): ZappyOne sets no helping price.
-const rateOwner = (req) => (req.auth.role === 'shop' ? { shopId: req.auth.sub } : { workerId: req.auth.sub });
-const runRates = (fn) => async (req, res, next) => { try { res.json(await fn(req)); } catch (e) { next(e); } };
-const paise = Joi.number().integer().min(0).max(10000000);
-router.get('/provider/rates/:lineCode', authenticate, requireRole('worker', 'shop'), runRates((req) => require('./services/provider-rates.service').card(rateOwner(req), req.params.lineCode)));
-router.put('/provider/rates/:lineCode/:serviceType', authenticate, requireRole('worker', 'shop'),
-  validate(Joi.object({ baseFeePaise: paise.required(), perKmPaise: paise.default(0), includedKm: Joi.number().min(0).max(50).default(0), waitingPerMinutePaise: paise.default(0), extraStopPaise: paise.default(0), specialHandlingPaise: paise.default(0) })),
-  runRates((req) => require('./services/provider-rates.service').saveRate(rateOwner(req), req.params.lineCode, req.params.serviceType, req.body)));
 router.get('/tasks/available', authenticate, requireRole('worker'), ctrl.listAvailable);
 router.get('/tasks/assigned', authenticate, requireRole('worker'), ctrl.listAssigned);
 

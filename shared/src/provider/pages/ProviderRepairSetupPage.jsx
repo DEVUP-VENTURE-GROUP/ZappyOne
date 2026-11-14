@@ -3,7 +3,6 @@ import { useScrollTopOnChange } from '../../components/common/ScrollToTop';
 import MenuEditor from '../components/menu/MenuEditor';
 import InspectionFeeCard from '../components/InspectionFeeCard';
 import PetRateCard from '../components/PetRateCard';
-import HelpingRateCard from '../components/HelpingRateCard';
 import { partsQuotedSeparately, PARTS_NOTE } from '../../utils/partsRule';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +44,7 @@ import { formatPaise } from '../../utils/money';
 import BrandLogo from '../../components/common/BrandLogo';
 import { useDebounced } from '../../hooks/useDebounced';
 import PriceNotice from '../components/PriceNotice';
+import { RUNNER_NOTICE } from '../jobFlows';
 
 /**
  * Provider setup — the mirror image of the customer's booking flow.
@@ -1517,7 +1517,7 @@ export default function ProviderRepairSetupPage() {
       </header>
 
       <div className="mx-auto max-w-2xl px-4 pt-4">
-        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <HelpingRateCard lineCode={other.code} fallback={<ReadyService name={other.name} isShop={isShop} onHours={() => nav(isShop ? '/shop/profile' : '/worker/hours')} />} /> : (
+        {other?.domain === 'pet_services' ? <PetRateCard category={other.code} /> : other ? <div className="space-y-4"><PriceNotice text={RUNNER_NOTICE} /><ReadyService name={other.name} isShop={isShop} onHours={() => nav(isShop ? '/shop/profile' : '/worker/hours')} /></div> : (
         <AnimatePresence mode="wait">
           <motion.div
             key={`${active}:${step}`}

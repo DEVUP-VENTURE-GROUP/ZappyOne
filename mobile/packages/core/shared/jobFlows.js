@@ -317,3 +317,6 @@ export const onceWords = (text = '') => String(text).split(/\s+/).filter((w, i, 
 
 // Shown wherever a provider types a price: what they enter is the price customers book.
 export const PRICE_NOTICE = 'Customers see and book exactly the price you enter here. Enter your final price for the whole job, with parts and your work included.';
+
+// Errands are a runner product: shown where a helper would otherwise set prices.
+export const RUNNER_NOTICE = 'ZappyOne sets the fare for every errand, like a ride app. You see what you earn on each errand before you accept it.';

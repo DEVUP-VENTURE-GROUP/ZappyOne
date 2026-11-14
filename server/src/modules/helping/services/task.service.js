@@ -126,12 +126,12 @@ async function createTask({
     );
   }
 
-  // Priced at the cheapest helper's own rates near the pickup; ZappyOne sets no errand price.
-  const charge = await pricingService.cheapestNearby({
-    serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise,
+  // ZappyOne's runner fare (helping pricing quote), when someone can take it near the pickup.
+  const charge = await pricingService.fareNearby({
+    serviceType, pickupLocation, destination, stops, specialHandling, itemBudgetPaise, at: scheduledAt,
     waivePlatformFee: (await require('../../jobs/member').perks(userId)).waivePlatformFee,
   });
-  if (!charge) throw httpError('No helper near you has set a price for this yet. Try again a little later.', 409, 'NO_PROVIDER_PRICE');
+  if (!charge) throw httpError('No helper is near you right now. Try again a little later.', 409, 'NO_PROVIDER_PRICE');
 
   if (charge.quoteRequired) {
     throw httpError(
