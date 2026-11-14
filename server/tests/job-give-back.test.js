@@ -114,6 +114,19 @@ describe('customer cancelling a helping task', () => {
 });
 
 describe('no-shows', () => {
+  test('"customer not here" waits for the customer’s free waiting first, then the usual wait', async () => {
+    const { RepairBooking } = require('../src/modules/repair/models/booking.model');
+    const at = new Date(Date.now() - 12 * 60000);
+    const b = await RepairBooking.create({
+      reference: `GB${Math.random().toString(36).slice(2, 8)}`, userId: new mongoose.Types.ObjectId(), workerId, vertical: 'bike_wash', brandCode: 'x', modelCode: 'y',
+      serviceMode: 'doorstep', status: 'ARRIVED', location: { type: 'Point', coordinates: [78.38, 17.44], address: 'T' },
+      // Five free minutes frozen on the booking: the usual 10 minute wait starts after them, so 12 minutes is still too soon.
+      priceSnapshot: { subtotalPaise: 0, totalPaise: 0, waitRule: { freeMin: 5, perMinPaise: 200, maxPaise: 6000 } },
+      statusHistory: [{ status: 'ON_THE_WAY', at: new Date(at - 600000) }, { status: 'ARRIVED', at }],
+    });
+    await expect(gb.reportCustomerAbsent({ kind: 'repair', id: b._id, actor })).rejects.toMatchObject({ code: 'TOO_SOON' });
+  });
+
   test('"customer not here" opens only after the wait, then closes it as their cancellation', async () => {
     const soon = await task('ARRIVED', { serviceType: 'return', minsAgo: 2 });
     await HelpingTask.updateOne({ _id: soon._id }, { $set: { workerId } });

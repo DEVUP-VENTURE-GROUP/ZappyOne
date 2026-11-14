@@ -82,6 +82,9 @@ function pauseLabel(cfg) {
   return m >= 60 && m % 60 === 0 ? `${m / 60} hour${m === 60 ? '' : 's'}` : `${m} minutes`;
 }
 const PROVIDER_LATE_MIN = 30;
+// The customer's free waiting first (the booking's frozen waiting rule), then the configured wait: "customer not here" never opens inside the free minutes.
+const customerWaitFor = (doc, base) => base + (doc?.priceSnapshot?.waitRule?.freeMin ?? doc?.pricing?.waitRule?.freeMin ?? 0);
+
 async function waits() {
   const cfg = await require('../order/cancellation.service').getConfig();
   return { customer: cfg.customerWaitMinutes ?? CUSTOMER_WAIT_MIN, provider: cfg.providerLateMinutes ?? PROVIDER_LATE_MIN };
@@ -370,7 +373,7 @@ async function reportCustomerAbsent({ kind, id, actor }) {
   const { doc } = await load(kind, id);
   const provider = holderOf(doc, actor);
   if (!provider) throw err(403, 'FORBIDDEN', 'This job is not yours');
-  const at = customerWaitAt(kind, doc, (await waits()).customer);
+  const at = customerWaitAt(kind, doc, customerWaitFor(doc, (await waits()).customer));
   if (!at) throw err(409, 'NOT_NOW', 'Mark yourself arrived at the customer first.');
   if (Date.now() < at.getTime()) {
     const mins = Math.ceil((at.getTime() - Date.now()) / 60000);
@@ -467,7 +470,7 @@ async function customerView(kind, doc) {
 /** What the provider's screen may offer. */
 async function providerView(kind, doc) {
   const rule = RULES[kind];
-  const waitAt = customerWaitAt(kind, doc, (await waits()).customer);
+  const waitAt = customerWaitAt(kind, doc, customerWaitFor(doc, (await waits()).customer));
   return {
     canGiveBack: !!rule?.held.includes(doc.status),
     customerAbsent: waitAt ? { opensAt: waitAt, open: Date.now() >= waitAt.getTime() } : null,
