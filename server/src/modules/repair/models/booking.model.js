@@ -265,6 +265,8 @@ const repairBookingSchema = new mongoose.Schema(
     workerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null, index: true },
     /** True when the provider came from Zappy's ranking rather than customer choice. */
     zappyRecommended: { type: Boolean, default: false },
+    // The customer asked for a woman or a man pro (only where the trade offers the choice: beauty, massage).
+    proGender: { type: String, enum: ['female', 'male', null], default: null },
     // Came through the provider's own link (shop/share-link): their customer, their commission rate, and the review does not count in their public rating.
     viaOwnLink: { type: Boolean, default: false, index: true },
     /** Booked together with other vehicles or devices, one visit (repair/models/group.model). */

@@ -16,6 +16,7 @@ import {
 } from '../../services/api';
 import { STAFF_PORTAL, PARTNER_ONLY } from '../staffPortal';
 import toast from 'react-hot-toast';
+import { PRO_GENDERS, PRO_GENDER_HINT } from '../jobFlows';
 
 // Skills come from the LIVE admin catalog (/api/catalog/services), never a hardcoded
 // list — a hardcoded set silently drifts from the catalog, and dispatch matches
@@ -87,6 +88,7 @@ export default function WorkerEditProfilePage() {
 
   const [name,   setName]   = useState('');
   const [bio,    setBio]    = useState('');
+  const [gender, setGender] = useState(null);
   const [loaded, setLoaded] = useState(false);
   useFocusField(loaded);
   // Login credentials
@@ -106,6 +108,7 @@ export default function WorkerEditProfilePage() {
   if (me && !loaded) {
     setName(me.name ?? '');
     setBio(me.bio ?? '');
+    setGender(me.gender ?? null);
     setLoaded(true);
   }
 
@@ -115,6 +118,7 @@ export default function WorkerEditProfilePage() {
     const body = {};
     if (name.trim() !== (me?.name ?? ''))  body.name   = name.trim();
     if (bio.trim()  !== (me?.bio  ?? ''))  body.bio    = bio.trim();
+    if (gender !== (me?.gender ?? null)) body.gender = gender;
 
     if (!Object.keys(body).length) { toast.success('No changes'); return; }
 
@@ -187,6 +191,17 @@ export default function WorkerEditProfilePage() {
           <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={300} rows={3}
             placeholder="Describe your experience - shown to customers when they view your profile…"
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-zappy-300 transition" />
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <span className="text-sm font-semibold text-slate-700">Gender</span>
+          <p className="mt-0.5 mb-3 text-xs text-slate-500">{PRO_GENDER_HINT}</p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Gender">
+            {PRO_GENDERS.map(([value, label]) => (
+              <button key={value} type="button" role="radio" aria-checked={gender === value} onClick={() => setGender(gender === value ? null : value)}
+                className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${gender === value ? 'border-zappy-600 bg-zappy-50 text-zappy-700' : 'border-slate-200 text-slate-600'}`}>{label}</button>
+            ))}
+          </div>
         </div>
 
         {/*

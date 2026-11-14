@@ -275,6 +275,8 @@ async function findProviders({
   limit = null,
   // A booking for later: workers whose hours cover it, online or not (jobs/work-hours).
   scheduledAt = null,
+  // The customer asked for a woman or a man pro: individual pros must match; a shop is kept and its owner sends the right person.
+  proGender = null,
 }) {
   const hoursRule = require('../../jobs/work-hours');
   const later = hoursRule.isLater(scheduledAt);
@@ -297,7 +299,12 @@ async function findProviders({
     }
   }
   const full = await require('../../shop/partner.service').atCapacity(found.filter((x) => x.shopId).map((x) => x.shopId));
-  const serviceable = found.filter((x) => !x.shopId || !full.has(String(x.shopId)));
+  let serviceable = found.filter((x) => !x.shopId || !full.has(String(x.shopId)));
+  if (proGender) {
+    const ids = serviceable.filter((x) => x.workerId && !x.shopId).map((x) => x.workerId);
+    const ok = new Set((await Worker.find({ _id: { $in: ids }, gender: proGender }).select('_id').lean()).map((w) => String(w._id)));
+    serviceable = serviceable.filter((x) => x.shopId || !x.workerId || ok.has(String(x.workerId)));
+  }
   if (!serviceable.length) return { recommended: null, providers: [], rejected: [], reason: 'no_provider_in_area' };
 
   // One read for the grade catalog, rather than one per provider per grade.

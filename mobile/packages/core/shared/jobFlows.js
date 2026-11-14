@@ -338,3 +338,8 @@ export const STAY_ON_ZAPPYONE = {
     short: 'Keep every job on ZappyOne: guaranteed payment, support and your rating. Taking a customer outside ends your account.',
   },
 };
+
+// A pro's gender, optional on their profile; a customer's choice of a woman or a man pro where the trade offers it (flow genderChoice).
+export const PRO_GENDERS = [['female', 'Woman'], ['male', 'Man'], ['other', 'Other']];
+export const PRO_GENDER_HINT = 'Optional. Customers who ask for a woman or a man pro (beauty, massage) are matched only with pros who set it.';
+export const CUSTOMER_GENDER_CHOICES = [[null, 'No preference'], ['female', 'A woman pro'], ['male', 'A man pro']];

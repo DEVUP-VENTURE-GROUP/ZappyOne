@@ -132,6 +132,23 @@ const baseQuery = {
   cityCode: 'hyderabad',
 };
 
+describe('a customer who asks for a woman or a man pro', () => {
+  afterEach(async () => {
+    await Promise.all([Worker.deleteMany({}), ProviderServiceArea.deleteMany({}), ProviderCapability.deleteMany({}), ProviderPricing.deleteMany({}), ProviderInventory.deleteMany({})]);
+  });
+  it('is matched only with pros who set that gender; no preference sees everyone', async () => {
+    const her = await makeProvider({ name: 'Asha', priceP: 70000 });
+    const him = await makeProvider({ name: 'Ravi', priceP: 70000 });
+    const unset = await makeProvider({ name: 'Kiran', priceP: 70000 });
+    await Worker.updateOne({ _id: her._id }, { $set: { gender: 'female' } });
+    await Worker.updateOne({ _id: him._id }, { $set: { gender: 'male' } });
+    const ids = (r) => r.providers.map((p) => String(p.workerId)).sort();
+    expect(ids(await matching.findProviders({ ...baseQuery, proGender: 'female' }))).toEqual([String(her._id)]);
+    expect(ids(await matching.findProviders({ ...baseQuery, proGender: 'male' }))).toEqual([String(him._id)]);
+    expect(ids(await matching.findProviders(baseQuery))).toEqual([her, him, unset].map((w) => String(w._id)).sort());
+  });
+});
+
 describe('eligibility gates', () => {
   afterEach(async () => {
     await Promise.all([

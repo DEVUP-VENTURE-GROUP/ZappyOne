@@ -48,6 +48,7 @@ import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { useClearCheckoutDraftMutation } from '@shared/services/api';
 import { jobsDoneLabel } from '@shared/customer/jobsDone';
 import { useDebounced } from '@shared/hooks/useDebounced';
+import { CUSTOMER_GENDER_CHOICES } from '@shared/provider/jobFlows';
 
 /**
  * Customer repair booking flow — one engine, every vertical.
@@ -965,7 +966,7 @@ function WhenChooser({ value, onChange }) {
 function ProviderStep({
   vertical, diagnosis, model, brand, configuration, problem,
   location, hasLocation, serviceMode, onPick, onInspectInstead, pinConfirmed = true, onPinConfirmed,
-  scheduledAt = null, onWhen,
+  scheduledAt = null, onWhen, proGender = null, onProGender,
 }) {
   const dispatch = useDispatch();
   const { data: verticalList } = useRepairVerticalsQuery();
@@ -991,6 +992,7 @@ function ProviderStep({
       lng: location.lng,
       // Later: whoever's hours cover that time, online now or not (jobs/work-hours).
       ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString() }),
+      ...(proGender && { proGender }),
     },
     // An inspection needs no priced provider — any capable technician can look
     // at the device, so provider matching is skipped entirely for that path.
@@ -1157,6 +1159,19 @@ function ProviderStep({
 
       {/* When: now, or a time later (pros whose hours cover it, online or not). */}
       {onWhen && <WhenChooser value={scheduledAt} onChange={onWhen} />}
+
+      {/* Beauty and massage: the customer may ask for a woman or a man pro (flow genderChoice); matching then rings only them. */}
+      {onProGender && termsOf(vertical, verticalList?.items).flow?.genderChoice && (
+        <div className="card">
+          <p className="mb-2 text-[13px] font-bold text-slate-800">Who would you like?</p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Who would you like">
+            {CUSTOMER_GENDER_CHOICES.map(([value, label]) => (
+              <button key={label} type="button" role="radio" aria-checked={proGender === value} onClick={() => onProGender(value)}
+                className={`rounded-full border px-4 py-1.5 text-[13px] font-semibold ${proGender === value ? 'border-zappy-600 bg-zappy-50 text-zappy-700' : 'border-slate-200 text-slate-600'}`}>{label}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {needsDiagnosis && (
         <div className="card bg-zappy-50 ring-zappy-100">
@@ -1619,7 +1634,7 @@ function AddOnsStep({
 function ConfirmStep({
   vertical, brand, model, configuration, problem, diagnosis, provider, repairCode,
   qualityCode, serviceMode, inspectionFeePaise, location, onDone, fuelType,
-  diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [], scheduledAt = null,
+  diagnosticAnswers, diagnosticTranscript = [], addOnCodes = [], scheduledAt = null, proGender = null,
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
   // Anyone can browse to here; signing in is asked only to confirm, and the draft brings them straight back.
@@ -1706,6 +1721,7 @@ function ConfirmStep({
         ...surge.bookingFields,
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString(), slotLabel: slotLabel(scheduledAt) }),
+        ...(proGender && { proGender }),
       }).unwrap();
       // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
       if (res.booking?.paymentMethod === 'online' && !res.booking?.priceSnapshot?.isEstimate) {
@@ -1895,6 +1911,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
   const [serviceMode, setServiceMode] = useState(saved?.serviceMode ?? 'doorstep');
   // Null = as soon as possible; a Date = booked for then.
   const [when, setWhen] = useState(null);
+  // A woman or a man pro, where the trade offers the choice (flow genderChoice).
+  const [proGender, setProGender] = useState(null);
   const [fuelType, setFuelType] = useState(saved?.fuelType ?? null);
 
   /*
@@ -2141,6 +2159,8 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
           serviceMode={serviceMode}
           scheduledAt={when}
           onWhen={(t) => { setWhen(t); setProvider(null); }}
+          proGender={proGender}
+          onProGender={(g) => { setProGender(g); setProvider(null); }}
           onInspectInstead={() => setServiceMode('diagnosis_only')}
           onPick={(p, code, quality) => {
             setProvider(p);
@@ -2180,7 +2200,7 @@ function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnother }) {
           addOnCodes={addOnCodes}
           diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
           serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
-          fuelType={fuelType} scheduledAt={when}
+          fuelType={fuelType} scheduledAt={when} proGender={proGender}
           onDone={(b) => { clearDraft(draftKey); draftDone(); nav(`/repair/bookings/${b._id}`, { replace: true, state: { justBooked: true } }); }}
         />
       )}

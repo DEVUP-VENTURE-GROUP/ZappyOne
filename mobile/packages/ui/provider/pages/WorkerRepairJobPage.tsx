@@ -171,6 +171,8 @@ export function WorkerRepairJobPage() {
       [capWord(terms.job), (booking as { repairName?: string }).repairName || readableCode(booking.repairCode || '') || 'Check first'] as [string, string],
     ]),
     ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
+    // The customer asked for a woman or a man pro: matching rang only them; a shop owner sends the right person.
+    ...((booking as { proGender?: string | null }).proGender ? [['Asked for', (booking as { proGender?: string }).proGender === 'female' ? 'A woman pro' : 'A man pro'] as [string, string]] : []),
     ['Address', booking.location?.address],
   ];
 

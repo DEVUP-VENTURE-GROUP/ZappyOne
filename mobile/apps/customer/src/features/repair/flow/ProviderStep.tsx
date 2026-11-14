@@ -8,7 +8,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Vibration, View } from 'react-native';
 import { AlertTriangle, HelpCircle } from 'lucide-react-native';
-import { useRepairPricePreviewQuery, useRepairProvidersQuery } from '@zappy/core/api';
+import { useRepairPricePreviewQuery, useRepairProvidersQuery, useRepairVerticalsQuery } from '@zappy/core/api';
+import { termsOf } from '@zappy/core/shared/repairBasket';
+import { CUSTOMER_GENDER_CHOICES } from '@zappy/core/shared/jobFlows';
 import { useProsArrive } from '@zappy/core/shared/prosArrive';
 import { Button, Text } from '@zappy/ui/components';
 import { toast } from '@zappy/ui/components/Toast';
@@ -29,11 +31,12 @@ type Named = { code: string; name: string } | null;
 type Sort = 'best' | 'fast' | 'cheap';
 const SORTS: { key: Sort; label: string }[] = [{ key: 'best', label: 'Recommended' }, { key: 'fast', label: 'Fastest' }, { key: 'cheap', label: 'Lowest price' }];
 
-export function ProviderStep({ vertical, diagnosis, model, brand, configuration, problem, location, serviceMode, pinConfirmed, onPinConfirmed, onChangeLocation, onPick, onInspectInstead, scheduledAt, onWhen }: {
+export function ProviderStep({ vertical, diagnosis, model, brand, configuration, problem, location, serviceMode, pinConfirmed, onPinConfirmed, onChangeLocation, onPick, onInspectInstead, scheduledAt, onWhen, proGender = null, onProGender }: {
   vertical: string; diagnosis: Diagnosis | null; model: Named; brand: Named; configuration: Named; problem: Named;
   location: BookingLocation | null; serviceMode: string; pinConfirmed: boolean; onPinConfirmed: () => void; onChangeLocation: () => void;
   onPick: (p: Provider | null, repairCode: string | undefined, qualityCode: string | null) => void; onInspectInstead?: () => void;
   scheduledAt: Date | null; onWhen?: (d: Date | null) => void;
+  proGender?: string | null; onProGender?: (g: string | null) => void;
 }) {
   const [sortBy, setSortBy] = useState<Sort>('best');
   const repairCode = diagnosis?.primaryRepairCode || diagnosis?.recommendations?.[0]?.repairCode;
@@ -41,10 +44,12 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
   const inspectionOnly = serviceMode === 'diagnosis_only';
   const ready = pinConfirmed && !!location;
 
+  const { data: verticals } = useRepairVerticalsQuery(undefined);
   const [pollMs, setPollMs] = useState(0);
   const { data, isFetching } = useRepairProvidersQuery({
     vertical, repairCode, brandCode: brand?.code, modelCode: model?.code, serviceMode, lat: location?.lat, lng: location?.lng,
     ...(scheduledAt && { scheduledAt: scheduledAt.toISOString() }),
+    ...(proGender && { proGender }),
   }, { skip: inspectionOnly || !repairCode || !ready, pollingInterval: pollMs });
   useProsArrive((data as { providers?: unknown[] } | undefined)?.providers, !!data && !isFetching, setPollMs, (n: number) => {
     toast.success(n === 1 ? 'A pro just became free near you. Pick them below.' : `${n} pros just became free near you. Pick one below.`);
@@ -101,6 +106,20 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
     <Shell>
       {summary}
       {onWhen ? <WhenChooser value={scheduledAt} onChange={onWhen} /> : null}
+      {/* Beauty and massage: a woman or a man pro (flow genderChoice); matching then rings only them. */}
+      {onProGender && termsOf(vertical, (verticals as { items?: unknown[] } | undefined)?.items as never).flow?.genderChoice ? (
+        <View style={flow.card}>
+          <Text variant="bodySmall" weight="bold">Who would you like?</Text>
+          <View accessibilityRole="radiogroup" style={styles.genderRow}>
+            {CUSTOMER_GENDER_CHOICES.map(([value, label]) => (
+              <Pressable key={label} accessibilityRole="radio" accessibilityState={{ checked: proGender === value }} onPress={() => onProGender(value)}
+                style={[styles.genderChip, proGender === value && styles.genderOn]}>
+                <Text variant="bodySmall" weight="semibold" color={proGender === value ? zappy[700] : ink[700]}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
       {needsDiagnosis ? <View style={[flow.card, styles.note]}><Text variant="caption" weight="semibold" color={zappy[700]}>Prices below are estimates. The final figure is confirmed after the technician inspects your device.</Text></View> : null}
       {isFetching && !providers.length ? <Spinner /> : null}
       {!isFetching && !ranked.length ? (
@@ -132,6 +151,9 @@ export function ProviderStep({ vertical, diagnosis, model, brand, configuration,
 }
 
 const styles = StyleSheet.create({
+  genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  genderChip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 7 },
+  genderOn: { borderColor: zappy[600], backgroundColor: zappy[50] },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   warn: { backgroundColor: accent[50], borderColor: accent[100] },
   note: { backgroundColor: zappy[50], borderColor: zappy[100] },

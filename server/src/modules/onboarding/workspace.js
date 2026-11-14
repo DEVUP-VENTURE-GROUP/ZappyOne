@@ -40,12 +40,12 @@ const LINE_TERMS = {
 };
 
 // What a job in this trade goes through, beyond its words: a diagnosis before the work, quotes for extra work, photos of the finished work. Repairs by default; a category, then a service, narrows it; admin can set a category's own (domain.dashboard.flow).
-const REPAIR_FLOW = { diagnosis: true, quote: true, photos: true };
+const REPAIR_FLOW = { diagnosis: true, quote: true, photos: true, genderChoice: false };
 const DOMAIN_FLOW = {
   home_services: { diagnosis: false },
   home_daily_help: { diagnosis: false, quote: false },
   specialist_home: { diagnosis: false },
-  beauty_care: { diagnosis: false, quote: false, photos: false },
+  beauty_care: { diagnosis: false, quote: false, photos: false, genderChoice: true },
   local_pros: { diagnosis: false, quote: false, photos: false },
   moving: { diagnosis: false },
 };
@@ -57,7 +57,7 @@ const LINE_FLOW = {
   appliance_repair: { diagnosis: true },
   gadget_repair: { diagnosis: true },
 };
-const FLOW_KEYS = ['diagnosis', 'quote', 'photos'];
+const FLOW_KEYS = ['diagnosis', 'quote', 'photos', 'genderChoice'];
 function flowOf(line, domain) {
   const flow = { ...REPAIR_FLOW, ...(DOMAIN_FLOW[domain?.code] || {}) };
   const own = domain?.dashboard?.flow || {};

@@ -111,6 +111,7 @@ async function redispatch(bookingId) {
     cityCode: booking.location?.cityCode || null,
     // Booked for later: whoever's hours cover it (jobs/work-hours).
     scheduledAt: booking.scheduledAt || null,
+    proGender: booking.proGender || null,
   });
 
   const pool = (providers || []).filter((p) => !tried.has(String(p.shopId || p.workerId)));

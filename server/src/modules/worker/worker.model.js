@@ -4,6 +4,8 @@ const workerSchema = new mongoose.Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
+    // Set by the pro on their profile; a customer who asks for a woman or a man pro (beauty, massage) is matched only with pros who set it.
+    gender: { type: String, enum: ['female', 'male', 'other', null], default: null },
     email: { type: String, lowercase: true, sparse: true },
     // Worker-chosen login ID — approved workers can sign in with
     // username / email / phone + password instead of an OTP every time.

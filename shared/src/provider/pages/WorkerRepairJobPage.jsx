@@ -686,6 +686,8 @@ export default function WorkerRepairJobPage() {
             [capWord(words.job), booking.repairName || readableCode(booking.repairCode || '') || 'Check first'],
             ]),
             ['Mode', (booking.serviceMode || '').replace(/_/g, ' ')],
+            // The customer asked for a woman or a man pro: matching rang only them; a shop owner sends the right person.
+            ...(booking.proGender ? [['Asked for', booking.proGender === 'female' ? 'A woman pro' : 'A man pro']] : []),
             ['Address', booking.location?.address],
           ].map(([k, v]) => (
             <div key={k} className="flex items-start justify-between gap-3">

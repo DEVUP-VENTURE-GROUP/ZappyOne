@@ -224,6 +224,7 @@ router.post(
     shopId: objectId.allow(null),
     workerId: objectId.allow(null),
     zappyRecommended: Joi.boolean().default(false),
+    proGender: Joi.string().valid('female', 'male').allow(null),
     location: locationSchema.required(),
     scheduledAt: Joi.date().allow(null),
     slotLabel: Joi.string().max(80).allow('', null),

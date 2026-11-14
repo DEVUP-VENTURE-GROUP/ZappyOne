@@ -72,6 +72,8 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
   const [addOnCodes, setAddOnCodes] = useState<string[]>([]);
   const [serviceMode, setServiceMode] = useState(saved?.serviceMode ?? 'doorstep');
   const [when, setWhen] = useState<Date | null>(null);
+  // A woman or a man pro, where the trade offers the choice (flow genderChoice).
+  const [proGender, setProGender] = useState<string | null>(null);
 
   const [step, setStep, , backTo] = useFlowStep('brand', { onExit: exit });
 
@@ -211,6 +213,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
         <ProviderStep vertical={vertical} diagnosis={diagnosis} model={model} brand={brand} configuration={configuration} problem={problem}
           location={location} serviceMode={serviceMode} pinConfirmed={pinConfirmed} onPinConfirmed={() => setPinConfirmed(true)}
           onChangeLocation={() => { setPinConfirmed(true); pick(); }} scheduledAt={when} onWhen={(t) => { setWhen(t); setProvider(null); }}
+          proGender={proGender} onProGender={(g) => { setProGender(g); setProvider(null); }}
           onInspectInstead={() => setServiceMode('diagnosis_only')} onPick={pickProvider} />
       ) : null}
       {step === 'addons' ? (
@@ -222,7 +225,7 @@ export function RepairFlow({ vertical, saved, draftKey, onStartOver, onAddAnothe
         <ConfirmStep vertical={vertical} brand={brand} model={model} configuration={configuration} problem={problem} diagnosis={diagnosis}
           provider={provider} repairCode={repairCode} qualityCode={qualityCode} serviceMode={serviceMode} inspectionFeePaise={inspectionFeePaise}
           location={location} fuelType={fuelType} diagnosticAnswers={diagnosticAnswers} diagnosticTranscript={diagnosticTranscript}
-          addOnCodes={addOnCodes} scheduledAt={when}
+          addOnCodes={addOnCodes} scheduledAt={when} proGender={proGender}
           onDone={(b) => { clearDraft(draftKey); draftDone(); router.replace(`/repair/bookings/${b._id}?booked=1` as never); }} />
       ) : null}
     </View>

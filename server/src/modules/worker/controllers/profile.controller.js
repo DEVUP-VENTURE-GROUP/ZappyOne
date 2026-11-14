@@ -91,10 +91,11 @@ async function getPublicProfile(req, res, next) {
 async function updateProfile(req, res, next) {
   try {
     const workerId = req.auth.sub;
-    const { name, skills, bio, expertise } = req.body;
+    const { name, skills, bio, expertise, gender } = req.body;
     const update = {};
     if (name)   update.name   = name;
     if (bio !== undefined) update.bio = bio;
+    if (gender !== undefined) update.gender = gender;
 
     // When rich expertise is provided, it becomes the source of truth and the flat
     // `skills` dispatch match-set is derived from the union of all handled services.

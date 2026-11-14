@@ -51,6 +51,7 @@ async function createBooking({
   shopId = null,
   workerId = null,
   zappyRecommended = false,
+  proGender = null,
   location,
   scheduledAt = null,
   slotLabel = '',
@@ -264,6 +265,8 @@ async function createBooking({
       shopId,
       workerId,
       zappyRecommended,
+      // Kept only where the trade offers the choice (flow genderChoice: beauty, massage).
+      proGender: proGender && (await require('../../../onboarding/workspace').termsForVertical(vertical).catch(() => null))?.flow?.genderChoice ? proGender : null,
       viaOwnLink,
       groupId,
       itemLabel,

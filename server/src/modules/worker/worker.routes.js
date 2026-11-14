@@ -56,6 +56,7 @@ router.patch('/profile', authenticate, requireRole('worker'),
     // must exceed the full catalog size — a worker may legitimately do everything.
     skills: Joi.array().items(Joi.string().max(60).pattern(/^[a-z0-9_]+$/)).min(1).max(300).optional(),
     bio:    Joi.string().max(300).allow('', null).optional(),
+    gender: Joi.string().valid('female', 'male', 'other').allow(null).optional(),
     // Rich per-category expertise. When provided, `skills` is derived from the
     // union of all services so dispatch matching stays in sync automatically.
     expertise: Joi.array().items(Joi.object({

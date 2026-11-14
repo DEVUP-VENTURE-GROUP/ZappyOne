@@ -46,6 +46,7 @@ import { DeleteAccountCard } from '../../components/account/DeleteAccountCard';
 import { PARTNER_ONLY } from '@zappy/core/shared/partnerPages';
 import { STAFF_APP } from '../staffApp';
 import { LegalLinks } from '../../components/account/LegalLinks';
+import { PRO_GENDERS, PRO_GENDER_HINT } from '@zappy/core/shared/jobFlows';
 
 const ALL_NAV_SECTIONS = [
   { title: 'Earnings & finance', items: [
@@ -85,18 +86,20 @@ export function WorkerEditProfilePage() {
   const verified: { _id: string; lineCode: string; line?: { name?: string } }[] = (providerStatus?.enrolments ?? []).filter((e: { status: string }) => e.status === 'approved');
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [gender, setGender] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [username, setUsername] = useState('');
 
   useEffect(() => {
-    if (me && !loaded) { setName(me.name ?? ''); setBio(me.bio ?? ''); setLoaded(true); }
+    if (me && !loaded) { setName(me.name ?? ''); setBio(me.bio ?? ''); setGender((me as { gender?: string | null }).gender ?? null); setLoaded(true); }
   }, [me, loaded]);
 
   async function save() {
     if (!name.trim()) { toast.error('Name is required'); return; }
-    const body: Record<string, string> = {};
+    const body: Record<string, string | null> = {};
     if (name.trim() !== (me?.name ?? '')) body.name = name.trim();
     if (bio.trim() !== (me?.bio ?? '')) body.bio = bio.trim();
+    if (gender !== ((me as { gender?: string | null } | undefined)?.gender ?? null)) body.gender = gender;
     if (!Object.keys(body).length) { toast.success('No changes'); return; }
     try { await updateProfile(body).unwrap(); toast.success('Profile updated'); }
     catch (err) { toast.error(errText(err, 'Failed to save. Try again.')); }
@@ -132,6 +135,19 @@ export function WorkerEditProfilePage() {
             <View style={styles.row}><FileText size={15} color={zappy[500]} /><Text variant="bodySmall" weight="semibold" style={styles.flex}>Bio</Text><Text variant="caption" color={ink[400]}>{bio.length}/300</Text></View>
             <TextInput value={bio} onChangeText={setBio} maxLength={300} multiline placeholder="Describe your experience. Shown to customers when they view your profile."
               placeholderTextColor={ink[400]} style={[styles.input, styles.area]} />
+          </View>
+
+          <View style={styles.card}>
+            <Text variant="bodySmall" weight="semibold">Gender</Text>
+            <Text variant="caption" color={ink[500]}>{PRO_GENDER_HINT}</Text>
+            <View accessibilityRole="radiogroup" style={styles.genderRow}>
+              {PRO_GENDERS.map(([value, label]) => (
+                <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: gender === value }} onPress={() => setGender(gender === value ? null : value)}
+                  style={[styles.genderChip, gender === value && styles.genderOn]}>
+                  <Text variant="bodySmall" weight="semibold" color={gender === value ? zappy[700] : ink[700]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
 
           <View style={styles.card}>
@@ -184,6 +200,9 @@ export function WorkerEditProfilePage() {
 }
 
 const styles = StyleSheet.create({
+  genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  genderChip: { borderWidth: 1, borderColor: slate[200], borderRadius: 999, paddingHorizontal: 16, paddingVertical: 7 },
+  genderOn: { borderColor: zappy[600], backgroundColor: zappy[50] },
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

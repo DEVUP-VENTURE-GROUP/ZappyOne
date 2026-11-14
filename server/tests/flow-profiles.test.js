@@ -19,18 +19,18 @@ beforeAll(async () => {
 afterAll(stopMongo);
 
 test('profiles by category, narrowed by service, with the admin able to set a category\'s own', () => {
-  expect(ws.flowOf({ code: 'mobile_repair' }, { code: 'electronics' })).toEqual({ diagnosis: true, quote: true, photos: true });
-  expect(ws.flowOf({ code: 'salon_home' }, { code: 'beauty_care' })).toEqual({ diagnosis: false, quote: false, photos: false });
-  expect(ws.flowOf({ code: 'home_tutor' }, { code: 'local_pros' })).toEqual({ diagnosis: false, quote: false, photos: false });
-  expect(ws.flowOf({ code: 'bike_wash', repairVertical: 'bike_wash' }, { code: 'vehicles' })).toEqual({ diagnosis: false, quote: false, photos: true });
+  expect(ws.flowOf({ code: 'mobile_repair' }, { code: 'electronics' })).toEqual({ diagnosis: true, quote: true, photos: true, genderChoice: false });
+  expect(ws.flowOf({ code: 'salon_home' }, { code: 'beauty_care' })).toEqual({ diagnosis: false, quote: false, photos: false, genderChoice: true });
+  expect(ws.flowOf({ code: 'home_tutor' }, { code: 'local_pros' })).toEqual({ diagnosis: false, quote: false, photos: false, genderChoice: false });
+  expect(ws.flowOf({ code: 'bike_wash', repairVertical: 'bike_wash' }, { code: 'vehicles' })).toEqual({ diagnosis: false, quote: false, photos: true, genderChoice: false });
   expect(ws.flowOf({ code: 'two_wheeler', repairVertical: 'two_wheeler' }, { code: 'vehicles' }).diagnosis).toBe(true);
   expect(ws.flowOf({ code: 'appliance_repair', repairVertical: 'appliance_repair' }, { code: 'home_services' }).diagnosis).toBe(true);
-  expect(ws.flowOf({ code: 'carpentry', repairVertical: 'carpentry' }, { code: 'home_services' })).toEqual({ diagnosis: false, quote: true, photos: true });
+  expect(ws.flowOf({ code: 'carpentry', repairVertical: 'carpentry' }, { code: 'home_services' })).toEqual({ diagnosis: false, quote: true, photos: true, genderChoice: false });
   expect(ws.flowOf({ code: 'x' }, { code: 'specialist_home', dashboard: { flow: { photos: false } } }).photos).toBe(false);
 });
 
 test('the terms every screen reads carry the flow', async () => {
-  expect((await ws.termsForVertical('dance_teacher')).flow).toEqual({ diagnosis: false, quote: false, photos: false });
+  expect((await ws.termsForVertical('dance_teacher')).flow).toEqual({ diagnosis: false, quote: false, photos: false, genderChoice: false });
   expect((await ws.termsForVertical('nothing_like_this')).flow).toEqual(ws.REPAIR_FLOW);
 });
 

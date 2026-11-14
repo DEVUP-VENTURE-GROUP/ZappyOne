@@ -553,6 +553,8 @@ async function findProviders(req, res, next) {
       pincode: pincode || null,
       cityCode: cityCode || null,
       scheduledAt: scheduledAt && !Number.isNaN(new Date(scheduledAt).getTime()) ? new Date(scheduledAt) : null,
+      // Only the two values a customer can pick; anything else is no preference.
+      proGender: ['female', 'male'].includes(req.query.proGender) ? req.query.proGender : null,
     });
     const result = { ...found, ...matchingService.poolStaff(found) };
 

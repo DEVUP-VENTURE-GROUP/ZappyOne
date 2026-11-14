@@ -34,10 +34,10 @@ import { chosenPrice } from '@zappy/core/shared/repairBill';
 
 type Named = { code: string; name: string };
 
-export function ConfirmStep({ vertical, brand, model, configuration, problem, diagnosis, provider, repairCode, qualityCode, serviceMode, inspectionFeePaise, location, fuelType, diagnosticAnswers, diagnosticTranscript, addOnCodes, scheduledAt, onDone }: {
+export function ConfirmStep({ vertical, brand, model, configuration, problem, diagnosis, provider, repairCode, qualityCode, serviceMode, inspectionFeePaise, location, fuelType, diagnosticAnswers, diagnosticTranscript, addOnCodes, scheduledAt, proGender = null, onDone }: {
   vertical: string; brand: Named; model: Named; configuration: Named | null; problem: Named; diagnosis: Diagnosis | null; provider: Provider | null;
   repairCode: string | null; qualityCode: string | null; serviceMode: string; inspectionFeePaise: number | null; location: BookingLocation;
-  fuelType: string | null; diagnosticAnswers: Record<string, unknown> | null; diagnosticTranscript: QA[]; addOnCodes: string[]; scheduledAt: Date | null;
+  fuelType: string | null; diagnosticAnswers: Record<string, unknown> | null; diagnosticTranscript: QA[]; addOnCodes: string[]; scheduledAt: Date | null; proGender?: string | null;
   onDone: (booking: { _id: string; reference?: string }) => void;
 }) {
   const [create, { isLoading }] = useCreateRepairBookingMutation();
@@ -81,6 +81,7 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
         ...surge.bookingFields,
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: scheduledAt.toISOString(), slotLabel: slotLabel(scheduledAt) }),
+        ...(proGender && { proGender }),
       }).unwrap();
       onDone(res.booking);
     } catch (err) {
