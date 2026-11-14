@@ -38,6 +38,9 @@ const ELECTRICIAN = packageVertical({
     { code: 'mcb', name: 'MCB or fuse change', minutes: 30, prices: one(249) },
     { code: 'doorbell', name: 'Doorbell install', minutes: 30, prices: one(149) },
     { code: 'inverter', name: 'Inverter install', minutes: 90, prices: one(599) },
+    { code: 'exhaust', name: 'Exhaust fan install', minutes: 45, prices: one(299) },
+    { code: 'decor_light', name: 'Decorative or smart light fitting, per point', minutes: 30, prices: one(199) },
+    { code: 'wiring', name: 'New wiring or rewiring, per point', minutes: 45, prices: one(249) },
   ],
 });
 
@@ -58,6 +61,9 @@ const PLUMBING = packageVertical({
     { code: 'blockage', name: 'Drain or basin blockage clearing', minutes: 60, prices: one(399) },
     { code: 'basin', name: 'Wash basin install', minutes: 90, prices: one(599) },
     { code: 'motor', name: 'Water motor install', minutes: 90, prices: one(699) },
+    { code: 'geyser', name: 'Geyser install', minutes: 60, prices: one(499) },
+    { code: 'geyser_repair', name: 'Geyser repair visit', minutes: 45, prices: one(299) },
+    { code: 'leak_detect', name: 'Hidden water-leak detection', minutes: 60, prices: one(499) },
   ],
 });
 

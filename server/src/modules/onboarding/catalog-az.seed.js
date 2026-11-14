@@ -6,7 +6,8 @@ const one = (p) => ({ one: p });
 const same = (types, p) => Object.fromEntries(types.map((t) => [t.code, p]));
 const RIDES = [{ code: 'bike', name: 'Bike or scooter' }, { code: 'car', name: 'Car' }];
 const CARS = [{ code: 'hatch', name: 'Hatchback' }, { code: 'sedan', name: 'Sedan' }, { code: 'suv', name: 'SUV or MUV' }];
-const APPLIANCES = [{ code: 'washer', name: 'Washing machine' }, { code: 'fridge', name: 'Refrigerator' }, { code: 'microwave', name: 'Microwave' }, { code: 'geyser', name: 'Geyser' }, { code: 'tv', name: 'Television' }, { code: 'chimney', name: 'Kitchen chimney' }];
+const APPLIANCES = [{ code: 'washer', name: 'Washing machine' }, { code: 'fridge', name: 'Refrigerator' }, { code: 'microwave', name: 'Microwave' }, { code: 'geyser', name: 'Geyser' }, { code: 'tv', name: 'Television' }, { code: 'chimney', name: 'Kitchen chimney' }, { code: 'dishwasher', name: 'Dishwasher' }, { code: 'induction', name: 'Induction stove' }, { code: 'cooler', name: 'Air cooler or purifier' }];
+const GADGETS = [{ code: 'tablet', name: 'Tablet' }, { code: 'desktop', name: 'Desktop computer' }, { code: 'printer', name: 'Printer' }, { code: 'watch', name: 'Smartwatch' }, { code: 'console', name: 'Gaming console' }];
 const CLASSES = [{ code: 'primary', name: 'Class 1 to 5' }, { code: 'middle', name: 'Class 6 to 8' }, { code: 'high', name: 'Class 9 and 10' }, { code: 'senior', name: 'Class 11 and 12' }];
 
 const AZ_DOMAINS = [
@@ -25,6 +26,57 @@ const AZ_DOMAINS = [
 const RENAMED_FROM = { home_services: 'Home Services', vehicles: 'Vehicles', family_assist: 'Family Assist' };
 
 const AZ_LINES = [
+  /* From the founder's Hyderabad service catalogue: trades with no line until now. */
+  { code: 'gadget_repair', name: 'Tablet, desktop, printer & gadget repair', domainCode: 'electronics', icon: 'Monitor', typeWord: 'Device', thing: 'device', types: GADGETS,
+    packages: [
+      { code: 'inspect', name: 'Inspection and diagnosis (repair quoted before work)', minutes: 45, prices: same(GADGETS, 249) },
+      { code: 'service', name: 'General service and cleaning', minutes: 60, prices: { tablet: 399, desktop: 499, printer: 449, watch: 299, console: 599 } },
+    ] },
+  { code: 'tech_setup', name: 'Wi-Fi, CCTV & smart home setup', domainCode: 'electronics', icon: 'Wifi', thing: 'job', types: ONE,
+    packages: [
+      { code: 'wifi', name: 'Wi-Fi router setup and coverage check', minutes: 45, prices: one(399) },
+      { code: 'cctv_install', name: 'CCTV camera install, per camera (camera extra)', minutes: 60, prices: one(699) },
+      { code: 'cctv_repair', name: 'CCTV repair visit', minutes: 45, prices: one(349) },
+      { code: 'smart_home', name: 'Smart home device setup (lights, plugs, doorbell)', minutes: 60, prices: one(499) },
+      { code: 'software', name: 'Software install and troubleshooting', minutes: 60, prices: one(399) },
+      { code: 'data_recovery', name: 'Data recovery assessment (recovery quoted first)', minutes: 45, prices: one(499) },
+    ] },
+  { code: 'specialty_cleaning', name: 'Curtains, windows, chimney & speciality cleaning', domainCode: 'specialist_home', icon: 'Sparkles', thing: 'job', types: ONE,
+    packages: [
+      { code: 'curtains', name: 'Curtain cleaning at home, up to 4 panels', minutes: 90, prices: one(799) },
+      { code: 'windows', name: 'Window and glass cleaning, whole home', minutes: 120, prices: one(999) },
+      { code: 'chimney', name: 'Kitchen chimney deep cleaning', minutes: 90, prices: one(999) },
+      { code: 'solar', name: 'Solar panel cleaning, up to 10 panels', minutes: 90, prices: one(799) },
+      { code: 'pool', name: 'Swimming pool cleaning', minutes: 180, prices: one(1999) },
+      { code: 'office', name: 'Office cleaning, up to 1,000 sq ft', minutes: 240, prices: one(2499) },
+      { code: 'post_construction', name: 'Post-construction cleaning site visit and quote', minutes: 45, prices: one(299) },
+    ] },
+  { code: 'gardening', name: 'Gardening & plant care', domainCode: 'specialist_home', icon: 'Leaf', thing: 'garden', types: ONE,
+    packages: [
+      { code: 'visit', name: 'Garden maintenance visit', minutes: 90, prices: one(499) },
+      { code: 'lawn', name: 'Lawn mowing, up to 500 sq ft', minutes: 60, prices: one(699) },
+      { code: 'trim_repot', name: 'Plant trimming and repotting, up to 10 plants', minutes: 90, prices: one(599) },
+      { code: 'terrace', name: 'Terrace or balcony garden setup visit and quote', minutes: 45, prices: one(499) },
+      { code: 'treatment', name: 'Plant disease and pest treatment', minutes: 60, prices: one(399) },
+      { code: 'drip', name: 'Drip irrigation install visit and quote', minutes: 45, prices: one(499) },
+    ] },
+  { code: 'home_inspection', name: 'Home inspection', domainCode: 'specialist_home', icon: 'ClipboardCheck', thing: 'home', types: HOME,
+    packages: [
+      { code: 'report', name: 'Home inspection with a written report', minutes: 120, prices: at(1499, 1999, 2499, 2999) },
+      { code: 'pre_purchase', name: 'Pre-purchase or move-in inspection', minutes: 180, prices: at(2499, 2999, 3499, 3999) },
+    ] },
+  { code: 'dance_teacher', name: 'Dance classes', domainCode: 'local_pros', icon: 'Music', thing: 'class', types: ONE, inHome: true,
+    packages: [
+      { code: 'trial', name: 'Trial class', minutes: 60, prices: one(199) },
+      { code: 'session', name: 'One class at home', minutes: 60, prices: one(499) },
+    ] },
+  { code: 'computer_classes', name: 'Computer classes', domainCode: 'local_pros', icon: 'Laptop', thing: 'class', types: ONE, inHome: true,
+    packages: [
+      { code: 'trial', name: 'Trial class', minutes: 60, prices: one(199) },
+      { code: 'session', name: 'One class at home', minutes: 60, prices: one(399) },
+    ] },
+  { code: 'interior_design', name: 'Interior design consultation', domainCode: 'local_pros', icon: 'Home', thing: 'job', types: ONE,
+    packages: [{ code: 'consult', name: 'Consultation at home with ideas and a rough estimate', minutes: 90, prices: one(999) }] },
   /* Moving & Shifting */
   { code: 'packers_movers', name: 'Packers & movers', domainCode: 'moving', icon: 'Truck', typeWord: 'Home size', thing: 'home', types: HOME, isPopular: true,
     packages: [
@@ -85,11 +137,13 @@ const AZ_LINES = [
       { code: 'door', name: 'Door repair or alignment', minutes: 60, prices: one(299) },
       { code: 'hinge', name: 'Hinge, handle or channel fix', minutes: 30, prices: one(149) },
       { code: 'shelf', name: 'Wall shelf install', minutes: 45, prices: one(249) },
+      { code: 'kitchen_repair', name: 'Modular kitchen repair (hinges, channels, shutters)', minutes: 90, prices: one(499) },
+      { code: 'polish', name: 'Furniture polishing, one item', minutes: 120, prices: one(999) },
     ] },
   { code: 'appliance_repair', name: 'Appliance repair', domainCode: 'home_services', icon: 'WashingMachine', typeWord: 'Appliance', thing: 'appliance', types: APPLIANCES, isPopular: true,
     packages: [
       { code: 'inspect', name: 'Inspection and diagnosis (repair quoted before work)', minutes: 45, prices: same(APPLIANCES, 249) },
-      { code: 'service', name: 'General service', minutes: 60, prices: { washer: 499, fridge: 449, microwave: 349, geyser: 399, tv: 399, chimney: 799 } },
+      { code: 'service', name: 'General service', minutes: 60, prices: { washer: 499, fridge: 449, microwave: 349, geyser: 399, tv: 399, chimney: 799, dishwasher: 599, induction: 299, cooler: 399 } },
     ] },
   { code: 'ro_service', name: 'RO & water purifier service', domainCode: 'home_services', icon: 'GlassWater', thing: 'purifier', types: ONE,
     packages: [
@@ -113,6 +167,7 @@ const AZ_LINES = [
       { code: 'interior', name: 'Interior deep clean and shampoo', minutes: 180, prices: { hatch: 1499, sedan: 1799, suv: 2199 } },
       { code: 'polish', name: 'Exterior wash, polish and wax', minutes: 150, prices: { hatch: 1299, sedan: 1499, suv: 1799 } },
       { code: 'full', name: 'Full detailing, inside and out', minutes: 300, prices: { hatch: 2499, sedan: 2999, suv: 3499 } },
+      { code: 'ceramic', name: 'Ceramic coating', minutes: 480, prices: { hatch: 7999, sedan: 9999, suv: 12999 } },
     ] },
   { code: 'roadside_help', name: 'Battery jump-start & puncture help', domainCode: 'vehicles', icon: 'BatteryCharging', typeWord: 'Vehicle', thing: 'vehicle', types: RIDES, modes: ['roadside', 'doorstep'],
     packages: [
@@ -142,6 +197,10 @@ const AZ_LINES = [
       { code: 'threading', name: 'Eyebrow and upper-lip threading', minutes: 15, prices: one(49) },
       { code: 'mani_pedi', name: 'Manicure and pedicure', minutes: 75, prices: one(899) },
       { code: 'hair_spa', name: 'Hair spa', minutes: 60, prices: one(799) },
+      { code: 'mens_haircut', name: "Men's haircut and styling", minutes: 30, prices: one(249) },
+      { code: 'beard', name: 'Beard trim and grooming', minutes: 20, prices: one(149) },
+      { code: 'womens_haircut', name: "Women's haircut and styling", minutes: 45, prices: one(499) },
+      { code: 'hair_colour', name: 'Hair colouring', minutes: 90, prices: one(1199) },
     ] },
   { code: 'makeup_mehndi', name: 'Makeup, mehndi & hairstyling', domainCode: 'beauty_care', icon: 'Palette', thing: 'session', types: ONE,
     packages: [
@@ -150,6 +209,7 @@ const AZ_LINES = [
       { code: 'mehndi', name: 'Mehndi, both hands', minutes: 60, prices: one(499) },
       { code: 'bridal_mehndi', name: 'Bridal mehndi, hands and feet', minutes: 240, prices: one(2999) },
       { code: 'hairstyle', name: 'Hairstyling', minutes: 45, prices: one(699) },
+      { code: 'saree', name: 'Saree draping', minutes: 30, prices: one(499) },
     ] },
   { code: 'massage_wellness', name: 'Massage & wellness', domainCode: 'beauty_care', icon: 'Leaf', thing: 'session', types: ONE, inHome: true,
     description: 'Relaxation therapy by qualified therapists. Not medical treatment.',
@@ -162,7 +222,14 @@ const AZ_LINES = [
   /* 5. Errands, Shopping & Pickup (grocery runs, shopping pickup, returns and parcels are built in) */
   { code: 'laundry_pickup', name: 'Laundry pickup & drop-off', domainCode: 'errands_pickup', icon: 'Shirt', thing: 'laundry', types: ONE,
     description: 'We collect your clothes, take them to your laundry and bring them back. The laundry bill is paid to the laundry.',
-    packages: [{ code: 'trip', name: 'Pickup and drop back, within 5 km', minutes: 60, prices: one(99) }] },
+    packages: [
+      { code: 'trip', name: 'Pickup and drop back, within 5 km', minutes: 60, prices: one(99) },
+      { code: 'wash_fold', name: 'Wash and fold, up to 5 kg', minutes: 60, prices: one(299) },
+      { code: 'dry_clean', name: 'Dry cleaning, up to 3 garments', minutes: 60, prices: one(399) },
+      { code: 'steam_iron', name: 'Steam ironing, up to 10 pieces', minutes: 60, prices: one(149) },
+      { code: 'shoes', name: 'Shoe cleaning, one pair', minutes: 60, prices: one(299) },
+      { code: 'bag', name: 'Bag cleaning, one bag', minutes: 60, prices: one(399) },
+    ] },
   { code: 'document_delivery', name: 'Document collection & delivery', domainCode: 'errands_pickup', icon: 'FileText', thing: 'documents', types: ONE,
     description: 'Collect papers from one place and hand them over at another, with a photo at both ends.',
     packages: [
@@ -201,6 +268,11 @@ const AZ_LINES = [
       { code: 'site_visit', name: 'Site visit and written quote', minutes: 45, prices: one(199) },
       { code: 'touch_up', name: 'Wall touch-up, one wall', minutes: 180, prices: one(1499) },
       { code: 'damp_check', name: 'Damp and waterproofing inspection', minutes: 45, prices: one(299) },
+      { code: 'wall_crack', name: 'Wall crack repair, one wall', minutes: 120, prices: one(799) },
+      { code: 'wallpaper', name: 'Wallpaper fitting, one wall (paper extra)', minutes: 180, prices: one(1999) },
+      { code: 'false_ceiling', name: 'False ceiling site visit and quote', minutes: 45, prices: one(299) },
+      { code: 'tile_grout', name: 'Tile and grout repair, up to 20 tiles', minutes: 120, prices: one(599) },
+      { code: 'floor_polish', name: 'Floor polishing, up to 200 sq ft', minutes: 180, prices: one(1499) },
     ] },
   { code: 'appliance_install', name: 'Appliance installation', domainCode: 'specialist_home', icon: 'Plug', typeWord: 'Appliance', thing: 'appliance',
     types: [{ code: 'washer', name: 'Washing machine' }, { code: 'chimney', name: 'Kitchen chimney' }, { code: 'geyser', name: 'Geyser' }, { code: 'tv', name: 'Television' }, { code: 'hob', name: 'Gas hob' }],

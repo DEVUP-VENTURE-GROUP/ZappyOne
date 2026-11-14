@@ -30,7 +30,7 @@ test('packages and types land as data', async () => {
   const { Repair } = require('../src/modules/repair/models/repair.model');
   expect((await Brand.find({ category: 'home_cleaning' }).lean()).map((b) => b.name).sort()).toEqual(['1 BHK', '2 BHK', '3 BHK', '4 BHK or villa']);
   expect(await Brand.countDocuments({ category: 'electrician' })).toBe(1);
-  expect(await Problem.countDocuments({ vertical: 'plumbing' })).toBe(7);
+  expect(await Problem.countDocuments({ vertical: 'plumbing' })).toBe(require('../src/modules/repair/seed/home-services.seed').PLUMBING.data.PROBLEMS.length);
   expect(await Repair.countDocuments({ vertical: 'ac_service', pricingMode: 'fixed' })).toBe(5);
 });
 
