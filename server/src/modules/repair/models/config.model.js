@@ -69,7 +69,7 @@ const repairConfigSchema = new mongoose.Schema(
      * worse than none: it is collected from customers and owed to the state,
      * and the two verticals had drifted to 2.5% and 18% for the same service.
      */
-    taxPct: { type: Number, default: 3, min: 0, max: 100 }, // 3% unless admin sets otherwise
+    taxPct: { type: Number, default: 0, min: 0, max: 100 }, // GST on hold until registration; admin sets it in Economics
     /**
      * Inspection economics.
      *

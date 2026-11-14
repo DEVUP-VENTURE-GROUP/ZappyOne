@@ -10,6 +10,7 @@ import BoostTips from './economics/BoostTips';
 import Surge from './economics/Surge';
 import Dispatch from './economics/Dispatch';
 import PartnerCommission from './economics/PartnerCommission';
+import SmallJobs from './economics/SmallJobs';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -185,14 +186,16 @@ function FeesTab() {
   );
 }
 
+// In the order a booking's money is built: what the customer pays, what the partner pays, then the extras and the rules around a job.
 const TABS = [
-  ['fees', 'Fees & commission', 'Platform fee, commission and tax for every service'],
-  ['partners', 'Partner commission', 'What shops, agencies, companies and individual providers pay ZappyOne on each job'],
-  ['cancellations', 'Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
-  ['dues', 'Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
-  ['boost', 'Boost & tips', 'What customers may add for a faster match, and tip after a job'],
-  ['dispatch', 'Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
-  ['surge', 'Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
+  ['fees', '1. Customer fees & tax', 'Platform fee, commission and tax for every service'],
+  ['partners', '2. Partner commission', 'What shops, agencies, companies and individual providers pay ZappyOne on each job'],
+  ['smalljobs', '3. Small jobs', 'Smaller jobs pay a smaller commission, by price'],
+  ['surge', '4. Surge', 'Automatic: busy areas, rain and late night, priced every minute inside your limits'],
+  ['boost', '5. Boost & tips', 'What customers may add for a faster match, and tip after a job'],
+  ['cancellations', '6. Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
+  ['dispatch', '7. Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
+  ['dues', '8. Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
 ];
 
 export default function Economics() {
@@ -214,6 +217,7 @@ export default function Economics() {
       </div>
       {tab === 'fees' && <FeesTab />}
       {tab === 'partners' && <PartnerCommission />}
+      {tab === 'smalljobs' && <SmallJobs />}
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
       {tab === 'boost' && <BoostTips />}

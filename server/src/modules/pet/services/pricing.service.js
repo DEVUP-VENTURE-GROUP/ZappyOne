@@ -377,7 +377,8 @@ async function quote({
    * cost — the provider spent that on fuel to get there.
    */
   // A partner on their own prices pays their partner commission (shop/partner-commission); the rule's rate is for ZappyOne staff.
-  const partnerPct = ownPricing ? await require('../../shop/partner-commission').pctFor(capability.shopId ? { shopId: capability.shopId } : { workerId: capability.workerId }) : null;
+  const pc = require('../../shop/partner-commission');
+  const partnerPct = ownPricing ? await pc.forBase(await pc.pctFor(capability.shopId ? { shopId: capability.shopId } : { workerId: capability.workerId }), serviceMoney) : null;
   const commissionPaise = Math.round(serviceMoney * ((partnerPct ?? sharedRule.commissionPct ?? 0) / 100));
   const providerAmountPaise = Math.max(
     0,

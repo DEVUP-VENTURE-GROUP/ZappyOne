@@ -167,8 +167,8 @@ async function subscribe(userId, { planId, months, startDay, timeSlot, address, 
   if (!covers) throw httpError('This provider does not come to that address. Pick a plan from someone near you.', 409, 'NOT_COVERED');
   const cfg = await config();
   const q = quoteOf(plan, months, cfg);
-  const { pctFor } = require('../shop/partner-commission');
-  const commissionPct = (await pctFor(plan.owner.kind === 'shop' ? { shopId: plan.owner.id } : { workerId: plan.owner.id })) ?? 0;
+  const { pctFor, forBase } = require('../shop/partner-commission');
+  const commissionPct = (await forBase(await pctFor(plan.owner.kind === 'shop' ? { shopId: plan.owner.id } : { workerId: plan.owner.id }), q.monthlyPaise)) ?? 0;
   const endDay = plan.type === 'pack' ? addDays(startDay, 1) : addMonths(startDay, months);
   const billing = Array.from({ length: plan.type === 'pack' ? 1 : months }, (_, i) => ({ index: i, fromDay: plan.type === 'pack' ? startDay : addMonths(startDay, i), duePaise: q.monthlyPaise + q.platformFeePaise, settled: false }));
 

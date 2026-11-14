@@ -199,9 +199,10 @@ describe('item money and service money never mix', () => {
 
   it('never commissions the item money', async () => {
     const { task } = await taskService.createTask(baseTask());
-    // 20% of the ₹110 fee, not of ₹460.
-    expect(task.charge.commissionPaise).toBe(inr(16));
-    expect(task.charge.workerEarningPaise).toBe(inr(64));
+    // The helper's 20% partner rate (this suite's fixture), lowered by the configured small-job tier, on the ₹80 fee only, never on the ₹350 of goods.
+    const pct = await require('../src/modules/shop/partner-commission').forBase(20, inr(80));
+    expect(task.charge.commissionPaise).toBe(Math.round((inr(80) * pct) / 100));
+    expect(task.charge.workerEarningPaise).toBe(inr(80) - task.charge.commissionPaise);
   });
 
   it('pays the helper their fee and their money back as SEPARATE ledger rows', async () => {
@@ -225,14 +226,16 @@ describe('item money and service money never mix', () => {
     // The reimbursement is the helper's own ₹240 coming back…
     expect(byReason[Transaction.REASONS.WORKER_REIMBURSEMENT]).toBe(inr(240));
     // …and the earning is the ₹88 fee. Two rows, two reasons.
-    expect(byReason[Transaction.REASONS.WORKER_EARNING]).toBe(inr(64));
+    // What the helper's own rate left them, as frozen on the task at settlement.
+    const settled = await HelpingTask.findById(task._id).lean();
+    expect(byReason[Transaction.REASONS.WORKER_EARNING]).toBe(settled.charge.workerEarningPaise);
 
     // The invariant that matters: an earnings report reading WORKER_EARNING
     // sees ₹88, not ₹328.
     const earnings = rows
       .filter((r) => r.reason === Transaction.REASONS.WORKER_EARNING)
       .reduce((s, r) => s + r.amountPaise, 0);
-    expect(earnings).toBe(inr(64));
+    expect(earnings).toBe(settled.charge.workerEarningPaise);
   });
 
   it('a cash fee is not paid to the helper again: they are billed the commission instead', async () => {

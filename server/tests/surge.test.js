@@ -10,6 +10,7 @@
 jest.mock('../src/modules/maps/google-maps.service', () => ({ getDistanceMatrix: jest.fn(async () => { throw new Error('offline'); }) }));
 const mongoose = require('mongoose');
 const { startMongo, stopMongo } = require('./helpers');
+const { SURGE_DEFAULTS } = require('../src/modules/pricing/services/config.service');
 
 jest.setTimeout(60000);
 let surge; let HelpingTask; let Transaction; let config; let redis;
@@ -92,18 +93,18 @@ test('hot zones: a worker approved for the line sees the surging zone near them;
   await ProviderEnrolment.create({ workerId: me, providerKind: 'individual', domainCode: 'helping_services', lineCode: 'shopping_pickup', status: 'approved' });
   const hot = await surge.hotZonesFor({ workerId: me, lat: AT.lat + 0.02, lng: AT.lng });
   expect(hot.on).toBe(true);
-  expect(hot.sharePct).toBe(60);
+  expect(hot.sharePct).toBe(SURGE_DEFAULTS.providerSharePct);
   expect(hot.zones[0]).toMatchObject({ line: 'shopping_pickup', multiplier: 1.1 });
   expect(hot.zones[0].km).toBeGreaterThan(1);
   const other = await surge.hotZonesFor({ workerId: new mongoose.Types.ObjectId(), lat: AT.lat, lng: AT.lng });
   expect(other.zones).toHaveLength(0);
 });
 
-test('booking pays the locked quote; split 60/40; an expired quote with a moved price is refused first', async () => {
+test('booking pays the locked quote; split by the configured share; an expired quote with a moved price is refused first', async () => {
   const q = await surge.quote({ kind: 'helping', line: 'shopping_pickup', ...AT, basePaise: 20000 });
   const t = await task();
   const s = await surge.attach('helping', t, { quoteId: q.quoteId, userId: t.userId });
-  expect(s).toMatchObject({ paise: q.totalPaise, providerPaise: Math.round(q.totalPaise * 0.6) });
+  expect(s).toMatchObject({ paise: q.totalPaise, providerPaise: Math.round((q.totalPaise * SURGE_DEFAULTS.providerSharePct) / 100) });
   expect(s.providerPaise + s.platformPaise).toBe(s.paise);
   // Attached once only.
   expect(await surge.attach('helping', t, { quoteId: q.quoteId, userId: t.userId })).toBeNull();

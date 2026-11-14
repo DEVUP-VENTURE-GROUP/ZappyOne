@@ -63,7 +63,8 @@ const WORKFORCE_DEFAULTS = {
 };
 
 // Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.
-const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5, ownLinkPct: 0, ownLinkMonths: 6 };
+// smallJobs: a job up to uptoRupees pays at most pct, so a ₹99 job is not charged like a ₹999 one (the lower of this and the partner's rate).
+const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5, ownLinkPct: 0, ownLinkMonths: 6, smallJobs: [{ uptoRupees: 199, pct: 2 }, { uptoRupees: 499, pct: 3 }] };
 
 const FAST_ASSIGN_DEFAULTS = {
   enabled: true,
@@ -94,7 +95,7 @@ const SURGE_DEFAULTS = {
   nightPaise: 2000,          // ₹20 late at night
   nightStartHour: 22,
   nightEndHour: 6,
-  providerSharePct: 60,      // provider's share of every surge line; ZappyOne keeps the rest
+  providerSharePct: 80,      // provider's share of every surge line; ZappyOne keeps the rest
   minDemand: 3,              // bookings + searches in 15 min before a zone can surge
   lockMinutes: 10,           // a quoted price holds this long
 };

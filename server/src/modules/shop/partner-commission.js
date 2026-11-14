@@ -52,8 +52,16 @@ async function overrides() {
     .sort((a, b) => new Date(b.setAt || 0) - new Date(a.setAt || 0));
 }
 
+// The partner's rate for a job of this size: the small-job tier when it is lower (Economics → Partner commission).
+async function forBase(pct, basePaise) {
+  if (pct == null) return pct;
+  const { smallJobs = [] } = await require('../pricing/services/config.service').partnerCommissionSettings();
+  const tier = [...smallJobs].sort((a, b) => a.uptoRupees - b.uptoRupees).find((t) => (basePaise || 0) <= t.uptoRupees * 100);
+  return tier && Number.isFinite(Number(tier.pct)) ? Math.min(pct, Number(tier.pct)) : pct;
+}
+
 async function commissionOn(doc, basePaise, fallbackPct) {
-  const pct = await pctFor(doc);
+  const pct = await forBase(await pctFor(doc), basePaise);
   return Math.round(((basePaise || 0) * (pct ?? fallbackPct ?? 0)) / 100);
 }
 
@@ -69,7 +77,8 @@ async function refreeze(kind, doc) {
   const frozen = money.partnerRate?.holder === holder ? money.partnerRate.pct : null;
   const pct = frozen ?? await pctFor(fresh);
   if (pct == null) return 0;
-  const next = Math.round((money.commissionBasePaise * pct) / 100);
+  // The rate is frozen, the tier is not: extras that grow the job move it out of the small-job tier.
+  const next = Math.round((money.commissionBasePaise * await forBase(pct, money.commissionBasePaise)) / 100);
   const change = next - (money.commissionPaise || 0);
   const set = frozen == null ? { [`${spec.path}.partnerRate`]: { holder, pct } } : {};
   if (change) {
@@ -91,4 +100,4 @@ async function refreeze(kind, doc) {
   return delta;
 }
 
-module.exports = { pctFor, rateOf, setOverride, overrides, commissionOn, refreeze };
+module.exports = { pctFor, forBase, rateOf, setOverride, overrides, commissionOn, refreeze };

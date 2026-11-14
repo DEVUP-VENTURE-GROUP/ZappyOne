@@ -372,7 +372,7 @@ router.get('/economics/partner-commission', async (req, res, next) => {
 });
 
 router.put('/economics/partner-commission',
-  validate(Joi.object({ ...Object.fromEntries(['shop', 'agency', 'company', 'individual', 'ownLinkPct'].map((k) => [k, Joi.number().min(0).max(50)])), ownLinkMonths: Joi.number().integer().min(0).max(36) }).min(1)),
+  validate(Joi.object({ ...Object.fromEntries(['shop', 'agency', 'company', 'individual', 'ownLinkPct'].map((k) => [k, Joi.number().min(0).max(50)])), ownLinkMonths: Joi.number().integer().min(0).max(36), smallJobs: Joi.array().max(5).items(Joi.object({ uptoRupees: Joi.number().integer().min(1).max(100000).required(), pct: Joi.number().min(0).max(50).required() })) }).min(1)),
   async (req, res, next) => {
     try {
       const cfg = require('../pricing/services/config.service');

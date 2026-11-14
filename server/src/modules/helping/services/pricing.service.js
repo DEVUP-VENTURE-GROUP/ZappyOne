@@ -149,7 +149,8 @@ async function quote({
    * on the government's tax. And never, under any circumstance, on item money.
    */
   // A partner at their own rates pays their partner commission (shop/partner-commission); the service's rate is for ZappyOne staff.
-  const partnerPct = rate ? await require('../../shop/partner-commission').pctFor(rate.shopId ? { shopId: rate.shopId } : { workerId: rate.workerId }) : null;
+  const pc = require('../../shop/partner-commission');
+  const partnerPct = rate ? await pc.forBase(await pc.pctFor(rate.shopId ? { shopId: rate.shopId } : { workerId: rate.workerId }), feesPaise) : null;
   const commissionPaise = Math.round((feesPaise * (partnerPct ?? cfg.commissionPct ?? 0)) / 100);
   const workerEarningPaise = Math.max(0, feesPaise - commissionPaise);
 
