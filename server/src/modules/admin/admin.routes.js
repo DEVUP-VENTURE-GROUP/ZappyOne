@@ -3,6 +3,8 @@ const { authenticate, requireRole } = require('../../middlewares/auth');
 
 const router = express.Router();
 router.use(authenticate, requireRole('admin'));
+// Admin reports (GET) read their aggregations from a replica, never slowing bookings (core/db/report-reads).
+router.use(require('../../core/db/report-reads').reportReads);
 
 router.use('/', require('./routes/team.routes'));
 router.use('/', require('./routes/metrics.routes'));
