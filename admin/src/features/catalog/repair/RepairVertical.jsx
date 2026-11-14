@@ -658,13 +658,6 @@ const CONFIG_FIELDS = [
     ['minJobPaise', 'Minimum job value - smaller jobs are topped up (₹, 0 = off)', 'money'],
     ['groupDiscountPct', 'Discount on each extra item in one visit (%, 0 = off)'],
   ] },
-  // Journeys: priced by distance, all of it to whoever travels (no commission).
-  { group: 'Visit fee - doorstep & roadside (provider travels)', keys: [
-    ['visitFreeKm', 'Free within (km)'],
-    ['visitPerKmPaise', 'Per km after that (₹)', 'money'],
-    ['visitBaseFeePaise', 'Base to turn up (₹)', 'money'],
-    ['visitMaxFeePaise', 'Maximum visit fee (₹, 0 = no cap)', 'money'],
-  ] },
   { group: 'Pickup & return - device travels', keys: [
     ['pickupFreeKm', 'Free within (km)'],
     ['pickupPerKmPaise', 'Per km after that (₹, each way)', 'money'],

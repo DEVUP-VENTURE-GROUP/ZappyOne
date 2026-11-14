@@ -85,6 +85,20 @@ const FAST_ASSIGN_DEFAULTS = {
   autoChooseMaxMin: 30,    // an offer later than this always needs the customer's own OK
 };
 
+// The pro's journey to the door and the wait there, for every service; a provider's own travel price still wins.
+const TRAVEL_DEFAULTS = {
+  baseFeePaise: 0,              // to turn up, on every journey
+  perKmPaise: 800,              // per road km after the free distance
+  freeKm: 0.5,                  // first half a kilometre free
+  roadFactor: 1.3,              // straight line to road distance in the city
+  maxPaise: 15000,              // journey never above this; 0 = no cap
+  trafficExtraPerKmPaise: 100,  // added per km inside traffic hours
+  trafficHours: [{ startHour: 8, endHour: 11 }, { startHour: 17, endHour: 21 }], // IST
+  waitFreeMin: 10,              // minutes at the door before waiting is charged
+  waitPerMinPaise: 200,         // after that, per minute, all to the pro
+  waitMaxPaise: 6000,           // waiting never above this
+};
+
 const SURGE_DEFAULTS = {
   // Always automatic, every service where someone travels to the customer.
   // Nothing to switch per service; the kill switch is the one emergency stop.
@@ -106,6 +120,7 @@ function toView(doc) {
     fastAssign: { ...FAST_ASSIGN_DEFAULTS, ...((doc.fastAssign && typeof doc.fastAssign === 'object') ? doc.fastAssign : {}) },
     workforce: { ...WORKFORCE_DEFAULTS, ...((doc.workforce && typeof doc.workforce === 'object') ? doc.workforce : {}) },
     partnerCommission: { ...PARTNER_COMMISSION_DEFAULTS, ...((doc.partnerCommission && typeof doc.partnerCommission === 'object') ? doc.partnerCommission : {}) },
+    travel: { ...TRAVEL_DEFAULTS, ...((doc.travel && typeof doc.travel === 'object') ? doc.travel : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -382,6 +397,11 @@ async function workforceSettings() {
   return { ...WORKFORCE_DEFAULTS, ...(cfg.workforce || {}) };
 }
 
+async function travelSettings() {
+  const cfg = await getActiveConfig();
+  return { ...TRAVEL_DEFAULTS, ...(cfg.travel || {}) };
+}
+
 async function partnerCommissionSettings() {
   const cfg = await getActiveConfig();
   return { ...PARTNER_COMMISSION_DEFAULTS, ...(cfg.partnerCommission || {}) };
@@ -393,6 +413,8 @@ module.exports = {
   workforceSettings,
   PARTNER_COMMISSION_DEFAULTS,
   partnerCommissionSettings,
+  TRAVEL_DEFAULTS,
+  travelSettings,
   fastAssignSettings,
   SURGE_DEFAULTS,
   getActiveConfig,

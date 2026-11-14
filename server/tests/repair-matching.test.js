@@ -440,6 +440,12 @@ describe('re-dispatch after release', () => {
   });
 });
 
+// The journey for these sums (Economics → Travel & waiting): straight-line km, no traffic hours, so they hold at any hour.
+async function travelAt(over) {
+  const c = require('../src/modules/pricing/services/config.service');
+  await c.updateActiveConfig({ travel: { ...c.TRAVEL_DEFAULTS, baseFeePaise: 0, roadFactor: 1, trafficHours: [], ...over } }, new mongoose.Types.ObjectId());
+}
+
 describe('provider list shows what the customer will pay', () => {
   afterEach(async () => {
     await Promise.all([
@@ -450,7 +456,8 @@ describe('provider list shows what the customer will pay', () => {
   });
 
   it('each provider carries the full bill the booking will charge: price + visit fee + platform fee', async () => {
-    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0, visitFreeKm: 3, visitPerKmPaise: 600, visitMaxFeePaise: 15000, visitBaseFeePaise: 0 } });
+    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0 } });
+    await travelAt({ perKmPaise: 600, freeKm: 3, maxPaise: 15000 });
     pricingService.invalidateConfigCache();
     await makeProvider({ name: 'Five Km Shop', priceP: 75000, distanceKm: 5 });
     const ctrl = require('../src/modules/repair/controllers/catalog.controller');
@@ -486,7 +493,8 @@ describe('several items in one booking (services/group)', () => {
   });
 
   it('one provider for both: the visit and the platform fee once, the second item discounted', async () => {
-    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0, visitFreeKm: 3, visitPerKmPaise: 600, visitMaxFeePaise: 15000, visitBaseFeePaise: 0, groupDiscountPct: 10 } });
+    await RepairConfig.updateMany({ vertical: 'mobile' }, { $set: { platformFeePaise: 1000, taxPct: 0, groupDiscountPct: 10 } });
+    await travelAt({ perKmPaise: 600, freeKm: 3, maxPaise: 15000 });
     pricingService.invalidateConfigCache();
     await makeProvider({ name: 'Both Shop', priceP: 75000, distanceKm: 5 });
     const q = await group.quote({ items: [item('Mine'), item('Second')], location: where, serviceMode: 'doorstep' });

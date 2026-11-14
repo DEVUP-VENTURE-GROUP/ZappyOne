@@ -329,9 +329,10 @@ describe('pricing shape', () => {
     });
     expect(snap.pickupPaise).toBe(0);
     expect(snap.returnPaise).toBe(0);
-    // The provider's own journey is the visit fee instead, capped (₹150 by default).
-    expect(snap.travelPaise).toBe(15000);
-    expect(snap.totalPaise).toBe(75000 + 15000);
+    // The provider's own journey is the visit fee instead, capped (Economics → Travel & waiting).
+    const { maxPaise } = await require('../src/modules/pricing/services/config.service').travelSettings();
+    expect(snap.travelPaise).toBe(maxPaise);
+    expect(snap.totalPaise).toBe(75000 + maxPaise);
   });
 
   /*
@@ -345,17 +346,18 @@ describe('pricing shape', () => {
       vertical: 'mobile', repairCode: 'battery_replacement', providerPrice: provider, referencePrice: reference, serviceMode, distanceKm,
     });
 
-    it('₹750 at 5 km: ₹6 a km after 3 free km = ₹12, all of it to the provider', async () => {
+    it('₹750 at 5 km: the journey from Travel & waiting, all of it to the provider', async () => {
       const s = await snap('doorstep', 5);
-      expect(s.travelPaise).toBe(1200);
-      expect(s.totalPaise).toBe(75000 + 1200);
+      const journey = (await pricingSvc.journeyFee(5)).paise;
+      expect(s.travelPaise).toBe(journey);
+      expect(s.totalPaise).toBe(75000 + journey);
       expect(s.commissionPaise).toBe(Math.round(75000 * 0.15)); // on the repair, not the journey
       expect(s.distanceKm).toBe(5);
     });
 
     it('free inside the radius, the same for roadside, nothing for walk-in, nothing with no distance', async () => {
-      expect((await snap('doorstep', 2.5)).travelPaise).toBe(0);
-      expect((await snap('roadside', 5)).travelPaise).toBe(1200);
+      expect((await snap('doorstep', 0.3)).travelPaise).toBe(0);
+      expect((await snap('roadside', 5)).travelPaise).toBe((await pricingSvc.journeyFee(5)).paise);
       expect((await snap('workshop', 12)).travelPaise).toBe(0);
       expect((await snap('doorstep', null)).travelPaise).toBe(0);
     });

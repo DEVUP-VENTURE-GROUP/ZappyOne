@@ -48,6 +48,8 @@ const pricingConfigSchema = new mongoose.Schema(
     fastAssign: { type: mongoose.Schema.Types.Mixed, default: undefined },
     workforce: { type: mongoose.Schema.Types.Mixed, default: undefined },
     partnerCommission: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    // The pro's journey and waiting at the door, for every service (config.service TRAVEL_DEFAULTS); Economics → Travel & waiting.
+    travel: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },

@@ -33,8 +33,11 @@ beforeAll(async () => {
 
   // Every part on: ₹20 to start the trip, 3 km free, ₹6 a km after; ₹10 platform fee; 18% tax.
   await RepairConfig.updateOne({ vertical: 'daily_cleaning', supersededAt: null },
-    { $set: { visitBaseFeePaise: 2000, visitPerKmPaise: 600, visitFreeKm: 3, visitMaxFeePaise: 0, platformFeePaise: 1000, taxPct: 18, minJobPaise: 0 } }, { upsert: true });
+    { $set: { platformFeePaise: 1000, taxPct: 18, minJobPaise: 0 } }, { upsert: true });
   require('../src/modules/repair/services/pricing.service').invalidateConfigCache();
+  // The journey part of it (Economics → Travel & waiting), straight-line km and no traffic hours so the sum below holds at any time of day.
+  const travelCfg = require('../src/modules/pricing/services/config.service');
+  await travelCfg.updateActiveConfig({ travel: { ...travelCfg.TRAVEL_DEFAULTS, baseFeePaise: 2000, perKmPaise: 600, freeKm: 3, roadFactor: 1, maxPaise: 0, trafficHours: [] } }, new mongoose.Types.ObjectId());
 
   // Late night right now (the window covers this hour); no busy-area surge.
   const config = require('../src/modules/pricing/services/config.service');

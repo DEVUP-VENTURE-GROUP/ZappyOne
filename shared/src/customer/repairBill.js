@@ -31,6 +31,7 @@ export function billExtras(bill) {
   const feePaise = journeyPaise + (bill.smallJobPaise || 0) + (bill.platformFeePaise || 0);
   return [
     [feeLabel(bill), feePaise],
+    [`Waiting at your door${bill.waitingMin ? ` (${bill.waitingMin} min)` : ''}`, bill.waitingPaise],
     ['Taxes', bill.taxPaise],
   ].filter(([, paise]) => paise > 0).map(([label, paise]) => ({ label, paise }));
 }
@@ -44,13 +45,18 @@ export function feeLabel(b = {}) {
 /** Nearby enough that the visit costs nothing: worth saying ("Free visit"). */
 export const freeVisit = (bill, serviceMode) => !!bill && ['doorstep', 'roadside'].includes(serviceMode) && !bill.travelPaise;
 
-/** How far the pro is and what the visit costs, when the distance shaped the price ("Your pro is 2.4 km away. The visit is free."). */
+/** How far the pro is, what the visit costs, and the waiting rule, for a doorstep job ("Your pro is 2.4 km away. The visit is free. Free waiting for 10 min…"). */
 export function visitNote(bill, serviceMode, pro = 'pro') {
-  if (!bill || bill.distanceKm == null || !['doorstep', 'roadside'].includes(serviceMode)) return null;
+  if (!bill || !['doorstep', 'roadside'].includes(serviceMode)) return null;
+  const parts = [];
   const km = Number(bill.distanceKm);
-  if (!Number.isFinite(km)) return null;
-  const away = km < 1 ? 'less than 1 km away' : `${km.toFixed(1)} km away`;
-  return `Your ${pro} is ${away}. ${bill.travelPaise > 0 ? 'Their travel is in the fee above.' : 'The visit is free.'}`;
+  if (bill.distanceKm != null && Number.isFinite(km)) {
+    const away = km < 1 ? 'less than 1 km away' : `${km.toFixed(1)} km away`;
+    parts.push(`Your ${pro} is ${away}. ${bill.travelPaise > 0 ? `Their travel is in the fee above${bill.trafficHours ? ', at the traffic-hours rate' : ''}.` : 'The visit is free.'}`);
+  }
+  const w = bill.waitRule;
+  if (w?.perMinPaise > 0) parts.push(`Free waiting for ${w.freeMin} min at your door, then ₹${w.perMinPaise / 100} a minute${w.maxPaise > 0 ? ` (at most ₹${w.maxPaise / 100})` : ''}.`);
+  return parts.length ? parts.join(' ') : null;
 }
 
 /** The bill's words in the service's own terms (repairBasket termsOf): a class is not a repair and has no parts. */

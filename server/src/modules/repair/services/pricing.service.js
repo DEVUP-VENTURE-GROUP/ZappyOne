@@ -399,10 +399,21 @@ const logisticsFeePaise = (cfg, distanceKm, legacyFlatPaise) => distanceFeePaise
   basePaise: cfg.pickupBaseFeePaise || 0, perKmPaise: cfg.pickupPerKmPaise || 0, freeKm: cfg.pickupFreeKm || 0, capPaise: cfg.pickupMaxFeePaise || 0,
 }, distanceKm, legacyFlatPaise);
 
-/** The provider travelling to a doorstep or roadside job, priced by distance. */
-const visitFeePaise = (cfg, distanceKm) => distanceFeePaise({
-  basePaise: cfg.visitBaseFeePaise || 0, perKmPaise: cfg.visitPerKmPaise || 0, freeKm: cfg.visitFreeKm || 0, capPaise: cfg.visitMaxFeePaise || 0,
-}, distanceKm, 0);
+// IST hour, for the traffic hours admin sets.
+const istHour = (at) => new Date(new Date(at).getTime() + 330 * 60000).getUTCHours();
+
+/** The provider's journey to a doorstep or roadside job (Economics → Travel & waiting): road distance, the traffic rate inside traffic hours, capped. */
+async function journeyFee(distanceKm, at = new Date()) {
+  if (distanceKm == null || !Number.isFinite(distanceKm)) return null;
+  const t = await require('../../pricing/services/config.service').travelSettings();
+  // Charged on the exact road distance; rounded only for showing.
+  const exactKm = distanceKm * (Number(t.roadFactor) || 1);
+  const roadKm = Math.round(exactKm * 10) / 10;
+  const h = istHour(at || new Date());
+  const traffic = (t.trafficHours || []).some((r) => h >= r.startHour && h < r.endHour);
+  const perKmPaise = (t.perKmPaise || 0) + (traffic ? t.trafficExtraPerKmPaise || 0 : 0);
+  return { paise: distanceFeePaise({ basePaise: t.baseFeePaise || 0, perKmPaise, freeKm: t.freeKm || 0, capPaise: t.maxPaise || 0 }, exactKm, 0), roadKm, traffic };
+}
 
 async function buildPriceSnapshot({
   vertical,
@@ -422,6 +433,8 @@ async function buildPriceSnapshot({
   skipPlatformFee = false,
   // The visiting provider's own inspection fee (inspectionFeeFor / nearbyInspectionFee).
   inspectionFeePaise = 0,
+  // When the visit happens (a booking for later), for the traffic hours; now when not given.
+  at = null,
 }) {
   const cfg = await getConfig(vertical);
   const repair = repairCode ? await Repair.findOne({ code: repairCode, vertical }).lean() : null;
@@ -484,7 +497,10 @@ async function buildPriceSnapshot({
   const consumablesPaise = fromProvider ? 0 : (source.consumablesPaise || 0);
   // A doorstep or roadside visit pays the provider's journey (a provider's own
   // travel price, when they set one, wins).
-  const travelPaise = skipJourney ? 0 : (source.travelPaise || (ON_LOCATION_MODES.includes(serviceMode) ? visitFeePaise(cfg, distanceKm) : 0));
+  const journey = !skipJourney && !source.travelPaise && ON_LOCATION_MODES.includes(serviceMode) ? await journeyFee(distanceKm, at) : null;
+  // The waiting rule a doorstep customer is told before booking, since waiting is the one line added after it.
+  const travel = ON_LOCATION_MODES.includes(serviceMode) ? await require('../../pricing/services/config.service').travelSettings() : null;
+  const travelPaise = skipJourney ? 0 : (source.travelPaise || journey?.paise || 0);
 
   // Collection and return are the platform's logistics, priced by distance —
   // not part of what the provider quoted for the repair itself.
@@ -536,6 +552,10 @@ async function buildPriceSnapshot({
     providerPricingVersion: providerPrice?.version || null,
     referencePricingId: referencePrice?.referencePricingId || null,
     referencePricingVersion: referencePrice?.version || null,
+    // Road km and whether the traffic rate applied, so both bills can say why the journey costs what it does.
+    travelKm: journey?.roadKm ?? null,
+    trafficHours: !!journey?.traffic,
+    waitRule: travel && travel.waitPerMinPaise > 0 ? { freeMin: travel.waitFreeMin || 0, perMinPaise: travel.waitPerMinPaise, maxPaise: travel.waitMaxPaise || 0 } : null,
     /** How far the journey is (the device's, or the provider's), when that shaped the price. */
     distanceKm: serviceMode === 'pickup_repair' || ON_LOCATION_MODES.includes(serviceMode) ? distanceKm : null,
     resolutionPath: providerPrice?.resolutionPath || referencePrice?.resolutionPath || 'unresolved',
@@ -654,6 +674,7 @@ function referencePriceAsProvider(ref) {
 }
 
 module.exports = {
+  journeyFee,
   getConfig,
   invalidateConfigCache,
   resolveReferencePrice,

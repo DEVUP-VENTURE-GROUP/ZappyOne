@@ -201,7 +201,7 @@ async function createBooking({
   const priceSnapshot = (repairCode || isInspectionOnly)
     ? await pricingService.buildPriceSnapshot({
       vertical, repairCode, providerPrice, referencePrice, serviceMode, discountPaise, distanceKm,
-      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee, inspectionFeePaise,
+      addOnsTotalPaise, addOnsCommissionPaise, addOnsCommissionBasePaise, skipJourney, skipPlatformFee, inspectionFeePaise, at: scheduledAt,
     })
     : {
       subtotalPaise: 0, totalPaise: 0, currency: 'INR',

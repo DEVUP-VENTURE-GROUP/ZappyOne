@@ -72,7 +72,9 @@ test('menu service: the pro builds their menu, a customer finds and books their 
   const final = await RepairBooking.findById(b._id).lean();
   // ZappyOne's part of a cash job: its commission, the platform fee and the tax the pro collected for it.
   const zappy = (final.priceSnapshot.commissionPaise || 0) + (final.priceSnapshot.platformFeePaise || 0) + (final.priceSnapshot.taxPaise || 0);
-  expect(final.priceSnapshot.taxPaise).toBeGreaterThan(0);
+  // Tax is on the bill exactly when admin has set a rate (on hold at 0 until GST registration), and is ZappyOne's either way.
+  const { taxPct } = await require('../src/modules/repair/services/pricing.service').getConfig(final.vertical);
+  expect(final.priceSnapshot.taxPaise > 0).toBe(taxPct > 0);
   const dues = await require('../src/modules/worker/worker-dues.service').getDuesStatus(worker._id);
   expect(dues.duesPaise).toBe(zappy);
   expect(zappy).toBeLessThan(final.priceSnapshot.totalPaise);

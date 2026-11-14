@@ -365,6 +365,36 @@ router.put('/economics/dispatch',
     } catch (err) { next(err); }
   });
 
+/* Economics → Travel & waiting: the pro's journey and the wait at the door, for every service (pricing config.service TRAVEL_DEFAULTS) */
+
+router.get('/economics/travel', async (req, res, next) => {
+  try { res.json({ travel: await require('../pricing/services/config.service').travelSettings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/travel',
+  validate(Joi.object({
+    baseFeePaise: Joi.number().integer().min(0).max(100000),
+    perKmPaise: Joi.number().integer().min(0).max(10000),
+    freeKm: Joi.number().min(0).max(20),
+    roadFactor: Joi.number().min(1).max(2),
+    maxPaise: Joi.number().integer().min(0).max(200000),
+    trafficExtraPerKmPaise: Joi.number().integer().min(0).max(5000),
+    trafficHours: Joi.array().max(6).items(Joi.object({ startHour: Joi.number().integer().min(0).max(23).required(), endHour: Joi.number().integer().min(1).max(24).greater(Joi.ref('startHour')).required() })),
+    waitFreeMin: Joi.number().integer().min(0).max(120),
+    waitPerMinPaise: Joi.number().integer().min(0).max(5000),
+    waitMaxPaise: Joi.number().integer().min(0).max(100000),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const cfg = require('../pricing/services/config.service');
+      const before = await cfg.travelSettings();
+      await cfg.updateActiveConfig({ travel: { ...before, ...req.body } }, req.auth.sub);
+      const after = await cfg.travelSettings();
+      await auditService.fromRequest(req, 'economics.travel', { kind: 'system', id: null }, before, after);
+      res.json({ travel: after });
+    } catch (err) { next(err); }
+  });
+
 /* Economics → Partner commission: percent taken from each kind of partner (shop/partner-commission) */
 
 router.get('/economics/partner-commission', async (req, res, next) => {

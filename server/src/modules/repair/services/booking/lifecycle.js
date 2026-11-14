@@ -67,6 +67,9 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
    */
   const timing = await slaService.deadlineFor(booking, next);
 
+  // The wait at the door, frozen as work starts (Economics → Travel & waiting).
+  if (booking.status === 'ARRIVED' && ['DIAGNOSING', 'REPAIR_IN_PROGRESS'].includes(next)) await freezeWaiting(booking);
+
   if (!booking.applyTransition(next, { actorRole, actorId, reason, meta })) {
     throw httpError(
       `Cannot move a booking from ${booking.status} to ${next}`,
@@ -165,6 +168,28 @@ async function issueWarranty(booking) {
 }
 
 /** Object-level authorisation — the customer, the assigned provider, or admin. */
+// From Arrived to the customer's code (not the pro's later tap, which they could delay), less the free minutes, at the per-minute rate, capped; all of it the pro's. Not added to a bill already paid online.
+async function freezeWaiting(booking) {
+  const { ON_LOCATION_MODES } = require('../../service-modes');
+  const snap = booking.priceSnapshot;
+  if (!snap || !ON_LOCATION_MODES.includes(booking.serviceMode) || snap.waitingPaise) return;
+  const arrivedAt = [...(booking.statusHistory || [])].reverse().find((h) => h.status === 'ARRIVED')?.at;
+  if (!arrivedAt) return;
+  const end = booking.otpVerified?.startAt || new Date();
+  const t = await require('../../../pricing/services/config.service').travelSettings();
+  const minutes = Math.max(0, Math.floor((new Date(end) - new Date(arrivedAt)) / 60000));
+  const billable = Math.max(0, minutes - (t.waitFreeMin || 0));
+  const raw = billable * (t.waitPerMinPaise || 0);
+  const paise = t.waitMaxPaise > 0 ? Math.min(raw, t.waitMaxPaise) : raw;
+  snap.waitingMin = minutes;
+  if (!paise || booking.paymentStatus === 'paid') return;
+  const cfg = await require('../pricing.service').getConfig(booking.vertical);
+  const taxPaise = Math.round((paise * (cfg.taxPct || 0)) / 100);
+  snap.waitingPaise = paise;
+  snap.taxPaise = (snap.taxPaise || 0) + taxPaise;
+  snap.totalPaise = (snap.totalPaise || 0) + paise + taxPaise;
+}
+
 function assertActorMayAct(booking, actorRole, actorId) {
   if (actorRole === 'admin' || actorRole === 'system') return;
   const id = String(actorId || '');
@@ -272,6 +297,7 @@ async function assertQAPassed(booking) {
 }
 
 module.exports = {
+  freezeWaiting,
   transition,
   issueWarranty,
   assertActorMayAct,

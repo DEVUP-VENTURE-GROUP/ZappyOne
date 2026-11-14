@@ -132,6 +132,11 @@ const priceSnapshotSchema = new mongoose.Schema(
     isEstimate: { type: Boolean, default: false },
     /** Kilometres between provider and customer, when that shaped the price. */
     distanceKm: { type: Number, default: null },
+    // Economics → Travel & waiting: road km of the journey, whether the traffic rate applied, and the wait at the door (frozen when work starts).
+    travelKm: { type: Number, default: null },
+    trafficHours: { type: Boolean, default: false },
+    waitingMin: { type: Number, default: 0, min: 0 },
+    waitingPaise: { type: Number, default: 0, min: 0 },
     rangeMinPaise: { type: Number, default: null },
     rangeMaxPaise: { type: Number, default: null },
 

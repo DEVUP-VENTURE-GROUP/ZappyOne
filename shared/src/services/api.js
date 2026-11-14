@@ -440,6 +440,8 @@ export const {
   useAdminDispatchQuery,
   useAdminUpdateDispatchMutation,
   useAdminPartnerCommissionQuery,
+  useAdminTravelQuery,
+  useAdminUpdateTravelMutation,
   useAdminUpdatePartnerCommissionMutation,
   useAdminPartnerRateQuery,
   useAdminSetPartnerRateMutation,
