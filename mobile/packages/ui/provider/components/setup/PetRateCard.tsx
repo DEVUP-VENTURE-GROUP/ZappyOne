@@ -9,6 +9,7 @@ import { errText } from '../../../lib/feedback';
 import { colors, ink, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
+import { PriceNotice } from '../PriceNotice';
 
 interface Service { code: string; name: string; categoryCode: string; per: string; sizes: string[]; prices: Record<string, number | null> }
 interface Card { sizes: string[]; services: Service[]; addons: { code: string; name: string; pricePaise: number | null }[]; pickupPaise: number; returnPaise: number }
@@ -60,6 +61,7 @@ export function PetRateCard({ category }: { category: string }) {
 
   return (
     <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">
+      <PriceNotice />
       <View style={styles.row}>
         <View style={styles.icon}><PawPrint size={18} color={zappy[700]} /></View>
         <View style={styles.flex}>

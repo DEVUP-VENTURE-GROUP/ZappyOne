@@ -7,6 +7,7 @@ import {
   useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
 } from '../../../services/api';
 import PhotoTiles from '../../../components/common/PhotoTiles';
+import PriceNotice from '../PriceNotice';
 
 const rupees = (p) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
 const toRupees = (p) => (p == null ? '' : String(Math.round(p / 100)));
@@ -35,6 +36,7 @@ export default function MenuEditor({ vertical, onNext, nextLabel = 'Continue' })
 
   return (
     <div className="space-y-4">
+      <PriceNotice />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[20px] font-extrabold text-ink-900">Your menu</h2>

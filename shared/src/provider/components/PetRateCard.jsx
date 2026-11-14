@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, PawPrint } from 'lucide-react';
 import { usePetProviderRatesQuery, useSavePetProviderRatesMutation } from '../../services/api';
+import PriceNotice from './PriceNotice';
 
 const SIZE = { small: 'Small', medium: 'Medium', large: 'Large', extra_large: 'Extra large' };
 const toR = (p) => (p == null ? '' : String(Math.round(p / 100)));
@@ -50,6 +51,7 @@ export default function PetRateCard({ category }) {
 
   return (
     <div className="space-y-4">
+      <PriceNotice />
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-btn bg-zappy-50 text-zappy-700"><PawPrint size={18} /></span>
         <div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Footprints, Loader2 } from 'lucide-react';
 import { useHelpingProviderRatesQuery, useSaveHelpingProviderRateMutation } from '../../services/api';
+import PriceNotice from './PriceNotice';
 
 const FIELDS = [
   ['baseFeePaise', 'Errand fee', true],
@@ -19,6 +20,7 @@ export default function HelpingRateCard({ lineCode, fallback = null }) {
   if (!data?.types?.length) return fallback;
   return (
     <div className="space-y-4">
+      <PriceNotice />
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-btn bg-zappy-50 text-zappy-700"><Footprints size={18} /></span>
         <div>

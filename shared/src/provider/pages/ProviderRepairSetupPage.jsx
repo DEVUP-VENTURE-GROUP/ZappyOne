@@ -44,6 +44,7 @@ import WeeklyHours, { incompleteDay } from '../../components/provider/WeeklyHour
 import { formatPaise } from '../../utils/money';
 import BrandLogo from '../../components/common/BrandLogo';
 import { useDebounced } from '../../hooks/useDebounced';
+import PriceNotice from '../components/PriceNotice';
 
 /**
  * Provider setup — the mirror image of the customer's booking flow.
@@ -1284,6 +1285,7 @@ function PricingStep({ vertical, isShop, onBack, onNext }) {
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
     >
+      <PriceNotice />
       <InspectionFeeCard vertical={vertical} />
       {!brandCodes.length && (
         <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">

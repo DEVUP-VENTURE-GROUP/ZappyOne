@@ -28,6 +28,7 @@ import {
 } from './priceSheet';
 import { uniqueRepairs, type RepairGroup } from './workSelection';
 import { useDebounced } from '@zappy/core/shared/useDebounced';
+import { PriceNotice } from '../PriceNotice';
 
 export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: string; isShop: boolean; onBack: () => void; onNext: () => void }) {
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
@@ -112,6 +113,7 @@ export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: st
   return (
     <StepShell title="What do you charge?" hint="Set your own price for each job, per brand. Change a single model only where you charge differently."
       onBack={onBack} onNext={onNext} nextLabel={pricing.length ? 'Continue' : 'Skip for now'}>
+      <PriceNotice />
       <PartsNote vertical={vertical} who="partner" />
       <InspectionFeeCard vertical={vertical} />
       {!brandCodes.length ? (

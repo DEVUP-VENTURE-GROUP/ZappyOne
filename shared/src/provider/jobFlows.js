@@ -309,3 +309,6 @@ export function readableCode(code = '') {
 
 // "Scooter Scooter" reads "Scooter"; case is kept, so "iPhone 13" stays as it is.
 export const onceWords = (text = '') => String(text).split(/\s+/).filter((w, i, a) => w && (i === 0 || w.toLowerCase() !== a[i - 1].toLowerCase())).join(' ');
+
+// Shown wherever a provider types a price: what they enter is the price customers book.
+export const PRICE_NOTICE = 'Customers see and book exactly the price you enter here. Enter your final price for the whole job, with parts and your work included.';

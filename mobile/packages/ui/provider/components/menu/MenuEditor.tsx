@@ -14,6 +14,7 @@ import { colors, ink, slate, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 import { StepShell } from '../setup/StepShell';
+import { PriceNotice } from '../PriceNotice';
 
 interface MenuType { code: string; name: string }
 interface MenuItem {
@@ -51,6 +52,7 @@ export function MenuEditor({ vertical, onBack, onNext, top = null }: { vertical:
   return (
     <>
       <StepShell title="Your menu" hint="Customers near you book from this. Every change is live as soon as you save." onBack={onBack} onNext={onNext} canNext={offered.length > 0}>
+        <PriceNotice />
         {top}
         {menu.tips.length ? (
           <View style={styles.wrap}>{menu.tips.map((t) => <View key={t} style={styles.tip}><Text variant="caption" weight="semibold" color="#92400E">{t}</Text></View>)}</View>

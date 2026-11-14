@@ -9,6 +9,7 @@ import { errText } from '../../../lib/feedback';
 import { colors, ink, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
+import { PriceNotice } from '../PriceNotice';
 
 type Field = [string, string, boolean];
 const FIELDS: Field[] = [
@@ -31,6 +32,7 @@ export function HelpingRateCard({ lineCode, fallback = null }: { lineCode: strin
   if (!types.length) return <>{fallback}</>;
   return (
     <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">
+      <PriceNotice />
       <View style={styles.row}>
         <View style={styles.icon}><Footprints size={18} color={zappy[700]} /></View>
         <View style={styles.flex}>
