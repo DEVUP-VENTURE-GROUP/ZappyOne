@@ -567,9 +567,13 @@ async function findProviders(req, res, next) {
     }).then((s) => s && {
       totalPaise: s.totalPaise, travelPaise: s.travelPaise || 0, pickupPaise: s.pickupPaise || 0, returnPaise: s.returnPaise || 0,
       platformFeePaise: s.platformFeePaise || 0, taxPaise: s.taxPaise || 0, smallJobPaise: s.smallJobPaise || 0, distanceKm: s.distanceKm ?? null,
+      // The road km, the traffic rate and the waiting rule, so the customer is told them before booking.
+      travelKm: s.travelKm ?? null, trafficHours: !!s.trafficHours, waitRule: s.waitRule || null,
     }));
     const withBill = async (p) => (p ? {
       ...p,
+      // The quoted distance, signed for 10 minutes: booking with it keeps this exact price (services/quote-lock).
+      distanceToken: require('../services/quote-lock').sign({ shopId: p.shopId || null, workerId: p.workerId || null, vertical: verticalOf(req), distanceKm: p.journeyKm }),
       bill: await billOf(p, p.totalPaise),
       priceOptions: await Promise.all((p.priceOptions || []).map(async (o) => ({ ...o, bill: await billOf(p, o.totalPaise) }))),
     } : p);

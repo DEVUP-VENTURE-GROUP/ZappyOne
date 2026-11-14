@@ -52,6 +52,7 @@ async function createBooking({
   workerId = null,
   zappyRecommended = false,
   proGender = null,
+  distanceToken = null,
   location,
   scheduledAt = null,
   slotLabel = '',
@@ -178,8 +179,10 @@ async function createBooking({
    * a routing promise, and a road-distance lookup per booking would cost an API
    * call to move the number by a few rupees.
    */
+  // The distance the customer was quoted, when they bring back its signed token (services/quote-lock), so the booked price is the quoted one; else the live one.
+  const quoted = distanceToken ? require('../quote-lock').verify(distanceToken, { shopId, workerId, vertical }) : null;
   const distanceKm = serviceMode === 'pickup_repair' || ON_LOCATION_MODES.includes(serviceMode)
-    ? await providerDistanceKm({ shopId, workerId, coordinates: location.coordinates })
+    ? (quoted ?? await providerDistanceKm({ shopId, workerId, coordinates: location.coordinates }))
     : null;
 
   /**

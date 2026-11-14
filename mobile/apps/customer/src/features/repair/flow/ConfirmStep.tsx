@@ -82,6 +82,8 @@ export function ConfirmStep({ vertical, brand, model, configuration, problem, di
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: scheduledAt.toISOString(), slotLabel: slotLabel(scheduledAt) }),
         ...(proGender && { proGender }),
+        // The quoted distance, signed: the booked price stays the one shown (server quote-lock).
+        ...((provider as { distanceToken?: string } | null)?.distanceToken && { distanceToken: (provider as { distanceToken?: string }).distanceToken }),
       }).unwrap();
       onDone(res.booking);
     } catch (err) {

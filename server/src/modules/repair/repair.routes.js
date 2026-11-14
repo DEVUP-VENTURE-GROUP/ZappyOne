@@ -225,6 +225,8 @@ router.post(
     workerId: objectId.allow(null),
     zappyRecommended: Joi.boolean().default(false),
     proGender: Joi.string().valid('female', 'male').allow(null),
+    // The provider list's signed quote distance (services/quote-lock).
+    distanceToken: Joi.string().max(400).allow(null, ''),
     location: locationSchema.required(),
     scheduledAt: Joi.date().allow(null),
     slotLabel: Joi.string().max(80).allow('', null),

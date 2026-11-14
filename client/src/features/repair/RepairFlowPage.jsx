@@ -1722,6 +1722,8 @@ function ConfirmStep({
         ...(tip > 0 && { tipPaise: tip * 100 }),
         ...(scheduledAt && { scheduledAt: new Date(scheduledAt).toISOString(), slotLabel: slotLabel(scheduledAt) }),
         ...(proGender && { proGender }),
+        // The quoted distance, signed: the booked price stays the one shown (server quote-lock).
+        ...(provider?.distanceToken && { distanceToken: provider.distanceToken }),
       }).unwrap();
       // A fixed price is paid now; a diagnosis-first job is paid once its quote is approved.
       if (res.booking?.paymentMethod === 'online' && !res.booking?.priceSnapshot?.isEstimate) {
