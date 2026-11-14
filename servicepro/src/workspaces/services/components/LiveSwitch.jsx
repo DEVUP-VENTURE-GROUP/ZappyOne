@@ -4,6 +4,10 @@ import { Loader2, Radio } from 'lucide-react';
 import { useSendShopLocationMutation, useSetShopLiveMutation, useShopMeQuery } from '@shared/services/api';
 
 const EVERY_MS = 60 * 1000;
+// An owner who has not moved is sent at most every 5 minutes.
+const MOVED_M = 100;
+const STILL_MS = 5 * 60 * 1000;
+const metres = (a, b) => 111320 * Math.hypot(a.lat - b.lat, (a.lng - b.lng) * Math.cos((a.lat * Math.PI) / 180));
 
 // While live and this tab is open, where the owner is each minute, as the app does; never asks for permission again.
 function useOwnerHeartbeat(on) {
@@ -11,6 +15,7 @@ function useOwnerHeartbeat(on) {
   useEffect(() => {
     if (!on || !navigator.geolocation) return undefined;
     let stopped = false;
+    let last = null;
     const beat = async () => {
       if (stopped || document.hidden) return;
       try {
@@ -19,7 +24,10 @@ function useOwnerHeartbeat(on) {
       } catch { /* no permissions API: the browser decides */ }
       navigator.geolocation.getCurrentPosition((pos) => {
         if (stopped || pos.coords.accuracy > 200) return;
-        send({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (last && metres(last, here) < MOVED_M && Date.now() - last.at < STILL_MS) return;
+        send(here);
+        last = { ...here, at: Date.now() };
       }, () => {}, { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 });
     };
     const t = setInterval(beat, EVERY_MS);

@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CalendarClock, ClipboardList, Repeat, Wrench } from 'lucide-react-native';
 import { useProviderPlanVisitsQuery } from '@zappy/core/api';
+import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { hourBook, timeOf, todaysTimeline, workshopColumns } from '@zappy/core/shared/tradeToday';
 import { Text } from '@zappy/ui/components';
@@ -19,7 +20,7 @@ export function TradeToday({ home = 'workshop', kinds }: { home?: string; kinds:
   const router = useRouter();
   const { mine } = useProviderJobs({ kinds });
   const jobs = (mine || []) as Job[];
-  const { data: visitData } = useProviderPlanVisitsQuery({ days: 1 }, { skip: home !== 'visits' && home !== 'appointments', pollingInterval: 60000 });
+  const { data: visitData } = useProviderPlanVisitsQuery({ days: 1 }, { skip: home !== 'visits' && home !== 'appointments', pollingInterval: useLivePoll(60000) });
   const [title, Icon] = TITLE[home as keyof typeof TITLE] || TITLE.workshop;
   const open = (to?: string) => { if (to) router.push(providerPath(to) as never); };
 

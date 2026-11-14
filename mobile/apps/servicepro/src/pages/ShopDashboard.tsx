@@ -60,7 +60,7 @@ export function ShopDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Customers near the shop asking for its price.
-  const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
+  const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 300000 });
   const askingNow = ((priceReqs?.requests || []) as { myOffer?: unknown }[]).filter((r) => !r.myOffer).length;
   const { data, isLoading, refetch, isError } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();

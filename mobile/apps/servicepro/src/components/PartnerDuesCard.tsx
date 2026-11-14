@@ -20,7 +20,7 @@ interface Dues { duesPaise: number; limitPaise: number; warnPaise: number; isBlo
 const STATE = { pending: ['Being checked', Clock3, accent[700]], confirmed: ['Received', CircleCheck, success[700]], rejected: ['Not found', AlertTriangle, danger[600]] } as const;
 
 export function PartnerDuesCard() {
-  const { data } = useShopDuesQuery(undefined, { pollingInterval: 120000 });
+  const { data } = useShopDuesQuery(undefined, { pollingInterval: 300000 });
   const [claim, { isLoading }] = useClaimShopDuesPaymentMutation();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');

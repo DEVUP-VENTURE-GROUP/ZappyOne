@@ -1,3 +1,4 @@
+import { useLivePoll } from '@shared/hooks/useSocket';
 import { useNavigate } from 'react-router-dom';
 import { useT } from '@shared/i18n/I18nProvider';
 import { labelKey } from '@shared/i18n/translations';
@@ -27,7 +28,7 @@ export default function TradeToday({ home = 'workshop', kinds }) {
   const nav = useNavigate();
   const t = useT();
   const { mine: jobs = [] } = useProviderJobs({ kinds });
-  const { data: visitData } = useProviderPlanVisitsQuery({ days: 1 }, { skip: home !== 'visits' && home !== 'appointments', pollingInterval: 60000 });
+  const { data: visitData } = useProviderPlanVisitsQuery({ days: 1 }, { skip: home !== 'visits' && home !== 'appointments', pollingInterval: useLivePoll(60000) });
   const [titleEn, Icon] = TITLE[home] || TITLE.workshop;
   const title = t(labelKey(titleEn), titleEn);
   const open = (to) => to && nav(to);

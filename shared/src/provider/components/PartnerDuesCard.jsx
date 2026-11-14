@@ -12,7 +12,7 @@ const STATE = { pending: ['Being checked', Clock3, 'text-amber-700'], confirmed:
 
 // What this business owes ZappyOne from cash jobs, and telling ZappyOne once it has paid; hidden when nothing is owed (server shop/shop-dues).
 export default function PartnerDuesCard() {
-  const { data } = useShopDuesQuery(undefined, { pollingInterval: 120000 });
+  const { data } = useShopDuesQuery(undefined, { pollingInterval: 300000 });
   const [claim, { isLoading }] = useClaimShopDuesPaymentMutation();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ amount: '', reference: '' });

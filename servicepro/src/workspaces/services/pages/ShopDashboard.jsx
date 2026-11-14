@@ -129,7 +129,7 @@ function TeamPanel({ workers, jobs, onManage }) {
 export default function ShopDashboard() {
   const nav = useNavigate();
   // Customers near the shop asking for its price (repair/services/price-request).
-  const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 60000 });
+  const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 300000 });
   const askingNow = (priceReqs?.requests || []).filter((r) => !r.myOffer).length;
   const { data, isLoading } = useShopMeQuery();
   const { data: kycData } = useShopKycStatusQuery();
