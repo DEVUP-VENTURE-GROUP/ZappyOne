@@ -404,7 +404,7 @@ const helpingTaskSchema = new mongoose.Schema(
     },
     paymentId: { type: String, default: null },
     cashCollectedAt: { type: Date, default: null },
-    idempotencyKey: { type: String, default: null, index: true, sparse: true },
+    idempotencyKey: { type: String, default: null },
 
     cancellationReason: { type: String, default: '' },
     cancellationFeePaise: { type: Number, default: 0, min: 0 },
@@ -419,6 +419,8 @@ const helpingTaskSchema = new mongoose.Schema(
 
 stripEmptyPoints(helpingTaskSchema, ['pickupLocation', 'destination']);
 
+// One booking per key even when two taps arrive together; a new name so it never clashes with the old non-unique index (scripts/idempotency-unique.js removes that).
+helpingTaskSchema.index({ idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } }, name: 'idempotencyKey_unique' });
 helpingTaskSchema.index({ userId: 1, status: 1, createdAt: -1 });
 helpingTaskSchema.index({ workerId: 1, status: 1 });
 helpingTaskSchema.index({ serviceType: 1, status: 1, createdAt: -1 });

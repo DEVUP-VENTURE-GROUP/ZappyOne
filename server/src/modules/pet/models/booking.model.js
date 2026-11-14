@@ -340,7 +340,7 @@ const petBookingSchema = new mongoose.Schema(
     penaltyPaise: { type: Number, default: 0, min: 0 },
     providerCompensationPaise: { type: Number, default: 0, min: 0 },
 
-    idempotencyKey: { type: String, default: null, index: true, sparse: true },
+    idempotencyKey: { type: String, default: null },
     isDemo: { type: Boolean, default: false },
   },
   { timestamps: true },
@@ -348,6 +348,8 @@ const petBookingSchema = new mongoose.Schema(
 
 stripEmptyPoints(petBookingSchema, ['serviceLocation', 'destination']);
 
+// One booking per key even when two taps arrive together; a new name so it never clashes with the old non-unique index (scripts/idempotency-unique.js removes that).
+petBookingSchema.index({ idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } }, name: 'idempotencyKey_unique' });
 petBookingSchema.index({ userId: 1, status: 1, createdAt: -1 });
 petBookingSchema.index({ workerId: 1, status: 1, scheduledAt: 1 });
 petBookingSchema.index({ shopId: 1, status: 1, checkInAt: 1, checkOutAt: 1 });

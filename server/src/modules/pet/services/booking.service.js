@@ -208,7 +208,9 @@ async function createBooking({
     categoryCodes: categoryCode, isActive: true,
   }).lean();
 
-  const booking = await PetBooking.create({
+  let booking;
+  try {
+  booking = await PetBooking.create({
     reference: reference(),
     userId,
     workerId,
@@ -234,6 +236,14 @@ async function createBooking({
     status: 'REQUESTED',
     statusHistory: [{ status: 'REQUESTED', at: new Date(), by: userId, byRole: 'user' }],
   });
+  } catch (err) {
+    // The same tap twice at once: the other request already made it, so this one hands that back.
+    if (err.code === 11000 && idempotencyKey) {
+      const existing = await PetBooking.findOne({ idempotencyKey }).lean();
+      if (existing) return { booking: existing, replayed: true };
+    }
+    throw err;
+  }
 
   booking.transitionTo('BOOKED', { by: userId, byRole: 'user' });
   // The customer chose someone: it's theirs to accept or decline, nobody else's yet.

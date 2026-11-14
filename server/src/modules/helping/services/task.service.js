@@ -172,6 +172,11 @@ async function createTask({
     await task.save();
   } catch (err) {
     await money.releaseHold(task, { amountPaise: task.itemMoney.heldPaise, why: 'Booking failed, budget returned' }).catch(() => {});
+    // The same tap twice at once: the other request already made it, so this one hands that back.
+    if (err.code === 11000 && idempotencyKey) {
+      const existing = await HelpingTask.findOne({ idempotencyKey }).lean();
+      if (existing) return { task: existing, replayed: true };
+    }
     throw err;
   }
 
