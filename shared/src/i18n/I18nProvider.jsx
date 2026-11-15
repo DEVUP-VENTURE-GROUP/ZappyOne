@@ -42,3 +42,9 @@ export function useI18n() {
 export function useT() {
   return useI18n().t;
 }
+
+/** Translates only inside Service Pro; every other app keeps its text exactly as it was. */
+export function useServiceProT() {
+  const { t } = useI18n();
+  return import.meta.env.VITE_CLIENT_SURFACE === 'servicepro' ? t : (key, fallback) => fallback ?? key;
+}

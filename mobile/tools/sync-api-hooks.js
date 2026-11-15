@@ -39,6 +39,7 @@ const LOGIC = [
   { from: 'components/home/problemArt.js', to: 'shared/problemArt.js', imports: {} },
   { from: 'components/home/serviceArt.js', to: 'shared/serviceArt.js', imports: { './problemArt': './problemArt' } },
   { from: 'config/homepageContent.js', to: 'shared/homepageContent.js', imports: {} },
+  { from: 'provider/statementMonths.js', to: 'shared/statementMonths.js', imports: {} },
   { from: 'components/provider/weeklyHoursRules.js', to: 'shared/weeklyHoursRules.js', imports: {} },
   { from: 'components/provider/autoAccept.js', to: 'shared/autoAccept.js', imports: {} },
   { from: 'provider/partnerPages.js', to: 'shared/partnerPages.js', imports: {} },

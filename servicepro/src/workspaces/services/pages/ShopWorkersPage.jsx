@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useT } from '@shared/i18n/I18nProvider';
 import {
   ArrowLeft, Plus, Trash2, Loader2, X, Star, Briefcase, ShieldCheck, Clock, XCircle, Circle, Users, Crown,
 } from 'lucide-react';
@@ -10,15 +11,16 @@ import toast from 'react-hot-toast';
 import { useTradeWords } from '../../../shell/useTradeWords';
 
 const KYC_PILL = {
-  approved: { label: 'Verified', cls: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
+  approved: { label: 'Verified', tk: 'sp.verified', cls: 'bg-emerald-50 text-emerald-700', Icon: ShieldCheck },
   pending_review: { label: 'We are checking', cls: 'bg-amber-50 text-amber-700', Icon: Clock },
-  rejected: { label: 'Rejected', cls: 'bg-red-50 text-red-700', Icon: XCircle },
+  rejected: { label: 'Rejected', tk: 'sp.wk.rejected', cls: 'bg-red-50 text-red-700', Icon: XCircle },
   not_submitted: { label: 'Not checked yet', cls: 'bg-slate-100 text-slate-500', Icon: Circle },
 };
 
 export default function ShopWorkersPage() {
   const words = useTradeWords();
   const nav = useNavigate();
+  const t = useT();
   const { data, isLoading } = useShopWorkersQuery();
   const [addWorker, { isLoading: adding }] = useAddShopWorkerMutation();
   const [removeWorker] = useRemoveShopWorkerMutation();
@@ -36,7 +38,7 @@ export default function ShopWorkersPage() {
 
   async function handleAdd(e) {
     e.preventDefault();
-    if (phone.length < 10) return toast.error('Enter a valid phone number');
+    if (phone.length < 10) return toast.error(t('sp.badPhone', 'Enter a valid phone number'));
     try {
       const res = await addWorker({ phone, name: name || undefined }).unwrap();
       toast.success(res.isNew
@@ -45,7 +47,7 @@ export default function ShopWorkersPage() {
       setShowAdd(false);
       setPhone(''); setName('');
     } catch (err) {
-      toast.error(err?.data?.error || 'Failed to add worker');
+      toast.error(err?.data?.error || t('sp.wk.addFail', 'Failed to add worker'));
     }
   }
 
@@ -53,9 +55,9 @@ export default function ShopWorkersPage() {
     setRemovingId(workerId);
     try {
       await removeWorker(workerId).unwrap();
-      toast.success('Worker removed from your shop');
+      toast.success(t('sp.wk.removed', 'Worker removed from your shop'));
     } catch (err) {
-      toast.error(err?.data?.error || 'Failed to remove worker');
+      toast.error(err?.data?.error || t('sp.wk.removeFail', 'Failed to remove worker'));
     } finally {
       setRemovingId(null);
     }
@@ -84,9 +86,9 @@ export default function ShopWorkersPage() {
             <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Briefcase size={28} className="text-slate-300" />
             </div>
-            <p className="font-bold text-slate-700 text-sm">No workers yet</p>
-            <p className="text-xs text-slate-400 mt-1">Add a worker by their phone number to get started.</p>
-            <button onClick={() => setShowAdd(true)} className="btn-primary mt-4 px-6">Add Worker</button>
+            <p className="font-bold text-slate-700 text-sm">{t('sp.wk.none', 'No workers yet')}</p>
+            <p className="text-xs text-slate-400 mt-1">{t('sp.wk.noneBody', 'Add a worker by their phone number to get started.')}</p>
+            <button onClick={() => setShowAdd(true)} className="btn-primary mt-4 px-6">{t('sp.wk.addWorker', 'Add Worker')}</button>
           </div>
         ) : (
           workers.map((w) => {
@@ -97,11 +99,11 @@ export default function ShopWorkersPage() {
                   {(w.name || w.phone || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[#0F172A] truncate">{w.name || 'Unnamed worker'}</p>
+                  <p className="font-semibold text-sm text-[#0F172A] truncate">{w.name || t('sp.wk.unnamed', 'Unnamed worker')}</p>
                   <p className="text-xs text-slate-400">{w.phone}</p>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${kyc.cls}`}>
-                      <kyc.Icon size={10} /> {kyc.label}
+                      <kyc.Icon size={10} /> {t(kyc.tk, kyc.label)}
                     </span>
                     {w.rating > 0 && (
                       <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-slate-500">
@@ -143,18 +145,18 @@ export default function ShopWorkersPage() {
           <form onSubmit={handleAdd} onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-t-sheet sm:rounded-card w-full sm:max-w-md p-6 space-y-4 safe-pb">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Add Worker</h3>
+              <h3 className="text-lg font-bold text-slate-900">{t('sp.wk.addWorker', 'Add Worker')}</h3>
               <button type="button" onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
             </div>
             <p className="text-xs text-slate-400 -mt-2">If this phone number already belongs to a ZappyOne worker, we'll just link them to your shop.</p>
             <div>
-              <label className="text-[12px] font-bold text-slate-700 block mb-1.5">Phone Number <span className="text-red-500">*</span></label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number"
+              <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{t('sp.wk.phone', 'Phone Number')} <span className="text-red-500">*</span></label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder={t('sp.wk.phoneEg', '10-digit mobile number')}
                 className="input text-sm w-full" />
             </div>
             <div>
-              <label className="text-[12px] font-bold text-slate-700 block mb-1.5">Name <span className="text-slate-400 font-medium">(required if new)</span></label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Worker's name" className="input text-sm w-full" />
+              <label className="text-[12px] font-bold text-slate-700 block mb-1.5">{t('sp.wk.name', 'Name')} <span className="text-slate-400 font-medium">{t('sp.wk.requiredIfNew', '(required if new)')}</span></label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('sp.wk.nameEg', 'Worker\'s name')} className="input text-sm w-full" />
             </div>
             {/*
               * No skills picker. A technician works on whatever the SHOP is
@@ -162,11 +164,10 @@ export default function ShopWorkersPage() {
               * rather than re-answered for every person hired.
               */}
             <p className="rounded-xl bg-slate-50 p-3 text-[11.5px] leading-relaxed text-slate-500">
-              They will be able to work on everything your shop is approved for.
-              They still complete their own verification before taking jobs.
+              {t('sp.wk.scope', 'They will be able to work on everything your shop is approved for. They still complete their own verification before taking jobs.')}
             </p>
             <button type="submit" disabled={adding || phone.length < 10 || !name.trim()} className="btn-primary w-full">
-              {adding ? <><Loader2 size={15} className="animate-spin" /> Adding…</> : 'Add Worker'}
+              {adding ? <><Loader2 size={15} className="animate-spin" /> {t('sp.wk.adding', 'Adding…')}</> : t('sp.wk.addWorker', 'Add Worker')}
             </button>
           </form>
         </div>

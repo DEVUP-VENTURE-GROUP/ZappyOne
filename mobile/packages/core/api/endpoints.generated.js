@@ -2254,6 +2254,10 @@ export function endpoints(b, { adminApiPath }) {
       }),
       invalidatesTags: ['RepairProvider'],
     }),
+    adjustRepairProviderPricing: b.mutation({
+      query: ({ vertical = 'mobile', percent }) => ({ url: '/repair/provider/pricing/adjust', method: 'POST', body: { vertical, percent } }),
+      invalidatesTags: ['RepairProvider'],
+    }),
 
     // --- Admin: Fraud Detection ---
     adminFraudSummary: b.query({

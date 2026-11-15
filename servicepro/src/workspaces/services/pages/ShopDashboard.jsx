@@ -23,6 +23,7 @@ import SetupJourney from '../components/SetupJourney';
 import ShopHeader from '../components/ShopHeader';
 import TradeToday from '../components/TradeToday';
 import LiveSwitch from '../components/LiveSwitch';
+import { useI18n } from '@shared/i18n/I18nProvider';
 
 /**
  * The shop owner's dashboard.
@@ -64,6 +65,7 @@ const SHOP_KINDS = ['repair', 'pet'];
  * open jobs each is carrying, which is what makes an assignment decision.
  */
 function TeamPanel({ workers, jobs, onManage }) {
+  const { t } = useI18n();
   const loadByWorker = useMemo(() => {
     const map = new Map();
     for (const job of jobs) {
@@ -76,22 +78,22 @@ function TeamPanel({ workers, jobs, onManage }) {
 
   return (
     <Panel
-      title="Your team"
+      title={t('sp.dash.team', 'Your team')}
       action={(
         <button onClick={onManage} className="flex items-center gap-1 text-[12px] font-bold text-zappy-600">
-          Manage <ChevronRight size={13} strokeWidth={3} />
+          {t('sp.manage', 'Manage')} <ChevronRight size={13} strokeWidth={3} />
         </button>
       )}
     >
       {!workers.length ? (
         <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center">
           <UserPlus size={20} className="mx-auto text-slate-300" />
-          <p className="mt-2 text-[13px] font-bold text-slate-700">No technicians yet</p>
+          <p className="mt-2 text-[13px] font-bold text-slate-700">{t('sp.dash.noTechs', 'No technicians yet')}</p>
           <p className="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">
-            Add your technicians so you can hand jobs to them instead of doing every one yourself.
+            {t('sp.dash.noTechsBody', 'Add your technicians so you can hand jobs to them instead of doing every one yourself.')}
           </p>
           <button onClick={onManage} className="mt-3 rounded-xl bg-zappy-600 px-4 py-2 text-[12px] font-bold text-white">
-            Add a technician
+            {t('sp.dash.addTech', 'Add a technician')}
           </button>
         </div>
       ) : (
@@ -110,14 +112,14 @@ function TeamPanel({ workers, jobs, onManage }) {
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
                   load ? 'bg-zappy-50 text-zappy-700' : 'bg-emerald-50 text-emerald-700'
                 }`}>
-                  {load ? `${load} job${load === 1 ? '' : 's'}` : 'Free'}
+                  {load ? (load === 1 ? t('sp.oneJob', '1 job') : t('sp.nJobs', '{n} jobs').replace('{n}', load)) : t('sp.dash.free', 'Free')}
                 </span>
               </div>
             );
           })}
           {workers.length > 5 && (
             <button onClick={onManage} className="w-full pt-1 text-[11.5px] font-bold text-zappy-600">
-              +{workers.length - 5} more
+              {t('sp.dash.more', '+{n} more').replace('{n}', workers.length - 5)}
             </button>
           )}
         </div>
@@ -128,6 +130,7 @@ function TeamPanel({ workers, jobs, onManage }) {
 
 export default function ShopDashboard() {
   const nav = useNavigate();
+  const { t } = useI18n();
   // Customers near the shop asking for its price (repair/services/price-request).
   const { data: priceReqs } = useShopPriceRequestsQuery(undefined, { pollingInterval: 300000 });
   const askingNow = (priceReqs?.requests || []).filter((r) => !r.myOffer).length;
@@ -256,11 +259,11 @@ export default function ShopDashboard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-black text-[#0F172A]">
-                  {kycStatus === 'approved' ? 'Almost there' : meta.label}
+                  {kycStatus === 'approved' ? t('sp.dash.almost', 'Almost there') : t(meta.tk, meta.label)}
                 </p>
                 <p className="mt-0.5 text-[12.5px] leading-relaxed text-slate-600">
                   {kycStatus === 'approved'
-                    ? 'Your documents are approved. Finish your profile so customers can find you.'
+                    ? t('sp.dash.approvedBody', 'Your documents are approved. Finish your profile so customers can find you.')
                     : kycStatus === 'pending_review' || verificationInFlight
                       ? "We'll notify you within 24 hours."
                       : 'Send your documents to start getting bookings.'}
@@ -269,16 +272,16 @@ export default function ShopDashboard() {
                 {/* What exactly is missing — a checklist beats "complete your profile". */}
                 {kycStatus === 'approved' && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {!hasPin && <Gap label="Shop address" onClick={() => nav('/shop/profile')} />}
-                    {!shop?.services?.length && <Gap label="Services" onClick={() => nav('/provider/onboarding')} />}
-                    {!shop?.hours?.length && <Gap label="Opening hours" onClick={() => nav('/shop/profile')} />}
+                    {!hasPin && <Gap label={t('sp.dash.shopAddress', 'Shop address')} onClick={() => nav('/shop/profile')} />}
+                    {!shop?.services?.length && <Gap label={t('sp.dash.services', 'Services')} onClick={() => nav('/provider/onboarding')} />}
+                    {!shop?.hours?.length && <Gap label={t('sp.dash.hours', 'Opening hours')} onClick={() => nav('/shop/profile')} />}
                   </div>
                 )}
               </div>
 
               {(kycStatus === 'not_submitted' || kycStatus === 'rejected') && !verificationInFlight && (
                 <button onClick={() => nav('/shop/kyc')} className="shrink-0 rounded-xl bg-[#0F172A] px-4 py-2.5 text-[12.5px] font-bold text-white">
-                  Verify
+                  {t('sp.dash.verify', 'Verify')}
                 </button>
               )}
             </div>
@@ -299,10 +302,10 @@ export default function ShopDashboard() {
             <PartnerTermsCard />
             <PartnerDuesCard />
             <Panel
-              title="Jobs"
+              title={t('sp.dash.jobs', 'Jobs')}
               action={needsAction.length ? (
                 <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-700">
-                  {needsAction.length} need{needsAction.length === 1 ? 's' : ''} you
+                  {t('sp.dash.needYou', '{n} need you').replace('{n}', needsAction.length)}
                 </span>
               ) : null}
             >
@@ -318,7 +321,7 @@ export default function ShopDashboard() {
               onViewDetails={() => nav('/shop/earnings')}
             />
 
-            <Panel title="Performance">
+            <Panel title={t('sp.dash.performance', 'Performance')}>
               <PerformanceGrid items={perfItems} />
             </Panel>
           </div>

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Check, Circle } from 'lucide-react';
 import { passwordChecks } from './passwordRules';
+import { useServiceProT } from '../../i18n/I18nProvider';
 
 export { passwordChecks, passwordOk } from './passwordRules';
 
 export default function PasswordField({ id, label = 'Password', value, onChange, autoComplete = 'new-password', showRules = false, phone, placeholder }) {
   const [show, setShow] = useState(false);
   const checks = passwordChecks(value, phone);
+  const t = useServiceProT();
   return (
     <div>
       <label htmlFor={id} className="mb-1.5 block text-[13px] font-semibold text-ink-700">{label}</label>
@@ -20,9 +22,9 @@ export default function PasswordField({ id, label = 'Password', value, onChange,
       </div>
       {showRules && (
         <ul className="mt-2 space-y-1">
-          {checks.map((c) => (
+          {checks.map((c, i) => (
             <li key={c.label} className={`flex items-center gap-1.5 text-[12px] ${c.ok ? 'text-green-700' : 'text-ink-500'}`}>
-              {c.ok ? <Check size={13} /> : <Circle size={11} />} {c.label}
+              {c.ok ? <Check size={13} /> : <Circle size={11} />} {t(`sp.pw.rule${i}`, c.label)}
             </li>
           ))}
         </ul>

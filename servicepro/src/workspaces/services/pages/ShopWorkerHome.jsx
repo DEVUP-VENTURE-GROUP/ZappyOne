@@ -14,6 +14,7 @@ import { useGeolocation } from '@shared/hooks/useGeolocation';
 import { formatPaise } from '@shared/utils/money';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import MyAreaChip from '@shared/components/worker/MyAreaChip';
+import { useT } from '@shared/i18n/I18nProvider';
 
 /**
  * A shop technician's home. The shop assigns the work and pays its staff, so
@@ -22,6 +23,7 @@ import MyAreaChip from '@shared/components/worker/MyAreaChip';
  */
 export default function ShopWorkerHome() {
   const nav = useNavigate();
+  const t = useT();
   const { accessToken } = useSelector(selectAuth);
   const { data: meData, refetch: refetchMe } = useGetWorkerMeQuery(undefined, { pollingInterval: 60000 });
   const { data: shopData } = useGetMyShopQuery(undefined, { pollingInterval: 120000 });
@@ -50,7 +52,7 @@ export default function ShopWorkerHome() {
     try {
       if (onDuty) {
         await goOffline().unwrap();
-        toast.success('You are off duty');
+        toast.success(t('sp.wh.nowOff', 'You are off duty'));
       } else {
         const pos = await getCurrent();
         // The server refuses a location worse than 500 m (worker.service LOCATION_MAX_M).
@@ -59,7 +61,7 @@ export default function ShopWorkerHome() {
       }
       refetchMe();
     } catch (err) {
-      toast.error(err?.data?.error || err?.message || 'Could not change duty');
+      toast.error(err?.data?.error || err?.message || t('sp.wh.dutyFail', 'Could not change duty'));
       if (err?.data?.code === 'ON_TRIP' && err.data.job?.link) nav(err.data.job.link);
     } finally {
       setToggling(false);
@@ -80,8 +82,8 @@ export default function ShopWorkerHome() {
             {onDuty && <MyAreaChip coordinates={me?.currentLocation?.coordinates} live className="mt-1" />}
           </div>
           {shop?.phone && (
-            <a href={`tel:${shop.phone}`} className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700" aria-label="Call shop owner">
-              <Phone size={14} /> Owner
+            <a href={`tel:${shop.phone}`} className="flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-bold text-slate-700" aria-label={t('sp.wh.callOwner', 'Call shop owner')}>
+              <Phone size={14} /> {t('sp.wh.owner', 'Owner')}
             </a>
           )}
         </div>
@@ -97,15 +99,15 @@ export default function ShopWorkerHome() {
             {toggling ? <Loader2 size={18} className="animate-spin" /> : <Power size={18} />}
           </span>
           <span className="flex-1">
-            <span className="block text-sm font-black text-navy">{onDuty ? 'On duty' : 'Off duty'}</span>
+            <span className="block text-sm font-black text-navy">{onDuty ? t('sp.onDuty', 'On duty') : t('sp.offDuty', 'Off duty')}</span>
             <span className="block text-xs text-slate-500">
-              {onDuty ? 'Your shop can give you jobs. Tap to go off duty.' : 'Tap to start receiving jobs from your shop.'}
+              {onDuty ? t('sp.wh.onBody', 'Your shop can give you jobs. Tap to go off duty.') : t('sp.wh.offBody', 'Tap to start receiving jobs from your shop.')}
             </span>
           </span>
         </button>
         {kycWaiting && (
           <p className="flex w-full items-center gap-2 rounded-2xl bg-slate-100 p-3 text-xs font-semibold text-slate-600">
-            <ShieldCheck size={15} /> Your ID is being checked. We will notify you when you can go on duty.
+            <ShieldCheck size={15} /> {t('sp.wh.idWait', 'Your ID is being checked. We will notify you when you can go on duty.')}
           </p>
         )}
         {!kycApproved && !kycWaiting && (
@@ -115,24 +117,24 @@ export default function ShopWorkerHome() {
         )}
 
         <section className="grid grid-cols-2 gap-3">
-          {[['Today', shopData?.today], ['This week', shopData?.week]].map(([title, t]) => (
+          {[[t('sp.today', 'Today'), shopData?.today], [t('sp.thisWeek', 'This week'), shopData?.week]].map(([title, stat]) => (
             <div key={title} className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
               <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">{title}</p>
-              <p className="mt-1 text-2xl font-black tabular-nums text-navy">{t?.jobs ?? '–'}</p>
-              <p className="text-xs text-slate-500">jobs done, <span className="tabular-nums">{t ? formatPaise(t.valuePaise) : '–'}</span></p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-navy">{stat?.jobs ?? '–'}</p>
+              <p className="text-xs text-slate-500">{t('sp.jobsDone', 'jobs done')}, <span className="tabular-nums">{stat ? formatPaise(stat.valuePaise) : '–'}</span></p>
             </div>
           ))}
         </section>
         <p className="flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-400">
-          <Info size={12} className="mt-0.5 shrink-0" /> Job value is what customers paid your shop, not your pay. Your shop pays you directly.
+          <Info size={12} className="mt-0.5 shrink-0" /> {t('sp.wh.valueNote', 'Job value is what customers paid your shop, not your pay. Your shop pays you directly.')}
         </p>
 
         <section className="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
-          <p className="flex items-center gap-2 text-sm font-black text-navy"><ClipboardList size={15} className="text-zappy-600" /> My jobs</p>
+          <p className="flex items-center gap-2 text-sm font-black text-navy"><ClipboardList size={15} className="text-zappy-600" /> {t('sp.wh.myJobs', 'My jobs')}</p>
           {loadingJobs ? (
             <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin text-slate-300" /></div>
           ) : jobs.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-500">No jobs right now. Your shop owner will assign the next one.</p>
+            <p className="py-6 text-center text-sm text-slate-500">{t('sp.wh.noJobs', 'No jobs right now. Your shop owner will assign the next one.')}</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {jobs.map((j) => (

@@ -25,11 +25,11 @@ const TONE = {
 };
 
 const STATUS_CHIP = {
-  draft: { label: 'Not submitted', tone: 'none', Icon: AlertTriangle },
-  pending_review: { label: 'Under review', tone: 'pending', Icon: Clock },
-  approved: { label: 'Approved', tone: 'approved', Icon: Check },
-  rejected: { label: 'Needs changes', tone: 'attention', Icon: AlertTriangle },
-  suspended: { label: 'Paused', tone: 'attention', Icon: Ban },
+  draft: { label: 'Not submitted', tk: 'sp.svc.notSubmitted', tone: 'none', Icon: AlertTriangle },
+  pending_review: { label: 'Under review', tk: 'sp.underReview', tone: 'pending', Icon: Clock },
+  approved: { label: 'Approved', tk: 'sp.svc.approved', tone: 'approved', Icon: Check },
+  rejected: { label: 'Needs changes', tk: 'sp.svc.needsChanges', tone: 'attention', Icon: AlertTriangle },
+  suspended: { label: 'Paused', tk: 'sp.svc.paused', tone: 'attention', Icon: Ban },
 };
 
 export default function ProviderServicesCard({ className = '' }) {

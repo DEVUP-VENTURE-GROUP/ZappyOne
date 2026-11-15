@@ -656,6 +656,7 @@ export const useRemoveProviderMenuItemMutation = h.useRemoveProviderMenuItemMuta
 export const useAdjustProviderMenuMutation = h.useAdjustProviderMenuMutation;
 export const useStartMenuFromSamplesMutation = h.useStartMenuFromSamplesMutation;
 export const useBulkRepairProviderPricingMutation = h.useBulkRepairProviderPricingMutation;
+export const useAdjustRepairProviderPricingMutation = h.useAdjustRepairProviderPricingMutation;
 export const useLazyRepairProviderSuggestedPricingQuery = h.useLazyRepairProviderSuggestedPricingQuery;
 export const useRepairProviderSuggestedPricingQuery = h.useRepairProviderSuggestedPricingQuery;
 export const useAdminCoverageGapsQuery = h.useAdminCoverageGapsQuery;

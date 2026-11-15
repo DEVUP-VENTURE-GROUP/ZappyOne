@@ -698,6 +698,17 @@ router.post(
   provider.bulkPricing,
 );
 
+// Every live price up or down by a whole %, always from its normal price; 0 puts them all back.
+router.post(
+  '/provider/pricing/adjust',
+  ...providerOnly,
+  validate(Joi.object({
+    vertical: Joi.string().custom((v, h) => (isValid(v) ? v.toLowerCase() : h.error('any.only'))),
+    percent: Joi.number().integer().min(-50).max(100).required(),
+  })),
+  provider.adjustPricing,
+);
+
 /* Device custody + QA (provider side) */
 
 router.post(

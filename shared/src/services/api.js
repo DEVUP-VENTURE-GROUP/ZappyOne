@@ -727,6 +727,7 @@ export const {
 
   useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation, useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
   useBulkRepairProviderPricingMutation,
+  useAdjustRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,
   useRepairProviderSuggestedPricingQuery,
   useAdminCoverageGapsQuery,

@@ -4,15 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, IndianRupee, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useShopEarningsQuery } from '@shared/services/api';
 import StatementDownload from '@shared/provider/components/StatementDownload';
+import { useI18n } from '@shared/i18n/I18nProvider';
 
 const RANGES = [
-  { key: 'today', label: 'Today' },
-  { key: 'week', label: 'This Week' },
-  { key: 'month', label: 'This Month' },
+  { key: 'today', label: 'Today', tk: 'sp.today' },
+  { key: 'week', label: 'This Week', tk: 'sp.week' },
+  { key: 'month', label: 'This Month', tk: 'sp.month' },
 ];
 
 export default function ShopEarningsPage() {
   const nav = useNavigate();
+  const { t } = useI18n();
   const [range, setRange] = useState('today');
   const { data, isLoading } = useShopEarningsQuery(range);
 
@@ -20,7 +22,7 @@ export default function ShopEarningsPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => nav('/shop')} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
-        <h1 className="h-card">Earnings</h1>
+        <h1 className="h-card">{t('sp.earnings', 'Earnings')}</h1>
       </div></header>
 
       <div className="max-w-lg lg:max-w-2xl mx-auto px-4 pt-4 space-y-3">
@@ -32,7 +34,7 @@ export default function ShopEarningsPage() {
           {RANGES.map((r) => (
             <button key={r.key} onClick={() => setRange(r.key)}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition ${range === r.key ? 'bg-zappy-600 text-white' : 'bg-white text-slate-500 border border-slate-200'}`}>
-              {r.label}
+              {t(r.tk, r.label)}
             </button>
           ))}
         </div>
@@ -42,7 +44,7 @@ export default function ShopEarningsPage() {
         ) : (
           <>
             <div className="card bg-zappy-600 text-white">
-              <p className="text-xs font-semibold text-zappy-100 uppercase tracking-wide">Total Earnings</p>
+              <p className="text-xs font-semibold text-zappy-100 uppercase tracking-wide">{t('sp.totalEarnings', 'Total Earnings')}</p>
               <p className="text-4xl font-black mt-1 flex items-center gap-0.5">
                 <IndianRupee size={26} strokeWidth={2.5} />{data?.earningsRupees ?? 0}
               </p>
@@ -52,14 +54,15 @@ export default function ShopEarningsPage() {
               <div className="card flex flex-col items-start gap-2">
                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center"><Briefcase size={16} className="text-emerald-600" /></div>
                 <p className="text-2xl font-black text-[#0F172A]">{data?.jobs ?? 0}</p>
-                <p className="text-xs text-slate-400 font-semibold">Jobs completed</p>
+                <p className="text-xs text-slate-400 font-semibold">{t('sp.jobsDone', 'Jobs completed')}</p>
               </div>
               <div className="card flex flex-col items-start gap-2">
                 <div className="w-9 h-9 rounded-xl bg-zappy-50 flex items-center justify-center"><Users size={16} className="text-zappy-600" /></div>
                 <p className="text-2xl font-black text-[#0F172A]">{data?.workerCount ?? 0}</p>
-                <p className="text-xs text-slate-400 font-semibold">Workers under shop</p>
+                <p className="text-xs text-slate-400 font-semibold">{t('sp.workers', 'Workers under shop')}</p>
               </div>
             </div>
+
 
             <p className="text-[11px] text-slate-400 text-center pt-2">
               Earnings across all technicians linked to your shop.

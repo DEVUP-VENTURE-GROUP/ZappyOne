@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PageSkeleton from '@shared/components/common/Skeleton';
 import { useNavigate } from 'react-router-dom';
+import { useT } from '@shared/i18n/I18nProvider';
 import {
   ArrowLeft, Upload, CheckCircle2, Clock, XCircle, ShieldCheck,
   IdCard, Store, Camera, FileText, Loader2,
@@ -13,12 +14,12 @@ import { sendSigned } from '@shared/utils/sendSigned';
 import MyVerificationPanel from '@shared/provider/MyVerificationPanel';
 
 const DOCS = [
-  { key: 'ownerIdUrl', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID - clear photo', Icon: IdCard, required: true },
-  { key: 'shopPhotoUrl', label: 'Shop Photo', sublabel: 'Photo of your shop front / signboard', Icon: Store, required: true },
+  { key: 'ownerIdUrl', tk: 'sp.kyc.ownerId', label: "Owner's ID Proof", sublabel: 'Aadhaar / PAN / Voter ID - clear photo', Icon: IdCard, required: true },
+  { key: 'shopPhotoUrl', tk: 'sp.kyc.shopPhoto', label: 'Shop Photo', sublabel: 'Photo of your shop front / signboard', Icon: Store, required: true },
   // Taken live with the front camera, with the place and time it was taken: never picked from a gallery.
-  { key: 'selfieUrl', label: 'Owner Selfie', sublabel: 'Taken live with your front camera; your location is recorded', Icon: Camera, required: true, live: true },
-  { key: 'businessRegistrationUrl', label: 'Business Registration (optional)', sublabel: 'Shop & establishment license, if you have one', Icon: FileText, required: false },
-  { key: 'gstCertificateUrl', label: 'GST Certificate (optional)', sublabel: 'If your shop is GST-registered', Icon: FileText, required: false },
+  { key: 'selfieUrl', tk: 'sp.kyc.selfie', label: 'Owner Selfie', sublabel: 'Taken live with your front camera; your location is recorded', Icon: Camera, required: true, live: true },
+  { key: 'businessRegistrationUrl', tk: 'sp.kyc.reg', label: 'Business Registration (optional)', sublabel: 'Shop & establishment license, if you have one', Icon: FileText, required: false },
+  { key: 'gstCertificateUrl', tk: 'sp.kyc.gst', label: 'GST Certificate (optional)', sublabel: 'If your shop is GST-registered', Icon: FileText, required: false },
 ];
 
 const STATUS_META = {
@@ -38,6 +39,7 @@ const STATUS_META = {
 
 export default function ShopKycPage() {
   const nav = useNavigate();
+  const t = useT();
   const { data, refetch, isLoading } = useShopKycStatusQuery();
   const [presign] = usePresignUploadMutation();
   const [submitKyc, { isLoading: submitting }] = useSubmitShopKycMutation();
@@ -68,7 +70,7 @@ export default function ShopKycPage() {
       if (meta) setSelfieMeta(meta);
       toast.success(meta ? 'Selfie saved' : 'Document uploaded');
     } catch {
-      toast.error('Upload failed. Please try again.');
+      toast.error(t('sp.uploadFailed', 'Upload failed. Please try again.'));
     } finally {
       setUploading(null);
     }
@@ -87,7 +89,7 @@ export default function ShopKycPage() {
       toast.success('Documents sent. We will check them');
       refetch();
     } catch (err) {
-      toast.error(err?.data?.error || 'Submission failed');
+      toast.error(err?.data?.error || t('sp.kyc.submitFail', 'Submission failed'));
     }
   }
 
@@ -144,7 +146,7 @@ export default function ShopKycPage() {
             <div className="flex items-start gap-3">
               <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-red-700 uppercase tracking-wide">Previous submission rejected</p>
+                <p className="text-xs font-bold text-red-700 uppercase tracking-wide">{t('sp.kyc.prevRejected', 'Previous submission rejected')}</p>
                 <p className="text-sm text-red-600 mt-1 leading-relaxed">{rejectionReason}</p>
               </div>
             </div>
@@ -171,7 +173,7 @@ export default function ShopKycPage() {
           />
         )}
 
-        {DOCS.map(({ key, label, sublabel, Icon, required, live }) => {
+        {DOCS.map(({ key, tk, label, sublabel, Icon, required, live }) => {
           const uploaded = !!urls[key];
           const isUploading = uploading === key;
           return (
@@ -182,7 +184,7 @@ export default function ShopKycPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="font-semibold text-sm text-[#0F172A]">{label}</p>
+                    <p className="font-semibold text-sm text-[#0F172A]">{t(tk, label)}</p>
                     {required && <span className="text-red-500 text-xs font-bold">*</span>}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">{opens(key) ? sublabel : 'Accepted, nothing to change'}</p>
@@ -203,9 +205,9 @@ export default function ShopKycPage() {
                 ) : (
                 <label className={`btn-secondary cursor-pointer text-xs py-2 px-3 ${isUploading ? 'opacity-50' : ''}`}>
                   {isUploading ? (
-                    <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Uploading</span>
+                    <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> {t('sp.kyc.uploadingShort', 'Uploading')}</span>
                   ) : (
-                    <span className="flex items-center gap-1.5"><Upload size={11} strokeWidth={2.5} />{uploaded ? 'Replace' : 'Upload'}</span>
+                    <span className="flex items-center gap-1.5"><Upload size={11} strokeWidth={2.5} />{uploaded ? t('sp.kyc.replace', 'Replace') : t('sp.kyc.upload', 'Upload')}</span>
                   )}
                   <input type="file" accept="image/*" className="hidden" disabled={isUploading} onChange={(e) => handleUpload(key, e.target.files?.[0])} />
                 </label>
@@ -216,9 +218,9 @@ export default function ShopKycPage() {
         })}
 
         <div className="card space-y-3">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Business Details (optional)</p>
-          <input value={gstNumber} onChange={(e) => setGstNumber(e.target.value)} placeholder="GST Number" className="input text-sm w-full" />
-          <input value={panNumber} onChange={(e) => setPanNumber(e.target.value)} placeholder="PAN Number" className="input text-sm w-full" />
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t('sp.kyc.bizDetails', 'Business Details (optional)')}</p>
+          <input value={gstNumber} onChange={(e) => setGstNumber(e.target.value)} placeholder={t('sp.kyc.gstNo', 'GST Number')} className="input text-sm w-full" />
+          <input value={panNumber} onChange={(e) => setPanNumber(e.target.value)} placeholder={t('sp.kyc.panNo', 'PAN Number')} className="input text-sm w-full" />
         </div>
       </div>
 

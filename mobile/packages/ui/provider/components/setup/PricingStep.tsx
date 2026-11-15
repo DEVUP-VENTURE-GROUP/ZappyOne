@@ -22,6 +22,7 @@ import { PriceRow } from './PriceRow';
 import { StepShell } from './StepShell';
 import { WarrantySettings } from './WarrantySettings';
 import { InspectionFeeCard } from './InspectionFeeCard';
+import { AdjustAllPrices } from './AdjustAllPrices';
 import { workModesFor } from './setupFlow';
 import {
   countsFor, existingFor, rowsFromValues, type ClaimedRepair, type PriceRowData,
@@ -115,6 +116,7 @@ export function PricingStep({ vertical, isShop, onBack, onNext }: { vertical: st
       onBack={onBack} onNext={onNext} nextLabel={pricing.length ? 'Continue' : 'Skip for now'}>
       <PriceNotice />
       <PartsNote vertical={vertical} who="partner" />
+      <AdjustAllPrices vertical={vertical} rows={pricing} />
       <InspectionFeeCard vertical={vertical} />
       {!brandCodes.length ? (
         <View style={styles.empty}><Text variant="bodySmall" weight="bold" color={ink[700]}>No brands chosen yet</Text><Text variant="caption" color={ink[500]}>Go back to the first step and pick the brands you handle.</Text></View>

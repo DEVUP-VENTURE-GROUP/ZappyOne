@@ -87,6 +87,7 @@ export default function PortalShell({ items, label, title, subtitle, photo, help
         helpPhone={helpPhone}
         onNavigate={go}
         onSignOut={onSignOut}
+        signOutLabel={t('sp.signOut', 'Sign out')}
       />
 
       {/* Phone top bar */}

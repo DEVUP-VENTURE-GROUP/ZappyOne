@@ -35,7 +35,7 @@ async function applyPriceSubmission({ owner, vertical, requestedByRole, requeste
     serviceMode = null, cityCode = null,
     partCostPaise = 0, labourPaise = 0, consumablesPaise = 0,
     travelPaise = 0, pickupPaise = 0, returnPaise = 0,
-    totalPaise, warrantyDays = 0, estimatedDurationMin = null,
+    totalPaise, warrantyDays = 0, estimatedDurationMin = null, normalPaise = null,
   } = row;
 
   const repair = await Repair.findOne({ code: repairCode, vertical, isActive: true }).lean();
@@ -105,7 +105,7 @@ async function applyPriceSubmission({ owner, vertical, requestedByRole, requeste
     ...scope,
     partCostPaise, labourPaise, consumablesPaise,
     travelPaise, pickupPaise, returnPaise,
-    totalPaise, warrantyDays, estimatedDurationMin,
+    totalPaise, normalPaise, warrantyDays, estimatedDurationMin,
     referencePricingId: reference?.referencePricingId || null,
     referenceRecommendedPaise: reference?.recommendedPaise ?? null,
     deviationPct: evaluation.deviationPct,
@@ -235,6 +235,29 @@ async function bulkPricing(req, res, next) {
         ? `${saved.length} price${saved.length === 1 ? '' : 's'} saved and live, ${rejected.length} could not be accepted.`
         : `${saved.length} price${saved.length === 1 ? '' : 's'} saved and live.`,
     });
+  } catch (err) { next(err); }
+}
+
+// Every live price up or down by a %, from each price's normal figure, so changes never compound and 0% puts them back.
+async function adjustPricing(req, res, next) {
+  try {
+    const owner = ownerOf(req);
+    const vertical = verticalOf(req);
+    const percent = Number(req.body.percent);
+    const rows = await ProviderPricing.find({ ...ownerFilter(req), vertical, supersededAt: null }).lean();
+    let changed = 0;
+    for (const r of rows) {
+      const normal = r.normalPaise ?? r.totalPaise;
+      const totalPaise = percent ? Math.round((normal * (100 + percent)) / 100 / 100) * 100 : normal;
+      if (totalPaise === r.totalPaise) continue;
+      const result = await applyPriceSubmission({
+        owner, vertical, requestedByRole: req.auth.role === 'shop' ? 'shop' : 'worker', requestedById: req.auth.sub,
+        row: { ...r, totalPaise, normalPaise: percent ? normal : null },
+      });
+      if (!result.error) changed += 1;
+    }
+    const n = `${changed} price${changed === 1 ? '' : 's'}`;
+    res.json({ changed, note: percent ? `${n} changed by ${percent}%.` : `${n} back to normal.` });
   } catch (err) { next(err); }
 }
 
@@ -368,6 +391,7 @@ module.exports = {
   applyPriceSubmission,
   submitPricing,
   bulkPricing,
+  adjustPricing,
   suggestedPricing,
   getReferenceBand,
   listStockableParts,

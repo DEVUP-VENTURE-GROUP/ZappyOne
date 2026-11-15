@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, Loader2, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useShopWorkersQuery, useAssignJobTechnicianMutation } from '../../services/api';
+import { useServiceProT } from '../../i18n/I18nProvider';
 
 /**
  * Pick which of the shop's own technicians does this job — any kind of job.
@@ -18,6 +19,7 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
   const { data } = useShopWorkersQuery();
   const [assign, { isLoading }] = useAssignJobTechnicianMutation();
   const [open, setOpen] = useState(startOpen);
+  const t = useServiceProT();
 
   const workers = [...(data?.workers || [])]
     .filter((w) => !w.isBlocked)
@@ -31,13 +33,13 @@ export default function AssignTechnician({ jobId, workerId, busy = {}, onDone, s
       setOpen(false);
       onDone?.();
     } catch (err) {
-      toast.error(err?.data?.error || 'Could not assign that technician');
+      toast.error(err?.data?.error || t('sp.assign.fail', 'Could not assign that technician'));
     }
   }
 
   if (!data) return null;
   if (!workers.length) {
-    return <p className="mt-2 text-[11px] text-slate-400">Add technicians to your team to hand jobs to them.</p>;
+    return <p className="mt-2 text-[11px] text-slate-400">{t('sp.assign.noTeam', 'Add technicians to your team to hand jobs to them.')}</p>;
   }
 
   return (

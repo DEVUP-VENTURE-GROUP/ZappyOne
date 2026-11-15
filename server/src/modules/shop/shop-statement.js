@@ -15,8 +15,12 @@ function monthBounds(month) {
   return { label: `${y}-${String(mo + 1).padStart(2, '0')}`, from, to };
 }
 
+// Launch month: no statement exists before it (the apps list months from here too, shared/provider/statementMonths).
+const STATEMENTS_FROM = '2026-11';
+
 async function statement(shopId, month) {
   const { label, from, to } = monthBounds(month);
+  if (label < STATEMENTS_FROM) throw Object.assign(new Error('Statements start from November 2026.'), { status: 400, code: 'BAD_MONTH' });
   const Transaction = require('../payment/transaction.model');
   const { ShopPayout } = require('./shop-payout');
   const [tx, payouts, shop] = await Promise.all([

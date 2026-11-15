@@ -1,4 +1,4 @@
-/** A month's statement (earnings, commission, dues, payouts) as a CSV, opened in the phone's browser (the website's StatementDownload). */
+// A month's statement as a CSV, opened in the phone's browser (the website's StatementDownload); months start at launch.
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { FileDown } from 'lucide-react-native';
@@ -7,16 +7,11 @@ import { useOpenDocument } from '@zappy/ui/lib/openDocument';
 import { colors, ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
-
-const months = (n: number) => Array.from({ length: n }, (_, i) => {
-  const d = new Date();
-  const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
-  return { key: `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`, label: m.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) };
-});
+import { statementMonths } from '@zappy/core/shared/statementMonths';
 
 export function StatementButton() {
-  const list = months(6);
-  const [month, setMonth] = useState(list[0].key);
+  const list = statementMonths(6, 'short');
+  const [month, setMonth] = useState(list[0]?.key || '');
   const { open, opening } = useOpenDocument();
   const path = `/api/shops/me/statement/${month}.csv`;
   return (

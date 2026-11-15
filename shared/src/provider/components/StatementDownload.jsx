@@ -5,21 +5,12 @@ import { FileDown, Loader2 } from 'lucide-react';
 import { selectAuth } from '../../modules/auth/authSlice';
 import { API_BASE } from '../../services/apiBase';
 import { fetchOk } from '../../utils/fetchOk';
-
-const lastMonths = (n) => {
-  const out = [];
-  const d = new Date();
-  for (let i = 0; i < n; i += 1) {
-    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
-    out.push({ key: `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`, label: m.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) });
-  }
-  return out;
-};
+import { statementMonths } from '../statementMonths';
 
 // A month's statement (earnings, commission, dues paid, payouts) as a CSV for the partner's accounts (server shop/shop-statement).
 export default function StatementDownload() {
-  const months = lastMonths(12);
-  const [month, setMonth] = useState(months[0].key);
+  const months = statementMonths(12);
+  const [month, setMonth] = useState(months[0]?.key || '');
   const [busy, setBusy] = useState(false);
   const { accessToken } = useSelector(selectAuth);
   async function download() {

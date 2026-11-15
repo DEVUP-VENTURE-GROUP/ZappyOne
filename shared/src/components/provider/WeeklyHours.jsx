@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast';
+import { useServiceProT } from '../../i18n/I18nProvider';
 import { DAYS, MINUTE_STEPS, to12Hour, to24Hour, dayLength, incompleteDay, dayOf, withDay, weekdaysLike, meantPm } from './weeklyHoursRules';
 
 export { DAYS, incompleteDay };
@@ -41,6 +42,7 @@ function TimeField({ value, onChange, label }) {
  * what the server validates and compares against.
  */
 export default function WeeklyHours({ hours, onChange }) {
+  const t = useServiceProT();
   const setDay = (day, patch) => onChange(withDay(hours, day, patch));
 
   /** Most shops keep one weekday schedule — set it once, not six times. */
@@ -54,7 +56,7 @@ export default function WeeklyHours({ hours, onChange }) {
   return (
     <div>
       <button type="button" onClick={applyWeekdays} className="text-xs font-bold text-zappy-600">
-        Apply one day to Mon–Sat
+        {t('sp.hrs.applyAll', 'Apply one day to Mon–Sat')}
       </button>
       <div className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white px-3.5">
         {DAYS.map((label, day) => {
@@ -65,7 +67,7 @@ export default function WeeklyHours({ hours, onChange }) {
             /* Day and Open/Closed lead; the times sit beside them on a wide screen and beneath on a phone. */
             <div key={day} className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:gap-3">
               <div className="flex items-center gap-2">
-                <span className="w-9 shrink-0 text-xs font-bold text-slate-600">{label}</span>
+                <span className="w-9 shrink-0 text-xs font-bold text-slate-600">{t(`sp.day.${day}`, label)}</span>
                 <button
                   type="button"
                   onClick={() => setDay(day, { isClosed: !row.isClosed })}
@@ -73,14 +75,14 @@ export default function WeeklyHours({ hours, onChange }) {
                   className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
                     row.isClosed ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-700'}`}
                 >
-                  {row.isClosed ? 'Closed' : 'Open'}
+                  {row.isClosed ? t('sp.hrs.closed', 'Closed') : t('sp.hrs.open', 'Open')}
                 </button>
-                {row.isClosed && <span className="text-[11.5px] text-slate-400">Not open this day</span>}
+                {row.isClosed && <span className="text-[11.5px] text-slate-400">{t('sp.hrs.notOpen', 'Not open this day')}</span>}
               </div>
               {!row.isClosed && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <TimeField label={`${label} opens at`} value={row.opensAt} onChange={(v) => setDay(day, { opensAt: v })} />
-                  <span className="px-0.5 text-xs text-slate-400">to</span>
+                  <span className="px-0.5 text-xs text-slate-400">{t('sp.hrs.to', 'to')}</span>
                   <TimeField label={`${label} closes at`} value={row.closesAt} onChange={(v) => setDay(day, { closesAt: v })} />
                   {len && (
                     <span className={`w-full text-[11px] font-semibold sm:w-auto ${len.short ? 'text-amber-600' : 'text-slate-400'}`}>
