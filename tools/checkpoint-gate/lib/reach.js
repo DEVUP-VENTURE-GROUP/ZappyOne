@@ -14,7 +14,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const WEB_APPS = ['client', 'servicepro', 'rakshak', 'admin'];
+// Rakshak is on hold (not built, tested or shipped), so the gate leaves it out until it returns.
+const WEB_APPS = ['client', 'servicepro', 'admin'];
 const CODE = /\.(jsx?|tsx?|mjs|cjs)$/;
 
 function listFiles(dir, out = []) {
@@ -133,7 +134,10 @@ function missingApiHooks(root) {
   if (!fs.existsSync(apiFile)) return [];
   const api = fs.readFileSync(apiFile, 'utf8');
   const exported = new Set(api.slice(api.indexOf('export const {')).match(/use[A-Z][A-Za-z0-9_]+/g) || []);
-  const endpoints = new Set([...api.matchAll(/^ +([A-Za-z0-9_]+): b[.](query|mutation)[(]/gm)].map((m) => m[1]));
+  // Endpoints are defined in endpoints.js and api.js re-exports their hooks; older trees kept both in api.js.
+  const endpointsFile = path.join(root, 'shared/src/services/endpoints.js');
+  const defs = api + (fs.existsSync(endpointsFile) ? fs.readFileSync(endpointsFile, 'utf8') : '');
+  const endpoints = new Set([...defs.matchAll(/^ +([A-Za-z0-9_]+): b[.](query|mutation)[(]/gm)].map((m) => m[1]));
   const endpointOf = (hook) => {
     const m = hook.match(/^use(?:Lazy)?(\w+?)(?:Query|Mutation)$/);
     return m ? m[1][0].toLowerCase() + m[1].slice(1) : null;

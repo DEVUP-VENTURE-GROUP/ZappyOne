@@ -22,7 +22,7 @@ const { renderMarkdown, renderHtml } = require('./lib/report');
 const ROOT = path.resolve(__dirname, '../..');
 const WEB_APPS = reach.WEB_APPS;
 const CODE = /\.(jsx?|mjs|cjs)$/;
-const SCANNED = /^(client|servicepro|rakshak|admin|events|shared|server)\//;
+const SCANNED = /^(client|servicepro|admin|events|shared|server)\//;
 
 /* Arguments */
 
