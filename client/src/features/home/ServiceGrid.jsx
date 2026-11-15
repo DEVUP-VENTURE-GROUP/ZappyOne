@@ -2,62 +2,70 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
-import { servicePhoto, tilePhoto } from '@shared/components/home/serviceArt';
-import { problemPhotoIn } from '@shared/components/home/problemArt';
+import { distinctArt } from '@shared/components/home/serviceArt';
+import { problemPhoto } from '@shared/components/home/problemArt';
 
-/**
- * The services, as one even grid on a single neutral surface.
- *
- * Order carries the priority, not colour: what someone verified can do at this
- * address comes first, then the rest in catalog order. Every tile looks the
- * same so nothing competes by tint; the picture and the name do the work.
- */
-function Tile({ service, onOpen }) {
+// The services, as one even grid on a single neutral surface.
+// Soft tints, one per service area, so the grid reads in groups at a glance.
+export const DOMAIN_TINT = {
+  electronics: { bg: 'bg-violet-50', fg: 'text-violet-600' },
+  vehicles: { bg: 'bg-sky-50', fg: 'text-sky-600' },
+  home_services: { bg: 'bg-cyan-50', fg: 'text-cyan-600' },
+  pet_services: { bg: 'bg-orange-50', fg: 'text-orange-500' },
+  helping_services: { bg: 'bg-emerald-50', fg: 'text-emerald-600' },
+  family_assist: { bg: 'bg-rose-50', fg: 'text-rose-500' },
+  events: { bg: 'bg-pink-50', fg: 'text-pink-500' },
+};
+const DEFAULT_TINT = { bg: 'bg-zappy-50', fg: 'text-zappy-600' };
+export const tintFor = (domainCode) => DOMAIN_TINT[domainCode] || DEFAULT_TINT;
+
+function Tile({ service, character, onOpen }) {
   const Icon = SERVICE_ICONS[service.icon] || Wrench;
-  // An admin-set picture wins; then the service's own photo; otherwise one clean icon, never a character beside photos.
-  const photo = service.imageUrl || tilePhoto(service.code) || servicePhoto(service);
+  const tint = tintFor(service.domainCode);
+  // An admin-set picture wins; then the service's ZappyOne character; then its icon.
+  const art = service.imageUrl || character?.still;
   return (
     <button type="button" onClick={onOpen}
-      className="group flex flex-col items-center gap-2 rounded-card text-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zappy-600/20">
-      <span className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-sunken transition-colors duration-150 group-active:bg-line">
-        {photo
-          ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" />
-          : <Icon strokeWidth={1.6} className="h-[36%] w-[36%] text-ink-700" />}
+      className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
+      <span className={`flex aspect-square w-full max-w-[88px] items-center justify-center overflow-hidden rounded-[18px] ${tint.bg} ring-1 ring-inset ring-black/[0.03] transition-transform duration-150 group-hover:-translate-y-0.5 group-active:scale-95 group-focus-visible:ring-4 group-focus-visible:ring-zappy-600/25`}>
+        {art
+          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain p-1.5 mix-blend-multiply'}`} />
+          : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
       </span>
-      <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{service.name}</span>
+      <span className="line-clamp-2 text-[12px] font-semibold leading-[1.25] text-ink-900 sm:text-[13px]">{service.name}</span>
     </button>
   );
 }
 
-export function ServiceGrid({ domains, onOpen }) {
-  // A photo grid only: a service without its photo yet is listed under All services below, never as a bare icon here.
-  const all = domains.flatMap((d) => d.services).filter((s) => s.imageUrl || tilePhoto(s.code) || servicePhoto(s));
+export function ServiceGrid({ domains, onOpen, onViewAll }) {
+  const all = domains.flatMap((d) => d.services);
   if (!all.length) return null;
   // Bookable here first; the sort is stable, so catalog order holds within each group.
   const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
+  const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
 
-  // Phones: three even columns. Wider: one fixed tile size, as many per row as fit.
+  // Phones: four columns. Wider: one fixed tile size, as many per row as fit.
   return (
     <section aria-labelledby="home-services">
-      <h2 id="home-services" className="h-section">Services</h2>
-      <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-[repeat(auto-fill,112px)] sm:gap-x-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="home-services" className="h-section">Explore services</h2>
+        {onViewAll && (
+          <button type="button" onClick={onViewAll} className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600 hover:text-zappy-800">
+            View all <ChevronRight size={15} strokeWidth={2.4} />
+          </button>
+        )}
+      </div>
+      {/* auto-fit: a short catalogue spreads across the row instead of huddling left. */}
+      <div className="mt-4 grid grid-cols-4 justify-items-center gap-x-2 gap-y-5 sm:grid-cols-[repeat(auto-fit,minmax(104px,1fr))] sm:gap-x-4">
         {tiles.map((s) => (
-          <Tile key={s.code} service={s} onOpen={() => onOpen(s)} />
+          <Tile key={s.code} service={s} character={characters.get(s.code)} onOpen={() => onOpen(s)} />
         ))}
       </div>
     </section>
   );
 }
 
-/**
- * The fastest way in: a problem in the customer's own words, straight into the
- * service that fixes it. Drawn from the catalog's popular problems, so an
- * operator changes this list, not a developer.
- *
- * The row drifts on its own so every problem gets seen; it stops while a
- * finger or pointer is on it, the arrows step through it, and anyone who asks
- * for reduced motion gets a still row they scroll themselves.
- */
+// The fastest way in: a problem in the customer's own words, straight into the service that fixes it.
 const DRIFT_PX_PER_S = 28;
 
 export function ProblemChips({ services }) {
@@ -113,10 +121,7 @@ export function ProblemChips({ services }) {
   return (
     <section aria-labelledby="home-problems">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 id="home-problems" className="text-[17px] font-extrabold tracking-[-0.01em] text-ink-900">What's wrong?</h2>
-          <p className="text-[12.5px] text-ink-500">Tap the problem, see the price</p>
-        </div>
+        <h2 id="home-problems" className="text-[13px] font-semibold text-ink-500">Common problems</h2>
         <div className="flex gap-1.5">
           <button type="button" onClick={() => stepBy(-1)} aria-label="Previous problems"
             className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-ink-700 hover:border-line-strong">
@@ -131,7 +136,7 @@ export function ProblemChips({ services }) {
       <div className="relative -mx-4 mt-2 sm:mx-0">
         <div
           ref={row}
-          className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar sm:px-0"
+          className="flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar sm:px-0"
           onMouseEnter={() => { hold.current = true; }}
           onMouseLeave={() => { hold.current = false; }}
           onTouchStart={() => { hold.current = true; }}
@@ -141,7 +146,7 @@ export function ProblemChips({ services }) {
         >
           {list.map((c, i) => {
             const Icon = SERVICE_ICONS[c.service.icon] || Wrench;
-            const photo = problemPhotoIn(c.service.artKey || c.service.code, c, c.categoryCode ? { code: c.categoryCode } : null);
+            const photo = problemPhoto(c.service.artKey || c.service.code, c);
             const copy = i >= chips.length;
             return (
               <button
@@ -150,15 +155,16 @@ export function ProblemChips({ services }) {
                 onClick={() => nav(c.service.path)}
                 tabIndex={copy ? -1 : 0}
                 aria-hidden={copy || undefined}
-                className="group flex w-[118px] shrink-0 flex-col gap-1.5 text-left focus-visible:outline-none sm:w-[132px]"
+                className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-full border border-line bg-white pl-1.5 pr-3.5 text-[13px] font-medium text-ink-900 transition-colors duration-150 hover:border-line-strong active:bg-canvas"
               >
-                <span className="block aspect-[4/5] w-full overflow-hidden rounded-card bg-sunken ring-1 ring-line transition group-hover:ring-line-strong group-focus-visible:ring-2 group-focus-visible:ring-zappy-600">
-                  {photo
-                    ? <img src={photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-                    : <span className="flex h-full w-full items-center justify-center text-zappy-600"><Icon size={26} strokeWidth={1.6} /></span>}
-                </span>
-                <span className="line-clamp-2 text-[13px] font-semibold leading-[1.25] text-ink-900">{c.name}</span>
-                <span className="truncate text-[11.5px] text-ink-500">{c.service.name}</span>
+                {photo
+                  ? <img src={photo} alt="" loading="lazy" decoding="async" className="h-7 w-7 rounded-full object-cover" />
+                  : (
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zappy-50 text-zappy-600">
+                      <Icon size={14} strokeWidth={2} />
+                    </span>
+                  )}
+                {c.name}
               </button>
             );
           })}

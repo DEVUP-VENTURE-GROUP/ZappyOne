@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
+import { setLocation } from '@shared/store/locationSlice';
 import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
 import useSeason from './useSeason';
 import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
@@ -13,10 +14,8 @@ import SEO, { HOME_SCHEMA, BASE_URL } from '@shared/components/SEO';
 import NotInYourArea from '../catalog/serviceability/NotInYourArea';
 import { backAt } from '@shared/customer/opening';
 import ComingSoonRow from './ComingSoonRow';
-import ServiceShowcase from './ServiceShowcase';
 import HeroCarousel from './HeroCarousel';
-import { foldIntoHub } from '@shared/components/home/serviceArt';
-import AdBanner from '../../components/marketing/AdBanner';
+import { artFor, foldIntoHub } from '@shared/components/home/serviceArt';
 import Footer from '../../components/layout/Footer';
 import SpotlightSearch from '../catalog/SpotlightSearch';
 import LensModal from '../catalog/LensModal';
@@ -25,28 +24,29 @@ import { trackSearch } from '@shared/hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
-import { OffersRail, BookAgainRail, NearbyShopsLink } from './HomeRails';
+import {
+  ModeSwitch, ZappyOnePromo, PopularServices, pickPopular, CampaignBanners, LocalStores,
+  OffersDeals, BookAgain, RecentActivity,
+} from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
+import { useHomeAds } from './useHomeAds';
 import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
-import FestiveReveal from '@shared/components/home/festive/FestiveReveal';
 import FestiveDivider from '@shared/components/home/festive/FestiveDivider';
 import useFestiveLook from '@shared/customer/useFestiveLook';
 import { reducedMotion } from '../../lib/animations';
 
-/**
- * Home — what a customer can get done, right where they are.
- *
- *   location + live status → search → anything in progress
- *   → every live service → common problems → offers → book again → shops, events
- *
- * What each service covers in detail lives one tap in (the service and All
- * Services pages) — repeating it here made Home five screens of the same list.
- *
- * One layout from a small phone to a wide desktop; nothing here is a claim
- * the data doesn't back (services, offers, events and counts are all live).
- */
+// Home — what a customer can get done, right where they are.
+
+/** The picture for a past booking, from the characters already shipped. */
+function jobArt(job) {
+  const raw = job.raw || {};
+  if (job.kind === 'repair') return artFor(raw.vertical)?.still || null;
+  if (job.kind === 'pet') return artFor(null, 'pet_services')?.still || null;
+  if (job.kind === 'helping') return artFor(null, 'helping_services')?.still || null;
+  return null;
+}
 
 /** Whatever is happening right now comes first — it is why most people open the app. */
 function ActiveJobCard({ job, onOpen }) {
@@ -82,15 +82,9 @@ function SkeletonGrid() {
   );
 }
 
-export default function HomePage() {
-  const nav = useNavigate();
-  const { profile } = useSelector(selectAuth);
-  const isAuthed = useSelector(selectIsAuthed);
-  const [spotOpen, setSpotOpen] = useState(false);
-  const [spotQuery, setSpotQuery] = useState('');
-  const [lensOpen, setLensOpen] = useState(false);
-  const { data: lensStatus } = useLensStatusQuery();
-  const lensReady = !!lensStatus?.enabled;
+// Where the customer is: trusted cache first, then GPS; ask only when neither works.
+function useHomeLocation(isAuthed) {
+  const dispatch = useDispatch();
   const [locSheet, setLocSheet] = useState(false);
   const [locDetecting, setLocDetecting] = useState(false);
 
@@ -159,6 +153,18 @@ export default function HomePage() {
     setLocSheet(false);
   }
 
+  // One location for the whole app: Local stores and the booking flows read the
+  // shared slice, which otherwise only hydrates on a full page load.
+  useEffect(() => {
+    if (loc.lat == null || loc.lng == null || loc.loading) return;
+    dispatch(setLocation({ lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') }));
+  }, [loc.lat, loc.lng, loc.loading, loc.primary, loc.secondary, dispatch]);
+
+  return { loc, locSheet, setLocSheet, locDetecting, detectCurrentLocation, pickLocation };
+}
+
+// What can be booked here: only services a live pro covers at this address; the rest waits in "Coming to your area".
+function useHomeCatalog(loc) {
   /* What we serve here. */
   // A failed check must not hold the grid in skeletons forever: once it has
   // answered (or failed), the catalog is shown as it is.
@@ -222,6 +228,21 @@ export default function HomePage() {
     return [...new Set(problems.length ? problems : services.map((s) => s.name))].slice(0, 8);
   }, [services]);
 
+  return { svc, checkingArea, loadingCatalog, liveCodes, allDomains, domains, services, comingSoon, allServices, searchTerms };
+}
+
+export default function HomePage() {
+  const nav = useNavigate();
+  const { profile } = useSelector(selectAuth);
+  const isAuthed = useSelector(selectIsAuthed);
+  const [spotOpen, setSpotOpen] = useState(false);
+  const [spotQuery, setSpotQuery] = useState('');
+  const [lensOpen, setLensOpen] = useState(false);
+  const { data: lensStatus } = useLensStatusQuery();
+  const lensReady = !!lensStatus?.enabled;
+  const { loc, locSheet, setLocSheet, locDetecting, detectCurrentLocation, pickLocation } = useHomeLocation(isAuthed);
+  const { svc, checkingArea, loadingCatalog, liveCodes, allDomains, domains, services, comingSoon, allServices, searchTerms } = useHomeCatalog(loc);
+
   // Demand signal for Insights: once per session per ~1 km, whether we serve it.
   useEffect(() => {
     if (!svc?.status || loc.lat == null) return;
@@ -242,8 +263,12 @@ export default function HomePage() {
     nav(path || s.path);
   }
 
+  /* Admin banners (hero, campaign, offer). */
+  const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
+  const popular = useMemo(() => pickPopular(services), [services]);
+
   /* The customer's own jobs. */
-  const { current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
+  const { jobs, current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
   // Anything they've had done before, of any kind, reopens its booking flow.
   const quickRebooks = useMemo(() => {
     const seen = new Set();
@@ -251,11 +276,16 @@ export default function HomePage() {
     for (const j of pastJobs) {
       if (j.outcome !== 'completed' || !j.rebookHref || seen.has(j.rebookHref)) continue;
       seen.add(j.rebookHref);
-      out.push({ key: j.rebookHref, title: j.title, href: j.rebookHref, date: j.raw.completedAt || j.createdAt });
+      out.push({ key: j.rebookHref, title: j.title, href: j.rebookHref, date: j.raw.completedAt || j.createdAt, art: jobArt(j) });
       if (out.length === 3) break;
     }
     return out;
   }, [pastJobs]);
+  // The latest few, live ones first; the live one already has its own card above.
+  const recent = useMemo(() => {
+    const ordered = [...jobs.filter((j) => j.active), ...jobs.filter((j) => !j.active)];
+    return ordered.filter((j) => j !== activeJob).slice(0, 3);
+  }, [jobs, activeJob]);
 
   const notHere = svc?.status === 'not_here';
   // In the city, but no pro has joined at this address yet: say so honestly and lead with what is coming.
@@ -295,7 +325,7 @@ export default function HomePage() {
       />
 
       {/* overflow-x-clip, not hidden: hidden makes this a scroll box and breaks the sticky header. */}
-      <div className="fz-look min-h-screen w-full overflow-x-clip bg-canvas"
+      <div className="fz-look min-h-screen w-full overflow-x-clip bg-[#F7F8FB]"
         // A festival carries all the way down in the page's own plain wash.
         style={theme ? { background: theme.wash } : undefined}>
         <HomeHeader
@@ -312,13 +342,15 @@ export default function HomePage() {
         />
 
         {/* Phone: search stays pinned while the rest scrolls (desktop has it in the bar). */}
-        <div className={`sticky top-0 z-30 bg-zappy-100 md:hidden ${tint ? '' : 'rounded-b-sheet'}`} style={tint ? { background: tint } : undefined}>
-          <div className="px-4 pb-4 pt-1">{searchBar}</div>
+        <div className="sticky top-0 z-30 bg-white pb-3 pt-1 shadow-[0_6px_12px_-10px_rgba(16,24,40,0.18)] md:hidden" style={tint ? { background: tint } : undefined}>
+          <div className="px-4">{searchBar}</div>
         </div>
 
         {season && <FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} />}
 
-        <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-10 pt-5 sm:gap-10 sm:px-6 sm:pt-7">
+        <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-4 pb-10 pt-4 sm:gap-10 sm:px-6 sm:pt-7">
+          <ModeSwitch onStores={() => nav('/nearby-shops')} />
+
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
           {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
           <ContinueBookingCard isAuthed={isAuthed} />
@@ -342,27 +374,35 @@ export default function HomePage() {
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {settling && <div className="mx-4 mt-3 h-40 animate-pulse rounded-card bg-sunken md:mx-0" aria-hidden="true" />}
-              {!settling && !nothingLive && !season && <HeroCarousel domains={allDomains} onOpen={openService} />}
+              {settling && <div className="h-[188px] animate-pulse rounded-[20px] bg-sunken sm:h-[300px] lg:h-[340px]" aria-hidden="true" />}
+              {!settling && !nothingLive && !season && (
+                <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />
+              )}
 
-              {/* Intent first: the problem in their words, then the services. */}
-              <FestiveReveal on={!!season}><ProblemChips services={services} /></FestiveReveal>
               {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <FestiveReveal on={!!season}><ServiceGrid domains={domains} onOpen={openService} /></FestiveReveal>}
+                : <ServiceGrid domains={domains} onOpen={openService} onViewAll={() => nav('/services')} />}
+              {/* The problem in the customer's own words, straight into its flow. */}
+              <ProblemChips services={services} />
               {season && <FestiveDivider theme={theme} />}
 
-              {/* Personal and real only: their own past bookings, live offers. */}
-              <FestiveReveal on={!!season}><BookAgainRail items={quickRebooks} onOpen={nav} /></FestiveReveal>
-              <FestiveReveal on={!!season}><OffersRail isAuthed={isAuthed} /></FestiveReveal>
-              {season && <FestiveDivider theme={theme} />}
+              <ZappyOnePromo onExplore={() => nav('/nearby-shops')} />
 
-              {!settling && <FestiveReveal on={!!season}><ServiceShowcase domains={allDomains} onOpen={openService} /></FestiveReveal>}
-              {isAuthed && <FestiveReveal on={!!season}><HomeMarketplace /></FestiveReveal>}
-              {!loadingCatalog && !nothingLive && <FestiveReveal on={!!season}><ComingSoonRow groups={comingSoon} loc={loc} /></FestiveReveal>}
-              {season && <FestiveDivider theme={theme} />}
-              <FestiveReveal on={!!season}><AdBanner /></FestiveReveal>
-              <FestiveReveal on={!!season}><NearbyShopsLink /></FestiveReveal>
+              {!loadingCatalog && <PopularServices services={popular} onOpen={openService} onViewAll={() => nav('/services')} />}
+
+              <CampaignBanners ads={campaignBanners} onOpen={openBanner} onImageError={onBannerImageError} />
+
+              <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => nav(`/shops/${id}`)} onViewAll={() => nav('/nearby-shops')} />
+
+              <OffersDeals ads={offerBanners} isAuthed={isAuthed} onOpenAd={openBanner} onViewAll={() => nav('/promos')} onImageError={onBannerImageError} />
+
+              {/* Personal and real only: the customer's own bookings. */}
+              <BookAgain items={quickRebooks} onOpen={nav} onViewAll={() => nav('/orders')} />
+              <RecentActivity jobs={recent} onOpen={nav} onViewAll={() => nav('/orders')} />
+
+              {isAuthed && <HomeMarketplace />}
+              {/* Only live services show above; the rest waits here, by category. */}
+              {!loadingCatalog && !nothingLive && <ComingSoonRow groups={comingSoon} loc={loc} />}
             </>
           )}
         </main>
