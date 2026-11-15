@@ -7,6 +7,7 @@ import { AREA_PHOTO } from '@zappy/core/shared/homepageContent';
 import { offerHeadline, offerTerms } from '@zappy/core/shared/season';
 import { artFor, servicePhoto } from '@zappy/core/shared/serviceArt';
 import { Skeleton, Text } from '@zappy/ui/components';
+import { GlassSurface } from '@zappy/ui/components/Glass';
 import { toast } from '@zappy/ui/components/Toast';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -34,14 +35,14 @@ function Rail({ children }: { children: React.ReactNode }) {
 
 export function ModeSwitch({ onStores }: { onStores: () => void }) {
   return (
-    <View style={styles.mode} accessibilityRole="tablist">
+    <GlassSurface style={styles.modeShape} fallbackStyle={styles.mode} accessibilityRole="tablist">
       <View style={[styles.modeBtn, styles.modeOn]} accessibilityRole="tab" accessibilityState={{ selected: true }}>
         <Wrench size={17} color="#fff" /><Text variant="bodySmall" weight="bold" color="#fff">Book a service</Text>
       </View>
       <Pressable onPress={onStores} style={styles.modeBtn} accessibilityRole="tab" accessibilityState={{ selected: false }}>
         <Store size={17} color={zappy[700]} /><Text variant="bodySmall" weight="bold" color={zappy[700]}>Local stores</Text>
       </Pressable>
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -241,7 +242,8 @@ const styles = StyleSheet.create({
   section: { gap: spacing.md },
   title: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   rail: { gap: spacing.md, paddingRight: spacing.base },
-  mode: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: zappy[50], borderWidth: 1, borderColor: zappy[100] },
+  modeShape: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16 },
+  mode: { backgroundColor: zappy[50], borderWidth: 1, borderColor: zappy[100] },
   modeBtn: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: 12 },
   modeOn: { backgroundColor: zappy[600] },
   promo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.extraLarge, backgroundColor: zappy[50], borderWidth: 1, borderColor: zappy[100] },

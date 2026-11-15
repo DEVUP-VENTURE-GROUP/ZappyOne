@@ -1,5 +1,6 @@
 import { useSafeBack } from '../../hooks/useBookingFlow';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useGetServiceabilityQuery } from '@shared/services/api';
 import { loadGeoLocation } from '@shared/hooks/useGeolocation';
@@ -15,6 +16,17 @@ import SEO from '@shared/components/SEO';
  * come to the address.
  */
 export default function AllServicesPage() {
+  const { hash } = useLocation();
+  // From an area tile on Home (#domain-<code>): scroll to that area once the catalog has drawn it.
+  useEffect(() => {
+    if (!hash) return undefined;
+    let tries = 0;
+    const t = setInterval(() => {
+      const el = document.getElementById(hash.slice(1));
+      if (el || ++tries > 20) { clearInterval(t); el?.scrollIntoView({ block: 'start' }); }
+    }, 150);
+    return () => clearInterval(t);
+  }, [hash]);
   const nav = useNavigate();
   // Back to the previous page, or to / when this page was opened directly.
   const goBack = useSafeBack('/');

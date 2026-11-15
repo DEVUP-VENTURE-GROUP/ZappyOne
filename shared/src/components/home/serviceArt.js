@@ -107,13 +107,27 @@ const SERVICE_PHOTOS = new Set([
   'pet_grooming', 'pet_boarding', 'pet_walk', 'pet_home_care', 'pet_transport', 'pet_vet_assist', 'pet_check',
 ]);
 
+// Licensed stock photos (assets/web/services/CREDITS.md), one per service, for services with no admin picture.
+const STOCK_PHOTOS = new Set([
+  'appliance_install', 'appliance_repair', 'bathroom_balcony', 'car_detailing', 'carpentry', 'daily_cleaning', 'dish_kitchen',
+  'document_delivery', 'fitness_trainer', 'four_wheeler', 'home_organising', 'home_tutor', 'household_help', 'laptop_repair',
+  'laundry_ironing', 'laundry_pickup', 'locks_mounting', 'makeup_mehndi', 'massage_wellness', 'mens_grooming', 'mobile_repair',
+  'music_teacher', 'painting', 'pest_control', 'photography', 'plant_party', 'returns_exchange', 'ro_service', 'roadside_help',
+  'salon_home', 'shopping_pickup', 'sofa_mattress', 'two_wheeler', 'vehicle_pickup', 'water_tank_care',
+]);
+
 export function servicePhoto(service) {
   if (service?.imageUrl) return service.imageUrl;
   if (SERVICE_PHOTOS.has(service?.code)) return `/services/pet/${service.code}.webp`;
   // Helping errands use their real photos (shopping, pickup, return, exchange); others keep their character.
   const photo = problemServicePhoto(service?.code);
-  return photo && photo.startsWith('/services/helping/') ? photo : null;
+  if (photo && photo.startsWith('/services/helping/')) return photo;
+  return STOCK_PHOTOS.has(service?.code) ? `/services/${service.code}.jpg` : null;
 }
+
+// One licensed photo per service area (assets/web/areas/CREDITS.md); an admin picture on the area wins.
+const AREA_PHOTOS = new Set(['electronics', 'home_daily_help', 'home_services', 'vehicles', 'beauty_care', 'errands_pickup', 'helping_services', 'family_assist', 'pet_services', 'specialist_home', 'local_pros']);
+export const areaPhoto = (domain) => domain?.imageUrl || (AREA_PHOTOS.has(domain?.code) ? `/areas/${domain.code}.jpg` : null);
 
 // The square photo for a service's tile in the home grid only; every tile is a real photo, so the grid never mixes photos with characters.
 const TILES = new Set(['bike_wash', 'car_wash', 'water_tank_care', 'shopping_pickup', 'fa_grocery_run', 'fa_doctor_escort', 'fa_elder_checkin', 'fa_party_helper', 'fa_puja_help']);

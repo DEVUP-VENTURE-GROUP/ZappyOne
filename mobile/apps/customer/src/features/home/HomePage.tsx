@@ -25,6 +25,7 @@ import { describeCoordinates } from '@zappy/ui/location/geocode';
 import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { useTabBarSpace } from '@zappy/ui/lib/useTabBarSpace';
 import { SpotlightSearch } from '../catalog/SpotlightSearch';
 import { backAt } from '@zappy/core/shared/opening';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
@@ -48,7 +49,7 @@ import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
 import { ProblemChips } from './ProblemChips';
 import { ServiceGrid } from './ServiceGrid';
-import { buildDomains, comingSoonOf, gridDomains, quickRebooks, searchTerms, type HomeDomain, type HomeService } from './homeCatalog';
+import { buildDomains, comingSoonOf, quickRebooks, searchTerms, type HomeDomain, type HomeService } from './homeCatalog';
 
 let remembered = false;   // a precise fix is saved on the customer's record once per app session
 
@@ -141,7 +142,6 @@ export function HomePage() {
   const eventsHere = !liveCodes || Boolean(svc?.events);
   const { data: eventCats } = useGetEventCategoriesQuery(svc?.zone?.city ? { city: svc.zone.city } : {}, { skip: !eventsHere });
   const allDomains: HomeDomain[] = useMemo(() => buildDomains(catalog?.domains || [], liveCodes, eventsHere ? eventCats?.categories || [] : []), [catalog, liveCodes, eventCats, eventsHere]);
-  const domains = useMemo(() => gridDomains(allDomains), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   const terms = useMemo(() => searchTerms(services), [services]);
 
@@ -169,6 +169,7 @@ export function HomePage() {
   const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
   const popular = useMemo(() => pickPopular(services) as HomeService[], [services]);
   const { width: screen } = useWindowDimensions();
+  const tabSpace = useTabBarSpace();
   const goStores = () => router.push('/nearby-shops' as never);
   const notHere = svc?.status === 'not_here';
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
@@ -195,7 +196,7 @@ export function HomePage() {
       {/* Search stays pinned while the rest scrolls. */}
       <View style={[styles.searchWrap, tint ? { backgroundColor: tint } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <HomeScrollY.Provider value={scrollY}>
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={[styles.body, { paddingBottom: tabSpace }]} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {season ? <SafeSection name="festive-hero"><View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View></SafeSection> : null}
         <ModeSwitch onStores={goStores} />
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
@@ -214,7 +215,7 @@ export function HomePage() {
             {settling ? <Skeleton height={188} style={styles.heroSkel} /> : null}
             {!settling && !nothingLive && !season ? <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} /> : null}
             {/* During a festival each section rises in after the last. */}
-            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={domains} onOpen={openService} onViewAll={() => router.push('/services' as never)} /></Reveal>}
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={allDomains} onOpenArea={(d) => router.push(`/services?category=${d.code}` as never)} onMore={() => router.push('/services' as never)} /></Reveal>}
             <Reveal on={!!theme}><ProblemChips services={services} /></Reveal>
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
             <ZappyOnePromo onExplore={goStores} />

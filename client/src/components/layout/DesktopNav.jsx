@@ -16,6 +16,7 @@ import { useLivePoll } from '@shared/hooks/useSocket';
 const LINKS = [
   { to: '/', label: 'Home', tKey: 'nav.home', end: true },
   { to: '/services', label: 'All services', tKey: 'nav.services' },
+  { to: '/nearby-shops', label: 'Local stores', tKey: 'nav.stores' },
   { to: '/orders', label: 'Bookings', tKey: 'nav.bookings' },
   { to: '/track', label: 'Track', tKey: 'nav.track' },
 ];

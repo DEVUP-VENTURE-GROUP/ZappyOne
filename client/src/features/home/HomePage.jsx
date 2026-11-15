@@ -15,7 +15,7 @@ import NotInYourArea from '../catalog/serviceability/NotInYourArea';
 import { backAt } from '@shared/customer/opening';
 import ComingSoonRow from './ComingSoonRow';
 import HeroCarousel from './HeroCarousel';
-import { artFor, foldIntoHub } from '@shared/components/home/serviceArt';
+import { artFor } from '@shared/components/home/serviceArt';
 import Footer from '../../components/layout/Footer';
 import SpotlightSearch from '../catalog/SpotlightSearch';
 import LensModal from '../catalog/LensModal';
@@ -216,8 +216,6 @@ function useHomeCatalog(loc) {
     const at = list.findIndex((d) => d.code === 'pet_services');
     return at < 0 ? [...list, events] : [...list.slice(0, at), events, ...list.slice(at)];
   }, [catalog, liveCodes, eventCats, eventsHere]);
-  // The quick grid folds a section with its own page (pet care) into one tile.
-  const domains = useMemo(() => allDomains.map(foldIntoHub), [allDomains]);
   const services = useMemo(() => allDomains.flatMap((d) => d.services), [allDomains]);
   // Grouped by category, one row each, so the list reads like a menu rather than one long strip.
   const comingSoon = useMemo(() => (liveCodes
@@ -229,7 +227,7 @@ function useHomeCatalog(loc) {
     return [...new Set(problems.length ? problems : services.map((s) => s.name))].slice(0, 8);
   }, [services]);
 
-  return { svc, checkingArea, loadingCatalog, liveCodes, allDomains, domains, services, comingSoon, allServices, searchTerms };
+  return { svc, checkingArea, loadingCatalog, liveCodes, allDomains, services, comingSoon, allServices, searchTerms };
 }
 
 export default function HomePage() {
@@ -242,7 +240,7 @@ export default function HomePage() {
   const { data: lensStatus } = useLensStatusQuery();
   const lensReady = !!lensStatus?.enabled;
   const { loc, locSheet, setLocSheet, locDetecting, detectCurrentLocation, pickLocation } = useHomeLocation(isAuthed);
-  const { svc, checkingArea, loadingCatalog, liveCodes, allDomains, domains, services, comingSoon, allServices, searchTerms } = useHomeCatalog(loc);
+  const { svc, checkingArea, loadingCatalog, liveCodes, allDomains, services, comingSoon, allServices, searchTerms } = useHomeCatalog(loc);
 
   // Demand signal for Insights: once per session per ~1 km, whether we serve it.
   useEffect(() => {
@@ -382,7 +380,7 @@ export default function HomePage() {
 
               {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={domains} onOpen={openService} onViewAll={() => nav('/services')} />}
+                : <ServiceGrid domains={allDomains} onOpenArea={(d) => nav(`/services#domain-${d.code}`)} onMore={() => nav('/services')} />}
               {/* The problem in the customer's own words, straight into its flow. */}
               <ProblemChips services={services} />
               {season && <FestiveDivider theme={theme} />}

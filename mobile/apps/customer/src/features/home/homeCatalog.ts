@@ -4,7 +4,6 @@
  * their own section before pet care, the rotating search hints, and the
  * customer's own "book again" list.
  */
-import { foldIntoHub } from '@zappy/core/shared/serviceArt';
 import { eventPhoto } from '../events/eventTones';
 
 export interface HomeService {
@@ -46,8 +45,6 @@ export function buildDomains(catalogDomains: HomeDomain[], liveCodes: Set<string
   return at < 0 ? [...list, events] : [...list.slice(0, at), events, ...list.slice(at)];
 }
 
-/** The quick grid folds a section with its own page (pet care) into one tile. */
-export const gridDomains = (all: HomeDomain[]): HomeDomain[] => all.map(foldIntoHub);
 
 /** Real, bookable problems for the rotating search hint; never a service we don't offer. */
 export function searchTerms(services: HomeService[]): string[] {

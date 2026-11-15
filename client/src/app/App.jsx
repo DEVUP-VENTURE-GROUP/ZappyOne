@@ -171,6 +171,8 @@ export default function App() {
           <Route path="/support" element={<RequireAuth role="user"><SupportPage /></RequireAuth>} />
           <Route path="/payments" element={<RequireAuth role="user"><PaymentMethodsPage /></RequireAuth>} />
           <Route path="/wallet" element={<RequireAuth><WalletPage /></RequireAuth>} />
+          {/* Local stores is a bottom-nav tab, so it keeps the bar. */}
+          <Route path="/nearby-shops" element={<NearbyShopsPage />} />
         </Route>
 
         {/* Routes outside MainLayout (no bottom nav) */}
@@ -251,8 +253,6 @@ export default function App() {
         <Route path="/repair/price-requests/:id" element={<RequireAuth role="user"><PriceRequestPage /></RequireAuth>} />
         {/* Kept so existing worker links and notifications still resolve. */}
 
-        {/* Nearby Shops — customer-facing discovery */}
-        <Route path="/nearby-shops" element={<NearbyShopsPage />} />
         <Route path="/shops/:id" element={<ShopPublicProfilePage />} />
 
         {/* Event Commerce */}

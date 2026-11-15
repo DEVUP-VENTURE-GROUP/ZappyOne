@@ -1,6 +1,8 @@
 import { View } from 'react-native';
-import { Tabs } from 'expo-router';
-import { ClipboardList, Home, LayoutGrid, MapPin, User } from 'lucide-react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { ClipboardList, Home, LayoutGrid, Store, User } from 'lucide-react-native';
+import { LIQUID_GLASS } from '@zappy/ui/components/Glass';
 import { useCurrentSeasonQuery } from '@zappy/core/api';
 import useFestiveLook from '@zappy/core/shared/useFestiveLook';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
@@ -10,15 +12,43 @@ import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import { colors } from '@zappy/ui/theme/colors';
 import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
 
-/**
- * The website's bottom bar on a phone (BottomNav): Home, Services, Bookings,
- * Track, Profile, in the customer's language. During a festival it wears it
- * lightly: the festival's wash, a gold jhalar along the top, its accent.
- */
+// Apple's Liquid Glass tab bar on iOS 26+: same slots and order; Stores is disabled there so its press only opens the stores screen.
+function GlassTabs() {
+  const t = useT();
+  const router = useRouter();
+  return (
+    <NativeTabs tintColor={colors.primary} screenListeners={({ route }) => ({ tabPress: () => { if (route.name === 'stores') router.push('/nearby-shops' as never); } })}>
+      <NativeTabs.Trigger name="index" disableAutomaticContentInsets>
+        <NativeTabs.Trigger.Label>{t('nav.home', 'Home')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="services">
+        <NativeTabs.Trigger.Label>{t('nav.services', 'Services')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="stores" disabled>
+        <NativeTabs.Trigger.Label>{t('nav.stores', 'Stores')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="storefront" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="orders">
+        <NativeTabs.Trigger.Label>{t('nav.bookings', 'Bookings')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'list.clipboard', selected: 'list.clipboard.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>{t('nav.profile', 'Profile')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}
+
+// The website's bottom bar on a phone: Home, Services, Stores, Bookings, Profile; tracking opens from the live-job card and Bookings. A festival wears it lightly.
 export default function CustomerTabs() {
   const t = useT();
+  const router = useRouter();
   const { data } = useCurrentSeasonQuery(undefined);
   const festive = useFestiveLook(data?.season?.theme, useReducedMotion());
+  if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs /><ActiveJobPill /></View>;
   return (
     <View style={{ flex: 1 }}>
     <Tabs screenOptions={{
@@ -36,8 +66,10 @@ export default function CustomerTabs() {
     }}>
       <Tabs.Screen name="index" options={{ title: t('nav.home', 'Home'), tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> }} />
       <Tabs.Screen name="services" options={{ title: t('nav.services', 'Services'), tabBarIcon: ({ color, size }) => <LayoutGrid color={color} size={size} /> }} />
+      <Tabs.Screen name="stores" options={{ title: t('nav.stores', 'Stores'), tabBarIcon: ({ color, size }) => <Store color={color} size={size} /> }}
+        listeners={{ tabPress: (e) => { e.preventDefault(); router.push('/nearby-shops' as never); } }} />
       <Tabs.Screen name="orders" options={{ title: t('nav.bookings', 'Bookings'), tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} /> }} />
-      <Tabs.Screen name="track" options={{ title: t('nav.track', 'Track'), tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} /> }} />
+      <Tabs.Screen name="track" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ title: t('nav.profile', 'Profile'), tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
     </Tabs>
     <ActiveJobPill />

@@ -4,7 +4,7 @@ For: everyone working on the apps. Read §1 and §2 first. Android developers th
 
 ## 1. One codebase, three outputs
 
-The customer app and ServicePro are each **one** React Native (Expo SDK 54) app.
+The customer app and ServicePro are each **one** React Native (Expo SDK 56) app.
 
 - The same TypeScript code ships to Android and to iOS.
 - The website is a separate React app (`client/`, `servicepro/`). It shares logic with the apps through `shared/` and the sync tool.

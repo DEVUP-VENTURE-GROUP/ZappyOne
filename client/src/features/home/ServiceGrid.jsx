@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Wrench } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
-import { distinctArt } from '@shared/components/home/serviceArt';
+import { areaPhoto } from '@shared/components/home/serviceArt';
 import { problemPhoto } from '@shared/components/home/problemArt';
 
 // The services, as one even grid on a single neutral surface.
@@ -19,47 +19,37 @@ export const DOMAIN_TINT = {
 const DEFAULT_TINT = { bg: 'bg-zappy-50', fg: 'text-zappy-600' };
 export const tintFor = (domainCode) => DOMAIN_TINT[domainCode] || DEFAULT_TINT;
 
-function Tile({ service, character, onOpen }) {
-  const Icon = SERVICE_ICONS[service.icon] || Wrench;
-  const tint = tintFor(service.domainCode);
-  // An admin-set picture wins; then the service's ZappyOne character; then its icon.
-  const art = service.imageUrl || character?.still;
+// Short names so two words fit under a tile (same as the app).
+const SHORT_AREA = {
+  electronics: 'Phones & Laptops', home_daily_help: 'Home & Daily Help', home_services: 'Repairs & Upkeep', beauty_care: 'Beauty & Care',
+  errands_pickup: 'Errands & Pickup', helping_services: 'Helping Services', family_assist: 'Family Help', specialist_home: 'Specialist Services', local_pros: 'Local Pros',
+};
+// 4 + 3 area tiles, then More Services: two rows of four.
+const HOME_AREA_LIMIT = 7;
+
+function AreaTile({ label, title, photo, Icon, tint, onOpen }) {
   return (
-    <button type="button" onClick={onOpen}
-      className="group flex flex-col items-center gap-2 text-center focus-visible:outline-none">
-      <span className={`flex aspect-square w-full max-w-[88px] items-center justify-center overflow-hidden rounded-[18px] ${tint.bg} ring-1 ring-inset ring-black/[0.03] transition-transform duration-150 group-hover:-translate-y-0.5 group-active:scale-95 group-focus-visible:ring-4 group-focus-visible:ring-zappy-600/25`}>
-        {art
-          ? <img src={art} alt="" loading="lazy" className={`h-full w-full ${service.imageUrl ? 'object-cover' : 'object-contain p-1.5 mix-blend-multiply'}`} />
-          : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
+    <button type="button" onClick={onOpen} aria-label={title} className="group flex w-full flex-col items-center gap-2 text-center focus-visible:outline-none">
+      <span className={`flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-[18px] ${tint.bg} ring-1 ring-inset ring-black/[0.04] transition-transform duration-150 group-hover:-translate-y-0.5 group-active:scale-95 group-focus-visible:ring-4 group-focus-visible:ring-zappy-600/25`}>
+        {photo ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
       </span>
-      <span className="line-clamp-2 text-[12px] font-semibold leading-[1.25] text-ink-900 sm:text-[13px]">{service.name}</span>
+      <span className="line-clamp-2 text-[12px] font-semibold leading-[1.25] text-ink-900 sm:text-[13px]">{label}</span>
     </button>
   );
 }
 
-export function ServiceGrid({ domains, onOpen, onViewAll }) {
-  const all = domains.flatMap((d) => d.services);
-  if (!all.length) return null;
-  // Bookable here first; the sort is stable, so catalog order holds within each group.
-  const tiles = [...all].sort((a, b) => Number(a.available === false) - Number(b.available === false));
-  const characters = new Map(domains.flatMap((d) => [...distinctArt(d.services, d.code)]));
-
-  // Phones: four columns. Wider: one fixed tile size, as many per row as fit.
+// Explore services (the app's design): seven service areas with their photo, then More Services; each opens All services at that area.
+export function ServiceGrid({ domains, onOpenArea, onMore }) {
+  if (!domains.length) return null;
   return (
     <section aria-labelledby="home-services">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 id="home-services" className="h-section">Explore services</h2>
-        {onViewAll && (
-          <button type="button" onClick={onViewAll} className="flex shrink-0 items-center text-[13px] font-semibold text-zappy-600 hover:text-zappy-800">
-            View all <ChevronRight size={15} strokeWidth={2.4} />
-          </button>
-        )}
-      </div>
-      {/* auto-fit: a short catalogue spreads across the row instead of huddling left. */}
-      <div className="mt-4 grid grid-cols-4 justify-items-center gap-x-2 gap-y-5 sm:grid-cols-[repeat(auto-fit,minmax(104px,1fr))] sm:gap-x-4">
-        {tiles.map((s) => (
-          <Tile key={s.code} service={s} character={characters.get(s.code)} onOpen={() => onOpen(s)} />
+      <h2 id="home-services" className="h-section">Explore services</h2>
+      <div className="mt-4 grid grid-cols-4 justify-items-center gap-x-2 gap-y-5 sm:gap-x-4">
+        {domains.slice(0, HOME_AREA_LIMIT).map((d) => (
+          <AreaTile key={d.code} label={SHORT_AREA[d.code] || d.name} title={`${d.name}, ${d.services.length} services`} photo={areaPhoto(d)}
+            Icon={SERVICE_ICONS[d.icon] || Wrench} tint={tintFor(d.code)} onOpen={() => onOpenArea(d)} />
         ))}
+        <AreaTile label="More Services" title="More services: see all services" photo={null} Icon={LayoutGrid} tint={DEFAULT_TINT} onOpen={onMore} />
       </div>
     </section>
   );
