@@ -38,7 +38,7 @@ export function ShopPublicProfilePage() {
           <View style={styles.inline}><Text variant="heading3" weight="black" style={styles.shrink}>{shop.businessName}</Text><ShieldCheck size={17} color={success[500]} /></View>
           <Text variant="caption" color={ink[400]}>{shop.category || t('shops.local', 'Local Repair Shop')}</Text>
           <View style={styles.meta}>
-            {shop.rating > 0 ? <View style={styles.inline}><Star size={14} color={accent[500]} fill={accent[500]} /><Text variant="bodySmall" weight="bold" color={ink[700]}>{shop.rating.toFixed(1)}</Text>{shop.reviewCount ? <Text variant="caption" color={ink[400]}>({shop.reviewCount})</Text> : null}</View> : null}
+            {shop.reviewCount > 0 ? <View style={styles.inline}><Star size={14} color={accent[500]} fill={accent[500]} /><Text variant="bodySmall" weight="bold" color={ink[700]}>{Number(shop.rating).toFixed(1)}</Text><Text variant="caption" color={ink[400]}>({shop.reviewCount})</Text></View> : null}
             <Text variant="caption" color={ink[400]}>{jobsDoneLabel(shop.completedJobs, t('shops.completed', 'jobs completed'))}</Text>
             {shop.yearsActive > 0 ? <View style={styles.inline}><Calendar size={11} color={ink[400]} /><Text variant="caption" color={ink[400]}>{shop.yearsActive}+ yrs</Text></View> : null}
           </View>

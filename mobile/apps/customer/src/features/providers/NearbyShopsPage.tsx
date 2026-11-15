@@ -20,7 +20,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { jobsDoneLabel } from '@zappy/core/shared/jobsDone';
 
-interface Shop { _id: string; businessName: string; coverImageUrl?: string; services?: { name: string }[]; category?: string; rating?: number; completedJobs?: number; openNow?: boolean | null; todayHours?: { closesAt?: string } }
+interface Shop { _id: string; businessName: string; coverImageUrl?: string; services?: { name: string }[]; category?: string; rating?: number; reviewCount?: number; completedJobs?: number; openNow?: boolean | null; todayHours?: { closesAt?: string } }
 
 export function NearbyShopsPage() {
   const router = useRouter();
@@ -57,7 +57,7 @@ export function NearbyShopsPage() {
                     <View style={styles.inline}><Text variant="bodySmall" weight="bold" numberOfLines={1} style={styles.shrink}>{s.businessName}</Text><ShieldCheck size={13} color={success[500]} /></View>
                     <Text variant="caption" color={ink[400]} numberOfLines={1}>{(s.services || []).map((x) => x.name).join(', ') || s.category}</Text>
                     <View style={styles.meta}>
-                      {s.rating ? <View style={styles.inline}><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{s.rating.toFixed(1)}</Text></View> : null}
+                      {s.reviewCount ? <View style={styles.inline}><Star size={11} color={accent[500]} fill={accent[500]} /><Text variant="caption" weight="bold" color={ink[700]}>{Number(s.rating).toFixed(1)} ({s.reviewCount})</Text></View> : null}
                       <Text variant="caption" color={ink[400]}>{jobsDoneLabel(s.completedJobs, t('shops.jobs', 'jobs done'))}</Text>
                       {s.openNow === true ? <Text variant="caption" weight="bold" color={success[600]}>{t('shops.open', 'Open now')}{s.todayHours?.closesAt ? `, till ${to12h(s.todayHours.closesAt)}` : ''}</Text> : null}
                       {s.openNow === false ? <Text variant="caption" weight="bold" color={ink[400]}>{t('shops.closed', 'Closed now')}</Text> : null}

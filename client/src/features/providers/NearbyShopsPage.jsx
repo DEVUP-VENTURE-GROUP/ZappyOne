@@ -90,9 +90,10 @@ export default function NearbyShopsPage() {
                   </div>
                   <p className="text-xs text-slate-400 truncate">{(s.services || []).map((x) => x.name).join(', ') || s.category}</p>
                   <div className="flex items-center gap-3 mt-1 flex-wrap">
-                    {s.rating > 0 && (
+                    {/* A new shop's rating is the schema default, not a review: shown once someone has reviewed it. */}
+                    {s.reviewCount > 0 && (
                       <span className="flex items-center gap-0.5 text-[11px] font-bold text-slate-600">
-                        <Star size={11} className="text-amber-400 fill-amber-400" /> {s.rating.toFixed(1)}
+                        <Star size={11} className="text-amber-400 fill-amber-400" /> {Number(s.rating).toFixed(1)} <span className="font-medium text-slate-400">({s.reviewCount})</span>
                       </span>
                     )}
                     <span className="text-[11px] text-slate-400">{jobsDoneLabel(s.completedJobs)}</span>

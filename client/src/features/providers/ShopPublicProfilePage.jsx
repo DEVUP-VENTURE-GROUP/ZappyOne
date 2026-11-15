@@ -55,10 +55,11 @@ export default function ShopPublicProfilePage() {
           </div>
           <p className="text-xs text-slate-400 mt-0.5">{shop.category || 'Local Repair Shop'}</p>
           <div className="flex items-center gap-4 mt-2">
-            {shop.rating > 0 && (
+            {/* A new shop's rating is the schema default, not a review: shown once someone has reviewed it. */}
+            {shop.reviewCount > 0 && (
               <span className="flex items-center gap-1 text-sm font-bold text-slate-700">
-                <Star size={14} className="text-amber-400 fill-amber-400" /> {shop.rating.toFixed(1)}
-                {shop.reviewCount > 0 && <span className="text-xs text-slate-400 font-normal">({shop.reviewCount})</span>}
+                <Star size={14} className="text-amber-400 fill-amber-400" /> {Number(shop.rating).toFixed(1)}
+                <span className="text-xs text-slate-400 font-normal">({shop.reviewCount})</span>
               </span>
             )}
             <span className="text-xs text-slate-400">{jobsDoneLabel(shop.completedJobs, 'jobs completed')}</span>
