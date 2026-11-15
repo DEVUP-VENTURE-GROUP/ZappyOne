@@ -64,8 +64,6 @@ import { RUNNER_NOTICE } from '../jobFlows';
  */
 
 const rupees = formatPaise;
-/** Only Service Pro gets this; Rakshak is built from the same page and stays as it was. */
-
 
 const BASE_STEPS = [
   { key: 'brands', label: 'Brands', Icon: Store },
@@ -1129,6 +1127,17 @@ function AdjustAllPrices({ vertical, rows }) {
   );
 }
 
+// The notes and tools above the price list: how pricing works, change all prices, the inspection fee.
+function PricingTop({ vertical, rows }) {
+  return (
+    <>
+      <PriceNotice />
+      <AdjustAllPrices vertical={vertical} rows={rows} />
+      <InspectionFeeCard vertical={vertical} />
+    </>
+  );
+}
+
 function PricingStep({ vertical, isShop, onBack, onNext }) {
   const { data: verticalList } = useRepairVerticalsQuery();
   const { data: catalog } = useRepairWorkCatalogQuery({ vertical });
@@ -1321,9 +1330,7 @@ function PricingStep({ vertical, isShop, onBack, onNext }) {
       onNext={onNext}
       nextLabel={pricing?.pricing?.length ? 'Continue' : 'Skip for now'}
     >
-      <PriceNotice />
-      <AdjustAllPrices vertical={vertical} rows={pricing?.pricing || []} />
-      <InspectionFeeCard vertical={vertical} />
+      <PricingTop vertical={vertical} rows={pricing?.pricing || []} />
       {!brandCodes.length && (
         <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
           <p className="text-sm font-bold text-slate-700">No brands chosen yet</p>
