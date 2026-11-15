@@ -39,6 +39,13 @@ yarn-error.*
 # generated native folders
 ios/
 android/
-# Our own native modules are source, not generated: keep their android code (the bubble was missing from every build).
+# Our own native modules are source, not generated: keep their android and ios code (the bubble was missing from every build).
 !apps/*/modules/*/android/
+!apps/*/modules/*/ios/
 !packages/native/android/
+!packages/native/ios/
+# Build caches inside those native modules.
+**/android/.gradle/
+**/android/build/
+**/ios/Pods/
+**/ios/build/

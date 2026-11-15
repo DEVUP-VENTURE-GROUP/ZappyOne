@@ -17,6 +17,12 @@
       "node": "22.13.0",
       "environment": "production"
     },
+    "development-simulator": {
+      "extends": "development",
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
