@@ -1,18 +1,20 @@
 /**
- * Home — the landing tab, redesigned to match the website's Home.
+ * Home — the landing tab, built to the reference design.
  * ----------------------------------------------------------------------------
- *   header · search · Book a service / Local stores · live booking · hero ·
- *   services · ZappyOne stores · popular · campaigns · stores near you ·
- *   offers · book again · recent activity
+ *   header · search · Book a Service / Shop from Stores · live booking ·
+ *   hero banners · explore services (areas + More) · discover stores ·
+ *   popular · campaign banners · local stores · offers · book again ·
+ *   recent activity
  *
  * ── DATA (all existing endpoints, read-only) ───────────────────────────────
  *   live catalogue   GET /provider/onboarding/catalog — what can be booked;
  *                    a tap opens `/service/{code}` exactly as before.
- *   banners          GET /ads/placement/home_banner — admin Homepage → Banners
- *                    (hero / campaign / offer). No banners → the hero shows
- *                    one slide per live service area instead.
- *   stores           GET /shops/nearby — verified shops within 10 km. Only when
- *                    location permission is ALREADY granted; Home never prompts.
+ *   banners          Bundled artwork (assets/banners) leads the hero and
+ *                    campaign carousels; GET /ads/placement/home_banner (admin
+ *                    Homepage → Banners) adds hero / campaign / offer slides.
+ *   stores           GET /shops/nearby — verified shops within 10 km of the
+ *                    device (only if permission is ALREADY granted; Home never
+ *                    prompts) or else of the default saved address.
  *   offers           offer banners + GET /promos/available
  *   book again /     GET /orders/mine — this app books through orders, so the
  *   recent activity  customer's own orders drive both. Rebook goes through
@@ -23,17 +25,21 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Alert, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions,
+  type NativeScrollEvent, type NativeSyntheticEvent,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PackageSearch } from 'lucide-react-native';
-import { EmptyState, ErrorState, Skeleton, Text } from '../../components/ui';
+import { EmptyState, ErrorState, LIQUID_GLASS, Skeleton } from '../../components/ui';
 import { humanizeCode } from '../../components/catalog/categoryIcons';
 import {
-  BannerCard, BookAgainList, CampaignBanners, HeroCarousel, HomeTopBar, ModeSwitch, OffersRail, PopularServices,
-  RecentActivity, SearchTrigger, ServiceGrid, StoresRail, ZappyOnePromo, openBannerLink, pickPopular,
-  type ActivityItem, type HomeService, type NearbyShop,
+  BannerCard, BannerCarousel, BookAgainList, CAMPAIGN_BANNERS, FloatingGlassHeader, HERO_BANNERS, HOME_BG, HomeTopBar, ModeSwitch,
+  OffersRail, PopularServices, RecentActivity, SearchTrigger, ServiceGrid, StoresRail, ZappyOnePromo,
+  openBannerLink, pickPopular,
+  type ActivityItem, type HomeService, type LocalBanner, type NearbyShop,
 } from '../../components/home/HomeSections';
 import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
 import { useListOrdersQuery, useRebookOrderMutation } from '../../services/api/ordersApi';
@@ -45,8 +51,8 @@ import {
   type HomeBanner,
 } from '../../services/api/homeApi';
 import { getApiErrorBody, getApiErrorMessage } from '../../services/api/apiSlice';
-import { brand, ink, surface } from '../../theme/brand';
-import { bottomNavClearance } from '../../theme/spacing';
+import { brand } from '../../theme/brand';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 import { ACTIVE_ORDER_STATUSES, type Order } from '../../types/api';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -61,12 +67,25 @@ const STATUS_LABEL: Record<string, string> = {
   failed: 'Could not be completed',
 };
 
-const PAD = 20;
+const PAD = 16;
+
+/** "Tomorrow, 10:00 AM" / "Today, 4:30 PM" / "12 Jan, 9:00 AM". */
+function whenLabel(iso: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toUpperCase();
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((day.getTime() - today.getTime()) / 86400000);
+  const date = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff === -1 ? 'Yesterday'
+    : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  return `${date}, ${time}`;
+}
 const seenBanners = new Set<string>(); // impressions once per app session
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
   const { width: screenWidth } = useWindowDimensions();
   const contentWidth = Math.min(screenWidth, 720) - PAD * 2;
   const push = useCallback((href: string) => router.push(href as never), [router]);
@@ -95,7 +114,11 @@ export default function HomeScreen() {
         let label: string | null = null;
         try {
           const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
-          label = place ? [place.name, place.district ?? place.city].filter(Boolean).join(', ') || null : null;
+          // "Narsingi, Hyderabad, Telangana" — locality, city, state.
+          // `name` is often just a house number ("1600"), which is not a locality.
+          const named = place?.name && /[a-z]/i.test(place.name) ? place.name : null;
+          const parts = place ? [place.district ?? named ?? place.street, place.city, place.region] : [];
+          label = parts.filter((x, i, a) => x && a.indexOf(x) === i).join(', ') || null;
         } catch { /* coordinates are still useful without a name */ }
         if (!cancelled) setGps({ label, lat, lng });
       } catch {
@@ -105,16 +128,30 @@ export default function HomeScreen() {
     return () => { cancelled = true; };
   }, []);
 
+  const preferredAddress = useMemo(() => {
+    const list = savedAddresses?.addresses ?? [];
+    return list.find((a) => a.isDefault) ?? list[0] ?? null;
+  }, [savedAddresses]);
+
   const locationLabel = useMemo(() => {
     if (gps?.label) return gps.label;
-    const list = savedAddresses?.addresses ?? [];
-    const preferred = list.find((a) => a.isDefault) ?? list[0];
-    return preferred ? preferred.label || preferred.address || null : null;
-  }, [gps, savedAddresses]);
+    if (!preferredAddress) return null;
+    // A full street address is too long for the header: keep locality, city,
+    // state — "…, Narsingi, Hyderabad, Telangana 500075, India" → the last three
+    // parts once the country and PIN code are dropped.
+    const parts = (preferredAddress.address || '').split(',')
+      .map((x) => x.replace(/\b\d{6}\b/g, '').trim())
+      .filter((x) => x && !/^india$/i.test(x));
+    return parts.length ? parts.slice(-3).join(', ') : preferredAddress.label || null;
+  }, [gps, preferredAddress]);
 
+  // Stores near the device, or else near the default saved address.
+  const storeCoords = gps ?? (preferredAddress && Number.isFinite(preferredAddress.lat) && Number.isFinite(preferredAddress.lng)
+    && (preferredAddress.lat !== 0 || preferredAddress.lng !== 0)
+    ? { lat: preferredAddress.lat, lng: preferredAddress.lng } : null);
   const shopsQuery = useNearbyShopsQuery(
-    gps ? { lat: gps.lat, lng: gps.lng, radiusKm: 10 } : ({} as never),
-    { skip: !gps },
+    storeCoords ? { lat: storeCoords.lat, lng: storeCoords.lng, radiusKm: 10 } : ({} as never),
+    { skip: !storeCoords },
   );
   const shops = useMemo(() => ((shopsQuery.data ?? []) as unknown as NearbyShop[]).slice(0, 8), [shopsQuery.data]);
 
@@ -151,6 +188,25 @@ export default function HomeScreen() {
     openBannerLink(push, ad.content.ctaLink);
   }, [push, trackClick]);
 
+  /* Scroll target for the "Explore Offers" banner. */
+  const scrollRef = useRef<ScrollView>(null);
+  const offersY = useRef<number | null>(null);
+
+  /* iOS 26: the compact glass header floats in once the top bar scrolls away. */
+  const [floatHeader, setFloatHeader] = useState(false);
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const past = e.nativeEvent.contentOffset.y > 64;
+    setFloatHeader((was) => (was === past ? was : past));
+  }, []);
+  const openLocalBanner = useCallback((b: LocalBanner) => {
+    if (b.link === '#offers') {
+      if (offersY.current != null) scrollRef.current?.scrollTo({ y: Math.max(0, offersY.current - 12), animated: true });
+      else push('/(tabs)/services?category=all');
+      return;
+    }
+    push(b.link);
+  }, [push]);
+
   /* The customer's own orders */
   const orderList = orders.data?.orders ?? [];
   const activeOrder = useMemo(
@@ -167,8 +223,10 @@ export default function HomeScreen() {
     .map((o) => ({
       id: o._id,
       title: humanizeCode(o.service),
-      subtitle: [STATUS_LABEL[o.status] ?? humanizeCode(o.status), o.createdAt
-        ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '']
+      code: o.service,
+      subtitle: [STATUS_LABEL[o.status] ?? humanizeCode(o.status),
+        o.scheduledAt ? whenLabel(o.scheduledAt)
+          : o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '']
         .filter(Boolean).join(' · '),
       state: (ACTIVE_ORDER_STATUSES as readonly string[]).includes(o.status) ? 'active'
         : o.status === 'completed' ? 'completed' : 'closed',
@@ -215,16 +273,19 @@ export default function HomeScreen() {
     orders.refetch();
     catalog.refetch();
     banners.refetch();
-    if (gps) shopsQuery.refetch();
-  }, [orders, catalog, banners, gps, shopsQuery]);
+    if (storeCoords) shopsQuery.refetch();
+  }, [orders, catalog, banners, storeCoords, shopsQuery]);
 
   const unread = notifData?.unread ?? 0;
 
   return (
     <View style={styles.root}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 12, paddingBottom: bottomNavClearance + insets.bottom }]}
+        ref={scrollRef}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 10, paddingBottom: tabBarSpace }]}
         showsVerticalScrollIndicator={false}
+        onScroll={LIQUID_GLASS ? onScroll : undefined}
+        scrollEventThrottle={LIQUID_GLASS ? 16 : undefined}
         refreshControl={
           <RefreshControl refreshing={orders.isFetching && !orders.isLoading} onRefresh={refreshAll} tintColor={brand[600]} />
         }
@@ -238,8 +299,8 @@ export default function HomeScreen() {
             onProfile={() => push('/(tabs)/profile')}
           />
 
-          <View style={styles.gapSm}><SearchTrigger onPress={() => push('/(tabs)/services')} /></View>
-          <View style={styles.gapSm}><ModeSwitch onStores={() => push('/shops')} /></View>
+          <View style={styles.gapMd}><SearchTrigger onPress={() => push('/(tabs)/services?category=all')} /></View>
+          <View style={styles.gapMd}><ModeSwitch onStores={() => push('/shops')} /></View>
 
           {activeOrder ? (
             <View style={styles.gap}>
@@ -264,50 +325,55 @@ export default function HomeScreen() {
           ) : null}
 
           <View style={styles.gap}>
-            {catalog.isLoading && banners.isLoading ? (
-              <Skeleton width="100%" height={188} borderRadius={20} />
-            ) : (
-              <HeroCarousel banners={hero} services={services} width={contentWidth} onOpenBanner={openBanner} onOpenService={openService} onImageError={onBannerImageError} />
-            )}
+            <BannerCarousel label="Featured" local={HERO_BANNERS} ads={hero} adVariant="hero" width={contentWidth}
+              onOpenLocal={openLocalBanner} onOpenAd={openBanner} onImageError={onBannerImageError} />
           </View>
 
           <View style={styles.gapLg}>
             {catalog.isLoading ? (
               <View style={styles.skelGrid} accessibilityLabel="Loading services" accessibilityRole="progressbar">
-                {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} width={72} height={72} borderRadius={18} />)}
+                {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} width={Math.floor((contentWidth - 30) / 4)} height={Math.floor((contentWidth - 30) / 4 * 1.25)} borderRadius={12} />)}
               </View>
             ) : catalog.isError ? (
               <ErrorState message={getApiErrorMessage(catalog.error)} onRetry={catalog.refetch} />
-            ) : services.length === 0 ? (
+            ) : domains.length === 0 ? (
               <EmptyState
                 icon={<PackageSearch size={26} color={brand[600]} />}
                 title="No services available yet"
                 message="Services appear here as soon as we have verified providers for them."
               />
             ) : (
-              <ServiceGrid services={services} width={contentWidth} onOpen={openService} onViewAll={() => push('/(tabs)/services')} />
+              <ServiceGrid
+                domains={domains}
+                width={contentWidth}
+                onOpenArea={(d) => push(`/(tabs)/services?category=${d.code}`)}
+                onMore={() => push('/(tabs)/services?category=all')}
+              />
             )}
           </View>
 
           <View style={styles.gapLg}><ZappyOnePromo onExplore={() => push('/shops')} /></View>
 
           {popular.length ? (
-            <View style={styles.gapLg}><PopularServices services={popular} onOpen={openService} onViewAll={() => push('/(tabs)/services')} /></View>
+            <View style={styles.gapLg}><PopularServices services={popular} onOpen={openService} onViewAll={() => push('/(tabs)/services?category=all')} /></View>
           ) : null}
 
-          {campaign.length ? (
-            <View style={styles.gapLg}><CampaignBanners ads={campaign} width={contentWidth} onOpen={openBanner} onImageError={onBannerImageError} /></View>
-          ) : null}
+          <View style={styles.gapLg}>
+            <BannerCarousel label="Campaigns" local={CAMPAIGN_BANNERS} ads={campaign} adVariant="campaign" width={contentWidth}
+              onOpenLocal={openLocalBanner} onOpenAd={openBanner} onImageError={onBannerImageError} />
+          </View>
 
-          {gps && !shopsQuery.isError ? (
+          {!shopsQuery.isError ? (
             <View style={styles.gapLg}>
-              <StoresRail shops={shops} loading={shopsQuery.isLoading} onOpenShop={(id) => push(`/shops/${id}`)} onViewAll={() => push('/shops')} />
+              <StoresRail shops={shops} loading={shopsQuery.isLoading} hasLocation={Boolean(storeCoords)}
+                onOpenShop={(id) => push(`/shops/${id}`)} onViewAll={() => push('/shops')} onSetLocation={() => push('/location/picker')} />
             </View>
           ) : null}
 
           {offer.length || promos.length ? (
             <View style={styles.gapLg}>
-              <OffersRail ads={offer} promos={promos} onOpenAd={openBanner} onImageError={onBannerImageError}
+              <OffersRail ads={offer} promos={promos} width={contentWidth} onOpenAd={openBanner} onImageError={onBannerImageError}
+                onLayout={(y) => { offersY.current = y; }}
                 onCopy={(code) => Alert.alert(`Code ${code}`, 'Enter this code at checkout to apply the offer.')} />
             </View>
           ) : null}
@@ -316,6 +382,7 @@ export default function HomeScreen() {
             <View style={styles.gapLg}>
               <BookAgainList
                 items={completed.map((o) => ({ id: o._id, title: humanizeCode(o.service), date: o.createdAt, code: o.service }))}
+                width={contentWidth}
                 busyId={rebookingId}
                 onRebook={handleRebook}
                 onViewAll={() => push('/(tabs)/bookings')}
@@ -326,31 +393,28 @@ export default function HomeScreen() {
           {activity.length ? (
             <View style={styles.gapLg}><RecentActivity items={activity} onViewAll={() => push('/(tabs)/bookings')} /></View>
           ) : null}
-
-          {!orders.isLoading && orderList.length === 0 ? (
-            <View style={[styles.gapLg, styles.firstBooking]}>
-              <Text variant="bodySmall" weight="semibold" color={ink[900]}>Your bookings will show here</Text>
-              <Text variant="caption" color={ink[500]} style={styles.firstBookingBody}>
-                Book a service above and track it live from this screen.
-              </Text>
-            </View>
-          ) : null}
         </View>
       </ScrollView>
+      {LIQUID_GLASS ? (
+        <FloatingGlassHeader
+          shown={floatHeader}
+          top={insets.top + 4}
+          location={locationLabel}
+          unread={unread}
+          onPickLocation={() => push('/location/picker')}
+          onBell={() => push('/notifications')}
+        />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: surface.page },
+  root: { flex: 1, backgroundColor: HOME_BG },
   content: { paddingHorizontal: PAD, alignItems: 'center' },
   column: { width: '100%', maxWidth: 720 - PAD * 2 },
-  gapSm: { marginTop: 14 },
-  gap: { marginTop: 18 },
-  gapLg: { marginTop: 28 },
-  skelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'space-between' },
-  firstBooking: {
-    padding: 16, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: surface.line,
-  },
-  firstBookingBody: { marginTop: 2 },
+  gapMd: { marginTop: 16 },
+  gap: { marginTop: 22 },
+  gapLg: { marginTop: 26 },
+  skelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 });

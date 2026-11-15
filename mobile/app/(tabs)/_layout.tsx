@@ -10,6 +10,14 @@
  * routing, focus state and accessibility roles still come from the
  * navigator's descriptors; this only draws them.
  *
+ * ── iOS 26+: LIQUID GLASS ──────────────────────────────────────────────────
+ * Where Liquid Glass is available the bar is Apple's own (`NativeTabs`): the
+ * floating glass capsule with SF Symbols and the sliding glass lens.
+ * Stores stays an action there too — its tab is `disabled`, so the native bar
+ * never selects it, and the press still arrives as `tabPress` (with
+ * `isPrevented`), which pushes `/shops`. Android and older iOS keep the
+ * custom bar below, unchanged.
+ *
  * ── ROUTES ─────────────────────────────────────────────────────────────────
  * `track` and `chat` stay registered but hidden (`href: null`): Track is
  * reached from the live-booking card on Home and from Bookings, chat from the
@@ -22,6 +30,7 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ClipboardList,
@@ -32,6 +41,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { Text } from '../../components/ui/Text';
+import { LIQUID_GLASS } from '../../components/ui/Glass';
 import { useAppSelector } from '../../store/hooks';
 import { useListNotificationsQuery } from '../../services/api/notificationsApi';
 import { colors, danger, slate } from '../../theme/colors';
@@ -143,6 +153,54 @@ function TabBar({ state, navigation }: TabBarProps) {
   );
 }
 
+/**
+ * Apple's Liquid Glass tab bar (iOS 26+). Same five slots, same order, same
+ * Profile badge; icons are SF Symbols so they sit right in the system glass.
+ *
+ * Automatic content insets are off: every tab screen already pads itself with
+ * `useTabBarSpace()`, and letting UIKit add the safe area as well would double
+ * the top inset on full-height scroll views like Home.
+ */
+function GlassTabs() {
+  const router = useRouter();
+  const { data: notifications } = useListNotificationsQuery();
+  const unread = notifications?.unread ?? 0;
+
+  return (
+    <NativeTabs
+      tintColor={brand[600]}
+      screenListeners={({ route }) => ({
+        tabPress: () => {
+          if (route.name === 'stores') router.push('/shops' as never);
+        },
+      })}
+    >
+      <NativeTabs.Trigger name="home" disableAutomaticContentInsets>
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="services" disableAutomaticContentInsets>
+        <NativeTabs.Trigger.Label>Services</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="stores" disabled>
+        <NativeTabs.Trigger.Label>Stores</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="storefront" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="bookings" disableAutomaticContentInsets>
+        <NativeTabs.Trigger.Label>Bookings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'list.clipboard', selected: 'list.clipboard.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile" disableAutomaticContentInsets>
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
+        {unread > 0 ? <NativeTabs.Trigger.Badge>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge> : null}
+      </NativeTabs.Trigger>
+      {/* `track` and `chat` have no trigger, so the native bar hides them. */}
+    </NativeTabs>
+  );
+}
+
 export default function TabsLayout() {
   /**
    * Don't mount the customer tabs without a session.
@@ -160,6 +218,8 @@ export default function TabsLayout() {
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   if (!isAuthenticated) return null;
 
+  if (LIQUID_GLASS) return <GlassTabs />;
+
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
@@ -170,7 +230,9 @@ export default function TabsLayout() {
       <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
 
-      {/* Registered but not in the bar — still reachable by route. */}
+      {/* Registered but not in the bar — still reachable by route. `stores`
+          is a real tab only on iOS's native bar; here the slot pushes /shops. */}
+      <Tabs.Screen name="stores" options={{ href: null, title: 'Stores' }} />
       <Tabs.Screen name="track" options={{ href: null, title: 'Track' }} />
       <Tabs.Screen name="chat" options={{ href: null, title: 'Chats' }} />
     </Tabs>

@@ -65,3 +65,6 @@ export type { AppearProps } from './Appear';
 
 export { ZappyLogo } from './ZappyLogo';
 export type { ZappyLogoProps } from './ZappyLogo';
+
+export { GlassSurface, LIQUID_GLASS } from './Glass';
+export type { GlassSurfaceProps } from './Glass';

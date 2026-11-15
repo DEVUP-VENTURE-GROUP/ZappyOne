@@ -65,11 +65,13 @@ import { useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../store/authSlice';
 import { apiSlice } from '../../services/api/apiSlice';
 import { colors, accent, success } from '../../theme/colors';
-import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
+import { spacing, screenPadding } from '../../theme/spacing';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
   const dispatch = useAppDispatch();
 
   const [signOutOpen, setSignOutOpen] = useState(false);
@@ -111,7 +113,7 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: bottomNavClearance + insets.bottom },
+          { paddingBottom: tabBarSpace },
         ]}
         showsVerticalScrollIndicator={false}
       >

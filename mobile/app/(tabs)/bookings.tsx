@@ -40,7 +40,8 @@ import { BookingCard } from '../../components/bookings/BookingCard';
 import { useListOrdersQuery, useRebookOrderMutation } from '../../services/api/ordersApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
 import { colors } from '../../theme/colors';
-import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
+import { spacing, screenPadding } from '../../theme/spacing';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
 import { ACTIVE_ORDER_STATUSES, type Order } from '../../types/api';
 
 /** A section header, or a booking. Keeps one FlatList instead of two lists. */
@@ -51,6 +52,7 @@ type Row =
 export default function BookingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
 
   const [page, setPage] = useState(1);
   const [accumulated, setAccumulated] = useState<Order[]>([]);
@@ -195,7 +197,7 @@ export default function BookingsScreen() {
         renderItem={renderItem}
         contentContainerStyle={[
           styles.list,
-          { paddingBottom: bottomNavClearance + insets.bottom },
+          { paddingBottom: tabBarSpace },
           rows.length === 0 ? styles.listEmpty : null,
         ]}
         ItemSeparatorComponent={Separator}

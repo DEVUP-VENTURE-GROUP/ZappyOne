@@ -1,143 +1,147 @@
 /**
- * Services — what a customer can actually book today.
+ * Services — every service a customer can actually book today, in the same
+ * 3D-tile style as Home. Home shows the service areas; "More Services" and
+ * "View All" land here.
  * ----------------------------------------------------------------------------
- * Rebuilt on the live catalog (`GET /provider/onboarding/catalog`) and the
- * hierarchy the website now uses:
+ * Built on the live catalog (`GET /provider/onboarding/catalog`):
  *
- *     DOMAIN → SERVICE → COVERAGE heading → PROBLEMS
- *
- * ── WHY THE OLD CATALOG MODEL IS GONE ──────────────────────────────────────
- * This screen used to list `/catalog/services` — every service the platform
- * had ever defined, filtered by a client-side category matcher. That list
- * includes services with no verified provider behind them, so a customer could
- * browse in, pick something, and reach a dead end nobody could fulfil. The
- * website retired its catalog page over exactly that.
+ *     DOMAIN (area) → SERVICE → COVERAGE heading → PROBLEMS
  *
  * The live catalog returns only lines that are live AND have an approved
- * `ProviderEnrolment` — the same list providers are verified against, so the
- * two sides cannot disagree.
+ * `ProviderEnrolment` — the same list providers are verified against — so a
+ * customer can never browse into a service nobody can fulfil. It carries no
+ * prices or ratings, so neither is shown (nothing here is invented).
  *
- * ── WHAT WENT AWAY WITH IT ─────────────────────────────────────────────────
- * The search bar and the "from ₹X / fastest N min" stat pills are gone. They
- * were derived from `price` and `estimatedDurationMinutes`, which the old rows
- * carried and live-catalog rows do not. Keeping them would have meant either
- * inventing figures or calling the retired endpoint alongside this one just to
- * decorate a header. The website's own services page shows neither.
- *
- * ── WHY A HERO AND NOT `ScreenHeader` ──────────────────────────────────────
- * This is a root TAB. `ScreenHeader` carries a back button, which would be a
- * lie here — there is nothing to go back to. Pushed routes (category, service
- * detail) use `ScreenHeader`; roots use the catalog hero.
+ * `?category=<domain code>` narrows to one area (Home's area tiles link here
+ * that way); `all` or an unknown value shows everything — a stale link
+ * degrades to the full catalog, never to a dead end. The chip row rewrites the
+ * same param, so the URL and the screen always agree.
  * ----------------------------------------------------------------------------
  */
 
-import React, { useCallback, useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { FlatList, Image, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowRight, PackageSearch } from 'lucide-react-native';
-import {
-  Card,
-  EmptyState,
-  ErrorState,
-  ScalePressable,
-  Skeleton,
-  Text,
-} from '../../components/ui';
-import { LiveServiceCard } from '../../components/catalog/LiveServiceCard';
-import { iconFor } from '../../components/catalog/liveCatalog';
+import { EmptyState, ErrorState, GlassSurface, ScalePressable, Skeleton, Text } from '../../components/ui';
+import { HOME_BG } from '../../components/home/HomeSections';
+import { GradientFill, icon3d, icon3dKey, pastelFor } from '../../components/home/icons3d';
+import { areaPhoto } from '../../components/home/areaPhotos';
+import { servicePhoto } from '../../components/home/servicePhotos';
 import { useGetLiveCatalogQuery } from '../../services/api/catalogApi';
 import { getApiErrorMessage } from '../../services/api/apiSlice';
-import { colors, indigo } from '../../theme/colors';
-import { radius } from '../../theme/radius';
-import { spacing, screenPadding, bottomNavClearance } from '../../theme/spacing';
-import type { LiveCatalogCategory, LiveCatalogDomain, LiveCatalogService } from '../../types/api';
+import { ink } from '../../theme/brand';
+import { useTabBarSpace } from '../../hooks/useTabBarSpace';
+import type { LiveCatalogDomain, LiveCatalogService } from '../../types/api';
+
+const PAD = 16;
+const COLS = 3;
+const GAP = 12;
+const CARD_RADIUS = 14;
+const NAVY = '#14205A';
+const BLUE = '#2251E0';
 
 export default function ServicesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  // Deep link: `/(tabs)/services?category=electronics` narrows to one domain.
-  // An unknown value shows everything rather than an empty screen — a stale
-  // link should degrade to the full catalog, not to a dead end.
+  const tabBarSpace = useTabBarSpace();
+  const { width: screenWidth } = useWindowDimensions();
+  const contentWidth = Math.min(screenWidth, 720) - PAD * 2;
+  const tile = Math.floor((contentWidth - GAP * (COLS - 1)) / COLS);
+
   const params = useLocalSearchParams<{ category?: string }>();
+  const { data: domains, isLoading, isError, error, refetch, isFetching } = useGetLiveCatalogQuery();
 
-  const { data: domains, isLoading, isError, error, refetch, isFetching } =
-    useGetLiveCatalogQuery();
+  const all = useMemo(() => domains ?? [], [domains]);
+  const selected = useMemo(() => {
+    const needle = (params.category ?? '').toLowerCase();
+    return all.find((d) => d.code.toLowerCase() === needle)?.code ?? 'all';
+  }, [all, params.category]);
+  const visible = useMemo(() => (selected === 'all' ? all : all.filter((d) => d.code === selected)), [all, selected]);
+  const total = useMemo(() => all.reduce((n, d) => n + d.services.length, 0), [all]);
 
-  const visibleDomains = useMemo(() => {
-    const all = domains ?? [];
-    if (!params.category) return all;
-    const needle = params.category.toLowerCase();
-    const scoped = all.filter((d) => d.code.toLowerCase() === needle);
-    return scoped.length ? scoped : all;
-  }, [domains, params.category]);
+  const pick = useCallback((code: string) => router.setParams({ category: code }), [router]);
 
+  // Keep the selected chip in view — Home's area tiles can select one that
+  // starts off-screen to the right.
+  const chipsRef = useRef<ScrollView>(null);
+  const chipX = useRef<Record<string, number>>({});
+  const scrollToChip = useCallback((code: string, animated = true) => {
+    const x = chipX.current[code];
+    if (x != null) chipsRef.current?.scrollTo({ x: Math.max(0, x - PAD), animated });
+  }, []);
+  useEffect(() => { scrollToChip(selected); }, [selected, scrollToChip]);
   const openService = useCallback(
     (service: LiveCatalogService) => router.push(`/service/${service.code}` as never),
     [router],
   );
 
-  // The heading code alone is ambiguous — "display" exists for phones AND
-  // laptops — so the service that owns it travels with the link.
-  const openCategory = useCallback(
-    (category: LiveCatalogCategory, service: LiveCatalogService) =>
-      router.push(`/category/${category.code}?service=${service.code}` as never),
-    [router],
-  );
-
-  const renderDomain = useCallback(
-    ({ item }: { item: LiveCatalogDomain }) => {
-      const Icon = iconFor(item.icon);
-      return (
-        <View style={styles.domain}>
-          <View style={styles.domainHead}>
-            <View style={styles.domainIcon}>
-              <Icon size={17} strokeWidth={2} color={indigo[500]} />
-            </View>
-            <View style={styles.domainText}>
-              <Text variant="heading3" weight="black" numberOfLines={2}>
-                {item.name}
-              </Text>
-              {item.description ? (
-                <Text variant="bodySmall" numberOfLines={2}>
-                  {item.description}
-                </Text>
-              ) : null}
-            </View>
+  const renderDomain = useCallback(({ item }: { item: LiveCatalogDomain }) => {
+    const headPhoto = areaPhoto(item.code, item.imageUrl);
+    return (
+      <View style={styles.domain}>
+        <View style={styles.domainHead}>
+          <View style={styles.domainThumb}>
+            {headPhoto ? (
+              <Image source={headPhoto} style={styles.domainThumbImg} resizeMode="cover" />
+            ) : (
+              <>
+                <GradientFill colors={pastelFor(item.code)} id={`dh${item.code}`} />
+                <Image source={icon3d(icon3dKey({ code: item.code, icon: item.icon, name: item.name }))} style={styles.domainThumbIcon} resizeMode="contain" />
+              </>
+            )}
           </View>
-
-          <View style={styles.services}>
-            {item.services.map((service) => (
-              <LiveServiceCard
-                key={service.code}
-                service={service}
-                onPress={openService}
-                onPressCategory={openCategory}
-              />
-            ))}
+          <View style={styles.flex}>
+            <Text weight="bold" color={ink[900]} numberOfLines={1} style={styles.domainTitle} accessibilityRole="header">{item.name}</Text>
+            <Text color={ink[500]} style={styles.domainCount}>
+              {item.services.length} {item.services.length === 1 ? 'service' : 'services'}
+            </Text>
           </View>
         </View>
-      );
-    },
-    [openCategory, openService],
-  );
+        <View style={[styles.grid, { columnGap: GAP }]}>
+          {item.services.map((svc) => (
+            <ServiceCard key={svc.code} service={svc} domainCode={item.code} width={tile} onPress={openService} />
+          ))}
+        </View>
+      </View>
+    );
+  }, [openService, tile]);
 
   const header = (
-    <View style={styles.hero}>
-      <Text variant="eyebrow">Zappy catalog</Text>
-      <Text variant="pageTitle">All Services</Text>
-      <Text variant="muted" style={styles.subtitle}>
-        What we can do for you today
-      </Text>
+    <View>
+      <View style={styles.hero}>
+        <Text weight="bold" color={NAVY} style={styles.title} accessibilityRole="header">All Services</Text>
+        <Text color={ink[500]} style={styles.subtitle}>
+          {total ? `${total} services across ${all.length} areas, ready to book` : 'What we can do for you today'}
+        </Text>
+      </View>
+      {all.length > 1 ? (
+        <ScrollView ref={chipsRef} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          <Chip label="All" active={selected === 'all'} onPress={() => pick('all')}
+            onX={(x) => { chipX.current.all = x; }} />
+          {all.map((d) => (
+            <Chip key={d.code} label={d.name} active={selected === d.code} onPress={() => pick(d.code)}
+              icon={areaPhoto(d.code, d.imageUrl) ?? icon3d(icon3dKey({ code: d.code, icon: d.icon, name: d.name }))}
+              round={Boolean(areaPhoto(d.code, d.imageUrl))}
+              onX={(x) => { chipX.current[d.code] = x; if (d.code === selected) scrollToChip(d.code, false); }} />
+          ))}
+        </ScrollView>
+      ) : null}
     </View>
   );
 
+  const top = { paddingTop: insets.top + 10 };
+
   if (isLoading) {
     return (
-      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.root, top]}>
         {header}
-        <View style={styles.padded}>
-          <ServiceSkeletons />
+        <View style={styles.padded} accessibilityLabel="Loading services" accessibilityRole="progressbar">
+          <Skeleton width="45%" height={18} style={{ marginTop: 20 }} />
+          <View style={[styles.grid, { columnGap: GAP, marginTop: 14 }]}>
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} width={tile} height={Math.round(tile * 1.18)} borderRadius={CARD_RADIUS} />)}
+          </View>
         </View>
       </View>
     );
@@ -145,32 +149,31 @@ export default function ServicesScreen() {
 
   if (isError) {
     return (
-      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={[styles.root, top]}>
         {header}
-        <ErrorState
-          message={getApiErrorMessage(error)}
-          onRetry={refetch}
-          style={styles.padded}
-        />
+        <ErrorState message={getApiErrorMessage(error)} onRetry={refetch} style={styles.padded} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.root, top]}>
       <FlatList
-        data={visibleDomains}
+        data={visible}
         keyExtractor={(d) => d.code}
         renderItem={renderDomain}
         ListHeaderComponent={header}
-        ListEmptyComponent={<CatalogEmptyState />}
-        ListFooterComponent={
-          visibleDomains.length ? (
-            <MoreComing onBrowseShops={() => router.push('/shops' as never)} />
-          ) : null
+        ListEmptyComponent={
+          <EmptyState
+            icon={<PackageSearch size={28} color={BLUE} />}
+            title="No services available yet"
+            message="Services appear here as soon as we have verified providers for them. Nothing is bookable in your area right now."
+            style={styles.padded}
+          />
         }
+        ListFooterComponent={visible.length ? <MoreComing onBrowseShops={() => router.push('/shops' as never)} /> : null}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarSpace }]}
         refreshing={isFetching && !isLoading}
         onRefresh={refetch}
       />
@@ -179,144 +182,113 @@ export default function ServicesScreen() {
 }
 
 /**
- * Shape-matched loading, not a spinner: an icon chip, two text lines and the
- * coverage strip, at the sizes the real card uses, so nothing jumps when the
- * data lands.
+ * One service: a white card, the photo across the top, the name beneath in a
+ * fixed two-line box so every card in a row is the same height.
  */
-function ServiceSkeletons() {
+const ServiceCard = React.memo(function ServiceCard({ service, domainCode, width, onPress }: {
+  service: LiveCatalogService; domainCode: string; width: number; onPress: (s: LiveCatalogService) => void;
+}) {
+  const photo = servicePhoto(service.code, service.imageUrl);
+  const photoH = Math.round(width * 0.78);
   return (
-    <View accessibilityLabel="Loading services" accessibilityRole="progressbar">
-      {[0, 1].map((i) => (
-        <View key={i} style={[styles.skelCard, i > 0 && { marginTop: spacing.md }]}>
-          <View style={styles.skelRow}>
-            <Skeleton width={48} height={48} borderRadius={radius.medium} />
-            <View style={styles.skelBody}>
-              <Skeleton width="60%" height={14} />
-              <Skeleton width="85%" height={11} style={{ marginTop: spacing.sm }} />
-            </View>
-          </View>
-          <View style={styles.skelRail}>
-            {[0, 1, 2].map((t) => (
-              <Skeleton key={t} width={116} height={145} borderRadius={radius.medium} />
-            ))}
-          </View>
+    <ScalePressable onPress={() => onPress(service)} style={[styles.card, { width }]} accessibilityRole="button" accessibilityLabel={service.name}>
+      <View style={[styles.cardPhoto, { height: photoH }]}>
+        {/* Explicit size: a bundled image's own pixel size would beat absoluteFill. */}
+        {photo ? (
+          <Image source={photo} style={{ width: width - 2, height: photoH }} resizeMode="cover" />
+        ) : (
+          <>
+            <GradientFill colors={pastelFor(domainCode)} id={`sc${service.code}`} />
+            <Image source={icon3d(icon3dKey({ ...service, domainCode }))} style={{ width: photoH * 0.6, height: photoH * 0.6 }} resizeMode="contain" />
+          </>
+        )}
+      </View>
+      <View style={styles.cardLabelBox}>
+        <Text weight="semibold" color={ink[900]} numberOfLines={2} textBreakStrategy="simple" android_hyphenationFrequency="none"
+          style={styles.cardLabel}>{service.name}</Text>
+      </View>
+    </ScalePressable>
+  );
+});
+
+function Chip({ label, active, onPress, icon, round = false, onX }: {
+  label: string; active: boolean; onPress: () => void; icon?: ReturnType<typeof icon3d>; round?: boolean; onX: (x: number) => void;
+}) {
+  return (
+    <ScalePressable onPress={onPress} onLayout={(e) => onX(e.nativeEvent.layout.x)} accessibilityRole="tab"
+      accessibilityState={{ selected: active }} accessibilityLabel={label}>
+      {/* iOS 26: glass capsules, the selected one tinted brand blue. */}
+      <GlassSurface interactive tint={active ? BLUE : undefined} style={styles.chip}
+        fallbackStyle={[styles.chipSolid, active && styles.chipActive]}>
+        {icon ? <Image source={icon} style={round ? styles.chipPhoto : styles.chipIcon} resizeMode={round ? 'cover' : 'contain'} /> : null}
+        <Text weight="semibold" color={active ? '#FFFFFF' : NAVY} style={styles.chipText} numberOfLines={1}>{label}</Text>
+      </GlassSurface>
+    </ScalePressable>
+  );
+}
+
+/** "More on the way" — a sentence, never a dead tile. */
+function MoreComing({ onBrowseShops }: { onBrowseShops: () => void }) {
+  return (
+    <View style={styles.more}>
+      <Text weight="bold" color={ink[900]} style={styles.moreTitle}>More services are on the way</Text>
+      <Text color={ink[500]} style={styles.moreSub}>New services open as soon as we have verified providers for them.</Text>
+      <ScalePressable onPress={onBrowseShops} accessibilityRole="button" accessibilityLabel="Browse nearby shops" hitSlop={8}>
+        <View style={styles.moreCta}>
+          <Text weight="bold" color={BLUE} style={styles.moreCtaText}>Browse nearby shops meanwhile</Text>
+          <ArrowRight size={14} color={BLUE} />
         </View>
-      ))}
+      </ScalePressable>
     </View>
   );
 }
 
-/**
- * The honest empty state.
- *
- * `{ domains: [] }` is a VALID response: a service line only appears once some
- * provider holds an approved enrolment for it. So this means "nothing is
- * bookable yet", not "something broke" — and it must never be papered over
- * with placeholder services, which is the dead-end problem the live catalog
- * exists to prevent.
- */
-function CatalogEmptyState() {
-  return (
-    <EmptyState
-      icon={<PackageSearch size={28} color={colors.primary} />}
-      title="No services available yet"
-      message="Services appear here as soon as we have verified providers for them. Nothing is bookable in your area right now."
-      style={styles.padded}
-    />
-  );
-}
-
-/** The website's dashed "more on the way" card — a sentence, never a dead tile. */
-function MoreComing({ onBrowseShops }: { onBrowseShops: () => void }) {
-  return (
-    <Card variant="outline" style={styles.more} padding={spacing.base}>
-      <Text variant="bodySmall" weight="bold" color={colors.textPrimary} align="center">
-        More services are on the way
-      </Text>
-      <Text variant="caption" align="center" style={styles.moreSub}>
-        New services open as soon as we have verified providers for them.
-      </Text>
-      <ScalePressable
-        onPress={onBrowseShops}
-        accessibilityRole="button"
-        accessibilityLabel="Browse nearby shops"
-        hitSlop={8}
-      >
-        <View style={styles.moreCta}>
-          <Text variant="caption" weight="bold" color={colors.primary}>
-            Browse nearby shops meanwhile
-          </Text>
-          <ArrowRight size={13} color={colors.primary} />
-        </View>
-      </ScalePressable>
-    </Card>
-  );
-}
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: bottomNavClearance },
-  padded: { paddingHorizontal: screenPadding },
-  hero: {
-    paddingHorizontal: screenPadding,
-    paddingBottom: spacing.lg,
-  },
-  subtitle: { marginTop: spacing.xs },
+  root: { flex: 1, backgroundColor: HOME_BG },
+  flex: { flex: 1, minWidth: 0 },
+  content: {},
+  padded: { paddingHorizontal: PAD },
+  hero: { paddingHorizontal: PAD, paddingBottom: 14 },
+  title: { fontSize: 26, lineHeight: 32, letterSpacing: -0.6 },
+  subtitle: { fontSize: 13.5, lineHeight: 18, marginTop: 2 },
 
-  domain: { marginTop: spacing.xl },
+  chips: { paddingHorizontal: PAD, gap: 8, paddingBottom: 4 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 12, borderRadius: 19 },
+  chipSolid: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E6E9F2' },
+  chipActive: { backgroundColor: BLUE, borderColor: BLUE },
+  chipIcon: { width: 20, height: 20 },
+  chipPhoto: { width: 24, height: 24, borderRadius: 12, marginLeft: -6 },
+  chipText: { fontSize: 13, lineHeight: 17 },
+
+  domain: { marginTop: 24, paddingHorizontal: PAD },
   domainHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: screenPadding,
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12, paddingBottom: 10,
+    borderBottomWidth: 1, borderBottomColor: '#E6E9F2',
   },
-  domainIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.button,
-    backgroundColor: colors.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  domainText: { flex: 1, minWidth: 0 },
-  services: {
-    marginTop: spacing.md,
-    paddingHorizontal: screenPadding,
-    gap: spacing.md,
-  },
+  domainThumb: { width: 44, height: 44, borderRadius: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#EEF1F8' },
+  domainThumbImg: { width: 44, height: 44 },
+  domainThumbIcon: { width: 30, height: 30 },
+  domainTitle: { fontSize: 17, lineHeight: 22, letterSpacing: -0.3 },
+  domainCount: { fontSize: 12, lineHeight: 16 },
 
-  skelCard: {
-    borderRadius: radius.large,
-    backgroundColor: colors.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    overflow: 'hidden',
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: GAP },
+  card: {
+    borderRadius: CARD_RADIUS, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EDEFF5',
+    shadowColor: '#1B2A6B', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2,
   },
-  skelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.base,
-    padding: spacing.base,
+  cardPhoto: {
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+    borderTopLeftRadius: CARD_RADIUS - 1, borderTopRightRadius: CARD_RADIUS - 1, backgroundColor: '#EEF1F8',
   },
-  skelBody: { flex: 1 },
-  skelRail: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: spacing.base,
-    paddingBottom: 14,
-  },
+  cardLabelBox: { height: 42, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
+  cardLabel: { textAlign: 'center', fontSize: 11, lineHeight: 14, letterSpacing: -0.25 },
 
   more: {
-    marginTop: spacing.xl,
-    marginHorizontal: screenPadding,
-    borderStyle: 'dashed',
+    marginTop: 28, marginHorizontal: PAD, padding: 16, borderRadius: 14, alignItems: 'center',
+    borderWidth: 1, borderStyle: 'dashed', borderColor: '#D2D7DE', backgroundColor: '#FFFFFF',
   },
-  moreSub: { marginTop: 2 },
-  moreCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
+  moreTitle: { fontSize: 14, lineHeight: 19, textAlign: 'center' },
+  moreSub: { fontSize: 12, lineHeight: 16, textAlign: 'center', marginTop: 2 },
+  moreCta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
+  moreCtaText: { fontSize: 12.5, lineHeight: 16 },
 });

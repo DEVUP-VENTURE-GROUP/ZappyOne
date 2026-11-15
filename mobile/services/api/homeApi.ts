@@ -47,7 +47,10 @@ export interface AvailablePromo {
   maxDiscountPaise?: number;
   minOrderPaise?: number;
   alreadyUsed?: boolean;
-  validity?: { endAt?: string };
+  /** Codes the promo applies to; empty means every service. */
+  services?: string[];
+  /** `GET /promos/available` sends the end date flat, not under `validity`. */
+  expiresAt?: string;
 }
 
 const KIND_BY_TYPE: Record<string, keyof HomeBannerSections> = {
