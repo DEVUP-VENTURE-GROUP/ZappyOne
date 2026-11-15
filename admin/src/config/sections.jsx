@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboard, ShoppingBag, Users, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat, LayoutTemplate, Image as ImageIcon, Rows3, Eye } from 'lucide-react';
 import { ADMIN_FLEET_VIEWS } from '@/features/fleet/views';
 import Hub from '../ui/Hub';
 
@@ -59,6 +59,9 @@ const P = {
   HelpContent: page(() => import('../features/marketing/content/HelpContent')),
   LegalPages: page(() => import('../features/marketing/content/LegalPages')),
   CityPages: page(() => import('../features/marketing/content/CityPages')),
+  HomepageBanners: page(() => import('../features/marketing/homepage/HomepageBanners')),
+  HomepageSections: page(() => import('../features/marketing/homepage/HomepageSections')),
+  HomepagePreview: page(() => import('../features/marketing/homepage/HomepagePreview')),
   Alerts: page(() => import('../features/system/Alerts')),
   Infrastructure: page(() => import('../features/system/Infrastructure')),
   SignInCodes: page(() => import('../features/system/SignInCodes')),
@@ -117,6 +120,11 @@ const HUBS = {
   areas: hub('Service areas', 'Where ZappyOne serves, and where customers are asking for it', [
     { id: 'zones', label: 'Zones', icon: MapIcon, Comp: P.Zones },
     { id: 'demand', label: 'Launch demand', icon: BellRing, Comp: P.LaunchDemand },
+  ]),
+  homepage: hub('Homepage', 'Banners and sections on the customer homepage, with a preview before publishing', [
+    { id: 'banners', label: 'Banners', icon: ImageIcon, Comp: P.HomepageBanners },
+    { id: 'sections', label: 'Sections', icon: Rows3, Comp: P.HomepageSections },
+    { id: 'preview', label: 'Preview', icon: Eye, Comp: P.HomepagePreview },
   ]),
   content: hub('Content & SEO', 'Help, the legal pages and the public city pages', [
     { id: 'help', label: 'FAQs', icon: FileText, Comp: P.HelpContent },
@@ -177,6 +185,7 @@ export const NAV_GROUPS = [
     { id: 'areas', area: 'operations', label: 'Service areas', icon: MapIcon, Comp: HUBS.areas },
     { id: 'fraud', area: 'operations', label: 'Fraud detection', icon: ShieldAlert, Comp: P.Fraud },
     { id: 'notifications', area: 'marketing', label: 'Notifications', icon: Bell, Comp: P.Notifications },
+    { id: 'homepage', area: 'marketing', label: 'Homepage', icon: LayoutTemplate, Comp: HUBS.homepage },
     { id: 'content', area: 'marketing', label: 'Content & SEO', icon: FileText, Comp: HUBS.content },
   ] },
   { label: 'System', items: [
@@ -207,4 +216,5 @@ export const REDIRECTS = {
   intervention: ['liveops', 'stuck'],
   zones: ['areas', 'zones'], cities: ['content', 'cities'],
   health: ['status', 'infra'], alerts: ['status', 'alerts'],
+  banners: ['homepage', 'banners'], 'content-management': ['homepage', 'banners'],
 };

@@ -314,6 +314,7 @@ export const {
   useAdminCreateAdMutation,
   useAdminUpdateAdMutation,
   useAdminDeleteAdMutation,
+  useAdminBannerUploadUrlMutation,
   useAdminApproveAdMutation,
   useAdminRejectAdMutation,
   useAdminAdWalletsQuery,

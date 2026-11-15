@@ -79,6 +79,14 @@ const adminRouter = express.Router();
 adminRouter.use(authenticate, requireRole('admin'));
 
 // Static routes MUST come before /:id to avoid Express matching "wallets" as an id
+// Homepage banner image upload: a short-lived presigned PUT into the banner prefix.
+const { BANNER_TYPES, BANNER_MAX_BYTES } = require('../../core/storage/s3');
+adminRouter.post('/banner-upload', validate(Joi.object({
+  contentType: Joi.string().valid(...Object.keys(BANNER_TYPES)).required(),
+  size: Joi.number().integer().min(1).max(BANNER_MAX_BYTES).required(),
+  // Only checks the extension matches the type; never stored.
+  filename: Joi.string().max(200).required(),
+})), ctrl.adminBannerUploadUrl);
 adminRouter.get('/wallets',                   ctrl.adminAllWallets);
 adminRouter.post('/wallets/adjust',           ctrl.adminAdjustWallet);
 adminRouter.get('/',                          ctrl.adminList);

@@ -969,6 +969,10 @@ export function endpoints(b, { adminApiPath }) {
       query: (id) => ({ url: adminApiPath(`/ads/${id}`), method: 'DELETE' }),
       invalidatesTags: ['Ad'],
     }),
+    // Homepage banner image: a short-lived upload link into the banner folder.
+    adminBannerUploadUrl: b.mutation({
+      query: (body) => ({ url: adminApiPath('/ads/banner-upload'), method: 'POST', body }),
+    }),
     adminApproveAd: b.mutation({
       query: (id) => ({ url: adminApiPath(`/ads/${id}/approve`), method: 'POST' }),
       invalidatesTags: ['Ad'],

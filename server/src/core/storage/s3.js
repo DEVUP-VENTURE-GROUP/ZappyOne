@@ -210,8 +210,68 @@ async function streamToResponse(key, res) {
   obj.Body.pipe(res);
 }
 
+// Homepage banners: keys the server mints under their own prefix; the client never names a key.
+const BANNER_PREFIX = 'homepage-banners/';
+const BANNER_TYPES = { 'image/jpeg': ['jpg', 'jpeg'], 'image/png': ['png'], 'image/webp': ['webp'] };
+const BANNER_MAX_BYTES = 5 * 1024 * 1024;
+const BANNER_UPLOAD_TTL_SEC = 300;
+const BANNER_READ_TTL_SEC = 6 * 60 * 60;
+const BANNER_KEY_RE = /^homepage-banners\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+// Advertisers' campaign images (presigned uploads into ads/) are banners too.
+const AD_KEY_RE = /^ads\/[\w.-]{1,200}$/;
+
+const isBannerKey = (key) => typeof key === 'string' && (BANNER_KEY_RE.test(key) || AD_KEY_RE.test(key));
+
+// Content-Type and Content-Length are signed, so S3 itself refuses another type or size.
+async function getBannerUploadUrl({ contentType, size }) {
+  const exts = BANNER_TYPES[contentType];
+  if (!exts) throw Object.assign(new Error('Use a JPG, PNG or WebP image.'), { status: 400, code: 'BANNER_TYPE' });
+  if (!Number.isInteger(size) || size < 1 || size > BANNER_MAX_BYTES) {
+    throw Object.assign(new Error('The image must be 5 MB or smaller.'), { status: 400, code: 'BANNER_SIZE' });
+  }
+  const now = new Date();
+  const key = `${BANNER_PREFIX}${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${uuid()}.${exts[0]}`;
+  const cmd = new PutObjectCommand({ Bucket: config.aws.bucket, Key: key, ContentType: contentType, ContentLength: size });
+  try {
+    const uploadUrl = await getSignedUrl(s3, cmd, { expiresIn: BANNER_UPLOAD_TTL_SEC, signableHeaders: new Set(['content-type', 'content-length']) });
+    return { uploadUrl, key, expiresIn: BANNER_UPLOAD_TTL_SEC, headers: { 'Content-Type': contentType } };
+  } catch (err) {
+    throw Object.assign(new Error('File upload service is temporarily unavailable. Please try again in a moment.'), { status: 503, code: 'S3_UNAVAILABLE', cause: err.message });
+  }
+}
+
+// One signed link per image reused for 5 of its 6 hours, so phones and browsers can cache the picture.
+const bannerLinks = new Map();
+const BANNER_REUSE_MS = 5 * 60 * 60 * 1000;
+const BANNER_LINKS_MAX = 500;
+async function signBannerImage(ref) {
+  if (!ref || typeof ref !== 'string') return '';
+  const value = keyFromMedia(ref);
+  if (/^https:\/\//i.test(value)) return value;
+  if (!isBannerKey(value)) return '';
+  const hit = bannerLinks.get(value);
+  if (hit && hit.until > Date.now()) return hit.url;
+  try {
+    const url = await getViewUrl(value, BANNER_READ_TTL_SEC);
+    if (bannerLinks.size >= BANNER_LINKS_MAX) bannerLinks.delete(bannerLinks.keys().next().value);
+    bannerLinks.set(value, { url, until: Date.now() + BANNER_REUSE_MS });
+    return url;
+  } catch { return ''; }
+}
+
+// Stored as a key only: images are always uploaded, never a pasted outside link.
+function normalizeBannerImage(ref) {
+  if (ref == null || ref === '') return '';
+  if (typeof ref !== 'string') throw Object.assign(new Error('Invalid banner image'), { status: 400, code: 'BANNER_IMAGE_INVALID' });
+  const value = keyFromMedia(ref.trim());
+  if (isBannerKey(value)) return value;
+  throw Object.assign(new Error('Upload the banner image here.'), { status: 400, code: 'BANNER_IMAGE_INVALID' });
+}
+
 module.exports = {
   isConfigured, getUploadUrl, getViewUrl, getDownloadUrl,
+  getBannerUploadUrl, signBannerImage, normalizeBannerImage, isBannerKey,
+  BANNER_PREFIX, BANNER_TYPES, BANNER_MAX_BYTES, BANNER_UPLOAD_TTL_SEC, BANNER_READ_TTL_SEC,
   signMedia, signMediaList, signDocMedia, signDocsMedia,
   keyFromMedia, normalizeDocMedia,
   MEDIA_FIELDS, MEDIA_LIST_FIELDS,
