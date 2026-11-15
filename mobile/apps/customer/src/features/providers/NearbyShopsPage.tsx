@@ -36,7 +36,7 @@ export function NearbyShopsPage() {
 
   return (
     <View style={[styles.page, { paddingTop: insets.top }]}>
-      <ScreenHeader title={t('shops.title', 'Nearby Shops')} subtitle={t('shops.sub', 'Trusted local businesses')} onBack={back} />
+      <ScreenHeader title={t('nav.stores', 'Local stores')} subtitle={t('shops.verified', 'Verified on ZappyOne')} onBack={back} />
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.note}><Text variant="caption" weight="medium" color={zappy[700]}>{t('shops.intro', 'Shops near you that ZappyOne has verified for each service they offer. Open one to book it.')}</Text></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>

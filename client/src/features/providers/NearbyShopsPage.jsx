@@ -30,8 +30,8 @@ export default function NearbyShopsPage() {
       <header className="page-header"><div className="page-header-inner">
         <button onClick={() => goBack()} className="back-btn"><ArrowLeft size={18} strokeWidth={2.5} /></button>
         <div>
-          <p className="t-label">Trusted Local Businesses</p>
-          <p className="font-semibold text-[#0F172A]">Nearby Shops</p>
+          <p className="t-label">Verified on ZappyOne</p>
+          <p className="font-semibold text-[#0F172A]">Local stores</p>
         </div>
       </div></header>
 

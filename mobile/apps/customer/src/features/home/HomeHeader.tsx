@@ -8,7 +8,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
-import { Bell, ChevronDown, MapPin, ScanLine, Search } from 'lucide-react-native';
+import { Bell, ChevronDown, MapPin, ScanLine, Search, UserRound } from 'lucide-react-native';
 import { Button, Text, ZappyWordmark } from '@zappy/ui/components';
 import { accent, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -98,13 +98,16 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
         </Pressable>
       ) : (
       <View style={styles.flex}>
-        <ZappyWordmark size={22} />
+        <ZappyWordmark size={28} />
+        {/* The area in bold, the city after it on the same line (Asif's top bar). */}
         <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Service location: ${loc.primary}. Change location`} style={styles.loc}>
           {loc.loading ? <ActivityIndicator size="small" color={zappy[600]} /> : <MapPin size={16} color={accent[500]} strokeWidth={2.4} />}
-          <Text variant="body" weight="extrabold" color={zappy[700]} numberOfLines={1} style={styles.shrink}>{loc.loading ? 'Finding you…' : loc.primary}</Text>
+          <Text variant="body" color={ink[700]} numberOfLines={1} style={styles.shrink}>
+            <Text variant="body" weight="extrabold" color={ink[900]}>{loc.loading ? 'Finding you…' : loc.primary}</Text>
+            {!loc.loading && loc.secondary ? `, ${loc.secondary}` : ''}
+          </Text>
           <ChevronDown size={16} color={zappy[600]} strokeWidth={2.6} />
         </Pressable>
-        {!loc.loading && loc.secondary ? <Text variant="caption" color={ink[500]} numberOfLines={1}>{loc.secondary}</Text> : null}
       </View>
       )}
       {isAuthed ? (
@@ -115,6 +118,13 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
         </Pressable>
         </GlassSurface>
       ) : <Button label="Sign in" size="small" onPress={() => router.push('/(auth)/login' as never)} />}
+      {isAuthed ? (
+        <GlassSurface style={styles.bellShape} fallbackStyle={styles.bell} interactive>
+          <Pressable onPress={() => router.push('/(tabs)/profile' as never)} accessibilityRole="button" accessibilityLabel="Your profile" style={styles.bellShape}>
+            <UserRound size={18} color={zappy[700]} />
+          </Pressable>
+        </GlassSurface>
+      ) : null}
     </View>
   );
 }

@@ -41,7 +41,8 @@ export function ModeSwitch({ onStores }: { onStores: () => void }) {
         <Wrench size={17} color="#fff" /><Text variant="bodySmall" weight="bold" color="#fff">Book a service</Text>
       </View>
       <Pressable onPress={onStores} style={styles.modeBtn} accessibilityRole="tab" accessibilityState={{ selected: false }}>
-        <Store size={17} color={zappy[700]} /><Text variant="bodySmall" weight="bold" color={zappy[700]}>Local stores</Text>
+        <Store size={17} color={zappy[700]} /><Text variant="bodySmall" weight="bold" color={zappy[700]}>Shop from Stores</Text>
+        <View style={styles.newBadge}><Text variant="caption" weight="bold" color="#fff">New</Text></View>
       </Pressable>
     </GlassSurface>
   );
@@ -264,4 +265,5 @@ const styles = StyleSheet.create({
   list: { overflow: 'hidden', borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   dotIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  newBadge: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: accent[600] },
 });

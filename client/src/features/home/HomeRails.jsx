@@ -49,7 +49,8 @@ export function ModeSwitch({ onStores }) {
       </span>
       <button type="button" onClick={onStores}
         className="flex h-12 items-center justify-center gap-2 rounded-[12px] text-[14px] font-bold text-zappy-700 transition-colors hover:bg-white sm:text-[15px]">
-        <Store size={17} strokeWidth={2.2} /> Local stores
+        <Store size={17} strokeWidth={2.2} /> Shop from Stores
+        <span className="rounded-full bg-accent-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">New</span>
       </button>
     </nav>
   );
