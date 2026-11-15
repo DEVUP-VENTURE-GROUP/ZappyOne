@@ -119,3 +119,17 @@ export const HOME_SECTIONS = [
   { id: 'again', title: 'Book again', source: 'The signed-in customer’s completed bookings', managedIn: null },
   { id: 'activity', title: 'Your recent activity', source: 'The signed-in customer’s latest bookings', managedIn: null },
 ];
+
+// Service-area photos shipped in assets/web/hero, for services without their own photo.
+export const AREA_PHOTO = {
+  mobile_repair: '/hero/phone-repair.webp', laptop_repair: '/hero/phone-bench.webp',
+  two_wheeler: '/hero/two-wheeler.webp', four_wheeler: '/hero/vehicle-care.webp',
+  water_tank_care: '/hero/water-tank.webp', shopping_pickup: '/hero/helping.webp',
+  returns_exchange: '/hero/helping.webp', pet_services: '/hero/pet-care.webp', events: '/hero/events.webp',
+};
+
+// Popular first (admin flag), then what can be booked at this address.
+export function pickPopular(services, max = 8) {
+  const rank = (s) => (s.isPopular ? 0 : 2) + (s.available === false ? 1 : 0);
+  return [...services].sort((a, b) => rank(a) - rank(b)).slice(0, max);
+}

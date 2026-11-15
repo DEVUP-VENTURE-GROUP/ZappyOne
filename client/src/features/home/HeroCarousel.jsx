@@ -37,7 +37,7 @@ function CatalogSlide({ slide, domain, active, onOpen }) {
   return (
     <div className="relative h-[188px] w-full shrink-0 snap-center overflow-hidden sm:h-[300px] lg:h-[340px]" aria-hidden={!active}>
       <img src={slide.photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading={active ? 'eager' : 'lazy'} />
-      <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,#142F73F2_0%,#1A41B4CC_40%,#1F4FD800_78%)]" />
+      <span aria-hidden="true" className="absolute inset-0 bg-zappy-900/60" />
       <div className="relative flex h-full max-w-[72%] flex-col justify-center gap-1 p-4 sm:max-w-[560px] sm:gap-2.5 sm:p-8 lg:p-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 sm:text-[12px]">{domain.name}</p>
         <h2 className="text-[20px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white [text-wrap:balance] sm:text-[30px] lg:text-[36px]">{title}</h2>

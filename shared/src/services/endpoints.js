@@ -902,10 +902,6 @@ export function endpoints(b, { adminApiPath }) {
     }),
 
     // --- Ads ---
-    getActiveAds: b.query({
-      query: () => '/ads',
-      providesTags: ['Ad'],
-    }),
     getAdsByPlacement: b.query({
       query: ({ placement, category, city, q, limit } = {}) => ({
         url: `/ads/placement/${placement}`,

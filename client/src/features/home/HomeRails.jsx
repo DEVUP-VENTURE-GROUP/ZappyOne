@@ -9,6 +9,7 @@ import PromoBanner from '@shared/components/home/PromoBanner';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { artFor, servicePhoto } from '@shared/components/home/serviceArt';
 import { tintFor } from './ServiceGrid';
+import { AREA_PHOTO } from '@shared/config/homepageContent';
 
 // The sections of Home below the hero.
 
@@ -80,7 +81,7 @@ function StorefrontArt({ className = '' }) {
 export function ZappyOnePromo({ onExplore }) {
   return (
     <section aria-labelledby="home-zappyone"
-      className="relative overflow-hidden rounded-[20px] bg-[linear-gradient(110deg,#EEF3FD_0%,#EEF0FF_55%,#F3EEFF_100%)] ring-1 ring-inset ring-zappy-100">
+      className="relative overflow-hidden rounded-[20px] bg-zappy-50 ring-1 ring-inset ring-zappy-100">
       <div className="flex items-center gap-3 p-4 sm:gap-6 sm:p-6 lg:px-8">
         <StorefrontArt className="h-[84px] w-[104px] shrink-0 sm:h-[120px] sm:w-[150px]" />
         <div className="min-w-0 flex-1">
@@ -106,22 +107,8 @@ export function ZappyOnePromo({ onExplore }) {
 
 /* Popular services near you */
 
-/** Service-area photos already shipped in assets/web/hero. */
-const AREA_PHOTO = {
-  mobile_repair: '/hero/phone-repair.webp', laptop_repair: '/hero/phone-bench.webp',
-  two_wheeler: '/hero/two-wheeler.webp', four_wheeler: '/hero/vehicle-care.webp',
-  water_tank_care: '/hero/water-tank.webp', shopping_pickup: '/hero/helping.webp',
-  returns_exchange: '/hero/helping.webp', pet_services: '/hero/pet-care.webp', events: '/hero/events.webp',
-};
-
 function photoFor(s) {
   return servicePhoto(s) || AREA_PHOTO[s.code] || AREA_PHOTO[s.domainCode] || artFor(s.code, s.domainCode)?.still || null;
-}
-
-/** Popular first (admin flag), then what can be booked at this address. */
-export function pickPopular(services, max = 8) {
-  const rank = (s) => (s.isPopular ? 0 : 2) + (s.available === false ? 1 : 0);
-  return [...services].sort((a, b) => rank(a) - rank(b)).slice(0, max);
 }
 
 export function PopularServices({ services, onOpen, onViewAll }) {
@@ -269,11 +256,7 @@ function couponTerms(p) {
   return parts.join(' · ');
 }
 
-const COUPON_FILLS = [
-  'bg-[linear-gradient(120deg,#1F4FD8,#3463DD)]',
-  'bg-[linear-gradient(120deg,#EA580C,#F59E0B)]',
-  'bg-[linear-gradient(120deg,#6D28D9,#8B5CF6)]',
-];
+const COUPON_FILLS = ['bg-zappy-600', 'bg-accent-600', 'bg-ink-900'];
 
 export function OffersDeals({ ads, isAuthed, onOpenAd, onViewAll, onImageError }) {
   const { data } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });

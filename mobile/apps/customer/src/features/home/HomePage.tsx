@@ -9,7 +9,7 @@
  * fix, it asks. Nothing here is a claim the data doesn't back.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import {
@@ -25,7 +25,6 @@ import { describeCoordinates } from '@zappy/ui/location/geocode';
 import { colors, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
-import { AdBanner } from '../../components/marketing/AdBanner';
 import { SpotlightSearch } from '../catalog/SpotlightSearch';
 import { backAt } from '@zappy/core/shared/opening';
 import { NotInYourArea } from '../catalog/serviceability/NotInYourArea';
@@ -39,7 +38,9 @@ import useFestiveLook from '@zappy/core/shared/useFestiveLook';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { HeroCarousel } from './HeroCarousel';
 import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
-import { BookAgainRail, NearbyShopsLink, OffersRail } from './HomeRails';
+import { BookAgain, CampaignBanners, LocalStores, ModeSwitch, OffersDeals, PopularServices, RecentActivity, ZappyOnePromo } from './HomeRails';
+import { useHomeAds } from './useHomeAds';
+import { pickPopular } from '@zappy/core/shared/homepageContent';
 import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
 import { HomeFooter } from './HomeFooter';
@@ -47,7 +48,6 @@ import { HomeMarketplace } from './HomeMarketplace';
 import { LocationSheet, type PickedArea } from './LocationSheet';
 import { ProblemChips } from './ProblemChips';
 import { ServiceGrid } from './ServiceGrid';
-import { ServiceShowcase } from './ServiceShowcase';
 import { buildDomains, comingSoonOf, gridDomains, quickRebooks, searchTerms, type HomeDomain, type HomeService } from './homeCatalog';
 
 let remembered = false;   // a precise fix is saved on the customer's record once per app session
@@ -161,8 +161,15 @@ export function HomePage() {
     router.push((path || s.path) as never);
   }
 
-  const { current: activeJob, past: pastJobs, refetch: refetchJobs } = useMyJobs({ skip: !isAuthed });
+  const { jobs, current: activeJob, past: pastJobs, refetch: refetchJobs } = useMyJobs({ skip: !isAuthed });
   const rebooks = useMemo(() => quickRebooks(pastJobs), [pastJobs]);
+  // The latest few, live ones first; the live one already has its own card above.
+  const recent = useMemo(() => [...jobs.filter((j) => j.active), ...jobs.filter((j) => !j.active)].filter((j) => j !== activeJob).slice(0, 3), [jobs, activeJob]);
+  /* Admin banners (hero, campaign, offer) and the popular rail. */
+  const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
+  const popular = useMemo(() => pickPopular(services) as HomeService[], [services]);
+  const { width: screen } = useWindowDimensions();
+  const goStores = () => router.push('/nearby-shops' as never);
   const notHere = svc?.status === 'not_here';
   // A festival running (Admin → Festive home): its own top on home; light ones also tint the header.
   const { data: seasonData, isLoading: loadingSeason, refetch: refetchSeason } = useCurrentSeasonQuery(undefined);
@@ -186,10 +193,11 @@ export function HomePage() {
     <View style={[styles.page, theme ? { backgroundColor: theme.wash } : null]}>
       <HomeHeader loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} tint={tint} festive={theme} greeting={season?.greeting || ''} eta={svc?.fastestMin != null && svc.fastestMin <= 60 ? svc.fastestMin : null} closed={svc?.status === 'closed_now' ? backAt(svc.nextOpening) : null} />
       {/* Search stays pinned while the rest scrolls. */}
-      <View style={[styles.searchWrap, tint ? { backgroundColor: tint, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
+      <View style={[styles.searchWrap, tint ? { backgroundColor: tint } : null]}><SearchBar terms={terms} onOpen={() => setSpotOpen(true)} /></View>
       <HomeScrollY.Provider value={scrollY}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {season ? <SafeSection name="festive-hero"><View style={styles.festive}><FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} /></View></SafeSection> : null}
+        <ModeSwitch onStores={goStores} />
         {activeJob ? <ActiveJobCard job={activeJob} onOpen={() => router.push(activeJob.href as never)} /> : null}
         {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
         <ContinueBookingCard isAuthed={isAuthed} />
@@ -203,21 +211,23 @@ export function HomePage() {
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {settling ? <Skeleton height={160} style={styles.heroSkel} /> : null}
-            {!settling && !nothingLive && !season ? <HeroCarousel domains={allDomains} onOpen={openService} /> : null}
+            {settling ? <Skeleton height={188} style={styles.heroSkel} /> : null}
+            {!settling && !nothingLive && !season ? <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} /> : null}
             {/* During a festival each section rises in after the last. */}
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={domains} onOpen={openService} onViewAll={() => router.push('/services' as never)} /></Reveal>}
             <Reveal on={!!theme}><ProblemChips services={services} /></Reveal>
-            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={domains} onOpen={openService} /></Reveal>}
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
-            <Reveal on={!!theme}><BookAgainRail items={rebooks} /></Reveal>
-            <Reveal on={!!theme}><OffersRail isAuthed={isAuthed} /></Reveal>
-            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
-            {!settling ? <Reveal on={!!theme}><ServiceShowcase domains={allDomains} onOpen={openService} /></Reveal> : null}
+            <ZappyOnePromo onExplore={goStores} />
+            {!loadingCatalog ? <PopularServices services={popular} onOpen={openService} onViewAll={() => router.push('/services' as never)} /> : null}
+            <CampaignBanners ads={campaignBanners} width={screen - spacing.base * 2} onOpen={openBanner} onImageError={onBannerImageError} />
+            <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => router.push(`/shops/${id}` as never)} onViewAll={goStores} />
+            <OffersDeals ads={offerBanners} isAuthed={isAuthed} onOpenAd={openBanner} onViewAll={() => router.push('/promos' as never)} onImageError={onBannerImageError} />
+            {/* Personal and real only: the customer's own bookings. */}
+            <BookAgain items={rebooks} onViewAll={() => router.push('/orders' as never)} />
+            <RecentActivity jobs={recent} onViewAll={() => router.push('/orders' as never)} />
             {isAuthed ? <HomeMarketplace loc={loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng, address: [loc.primary, loc.secondary].filter(Boolean).join(', ') } : null} /> : null}
+            {/* Only live services show above; the rest waits here, by category. */}
             {!loadingCatalog && !nothingLive ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
-            <AdBanner isAuthed={isAuthed} />
-            <NearbyShopsLink />
             <HomeFooter areas={svc?.areas || []} />
           </>
         )}
@@ -232,7 +242,7 @@ export function HomePage() {
 const styles = StyleSheet.create({
   heroSkel: { marginHorizontal: 16, marginTop: 12, borderRadius: 14 },
   page: { flex: 1, backgroundColor: colors.background },
-  searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.base, paddingTop: 4, backgroundColor: zappy[100], borderBottomLeftRadius: radius.extraLarge, borderBottomRightRadius: radius.extraLarge },
+  searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.md, paddingTop: 4, backgroundColor: colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   // Edge to edge, flush under the search: undoes the body's padding.
   festive: { marginHorizontal: -spacing.base, marginTop: -spacing.base },
   body: { padding: spacing.base, gap: spacing.xl, paddingBottom: spacing.xxxl },

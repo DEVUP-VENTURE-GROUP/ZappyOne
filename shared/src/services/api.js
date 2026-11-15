@@ -298,7 +298,6 @@ export const {
   useAdminUpdatePlanMutation,
   useAdminDeletePlanMutation,
   // Ads — serving
-  useGetActiveAdsQuery,
   useGetAdsByPlacementQuery,
   useTrackAdImpressionMutation,
   useTrackAdClickMutation,

@@ -25,11 +25,12 @@ import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import {
-  ModeSwitch, ZappyOnePromo, PopularServices, pickPopular, CampaignBanners, LocalStores,
+  ModeSwitch, ZappyOnePromo, PopularServices, CampaignBanners, LocalStores,
   OffersDeals, BookAgain, RecentActivity,
 } from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
 import { useHomeAds } from './useHomeAds';
+import { pickPopular } from '@shared/config/homepageContent';
 import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';

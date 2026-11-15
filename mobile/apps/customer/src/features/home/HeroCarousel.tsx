@@ -1,9 +1,4 @@
-/**
- * The top of Home: a photo carousel of everything we do (the website's
- * HeroCarousel, phone layout). Every slide is tied to the live catalog: a slide
- * whose services are not offered is dropped. It moves on by itself every few
- * seconds, pauses while touched, and stays put for reduced motion.
- */
+// The top of Home (the website's HeroCarousel): admin hero banners when there are any, else photo slides tied to the live catalog.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
@@ -15,6 +10,7 @@ import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeDomain, HomeService } from './homeCatalog';
+import { PromoBanner, type HomeAd } from './PromoBanner';
 
 /** `services`: catalog codes the slide stands for; it opens the first one offered. Photos are served at /hero. */
 const SLIDES = [
@@ -33,7 +29,9 @@ const SLIDES = [
 const SLIDE_MS = 6000;
 const HEIGHT = 190;
 
-export function HeroCarousel({ domains, onOpen }: { domains: HomeDomain[]; onOpen: (s: HomeService, path?: string) => void }) {
+export function HeroCarousel({ banners = [], domains, onOpen, onOpenBanner, onImageError }: {
+  banners?: HomeAd[]; domains: HomeDomain[]; onOpen: (s: HomeService, path?: string) => void; onOpenBanner?: (ad: HomeAd) => void; onImageError?: () => void;
+}) {
   const reduce = useReducedMotion();
   const { width: screen } = useWindowDimensions();
   const width = screen - spacing.base * 2;
@@ -51,7 +49,8 @@ export function HeroCarousel({ domains, onOpen }: { domains: HomeDomain[]; onOpe
       return target && domain ? { ...s, target, domain } : null;
     }).filter(Boolean) as ({ target: HomeService; domain: HomeDomain } & (typeof SLIDES)[number])[];
   }, [domains]);
-  const count = slides.length;
+  const useBanners = banners.length > 0;
+  const count = useBanners ? banners.length : slides.length;
 
   function go(i: number) {
     if (!count) return;
@@ -66,7 +65,29 @@ export function HeroCarousel({ domains, onOpen }: { domains: HomeDomain[]; onOpe
     return () => clearInterval(t);
   }, [index, count, reduce, pausedUntil]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A source switch (catalog slides, then banners once they load) starts from the first slide.
+  useEffect(() => { track.current?.scrollTo({ x: 0, animated: false }); setIndex(0); }, [useBanners]);
+
   if (!count) return null;
+  if (useBanners) {
+    return (
+      <View style={styles.section}>
+        <ScrollView ref={track} horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={[styles.track, { width }]}
+          onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+          onTouchStart={() => setPausedUntil(Date.now() + SLIDE_MS * 2)}>
+          {banners.map((ad) => <PromoBanner key={ad._id} ad={ad} variant="hero" width={width} onOpen={onOpenBanner} onImageError={onImageError} />)}
+        </ScrollView>
+        {count > 1 ? (
+          <View style={styles.dots}>
+            {banners.map((ad, i) => (
+              <Pressable key={ad._id} onPress={() => go(i)} hitSlop={6} accessibilityRole="tab" accessibilityLabel={`Slide ${i + 1} of ${count}`} accessibilityState={{ selected: i === index }}
+                style={[styles.dot, i === index && styles.dotOn]} />
+            ))}
+          </View>
+        ) : null}
+      </View>
+    );
+  }
   return (
     <View style={styles.section}>
       <ScrollView ref={track} horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={[styles.track, { width }]}
@@ -111,4 +132,7 @@ const styles = StyleSheet.create({
   tabs: { gap: spacing.sm },
   tab: { minHeight: 30, justifyContent: 'center', paddingHorizontal: 10, borderRadius: radius.button, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   tabOn: { backgroundColor: zappy[600], borderColor: zappy[600] },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: ink[300] },
+  dotOn: { width: 22, backgroundColor: zappy[600] },
 });
