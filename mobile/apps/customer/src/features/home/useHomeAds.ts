@@ -32,7 +32,7 @@ export function useHomeAds() {
   const open = useCallback((ad: HomeAd) => {
     const link = ad.content?.ctaLink;
     if (!link) return;
-    if (isAuthed) click({ id: String(ad._id), placement: HOME_PLACEMENT }).unwrap().catch(() => {});
+    if (isAuthed && !ad.fullImage) click({ id: String(ad._id), placement: HOME_PLACEMENT }).unwrap().catch(() => {});
     if (link.startsWith('/')) router.push(link as never);
     else if (/^https:\/\//i.test(link)) openLink(link);
   }, [isAuthed, click, router]);

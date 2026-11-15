@@ -7,8 +7,9 @@ import { useGetServiceabilityQuery, useLiveCatalogQuery } from '@zappy/core/api'
 import { loadGeoLocation, type CachedLocation } from '@zappy/core/lib/geoCache';
 import { trackSearch } from '@zappy/core/lib/telemetry';
 import { areaPhoto, servicePhoto } from '@zappy/core/shared/serviceArt';
+import { icon3dFor } from '@zappy/core/shared/icons3d';
 import { EmptyState, ErrorState, ScreenHeader, Skeleton, Text } from '@zappy/ui/components';
-import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
+import { GlassSurface } from '@zappy/ui/components/Glass';
 import { webAsset } from '@zappy/ui/lib/media';
 import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -22,11 +23,11 @@ const GAP = 10;
 function ServiceCard({ service, domainCode, width, onPress }: { service: Service; domainCode: string; width: number; onPress: () => void }) {
   const photo = webAsset(servicePhoto(service));
   const tint = tintFor(domainCode);
-  const Icon = serviceIcon(service.icon);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={service.name} style={[styles.card, { width }]}>
       <View style={[styles.cardPhoto, { height: Math.round(width * 0.8), backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
+        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" />
+          : <Image source={{ uri: webAsset(icon3dFor({ ...service, domainCode })) || undefined }} style={styles.icon3d} resizeMode="contain" accessibilityIgnoresInvertColors />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.cardLabel}>{service.name}</Text>
     </Pressable>
@@ -35,9 +36,11 @@ function ServiceCard({ service, domainCode, width, onPress }: { service: Service
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: active }} style={[styles.chip, active && styles.chipOn]}>
-      <Text variant="caption" weight="semibold" color={active ? '#fff' : ink[700]}>{label}</Text>
-    </Pressable>
+    <GlassSurface style={styles.chipShape} fallbackStyle={[styles.chip, active && styles.chipOn]} tint={active ? zappy[600] : undefined} interactive>
+      <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: active }} style={styles.chipTap}>
+        <Text variant="caption" weight="semibold" color={active ? '#fff' : ink[700]}>{label}</Text>
+      </Pressable>
+    </GlassSurface>
   );
 }
 
@@ -46,7 +49,7 @@ function AreaHead({ domain, count }: { domain: Domain; count: number }) {
   return (
     <View style={styles.head}>
       <View style={[styles.headThumb, { backgroundColor: tintFor(domain.code).bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" /> : null}
+        <Image source={{ uri: (photo || webAsset(icon3dFor(domain))) || undefined }} style={photo ? styles.fill : styles.icon3d} resizeMode={photo ? 'cover' : 'contain'} />
       </View>
       <View style={styles.flex}>
         <Text variant="bodyLarge" weight="bold" numberOfLines={1} accessibilityRole="header">{domain.name}</Text>
@@ -110,10 +113,13 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   fill: { width: '100%', height: '100%' },
+  icon3d: { width: '60%', height: '60%' },
   body: { padding: spacing.base, gap: spacing.xl, paddingBottom: spacing.xxxl },
   chipBar: { flexGrow: 0 },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.base, paddingVertical: spacing.sm },
-  chip: { minHeight: 34, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  chipShape: { minHeight: 34, borderRadius: radius.pill, overflow: 'hidden' },
+  chipTap: { minHeight: 34, justifyContent: 'center', paddingHorizontal: spacing.md },
+  chip: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   chipOn: { backgroundColor: zappy[600], borderColor: zappy[600] },
   section: { gap: spacing.md },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

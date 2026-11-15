@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
+import { webAsset } from '@zappy/ui/lib/media';
 import { ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
 export interface HomeAd {
   _id: string;
+  fullImage?: boolean;
   type?: string;
   content?: { headline?: string; body?: string; badgeText?: string; imageUrl?: string; ctaText?: string; ctaLink?: string; backgroundColor?: string; textColor?: string };
 }
@@ -35,6 +37,12 @@ export function PromoBanner({ ad, variant = 'hero', width, onOpen, onImageError 
   const fg = hex(c.textColor, '#FFFFFF');
   const photo = c.imageUrl && !broken ? c.imageUrl : null;
   const tappable = Boolean(onOpen && c.ctaLink);
+  if (ad.fullImage && c.imageUrl) {
+    // Finished artwork (the bundled banners) carries its own words: the image fills the banner.
+    const art = <Image source={{ uri: webAsset(c.imageUrl) || undefined }} resizeMode="cover" accessibilityLabel={c.headline}
+      style={[{ height: HEIGHT[variant], borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : null]} />;
+    return onOpen && c.ctaLink ? <Pressable onPress={() => onOpen(ad)} accessibilityRole="button" accessibilityLabel={c.headline}>{art}</Pressable> : art;
+  }
   const body = (
     <View style={[styles.box, { height: HEIGHT[variant], backgroundColor: bg, borderRadius: variant === 'hero' ? 0 : radius.extraLarge }, width ? { width } : null]}>
       {photo ? (

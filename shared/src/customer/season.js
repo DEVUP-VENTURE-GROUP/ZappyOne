@@ -276,6 +276,12 @@ export function offerTerms(p) {
   return parts.join(', ');
 }
 
+// When a code stops working: /promos/available sends it flat as expiresAt (older shapes nest it under validity).
+export function offerEnds(p) {
+  const d = p.expiresAt || p.validity?.endAt;
+  return d ? `till ${new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : '';
+}
+
 // A festive tile's tag: admin's own badge, else the service's real starting price; never an invented discount.
 export function tileTag(tile, service) {
   if (tile?.badge) return tile.badge;

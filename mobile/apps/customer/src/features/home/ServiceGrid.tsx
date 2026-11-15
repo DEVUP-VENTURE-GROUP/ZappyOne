@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { LayoutGrid } from 'lucide-react-native';
 import { areaPhoto } from '@zappy/core/shared/serviceArt';
+import { icon3dFor } from '@zappy/core/shared/icons3d';
 import { Text } from '@zappy/ui/components';
 import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
@@ -31,13 +32,14 @@ const SHORT_AREA: Record<string, string> = {
 // 4 + 3 area tiles, then More Services: two rows of four.
 const HOME_AREA_LIMIT = 7;
 
-const AreaTile = memo(function AreaTile({ label, a11y, photo, Icon, tint, onPress }: {
-  label: string; a11y: string; photo: string | null; Icon: ReturnType<typeof serviceIcon>; tint: { bg: string; fg: string }; onPress: () => void;
+const AreaTile = memo(function AreaTile({ label, a11y, photo, icon = null, Icon, tint, onPress }: {
+  label: string; a11y: string; photo: string | null; icon?: string | null; Icon: ReturnType<typeof serviceIcon>; tint: { bg: string; fg: string }; onPress: () => void;
 }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={styles.tile}>
       <View style={[styles.art, { backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.photo} resizeMode="cover" /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
+        {photo ? <Image source={{ uri: photo }} style={styles.photo} resizeMode="cover" />
+          : icon ? <Image source={{ uri: icon }} style={styles.icon3d} resizeMode="contain" /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.name}>{label}</Text>
     </Pressable>
@@ -53,7 +55,7 @@ export function ServiceGrid({ domains, onOpenArea, onMore }: { domains: HomeDoma
       <View style={styles.grid}>
         {domains.slice(0, HOME_AREA_LIMIT).map((d) => (
           <AreaTile key={d.code} label={SHORT_AREA[d.code] ?? d.name} a11y={`${d.name}, ${d.services.length} services`}
-            photo={webAsset(areaPhoto(d))} Icon={serviceIcon((d as { icon?: string }).icon)} tint={tintFor(d.code)} onPress={() => onOpenArea(d)} />
+            photo={webAsset(areaPhoto(d))} icon={webAsset(icon3dFor(d))} Icon={serviceIcon((d as { icon?: string }).icon)} tint={tintFor(d.code)} onPress={() => onOpenArea(d)} />
         ))}
         <AreaTile label="More Services" a11y="More services: see all services" photo={null} Icon={LayoutGrid} tint={DEFAULT_TINT} onPress={onMore} />
       </View>
@@ -67,5 +69,6 @@ const styles = StyleSheet.create({
   tile: { width: '23%', alignItems: 'center', gap: spacing.sm },
   art: { width: '100%', aspectRatio: 1, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(16,24,40,0.05)' },
   photo: { width: '100%', height: '100%' },
+  icon3d: { width: '62%', height: '62%' },
   name: { textAlign: 'center' },
 });

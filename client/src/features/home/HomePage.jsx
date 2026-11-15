@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { setLocation } from '@shared/store/locationSlice';
-import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
+import { useGetAvailablePromosQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
 import useSeason from './useSeason';
 import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
@@ -30,7 +30,7 @@ import {
 } from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
 import { useHomeAds } from './useHomeAds';
-import { pickPopular } from '@shared/config/homepageContent';
+import { bestOfferPct, localBanners, pickPopular } from '@shared/config/homepageContent';
 import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
@@ -265,6 +265,11 @@ export default function HomePage() {
   /* Admin banners (hero, campaign, offer). */
   const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
   const popular = useMemo(() => pickPopular(services), [services]);
+  const { data: promoData } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
+  // Admin banners first; the bundled ones only where they are true for this address and customer.
+  const local = (slot) => localBanners(slot, { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }) => (offers ? '/promos' : area ? `/services#domain-${area}` : '/services') });
+  const heroList = heroBanners.length ? heroBanners : local('hero');
+  const campaignList = [...campaignBanners, ...local('campaign')];
 
   /* The customer's own jobs. */
   const { jobs, current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
@@ -375,7 +380,7 @@ export default function HomePage() {
 
               {settling && <div className="h-[188px] animate-pulse rounded-[20px] bg-sunken sm:h-[300px] lg:h-[340px]" aria-hidden="true" />}
               {!settling && !nothingLive && !season && (
-                <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />
+                <HeroCarousel banners={heroList} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />
               )}
 
               {settling || (loc.lat != null && !svc && checkingArea)
@@ -389,7 +394,7 @@ export default function HomePage() {
 
               {!loadingCatalog && <PopularServices services={popular} onOpen={openService} onViewAll={() => nav('/services')} />}
 
-              <CampaignBanners ads={campaignBanners} onOpen={openBanner} onImageError={onBannerImageError} />
+              <CampaignBanners ads={campaignList} onOpen={openBanner} onImageError={onBannerImageError} />
 
               <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => nav(`/shops/${id}`)} onViewAll={() => nav('/nearby-shops')} />
 

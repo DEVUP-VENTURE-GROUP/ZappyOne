@@ -68,7 +68,8 @@ export default function PromoBanner({ ad, variant = 'hero', device, onOpen, onIm
   const fg = hex(c.textColor, '#FFFFFF');
   const radius = variant === 'offer' ? 'rounded-card' : 'rounded-[20px]';
   const base = `relative block w-full overflow-hidden text-left ${radius} ${SIZES[variant][size]} ${className}`;
-  const inner = (
+  // Finished artwork (the bundled banners) carries its own words: the image fills the banner.
+  const inner = ad?.fullImage ? <img src={c.imageUrl} alt={c.headline || ''} loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : (
     <>
       {/* Keyed by URL: a refreshed signed link gets a fresh attempt. */}
       <Media key={c.imageUrl || 'none'} src={c.imageUrl} variant={variant} onError={onImageError} />

@@ -4,12 +4,13 @@ import {
 } from 'lucide-react';
 import { useGetAvailablePromosQuery, useNearbyShopsQuery } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
+import { offerEnds } from '@shared/customer/season';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import PromoBanner from '@shared/components/home/PromoBanner';
-import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { artFor, servicePhoto } from '@shared/components/home/serviceArt';
 import { tintFor } from './ServiceGrid';
 import { AREA_PHOTO } from '@shared/config/homepageContent';
+import { icon3dFor } from '@shared/config/icons3d';
 
 // The sections of Home below the hero.
 
@@ -119,7 +120,6 @@ export function PopularServices({ services, onOpen, onViewAll }) {
       <Rail>
         {services.map((s) => {
           const photo = photoFor(s);
-          const Icon = SERVICE_ICONS[s.icon] || Wrench;
           const tint = tintFor(s.domainCode);
           const covers = s.coverage?.reduce((n, g) => n + (g.problems?.length || 0), 0) || 0;
           return (
@@ -128,7 +128,7 @@ export function PopularServices({ services, onOpen, onViewAll }) {
               <span className={`relative block aspect-[16/10] w-full overflow-hidden ${tint.bg}`}>
                 {photo
                   ? <img src={photo} alt="" loading="lazy" className={`h-full w-full transition-transform duration-300 group-hover:scale-[1.03] ${photo.startsWith('/characters/') ? 'object-contain p-3 mix-blend-multiply' : 'object-cover'}`} />
-                  : <span className="flex h-full items-center justify-center"><Icon size={34} strokeWidth={1.6} className={tint.fg} /></span>}
+                  : <span className="flex h-full items-center justify-center"><img src={icon3dFor(s)} alt="" loading="lazy" className="h-[64%] w-auto object-contain" /></span>}
                 {s.isPopular && (
                   <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold text-accent-700 shadow-soft">Popular</span>
                 )}
@@ -252,7 +252,7 @@ function couponTerms(p) {
   const parts = [];
   if (p.type === 'percent' && p.maxDiscountPaise) parts.push(`up to ${formatPaise(p.maxDiscountPaise)}`);
   if (p.minOrderPaise) parts.push(`on ${formatPaise(p.minOrderPaise)}+`);
-  if (p.validity?.endAt) parts.push(`till ${fmtDay(p.validity.endAt)}`);
+  if (offerEnds(p)) parts.push(offerEnds(p));
   return parts.join(' · ');
 }
 

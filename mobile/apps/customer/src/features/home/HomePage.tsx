@@ -11,9 +11,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import {
   useCurrentSeasonQuery, useGetEventCategoriesQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useSaveRecentLocationMutation,
+  useGetAvailablePromosQuery,
 } from '@zappy/core/api';
 import { getBestPosition } from '@zappy/core/hooks/useBestPosition';
 import { loadGeoLocation, saveGeoLocation, tooRough } from '@zappy/core/lib/geoCache';
@@ -38,10 +39,11 @@ import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import useFestiveLook from '@zappy/core/shared/useFestiveLook';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { HeroCarousel } from './HeroCarousel';
-import { HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
+import { FloatingGlassHeader, HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgain, CampaignBanners, LocalStores, ModeSwitch, OffersDeals, PopularServices, RecentActivity, ZappyOnePromo } from './HomeRails';
 import { useHomeAds } from './useHomeAds';
-import { pickPopular } from '@zappy/core/shared/homepageContent';
+import type { HomeAd } from './PromoBanner';
+import { bestOfferPct, localBanners, pickPopular } from '@zappy/core/shared/homepageContent';
 import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
 import { HomeFooter } from './HomeFooter';
@@ -168,6 +170,11 @@ export function HomePage() {
   /* Admin banners (hero, campaign, offer) and the popular rail. */
   const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
   const popular = useMemo(() => pickPopular(services) as HomeService[], [services]);
+  const { data: promoData } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
+  // Admin banners first; the bundled ones only where they are true for this address and customer.
+  const local = (slot: string) => localBanners(slot, { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }: { area?: string; offers?: boolean }) => (offers ? '/promos' : area ? `/services?category=${area}` : '/services') }) as HomeAd[];
+  const heroList = heroBanners.length ? heroBanners : local('hero');
+  const campaignList = [...campaignBanners, ...local('campaign')];
   const { width: screen } = useWindowDimensions();
   const tabSpace = useTabBarSpace();
   const goStores = () => router.push('/nearby-shops' as never);
@@ -182,7 +189,14 @@ export function HomePage() {
   const tint = theme ? theme.top : null;
   // The scroll position, so festive sections and dividers play as they come up the screen.
   const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => { scrollY.value = e.contentOffset.y; });
+  // Past the top bar, the floating glass header takes over (iOS 26).
+  const [pastTop, setPastTop] = useState(false);
+  const pastFlag = useSharedValue(false);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+    const past = e.contentOffset.y > 120;
+    if (past !== pastFlag.value) { pastFlag.value = past; runOnJS(setPastTop)(past); }
+  });
 
   async function onRefresh() {
     setRefreshing(true);
@@ -213,14 +227,14 @@ export function HomePage() {
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
             {settling ? <Skeleton height={188} style={styles.heroSkel} /> : null}
-            {!settling && !nothingLive && !season ? <HeroCarousel banners={heroBanners} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} /> : null}
+            {!settling && !nothingLive && !season ? <HeroCarousel banners={heroList} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} /> : null}
             {/* During a festival each section rises in after the last. */}
             {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={allDomains} onOpenArea={(d) => router.push(`/services?category=${d.code}` as never)} onMore={() => router.push('/services' as never)} /></Reveal>}
             <Reveal on={!!theme}><ProblemChips services={services} /></Reveal>
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
             <ZappyOnePromo onExplore={goStores} />
             {!loadingCatalog ? <PopularServices services={popular} onOpen={openService} onViewAll={() => router.push('/services' as never)} /> : null}
-            <CampaignBanners ads={campaignBanners} width={screen - spacing.base * 2} onOpen={openBanner} onImageError={onBannerImageError} />
+            <CampaignBanners ads={campaignList} width={screen - spacing.base * 2} onOpen={openBanner} onImageError={onBannerImageError} />
             <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => router.push(`/shops/${id}` as never)} onViewAll={goStores} />
             <OffersDeals ads={offerBanners} isAuthed={isAuthed} onOpenAd={openBanner} onViewAll={() => router.push('/promos' as never)} onImageError={onBannerImageError} />
             {/* Personal and real only: the customer's own bookings. */}
@@ -234,6 +248,7 @@ export function HomePage() {
         )}
       </Animated.ScrollView>
       </HomeScrollY.Provider>
+      <FloatingGlassHeader shown={pastTop} loc={loc} isAuthed={isAuthed} onPickLocation={() => setLocSheet(true)} />
       <SpotlightSearch open={spotOpen} onClose={() => setSpotOpen(false)} lat={loc.lat} lng={loc.lng} />
       <LocationSheet open={locSheet} onClose={() => setLocSheet(false)} onUseCurrent={useCurrent} detecting={detecting} onPick={pick} />
     </View>

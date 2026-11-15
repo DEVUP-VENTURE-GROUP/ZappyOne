@@ -133,3 +133,23 @@ export function pickPopular(services, max = 8) {
   const rank = (s) => (s.isPopular ? 0 : 2) + (s.available === false ? 1 : 0);
   return [...services].sort((a, b) => rank(a) - rank(b)).slice(0, max);
 }
+
+// The team's bundled banners (assets/web/banners), shown only when true here: a repairs banner needs live repairs, the 40% OFF one a live offer of 40% or more.
+const LOCAL_BANNERS = [
+  { id: 'every-service', slot: 'hero', label: 'Every service. One place. Book trusted professionals for your home, lifestyle and everyday needs.' },
+  { id: 'home-repairs', slot: 'hero', area: 'home_services', label: 'Home repairs made easy. AC, appliance, electrical, plumbing and more.' },
+  { id: 'home-cleaning', slot: 'campaign', area: 'home_daily_help', label: 'A cleaner, happier home. Professional home cleaning.' },
+  { id: 'special-offers', slot: 'campaign', minOfferPct: 40, label: 'Special offers. Explore offers.' },
+];
+
+// Banner artwork already carries its words; `link` builds each platform's route ({ area } or { offers }).
+export function localBanners(slot, { liveAreas, bestOfferPct = 0, link }) {
+  return LOCAL_BANNERS
+    .filter((b) => b.slot === slot)
+    .filter((b) => (b.area ? liveAreas.has(b.area) : liveAreas.size > 0))
+    .filter((b) => !b.minOfferPct || bestOfferPct >= b.minOfferPct)
+    .map((b) => ({ _id: `local-${b.id}`, fullImage: true, content: { imageUrl: `/banners/${b.id}.jpg`, headline: b.label, ctaLink: link(b.minOfferPct ? { offers: true } : { area: b.area }) } }));
+}
+
+// The biggest percentage off among the codes this customer can still use.
+export const bestOfferPct = (promos = []) => promos.filter((p) => p.type === 'percent' && !p.alreadyUsed).reduce((m, p) => Math.max(m, Number(p.discountValue) || 0), 0);

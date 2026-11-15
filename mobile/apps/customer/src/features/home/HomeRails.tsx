@@ -4,12 +4,12 @@ import { useRouter } from 'expo-router';
 import { ArrowRight, CheckCircle2, ChevronRight, Clock, MapPin, RotateCcw, ShieldCheck, Star, Store, Wrench, XCircle } from 'lucide-react-native';
 import { useGetAvailablePromosQuery, useNearbyShopsQuery } from '@zappy/core/api';
 import { AREA_PHOTO } from '@zappy/core/shared/homepageContent';
-import { offerHeadline, offerTerms } from '@zappy/core/shared/season';
+import { offerEnds, offerHeadline, offerTerms } from '@zappy/core/shared/season';
 import { artFor, servicePhoto } from '@zappy/core/shared/serviceArt';
+import { icon3dFor } from '@zappy/core/shared/icons3d';
 import { Skeleton, Text } from '@zappy/ui/components';
 import { GlassSurface } from '@zappy/ui/components/Glass';
 import { toast } from '@zappy/ui/components/Toast';
-import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
 import { accent, colors, ink, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
@@ -17,6 +17,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeService } from './homeCatalog';
 import { PromoBanner, type HomeAd } from './PromoBanner';
 import { tintFor } from './ServiceGrid';
+import { StorefrontArt } from './StorefrontArt';
 
 const fmtDay = (d?: string) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
 
@@ -49,7 +50,7 @@ export function ModeSwitch({ onStores }: { onStores: () => void }) {
 export function ZappyOnePromo({ onExplore }: { onExplore: () => void }) {
   return (
     <View style={styles.promo}>
-      <View style={styles.promoIcon}><Store size={30} color={zappy[600]} strokeWidth={1.8} /></View>
+      <StorefrontArt width={120} />
       <View style={styles.flex}>
         <Text variant="bodyLarge" weight="bold">Discover local stores on ZappyOne</Text>
         <Text variant="caption" color={ink[500]}>Verified neighbourhood shops near you. Walk in, or book their service directly.</Text>
@@ -65,13 +66,13 @@ const photoFor = (s: HomeService) => servicePhoto(s) || (AREA_PHOTO as Record<st
 
 function PopularCard({ s, onOpen }: { s: HomeService & { isPopular?: boolean }; onOpen: () => void }) {
   const photo = webAsset(photoFor(s));
-  const Icon = serviceIcon(s.icon);
   const tint = tintFor(s.domainCode);
   const covers = s.coverage?.reduce((n, g) => n + (g.problems?.length || 0), 0) || 0;
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={s.name} style={styles.card}>
       <View style={[styles.cardArt, { backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" /> : <Icon size={34} color={tint.fg} strokeWidth={1.6} />}
+        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" />
+          : <Image source={{ uri: webAsset(icon3dFor(s)) || undefined }} style={styles.icon3d} resizeMode="contain" />}
         {s.isPopular ? <View style={styles.pill}><Text variant="caption" weight="bold" color={accent[700]}>Popular</Text></View> : null}
       </View>
       <View style={styles.cardBody}>
@@ -153,7 +154,7 @@ export function LocalStores({ lat, lng, enabled, onOpenShop, onViewAll }: { lat?
   );
 }
 
-interface Promo { code: string; name: string; type: string; discountValue: number; maxDiscountPaise?: number; minOrderPaise?: number; alreadyUsed?: boolean }
+interface Promo { code: string; name: string; type: string; discountValue: number; maxDiscountPaise?: number; minOrderPaise?: number; alreadyUsed?: boolean; expiresAt?: string }
 const COUPON_FILLS = [zappy[600], accent[600], ink[900]];
 
 export function OffersDeals({ ads, isAuthed, onOpenAd, onViewAll, onImageError }: { ads: HomeAd[]; isAuthed: boolean; onOpenAd: (ad: HomeAd) => void; onViewAll: () => void; onImageError: () => void }) {
@@ -171,7 +172,7 @@ export function OffersDeals({ ads, isAuthed, onOpenAd, onViewAll, onImageError }
             <View>
               <Text variant="caption" weight="semibold" color="#fff" numberOfLines={1}>{p.name}</Text>
               <Text variant="heading2" weight="bold" color="#fff">{offerHeadline(p).toUpperCase()}</Text>
-              {offerTerms(p) ? <Text variant="caption" color="#fff" numberOfLines={1}>{offerTerms(p)}</Text> : null}
+              {offerTerms(p) || offerEnds(p) ? <Text variant="caption" color="#fff" numberOfLines={1}>{[offerTerms(p), offerEnds(p)].filter(Boolean).join(' · ')}</Text> : null}
             </View>
             <View style={styles.code}><Text variant="caption" weight="bold" color="#fff">{p.code}</Text></View>
           </Pressable>
@@ -239,6 +240,7 @@ const styles = StyleSheet.create({
   cap: { textTransform: 'capitalize' },
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   fill: { width: '100%', height: '100%' },
+  icon3d: { width: '45%', height: '70%' },
   section: { gap: spacing.md },
   title: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   rail: { gap: spacing.md, paddingRight: spacing.base },
@@ -247,7 +249,6 @@ const styles = StyleSheet.create({
   modeBtn: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: 12 },
   modeOn: { backgroundColor: zappy[600] },
   promo: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.extraLarge, backgroundColor: zappy[50], borderWidth: 1, borderColor: zappy[100] },
-  promoIcon: { width: 64, height: 64, borderRadius: radius.large, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   promoBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', minHeight: 40, marginTop: spacing.sm, paddingHorizontal: spacing.base, borderRadius: radius.pill, backgroundColor: zappy[600] },
   card: { width: 230, overflow: 'hidden', borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   cardArt: { width: '100%', aspectRatio: 1.6, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

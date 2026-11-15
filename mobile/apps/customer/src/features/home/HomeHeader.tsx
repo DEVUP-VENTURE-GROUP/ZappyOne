@@ -9,12 +9,12 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { Bell, ChevronDown, MapPin, ScanLine, Search } from 'lucide-react-native';
-import { useListNotificationsQuery } from '@zappy/core/api';
 import { Button, Text, ZappyWordmark } from '@zappy/ui/components';
 import { accent, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
-import { useLivePoll } from '@zappy/core/hooks/useLivePoll';
+import { GlassSurface, LIQUID_GLASS } from '@zappy/ui/components/Glass';
+import { useUnread } from './useUnread';
 
 export interface HomeLocation { primary: string; secondary: string | null; loading: boolean; lat?: number; lng?: number }
 
@@ -40,7 +40,7 @@ function SearchHint({ terms }: { terms: string[] }) {
 
 export function SearchBar({ terms, onOpen, onLens }: { terms: string[]; onOpen: () => void; onLens?: () => void }) {
   return (
-    <View style={styles.search}>
+    <GlassSurface style={styles.searchShape} fallbackStyle={styles.search} interactive>
       <Pressable onPress={onOpen} accessibilityRole="search" accessibilityLabel="Search services" style={styles.searchTap}>
         <Search size={18} color={ink[500]} strokeWidth={2.4} />
         <SearchHint terms={terms} />
@@ -51,14 +51,10 @@ export function SearchBar({ terms, onOpen, onLens }: { terms: string[]; onOpen: 
           <ScanLine size={17} color={ink[500]} />
         </Pressable>
       ) : null}
-    </View>
+    </GlassSurface>
   );
 }
 
-function useUnread(isAuthed: boolean) {
-  const { data } = useListNotificationsQuery({ page: 1, unreadOnly: true }, { skip: !isAuthed, pollingInterval: useLivePoll(60000) });
-  return data?.unread ?? data?.notifications?.length ?? 0;
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Theme = any;
@@ -112,12 +108,39 @@ export function HomeHeader({ loc, isAuthed, onPickLocation, tint = null, eta = n
       </View>
       )}
       {isAuthed ? (
-        <Pressable onPress={() => router.push('/notifications' as never)} accessibilityRole="button" accessibilityLabel={unread ? `${unread} unread notifications` : 'Notifications'} style={styles.bell}>
+        <GlassSurface style={styles.bellShape} fallbackStyle={styles.bell} interactive>
+        <Pressable onPress={() => router.push('/notifications' as never)} accessibilityRole="button" accessibilityLabel={unread ? `${unread} unread notifications` : 'Notifications'} style={styles.bellShape}>
           <Bell size={17} color={zappy[700]} />
           {unread > 0 ? <View style={styles.badge}><Text variant="caption" weight="bold" color="#fff" style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text></View> : null}
         </Pressable>
+        </GlassSurface>
       ) : <Button label="Sign in" size="small" onPress={() => router.push('/(auth)/login' as never)} />}
     </View>
+  );
+}
+
+// iOS 26 only: once the top bar scrolls away, the place and the bell float back in on glass (Asif's design); elsewhere nothing changes.
+export function FloatingGlassHeader({ shown, loc, isAuthed, onPickLocation }: { shown: boolean; loc: HomeLocation; isAuthed: boolean; onPickLocation: () => void }) {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const unread = useUnread(isAuthed);
+  if (!LIQUID_GLASS || !shown) return null;
+  return (
+    <Animated.View entering={FadeInDown.duration(180)} exiting={FadeOutUp.duration(150)} style={[styles.floatWrap, { top: insets.top + 6 }]} pointerEvents="box-none">
+      <GlassSurface style={styles.floatBar} interactive>
+        <Pressable onPress={onPickLocation} accessibilityRole="button" accessibilityLabel={`Service location: ${loc.primary}. Change location`} style={styles.floatLoc}>
+          <MapPin size={15} color={zappy[600]} strokeWidth={2.4} />
+          <Text variant="bodySmall" weight="bold" numberOfLines={1} style={styles.flex}>{loc.primary}</Text>
+          <ChevronDown size={14} color={zappy[600]} strokeWidth={2.6} />
+        </Pressable>
+        {isAuthed ? (
+          <Pressable onPress={() => router.push('/notifications' as never)} hitSlop={6} accessibilityRole="button" accessibilityLabel={unread ? `${unread} unread notifications` : 'Notifications'} style={styles.floatBell}>
+            <Bell size={18} color={ink[900]} />
+            {unread > 0 ? <View style={styles.badge}><Text variant="caption" weight="bold" color="#fff" style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text></View> : null}
+          </Pressable>
+        ) : null}
+      </GlassSurface>
+    </Animated.View>
   );
 }
 
@@ -128,11 +151,17 @@ const styles = StyleSheet.create({
   eta: { letterSpacing: -0.8, lineHeight: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.sm, backgroundColor: zappy[100] },
   loc: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  bell: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },
+  bellShape: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center' },
+  bell: { borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: danger[500], borderWidth: 2, borderColor: '#fff' },
   badgeText: { fontSize: 10, lineHeight: 12 },
-  search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, height: 48, paddingLeft: spacing.md, paddingRight: 6, borderRadius: radius.button, borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },
+  searchShape: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, height: 48, paddingLeft: spacing.md, paddingRight: 6, borderRadius: radius.button },
+  search: { borderWidth: 1, borderColor: zappy[100], backgroundColor: '#fff' },
   searchTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, height: '100%' },
   hint: { flex: 1, overflow: 'hidden', justifyContent: 'center', height: '100%' },
   lens: { width: 36, height: 36, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', borderLeftWidth: 1, borderLeftColor: slate[200] },
+  floatWrap: { position: 'absolute', left: spacing.base, right: spacing.base, zIndex: 20 },
+  floatBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, height: 48, paddingHorizontal: spacing.md, borderRadius: radius.pill },
+  floatLoc: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  floatBell: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 });

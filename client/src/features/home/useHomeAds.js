@@ -32,7 +32,7 @@ export function useHomeAds() {
   const open = useCallback((ad) => {
     const link = ad?.content?.ctaLink;
     if (!link) return;
-    if (isAuthed) click({ id: String(ad._id), placement: HOME_PLACEMENT }).catch(() => {});
+    if (isAuthed && !ad.fullImage) click({ id: String(ad._id), placement: HOME_PLACEMENT }).catch(() => {});
     if (link.startsWith('/')) nav(link);
     else if (/^https:\/\//i.test(link)) window.open(link, '_blank', 'noopener,noreferrer');
   }, [isAuthed, click, nav]);

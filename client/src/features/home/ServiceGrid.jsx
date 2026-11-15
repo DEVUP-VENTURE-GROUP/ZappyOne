@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, LayoutGrid, Wrench } from 'lucide-react';
 import { SERVICE_ICONS } from '@shared/components/home/LiveServices';
 import { areaPhoto } from '@shared/components/home/serviceArt';
+import { icon3dFor } from '@shared/config/icons3d';
 import { problemPhoto } from '@shared/components/home/problemArt';
 
 // The services, as one even grid on a single neutral surface.
@@ -27,11 +28,12 @@ const SHORT_AREA = {
 // 4 + 3 area tiles, then More Services: two rows of four.
 const HOME_AREA_LIMIT = 7;
 
-function AreaTile({ label, title, photo, Icon, tint, onOpen }) {
+function AreaTile({ label, title, photo, icon = null, Icon, tint, onOpen }) {
   return (
     <button type="button" onClick={onOpen} aria-label={title} className="group flex w-full flex-col items-center gap-2 text-center focus-visible:outline-none">
       <span className={`flex aspect-square w-full max-w-[96px] items-center justify-center overflow-hidden rounded-[18px] ${tint.bg} ring-1 ring-inset ring-black/[0.04] transition-transform duration-150 group-hover:-translate-y-0.5 group-active:scale-95 group-focus-visible:ring-4 group-focus-visible:ring-zappy-600/25`}>
-        {photo ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
+        {photo ? <img src={photo} alt="" loading="lazy" className="h-full w-full object-cover" />
+          : icon ? <img src={icon} alt="" loading="lazy" className="h-[62%] w-[62%] object-contain" /> : <Icon strokeWidth={1.8} className={`h-[42%] w-[42%] ${tint.fg}`} />}
       </span>
       <span className="line-clamp-2 text-[12px] font-semibold leading-[1.25] text-ink-900 sm:text-[13px]">{label}</span>
     </button>
@@ -46,7 +48,7 @@ export function ServiceGrid({ domains, onOpenArea, onMore }) {
       <h2 id="home-services" className="h-section">Explore services</h2>
       <div className="mt-4 grid grid-cols-4 justify-items-center gap-x-2 gap-y-5 sm:gap-x-4">
         {domains.slice(0, HOME_AREA_LIMIT).map((d) => (
-          <AreaTile key={d.code} label={SHORT_AREA[d.code] || d.name} title={`${d.name}, ${d.services.length} services`} photo={areaPhoto(d)}
+          <AreaTile key={d.code} label={SHORT_AREA[d.code] || d.name} title={`${d.name}, ${d.services.length} services`} photo={areaPhoto(d)} icon={icon3dFor(d)}
             Icon={SERVICE_ICONS[d.icon] || Wrench} tint={tintFor(d.code)} onOpen={() => onOpenArea(d)} />
         ))}
         <AreaTile label="More Services" title="More services: see all services" photo={null} Icon={LayoutGrid} tint={DEFAULT_TINT} onOpen={onMore} />

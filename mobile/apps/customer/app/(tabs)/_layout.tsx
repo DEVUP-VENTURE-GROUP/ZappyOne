@@ -3,6 +3,8 @@ import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { ClipboardList, Home, LayoutGrid, Store, User } from 'lucide-react-native';
 import { LIQUID_GLASS } from '@zappy/ui/components/Glass';
+import { useAppSelector } from '@zappy/core/store/hooks';
+import { useUnread } from '../../src/features/home/useUnread';
 import { useCurrentSeasonQuery } from '@zappy/core/api';
 import useFestiveLook from '@zappy/core/shared/useFestiveLook';
 import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
@@ -13,7 +15,7 @@ import { colors } from '@zappy/ui/theme/colors';
 import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
 
 // Apple's Liquid Glass tab bar on iOS 26+: same slots and order; Stores is disabled there so its press only opens the stores screen.
-function GlassTabs() {
+function GlassTabs({ unread }: { unread: number }) {
   const t = useT();
   const router = useRouter();
   return (
@@ -37,6 +39,7 @@ function GlassTabs() {
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Label>{t('nav.profile', 'Profile')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
+        {unread > 0 ? <NativeTabs.Trigger.Badge>{unread > 9 ? '9+' : String(unread)}</NativeTabs.Trigger.Badge> : null}
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -46,9 +49,12 @@ function GlassTabs() {
 export default function CustomerTabs() {
   const t = useT();
   const router = useRouter();
+  // The unread count hangs off Profile, as on the website's bar; same query as the Home bell.
+  const isAuthed = useAppSelector((s) => s.auth.isAuthenticated && s.auth.role === 'user');
+  const unread = useUnread(isAuthed);
   const { data } = useCurrentSeasonQuery(undefined);
   const festive = useFestiveLook(data?.season?.theme, useReducedMotion());
-  if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs /><ActiveJobPill /></View>;
+  if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs unread={unread} /><ActiveJobPill /></View>;
   return (
     <View style={{ flex: 1 }}>
     <Tabs screenOptions={{
@@ -70,7 +76,7 @@ export default function CustomerTabs() {
         listeners={{ tabPress: (e) => { e.preventDefault(); router.push('/nearby-shops' as never); } }} />
       <Tabs.Screen name="orders" options={{ title: t('nav.bookings', 'Bookings'), tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} /> }} />
       <Tabs.Screen name="track" options={{ href: null }} />
-      <Tabs.Screen name="profile" options={{ title: t('nav.profile', 'Profile'), tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
+      <Tabs.Screen name="profile" options={{ title: t('nav.profile', 'Profile'), tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined, tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
     </Tabs>
     <ActiveJobPill />
     </View>
