@@ -195,18 +195,21 @@ describe('what rings on the provider’s phone', () => {
     expect(new Date(alerts[0].payload.expiresAt).getTime() - Date.now()).toBeLessThanOrEqual(40000);
   });
 
-  test('over the dues limit they still hear the job, marked to pay first; paid up, the mark goes', async () => {
+  test('a runner over the owed limit is not rung for errands; paid up, they are rung again', async () => {
     const Wallet = require('../src/modules/wallet/wallet.model');
     await Wallet.updateOne({ 'owner.kind': 'worker', 'owner.id': approved._id }, { $set: { balancePaise: -250000 } }, { upsert: true });
     const job = () => announce('helping', {
       _id: oid(), reference: `ZHPAY${Math.random().toString(36).slice(2, 6)}`, userId: customer, status: 'CONFIRMED', serviceType: 'shopping', title: 'Groceries',
       pickupLocation: HOME, charge: { workerEarningPaise: 9000 }, items: [], statusHistory: [],
     }, 'CONFIRMED');
-    const owing = (await listen(job)).filter((h) => h.event === 'job.available');
-    expect(owing.map((a) => a.id)).toEqual([String(approved._id)]);
-    expect(owing[0].payload.mustPay).toBe(true);
-    await Wallet.updateOne({ 'owner.kind': 'worker', 'owner.id': approved._id }, { $set: { balancePaise: 0 } });
+    try {
+      const owing = (await listen(job)).filter((h) => h.event === 'job.available');
+      expect(owing.map((a) => a.id)).toEqual([]);
+    } finally {
+      await Wallet.updateOne({ 'owner.kind': 'worker', 'owner.id': approved._id }, { $set: { balancePaise: 0 } });
+    }
     const clear = (await listen(job)).filter((h) => h.event === 'job.available');
+    expect(clear.map((a) => a.id)).toEqual([String(approved._id)]);
     expect(clear[0].payload.mustPay).toBeUndefined();
   });
 
