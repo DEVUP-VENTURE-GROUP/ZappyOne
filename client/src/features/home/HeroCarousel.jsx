@@ -1,20 +1,42 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ArrowRight, BadgeIndianRupee, Car, ChevronLeft, ChevronRight, Droplets, House, MapPin, ShieldCheck, Smartphone, Wrench,
+} from 'lucide-react';
 import PromoBanner from '@shared/components/home/PromoBanner';
 import { PITCH } from '@shared/components/home/serviceArt';
+import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 
-// The top of Home: one full-width carousel.
+// What every booking gets (the site's own promise: verified pros, the price before work starts, live tracking).
+const PROMISE = [
+  [ShieldCheck, 'Verified', 'Professionals'],
+  [BadgeIndianRupee, 'Price Before', 'Work Starts'],
+  [MapPin, 'Live', 'Tracking'],
+];
+
+/*
+ * The top of Home (the team's web design): a navy panel that fades into the photo,
+ * the wordmark, a two-line title with an orange underline, three points and an
+ * orange button. `services`: catalog codes the slide stands for; it opens the
+ * first one offered here, and a slide with none live does not show.
+ */
 const SLIDES = [
+  { key: 'car_wash', domain: 'vehicles', services: ['car_wash', 'car_detailing'], photo: '/hero/car-wash.webp',
+    title: ['Car Wash', 'at Your Doorstep'], cta: 'Book Car Wash',
+    points: [[Droplets, 'Exterior &', 'Interior Cleaning'], [ShieldCheck, 'Safe &', 'Reliable'], [Car, 'Professional', 'Service']] },
   { key: 'electronics', domain: 'electronics', services: ['mobile_repair', 'mobile', 'laptop_repair', 'laptop'], photo: '/hero/phone-repair.webp',
-    title: 'Phone or laptop repair', line: 'Fixed at your door. You approve the price before work starts.' },
+    title: ['Phone & Laptop', 'Repair at Your Door'], cta: 'Book a Repair',
+    points: [[Smartphone, 'Fixed at', 'Your Door'], [BadgeIndianRupee, 'Price Before', 'Work Starts'], [ShieldCheck, 'Verified', 'Technicians']] },
   { key: 'two_wheeler', domain: 'vehicles', services: ['two_wheeler'], photo: '/hero/two-wheeler.webp',
-    title: 'Bike trouble, sorted', line: 'A mechanic comes to you, at home or on the road.' },
+    title: ['Bike Trouble,', 'Sorted'], cta: 'Book a Mechanic',
+    points: [[House, 'At Home or', 'On the Road'], [Wrench, 'Mechanic', 'Comes to You'], [ShieldCheck, 'Verified', 'Mechanics']] },
   { key: 'four_wheeler', domain: 'vehicles', services: ['four_wheeler'], photo: '/hero/vehicle-care.webp',
-    title: 'Car care at your door', line: 'Checks and repairs where your car is parked.' },
-  { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], photo: '/hero/water-tank.webp' },
-  { key: 'pet_services', domain: 'pet_services', photo: '/hero/pet-care.webp', path: '/pet' },
-  { key: 'helping_services', domain: 'helping_services', photo: '/hero/helping.webp', path: '/helping' },
-  { key: 'events', domain: 'events', photo: '/hero/events.webp', path: '/events' },
+    title: ['Car Care', 'at Your Door'], cta: 'Book Car Service',
+    points: [[Car, 'Where Your Car', 'Is Parked'], [Wrench, 'Checks &', 'Repairs'], [ShieldCheck, 'Verified', 'Mechanics']] },
+  { key: 'water_tank_care', domain: 'home_services', services: ['water_tank_care'], photo: '/hero/water-tank.webp',
+    title: ['Water Tank', 'Cleaning at Home'], cta: 'Book Tank Cleaning' },
+  { key: 'pet_services', domain: 'pet_services', photo: '/hero/pet-care.webp', path: '/pet', cta: 'Book Pet Care' },
+  { key: 'helping_services', domain: 'helping_services', photo: '/hero/helping.webp', path: '/helping', cta: 'Get Help' },
+  { key: 'events', domain: 'events', photo: '/hero/events.webp', path: '/events', cta: 'Plan an Event' },
 ];
 const SLIDE_MS = 6000;
 
@@ -30,21 +52,43 @@ function useReducedMotionPref() {
   return on;
 }
 
-function CatalogSlide({ slide, domain, active, onOpen }) {
-  const [pTitle, pLine] = PITCH[domain.code] || [domain.name, domain.description];
-  const title = slide.title || (slide.services ? slide.target.name : pTitle);
-  const line = slide.line || pLine;
+/** The orange brush-stroke under the title. */
+function Underline() {
   return (
-    <div className="relative h-[188px] w-full shrink-0 snap-center overflow-hidden sm:h-[300px] lg:h-[340px]" aria-hidden={!active}>
-      <img src={slide.photo} alt="" className="absolute inset-0 h-full w-full object-cover" loading={active ? 'eager' : 'lazy'} />
-      <span aria-hidden="true" className="absolute inset-0 bg-zappy-900/60" />
-      <div className="relative flex h-full max-w-[72%] flex-col justify-center gap-1 p-4 sm:max-w-[560px] sm:gap-2.5 sm:p-8 lg:p-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/75 sm:text-[12px]">{domain.name}</p>
-        <h2 className="text-[20px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white [text-wrap:balance] sm:text-[30px] lg:text-[36px]">{title}</h2>
-        {line && <p className="hidden max-w-md text-[15px] leading-relaxed text-white/85 sm:block sm:text-[16px]">{line}</p>}
+    <svg viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true" className="mt-1 h-2 w-[58%] max-w-[300px] sm:mt-2 sm:h-3">
+      <path d="M4 10 C 80 2, 200 1, 296 6" fill="none" stroke="#F97316" strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CatalogSlide({ slide, domain, active, onOpen }) {
+  const [pTitle] = PITCH[domain.code] || [domain.name];
+  const [top, bottom] = slide.title || [slide.services ? slide.target.name : pTitle, ''];
+  const points = slide.points || PROMISE;
+  return (
+    <div className="relative h-[230px] w-full shrink-0 snap-center overflow-hidden bg-zappy-900 sm:h-[340px] lg:h-[400px]" aria-hidden={!active}>
+      <img src={slide.photo} alt="" loading={active ? 'eager' : 'lazy'} decoding="async"
+        className="absolute inset-y-0 right-0 h-full w-[72%] object-cover object-center sm:w-[62%]" />
+      {/* Navy on the left, fading into the photo, so the words always read. */}
+      <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-zappy-900 from-[30%] via-zappy-900/85 via-[48%] to-transparent to-[78%] sm:from-[36%] sm:via-[52%]" />
+      <div className="relative flex h-full max-w-[68%] flex-col justify-center px-5 sm:max-w-[600px] sm:px-10 lg:px-12">
+        <ZappyWordmark tone="dark" size={22} className="sm:hidden" />
+        <ZappyWordmark tone="dark" size={34} className="hidden sm:inline-flex" />
+        <h2 className="mt-3 text-[24px] font-extrabold italic leading-[1.05] tracking-[-0.02em] text-white sm:mt-5 sm:text-[44px] lg:text-[54px]">
+          {top}{bottom && <><br />{bottom}</>}
+        </h2>
+        <Underline />
+        <ul className="mt-5 hidden items-center divide-x divide-white/25 sm:flex">
+          {points.map(([Icon, a, b]) => (
+            <li key={a + b} className="flex items-center gap-2.5 px-4 first:pl-0 last:pr-0 lg:px-5">
+              <Icon size={30} strokeWidth={1.8} className="shrink-0 text-white" />
+              <span className="text-[14px] font-medium leading-[1.25] text-white/95 lg:text-[15px]">{a}<br />{b}</span>
+            </li>
+          ))}
+        </ul>
         <button type="button" tabIndex={active ? 0 : -1} onClick={() => onOpen(slide.target, slide.path)}
-          className="mt-2 inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-white px-3.5 text-[13px] font-semibold text-ink-900 transition-colors hover:bg-zappy-50 sm:h-11 sm:px-5 sm:text-[14px]">
-          Book a service <ArrowRight size={15} />
+          className="mt-4 inline-flex h-10 items-center gap-2 self-start rounded-full bg-orange-500 px-5 text-[14px] font-bold text-white shadow-[0_8px_20px_-6px_rgba(249,115,22,0.6)] transition-colors hover:bg-orange-600 sm:mt-6 sm:h-14 sm:px-8 sm:text-[18px]">
+          {slide.cta || 'Book Now'} <ArrowRight size={20} strokeWidth={2.4} />
         </button>
       </div>
     </div>
