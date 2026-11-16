@@ -3,16 +3,22 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-// A command run without blocking, so tests, builds and type checks share the machine instead of queueing.
-function runAsync(cmd, args, cwd) {
+// Every step has a time limit: a step that hangs is stopped and reported, never left to hold the gate for hours.
+function runAsync(cmd, args, cwd, timeoutMs = 25 * 60 * 1000) {
   return new Promise((resolve) => {
     const child = spawn(cmd, args, { cwd, shell: process.platform === 'win32' });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (process.platform === 'win32') spawn('taskkill', ['/pid', String(child.pid), '/T', '/F']);
+      else child.kill('SIGKILL');
+    }, timeoutMs);
     child.stdout.on('data', (d) => { stdout += d; });
     child.stderr.on('data', (d) => { stderr += d; });
-    child.on('close', (status) => resolve({ status, stdout, stderr }));
-    child.on('error', (err) => resolve({ status: 1, stdout, stderr: `${stderr}\n${err.message}` }));
+    child.on('close', (status) => { clearTimeout(timer); resolve({ status: timedOut ? 124 : status, timedOut, stdout, stderr }); });
+    child.on('error', (err) => { clearTimeout(timer); resolve({ status: 1, timedOut, stdout, stderr: `${stderr}\n${err.message}` }); });
   });
 }
 
@@ -97,7 +103,9 @@ function addedDependencies(git, baseSha, changedFiles, root) {
 // High and critical advisories from `npm audit --package-lock-only` for one folder.
 async function auditHigh(dir) {
   if (!fs.existsSync(path.join(dir, 'package-lock.json'))) return null;
-  const res = await runAsync('npm', ['audit', '--package-lock-only', '--json', '--omit=dev'], dir);
+  // npm's advisory service can be slow or unreachable: 90 s, then 'not checked' rather than a stuck gate.
+  const res = await runAsync('npm', ['audit', '--package-lock-only', '--json', '--omit=dev'], dir, 90 * 1000);
+  if (res.timedOut) return null;
   try {
     const data = JSON.parse(res.stdout);
     return Object.entries(data.vulnerabilities || {}).filter(([, v]) => ['high', 'critical'].includes(v.severity)).map(([name, v]) => `${name} (${v.severity})`);
