@@ -244,7 +244,8 @@ async function adjustPricing(req, res, next) {
     const owner = ownerOf(req);
     const vertical = verticalOf(req);
     const percent = Number(req.body.percent);
-    const rows = await ProviderPricing.find({ ...ownerFilter(req), vertical, supersededAt: null }).lean();
+    // A provider's live prices for one trade: a few hundred at most; the bound keeps one request from scanning without end.
+    const rows = await ProviderPricing.find({ ...ownerFilter(req), vertical, supersededAt: null }).limit(5000).lean();
     let changed = 0;
     for (const r of rows) {
       const normal = r.normalPaise ?? r.totalPaise;

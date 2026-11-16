@@ -99,6 +99,16 @@ function putToS3({ url, file, contentType, onProgress, xhrRef }) {
   });
 }
 
+// Why a picked file cannot be uploaded, or null.
+function uploadProblem(file, contentType) {
+  const ext = file.name.toLowerCase().split('.').pop();
+  if (!UPLOAD_TYPES[contentType] || !UPLOAD_TYPES[contentType].includes(ext)) return 'Use a JPG, PNG or WebP image.';
+  if (file.size > MAX_UPLOAD_BYTES) return `This file is ${fmtBytes(file.size)}. The limit is 5 MB.`;
+  return null;
+}
+
+const uploadFailure = (e) => e?.data?.error || (e.status === 0 ? 'The upload was interrupted. Check your connection and try again.' : 'The upload failed. Try again.');
+
 function ImageUploader({ value, onChange }) {
   const [requestUpload] = useAdminBannerUploadUrlMutation();
   const [state, setState] = useState({ phase: 'idle' }); // idle | uploading | done | error
@@ -106,33 +116,24 @@ function ImageUploader({ value, onChange }) {
   const inputRef = useRef(null);
 
   async function upload(file) {
-    const ext = file.name.toLowerCase().split('.').pop();
     const contentType = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
-    if (!UPLOAD_TYPES[contentType] || !UPLOAD_TYPES[contentType].includes(ext)) {
-      setState({ phase: 'error', file, message: 'Use a JPG, PNG or WebP image.' }); return;
-    }
-    if (file.size > MAX_UPLOAD_BYTES) {
-      setState({ phase: 'error', file, message: `This file is ${fmtBytes(file.size)}. The limit is 5 MB.` }); return;
-    }
+    const problem = uploadProblem(file, contentType);
+    if (problem) { setState({ phase: 'error', file, message: problem }); return; }
     const localUrl = URL.createObjectURL(file);
     setState({ phase: 'uploading', file, progress: 0 });
-    // One automatic retry with a fresh link covers a link that expired mid-way (403).
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const { uploadUrl, key } = await requestUpload({ contentType, size: file.size, filename: file.name }).unwrap();
-        await putToS3({ url: uploadUrl, file, contentType, xhrRef, onProgress: (p) => setState((s) => ({ ...s, progress: p })) });
-        onChange({ imageUrl: key, imagePreview: localUrl });
-        setState({ phase: 'done', file });
-        return;
-      } catch (e) {
-        if (e.aborted) { URL.revokeObjectURL(localUrl); setState({ phase: 'idle' }); return; }
-        if (attempt === 0 && e.status === 403) continue;
-        URL.revokeObjectURL(localUrl);
-        const message = e?.data?.error
-          || (e.status === 0 ? 'The upload was interrupted. Check your connection and try again.' : 'The upload failed. Try again.');
-        setState({ phase: 'error', file, message });
-        return;
-      }
+    const send = async () => {
+      const { uploadUrl, key } = await requestUpload({ contentType, size: file.size, filename: file.name }).unwrap();
+      await putToS3({ url: uploadUrl, file, contentType, xhrRef, onProgress: (p) => setState((s) => ({ ...s, progress: p })) });
+      return key;
+    };
+    try {
+      // One automatic retry with a fresh link covers a link that expired mid-way (403).
+      const key = await send().catch((e) => (e.status === 403 ? send() : Promise.reject(e)));
+      onChange({ imageUrl: key, imagePreview: localUrl });
+      setState({ phase: 'done', file });
+    } catch (e) {
+      URL.revokeObjectURL(localUrl);
+      setState(e.aborted ? { phase: 'idle' } : { phase: 'error', file, message: uploadFailure(e) });
     }
   }
 
@@ -348,9 +349,14 @@ function bannerBody(f, ad, paid) {
   return { title: f.title.trim(), type, placements: [HOME_PLACEMENT], audience: 'users', content, schedule, billing: { model: 'fixed', rate: priority, budget: 0, dailyCapPaise: 0 } };
 }
 
-function BannerEditor({ initial, ad, onCancel, onSave, saving }) {
-  const [f, setF] = useState(initial);
-  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e?.target ? (e.target.type === 'checkbox' ? e.target.checked : e.target.value) : e }));
+// A form field's value from an input event, a checkbox, or a value passed directly.
+const fieldValue = (e) => {
+  if (!e?.target) return e;
+  return e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+};
+
+// Where a banner button may go: the app's own pages, then every live service.
+function useBannerRoutes() {
   const { data: catalog } = useLiveCatalogQuery();
   const servicePaths = useMemo(() => (catalog?.domains || []).flatMap((d) => d.services)
     .filter((s) => s.path).map((s) => ({ path: s.path, label: s.name })), [catalog]);
@@ -358,6 +364,30 @@ function BannerEditor({ initial, ad, onCancel, onSave, saving }) {
     const seen = new Set();
     return [...BANNER_ROUTES, ...servicePaths].filter((r) => (seen.has(r.path) ? false : seen.add(r.path)));
   }, [servicePaths]);
+  return { servicePaths, routeOptions };
+}
+
+// Save buttons: a paid campaign keeps its status (Ad campaigns owns it); a house banner saves as draft or publishes.
+function EditorActions({ paid, saving, live, status, onSubmit }) {
+  const solid = 'rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50';
+  if (paid) return <button type="button" disabled={saving} onClick={() => onSubmit(status)} className={solid}>{saving ? 'Saving…' : 'Save changes'}</button>;
+  return (
+    <>
+      <button type="button" disabled={saving} onClick={() => onSubmit('draft')}
+        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+        {live ? 'Unpublish & save as draft' : 'Save as draft'}
+      </button>
+      <button type="button" disabled={saving} onClick={() => onSubmit('active')} className={solid}>
+        {saving ? 'Saving…' : live ? 'Update live banner' : 'Publish'}
+      </button>
+    </>
+  );
+}
+
+function BannerEditor({ initial, ad, onCancel, onSave, saving }) {
+  const [f, setF] = useState(initial);
+  const set = (k) => (e) => setF((x) => ({ ...x, [k]: fieldValue(e) }));
+  const { servicePaths, routeOptions } = useBannerRoutes();
   const check = checkBannerLink(f.ctaEnabled ? f.ctaLink : '', servicePaths.map((s) => s.path));
   const choice = routeOptions.some((r) => r.path === f.ctaLink) ? f.ctaLink : '__custom';
   const paid = ad && !isHouseBanner(ad);
@@ -485,23 +515,7 @@ function BannerEditor({ initial, ad, onCancel, onSave, saving }) {
           <Card className="p-5"><DevicePreviews form={f} /></Card>
           <div className="flex flex-wrap justify-end gap-2">
             <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
-            {paid ? (
-              <button type="button" disabled={saving} onClick={() => submit(ad.status)}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-                {saving ? 'Saving…' : 'Save changes'}
-              </button>
-            ) : (
-              <>
-                <button type="button" disabled={saving} onClick={() => submit('draft')}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
-                  {ad?.status === 'active' ? 'Unpublish & save as draft' : 'Save as draft'}
-                </button>
-                <button type="button" disabled={saving} onClick={() => submit('active')}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-                  {saving ? 'Saving…' : ad?.status === 'active' ? 'Update live banner' : 'Publish'}
-                </button>
-              </>
-            )}
+            <EditorActions paid={paid} saving={saving} live={ad?.status === 'active'} onSubmit={submit} status={ad?.status} />
           </div>
           {problems.length > 0 && (
             <ul className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-800">

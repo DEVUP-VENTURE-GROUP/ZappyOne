@@ -13,29 +13,43 @@ The report appears in three places:
 
 ## What it checks
 
-| Check | Fails when |
-|---|---|
-| Forbidden files | an `.env`, key, certificate, build output or AI tool config (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.cursor/`…) is added |
-| Secrets in code | an added line looks like an AWS key, a database URI with a password, a private key, a live payment key or a token |
-| Server tests | any test in `server/tests` fails |
-| Build every app · compressed size | an app fails to build, or its gzipped JS + CSS grows past its budget in `budgets.json` |
-| Code health | the PR **adds** a function that is too complex (more than 20 branches) or too long (more than 250 lines), nests more than 5 levels deep, takes more than 5 parameters, or adds unused values or dead code |
-| Duplicated code | the PR adds a copy-paste block of 12 lines or more instead of reusing existing code |
-| Unused components and endpoints | the PR leaves a file that no app imports or nothing on the server requires, or an API hook no screen calls |
-| AI assistance | the PR description has no `AI-assisted: N%` line |
+The gate rates the code a PR **adds** the way SonarQube does: Reliability, Security and Maintainability from A to E, coverage and duplication on new code, and hotspots to review. It goes further with checks SonarQube does not have: app type checks, running cost, dependency licences, unused code and dead API hooks.
 
-These checks only report and never fail the gate:
+| Check | Fails when the PR… |
+|---|---|
+| Forbidden files | adds an `.env`, key, certificate, build output or AI tool config (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.cursor/`…) |
+| Secrets in code | adds a line that looks like an AWS key, a database URI with a password, a private key, a live payment key or a token |
+| Server tests | breaks a test that uses the changed server code (by path, file name or URL, else its module's tests, at most 25 files). `--full` runs the whole suite. A file that fails only under load and passes on a calm retry is a warning (flaky) |
+| Coverage on new code | runs fewer than 80% of the new server statements in tests (SonarQube's default gate) |
+| Build every app · compressed size | breaks a build of client, servicepro or admin, or pushes one past its gzip budget in `budgets.json` |
+| App type check (iOS + Android) | changes `mobile/` and leaves a TypeScript error in the customer or ServicePro app |
+| Reliability · bugs | adds an undefined name or component, a hook outside a component, identical branches or conditions, an impossible comparison, an ignored return value… (SonarJS + core rules) |
+| Security · vulnerabilities | adds `eval` or `new Function`, a shell call, an exponential regex, a hard-coded password or IP, an insecure cookie, a timing-unsafe comparison… |
+| Maintainability · code smells | adds a function over cognitive complexity 15 or cyclomatic complexity 20, over 250 lines, nested over 5 deep or with over 5 parameters, an identical function, a dead store, an unused value, missing hook dependencies… |
+| Accessibility | adds an image without alt text, an empty link or heading, invalid ARIA roles or properties… |
+| Duplicated code | adds a copy-paste block of 12 lines or more |
+| Unused components and endpoints | leaves a file no app imports or nothing on the server requires, or an API hook no screen calls |
+| Screens wired to real API hooks | imports an API hook the client does not define (the screen would crash on open) |
+| Running cost | polls faster than once a minute or adds an image over 400 KB |
+| Dependencies | brings in a package with a high or critical advisory, or a GPL, AGPL, SSPL or BUSL licence |
+
+These checks report and never fail the gate:
 
 | Check | Reports |
 |---|---|
+| Quality on new code | the A–E ratings, coverage %, duplication % and hotspot count, at the top of the report |
+| Security hotspots | randomness, weak hashing, plain `http://`, raw HTML and dynamic regexes to review |
+| Running cost (to check) | database reads with no `.limit()`, fast timers, polling while the live connection is down |
 | Complexity | the average and highest complexity of the functions the PR wrote or changed |
-| AI assistance | the declared share, and the share of lines from commits marked with an AI co-author trailer; it warns when the declaration is lower than what the commits show |
-| Tests for server changes | a warning when server code changes but no test changes |
-| Size of the change | a warning past 1,500 added lines |
+| AI assistance | the declared share against commits marked with an AI co-author trailer |
+| Tests for server changes | server code changed with no test changed |
+| Size of the change | past 1,500 added lines |
 
-The code-quality checks (code health, duplicates, unused) compare the PR with its base. They fail only on what the PR adds, so older debt in a file you touch is shown but not blamed on you.
+A PR run takes about 2 minutes: only the tests that use the changed code, only the web apps whose code changed, and both app type checks when `mobile/` changed. Run `--full` (the whole ~1,950-test suite and all three builds) before a release and nightly.
 
-AI-written code that isn't declared can't be detected reliably. That's why the gate requires the declaration and cross-checks it against commit trailers.
+Every lint-based check compares the PR with its base and fails only on what the PR adds, so older debt in a file you touch is shown but not blamed on you. Tests, the three web builds and both app type checks run at the same time.
+
+Test files may use fake passwords and random values, and translation files contain the word "password" in every language, so those rules skip them (`eslint.config.mjs`).
 
 ## Run it before you open a PR
 

@@ -46,6 +46,11 @@ const lastLines = (text, n = 25) => (text || '').trim().split('\n').slice(-n).jo
 const kb = (bytes) => Math.round(bytes / 102.4) / 10;
 
 const checks = [];
+const quality = require('./lib/quality');
+const extra = require('./lib/extra');
+let coveragePct = null;
+let dupPct = null;
+let newIssues = { bugs: 0, vulns: 0, smells: 0, hotspots: 0 };
 function check(id, title, status, summary, { details = [], fix = [] } = {}) {
   checks.push({ id, title, status, summary, details, fix });
 }
@@ -95,7 +100,16 @@ const commits = git('log', '--format=%H%x1f%an%x1f%s%x1f%B%x1e', `${baseSha}..HE
 /* The base, checked out beside the PR for before/after comparisons */
 
 const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-base-'));
-git('worktree', 'add', '--detach', '--force', baseDir, baseSha);
+// Only the code folders the comparisons read, exported (git archive) rather than checked out: seconds, and the repo is never touched.
+{
+  const tarFile = path.join(os.tmpdir(), `gate-base-${process.pid}.tar`);
+  const paths = ['client/src', 'servicepro/src', 'admin/src', 'shared/src', 'server/src', 'mobile/apps', 'mobile/packages', ':(glob)**/package.json', ':(glob)**/package-lock.json']
+    .filter((p) => p.startsWith(':') || git('ls-tree', '--name-only', baseSha, p));
+  execFileSync('git', ['archive', '--format=tar', '-o', tarFile, baseSha, ...paths], { cwd: ROOT });
+  // A relative path: GNU tar reads a Windows drive letter (C:) as a remote host.
+  execFileSync('tar', ['-xf', path.relative(baseDir, tarFile)], { cwd: baseDir });
+  fs.rmSync(tarFile, { force: true });
+}
 
 async function main() {
   // 1. Forbidden files
@@ -141,31 +155,53 @@ async function main() {
       { details: hits, fix: hits.length ? ['Move the value to an environment variable, remove it from the branch history, and rotate the credential — treat it as leaked.'] : [] });
   }
 
-  // 3. Server tests
-  if (flag('skip-tests')) {
-    check('tests', 'Server tests', 'info', 'Skipped (--skip-tests)');
-  } else {
-    const res = run('npm', ['test', '--', '--silent'], path.join(ROOT, 'server'));
+  // 3-4b. Server tests (with coverage of new code), web builds and app type checks run side by side.
+  const serverSrc = live.filter((f) => /^server\/src\/.*\.js$/.test(f) && !/(seed|migrations)\//.test(f));
+  const FULL = flag('full');
+  // Tests jest links to the changed server files by following imports, plus any test the PR touched; --full runs them all.
+  const serverTouched = live.filter((f) => /^server\/(src|tests)\/.*\.js$/.test(f) || /^server\/package(-lock)?\.json$/.test(f));
+  const selected = FULL ? [] : extra.selectTests(serverTouched, path.join(ROOT, 'server'));
+  const relatedArgs = FULL ? [] : selected;
+  // An app is built when its own code changes; shared code or assets build all three; --full builds all.
+  const appsToBuild = FULL ? WEB_APPS : WEB_APPS.filter((a) => live.some((f) => f.startsWith(`${a}/`) || /^(shared|assets)\//.test(f)));
+  const covDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-cov-'));
+  async function testsStep() {
+    if (flag('skip-tests')) return { status: 'info', summary: 'Skipped (--skip-tests)' };
+    if (!FULL && !serverTouched.length) return { status: 'pass', summary: 'No server code changed (run --full for the whole suite)' };
+    if (!FULL && !selected.length) return { status: 'warn', summary: 'Server code changed but no test uses it directly', fix: ['Add a test in server/tests for the changed code, or run the gate with --full.'] };
+    const serverDir = path.join(ROOT, 'server');
+    const cov = serverSrc.length
+      ? ['--coverage', '--coverageReporters=json', `--coverageDirectory=${covDir}`, ...serverSrc.map((f) => `--collectCoverageFrom=${f.replace(/^server\//, '')}`)]
+      : [];
+    const res = await extra.runAsync('npm', ['test', '--', '--silent', ...relatedArgs, ...cov], serverDir, 40 * 60 * 1000);
+    if (res.timedOut) return { status: 'fail', summary: 'Server tests did not finish in 40 minutes', fix: ['Find the hanging test (`cd server && npm test`); a test left waiting on a timer or connection holds the whole run.'] };
     const out = `${res.stdout}\n${res.stderr}`;
-    const summary = (out.match(/^Tests:.*$/m) || ['Tests: no summary'])[0];
-    const failed = [...out.matchAll(/^\s*● (.+)$/gm)].map((m) => m[1]).filter((t) => !/Validation Warning/.test(t));
-    check('tests', 'Server tests', res.status === 0 ? 'pass' : 'fail', summary.replace(/^Tests:\s*/, ''), {
-      details: res.status === 0 ? [] : [...new Set(failed)].slice(0, 30).map((t) => `✗ ${t}`).concat(failed.length ? [] : ['```', lastLines(out), '```']),
-      fix: res.status === 0 ? [] : ['Make every server test pass (`cd server && npm test`).'],
-    });
+    const summary = (out.match(/^Tests:.*$/m) || ['Tests: no summary'])[0].replace(/^Tests:\s*/, '');
+    if (res.status === 0) return { status: 'pass', summary: FULL ? `${summary} · whole suite` : `${summary} · ${selected.length} test file(s) that use the changed code` };
+    // A file that fails only while ~2,000 tests share the machine is retried alone: a pass means load, not a bug.
+    const files = extra.failedTestFiles(out);
+    const failed = [...new Set([...out.matchAll(/^\s*● (.+)$/gm)].map((m) => m[1]).filter((t) => !/Validation Warning/.test(t)))];
+    if (files.length && files.length <= 10) {
+      const retry = await extra.runAsync('npx', ['jest', ...files, '--maxWorkers=2', '--silent'], serverDir);
+      if (retry.status === 0) {
+        return { status: 'warn', summary: `${summary} · ${files.length} file(s) failed under load and passed on a calm retry`,
+          details: files.map((f) => `flaky under load: \`server/${f}\``), fix: ['Make these tests independent of timing (raise their timeout or wait on the condition, not the clock).'] };
+      }
+    }
+    return { status: 'fail', summary: FULL ? summary : `${summary} (${selected.length} test file(s) that use the changed code)`, details: failed.slice(0, 30).map((t) => `✗ ${t}`).concat(failed.length ? [] : ['```', lastLines(out), '```']),
+      fix: ['Make every server test pass (`cd server && npm test`).'] };
   }
-
-  // 4. Builds, and how much each app ships (gzip)
-  if (flag('skip-build')) {
-    check('build', 'Build every app', 'info', 'Skipped (--skip-build)');
-  } else {
+  async function buildStep() {
+    if (flag('skip-build')) return { status: 'info', summary: 'Skipped (--skip-build)' };
     const budgets = JSON.parse(fs.readFileSync(path.join(__dirname, 'budgets.json'), 'utf8'));
+    const results = [];
+    if (!appsToBuild.length) return { status: 'pass', summary: 'No web app code changed' };
+    for (const app of appsToBuild) results.push({ app, res: await extra.runAsync('npx', ['vite', 'build', '--logLevel', 'error'], path.join(ROOT, app), 10 * 60 * 1000) });
     const rows = [];
     const fix = [];
     let worst = 'pass';
-    for (const app of WEB_APPS) {
+    for (const { app, res } of results) {
       const dir = path.join(ROOT, app);
-      const res = run('npx', ['vite', 'build', '--logLevel', 'error'], dir);
       if (res.status !== 0) {
         worst = 'fail';
         rows.push(`**${app}** — build failed`, '```', lastLines(`${res.stdout}\n${res.stderr}`, 15), '```');
@@ -176,9 +212,9 @@ async function main() {
       let gz = 0;
       const walk = (d) => {
         for (const n of fs.readdirSync(d)) {
-          const p = path.join(d, n);
-          if (fs.statSync(p).isDirectory()) walk(p);
-          else if (/\.(js|css)$/.test(n)) { const b = fs.readFileSync(p); raw += b.length; gz += zlib.gzipSync(b, { level: 9 }).length; }
+          const p2 = path.join(d, n);
+          if (fs.statSync(p2).isDirectory()) walk(p2);
+          else if (/\.(js|css)$/.test(n)) { const buf = fs.readFileSync(p2); raw += buf.length; gz += zlib.gzipSync(buf, { level: 9 }).length; }
         }
       };
       walk(path.join(dir, 'dist'));
@@ -187,12 +223,42 @@ async function main() {
       if (over) { worst = 'fail'; fix.push(`${app} ships ${kb(gz)} KB gzipped, over its ${budget} KB budget — lazy-load the new code or drop a dependency. Raise the budget in tools/checkpoint-gate/budgets.json only with a reason in the PR.`); }
       rows.push(`${over ? '✗' : '✓'} **${app}** — ${kb(raw)} KB raw · **${kb(gz)} KB gzipped**${budget ? ` (budget ${budget} KB)` : ''}`);
     }
-    check('build', 'Build every app · compressed size', worst,
-      worst === 'pass' ? `All ${WEB_APPS.length} apps build and stay within their gzip budgets` : 'A build failed or an app grew past its budget',
-      { details: rows, fix });
+    return { status: worst, summary: worst === 'pass' ? `${appsToBuild.join(', ')} build and stay within their gzip budgets` : 'A build failed or an app grew past its budget', details: rows, fix };
+  }
+  async function typesStep() {
+    if (!live.some((f) => /^mobile\//.test(f))) return { status: 'pass', summary: 'No app code changed' };
+    const apps = ['customer', 'servicepro'].filter((a) => fs.existsSync(path.join(ROOT, 'mobile/apps', a, 'tsconfig.json')));
+    const results = [];
+    for (const a of apps) results.push({ a, res: await extra.runAsync('npx', ['tsc', '--noEmit', '-p', '.'], path.join(ROOT, 'mobile/apps', a), 10 * 60 * 1000) });
+    const errors = results.flatMap(({ a, res }) => `${res.stdout}`.split('\n').filter((l) => /error TS\d+/.test(l)).map((l) => `${a}: ${l.trim()}`));
+    return errors.length
+      ? { status: 'fail', summary: `${errors.length} type error(s) in the apps`, details: errors.slice(0, 30), fix: ['Fix the types (`npx tsc --noEmit -p .` inside each app). A type error here is a crash on a phone the web build never shows.'] }
+      : { status: 'pass', summary: `Both apps type-check (${apps.join(', ')})` };
+  }
+  // Two lanes, not six jobs at once: tests in one, builds then app type checks in the other (one machine, not a cluster).
+  // Each step's own time is in its summary, so a slow step shows itself.
+  const timed = async (fn) => { const t0 = Date.now(); const r = await fn(); const sec = Math.round((Date.now() - t0) / 1000); return { ...r, summary: `${r.summary} · ${sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60}s` : `${sec}s`}` }; };
+  const [tests, [build, types]] = await Promise.all([timed(testsStep), timed(buildStep).then(async (b) => [b, await timed(typesStep)])]);
+  check('tests', 'Server tests', tests.status, tests.summary, tests);
+  check('build', 'Build every app · compressed size', build.status, build.summary, build);
+  check('types', 'App type check (iOS + Android)', types.status, types.summary, types);
+
+  // 4c. Coverage of new server code (SonarQube's gate asks 80%).
+  {
+    const cov = flag('skip-tests') || !serverSrc.length ? null : extra.newCodeCoverage(path.join(covDir, 'coverage-final.json'), path.join(ROOT, 'server'), isAdded);
+    if (!cov) check('coverage', 'Coverage on new code', 'info', flag('skip-tests') ? 'Not measured (--skip-tests)' : 'No server code changed');
+    else {
+      const low = cov.total > 0 && cov.pct < 80;
+      check('coverage', 'Coverage on new code', low ? 'fail' : 'pass',
+        cov.total ? `${cov.pct}% of ${cov.total} new server statement(s) run by tests (needs 80%)` : 'No new executable server lines',
+        { details: cov.files.sort((x, y) => x.covered / x.total - y.covered / y.total).slice(0, 15).map((f) => `\`${f.file}\` — ${f.covered}/${f.total} new statements tested`),
+          fix: low ? ['Add tests in server/tests that run the new code paths, including the failure branches.'] : [] });
+      coveragePct = cov.total ? cov.pct : null;
+    }
+    fs.rmSync(covDir, { recursive: true, force: true });
   }
 
-  // 5. Code health: complexity, depth, size, dead values — NEW violations only
+  // 5. Quality on new code, SonarQube-style: reliability, security, hotspots, maintainability, accessibility
   const codeFiles = live.filter((f) => CODE.test(f) && SCANNED.test(f) && !/(^|\/)(seed|migrations)\//.test(f));
   const { ESLint } = require('eslint');
   const lintAt = async (cwd, files) => {
@@ -222,15 +288,24 @@ async function main() {
         .sort((a, b) => Number(isAdded(b.file, b.line)) - Number(isAdded(a.file, a.line)));
       fresh.push(...candidates.slice(0, extra));
     }
-    const debt = head.length - fresh.length;
-    check('health', 'Code health (new issues)', fresh.length ? 'fail' : 'pass',
-      fresh.length
-        ? `${fresh.length} new issue(s) in ${new Set(fresh.map((f) => f.file)).size} file(s)`
-        : `No new issues${debt ? ` · ${debt} older issue(s) remain in touched files` : ''}`,
-      {
-        details: fresh.map((v) => `\`${v.file}:${v.line}\` **${v.rule}** — ${v.message}`),
-        fix: fresh.length ? ['Split long or branchy functions, flatten deep nesting, pass an object instead of many parameters, and delete values that are never used.'] : [],
-      });
+    const by = (cat) => fresh.filter((v) => quality.categoryOf(v.rule) === cat);
+    const older = (cat) => head.filter((v) => quality.categoryOf(v.rule) === cat).length - by(cat).length;
+    const line = (v) => `\`${v.file}:${v.line}\` **${v.rule}** — ${v.message}`;
+    const CATS = [
+      ['reliability', 'Reliability · bugs', 'fail', 'new bug(s)', 'No new bugs', 'Fix each one: an undefined name, a broken hook or an impossible condition is a crash or a wrong result waiting to happen.'],
+      ['security', 'Security · vulnerabilities', 'fail', 'new vulnerability(ies)', 'No new vulnerabilities', 'Remove eval and shell calls on user input, move passwords and addresses to configuration, and make regexes linear.'],
+      ['hotspot', 'Security hotspots · to review', 'warn', 'hotspot(s) to review', 'No new hotspots', 'Check each one is safe here (randomness that guards nothing, hashing that is not for passwords, sanitised HTML) and say so in the PR.'],
+      ['maintainability', 'Maintainability · code smells', 'fail', 'new code smell(s)', 'No new code smells', 'Split long or branchy functions (cognitive complexity over 15), reuse identical functions, flatten nesting and delete values that are never read.'],
+      ['a11y', 'Accessibility', 'fail', 'new accessibility issue(s)', 'No new accessibility issues', 'Give images alt text, links and headings real content, and use valid ARIA roles and properties.'],
+    ];
+    for (const [cat, title, level, many, none, fix] of CATS) {
+      const list = by(cat);
+      const old = older(cat);
+      check(cat, title, list.length ? level : 'pass',
+        list.length ? `${list.length} ${many} in ${new Set(list.map((v) => v.file)).size} file(s)` : `${none}${old ? ` · ${old} older in touched files` : ''}`,
+        { details: list.slice(0, 40).map(line), fix: list.length ? [fix] : [] });
+    }
+    newIssues = { bugs: by('reliability').length, vulns: by('security').length, smells: by('maintainability').length, hotspots: by('hotspot').length };
   }
 
   // 6. Complexity of the functions this PR wrote or changed (measurement)
@@ -284,6 +359,8 @@ async function main() {
     const fresh = data.duplicates.map((d) => [span(d.firstFile), span(d.secondFile), d.lines])
       .filter(([a, b]) => mostlyNew(a) || mostlyNew(b));
     const pct = data.statistics?.total?.percentage;
+    const dupNew = fresh.reduce((n, [, , lines]) => n + lines, 0);
+    dupPct = added ? Math.round((dupNew * 1000) / added) / 10 : 0;
     check('duplicates', 'Duplicated code', fresh.length ? 'fail' : 'pass',
       `${fresh.length ? `${fresh.length} new copy-paste block(s)` : 'No new copy-paste blocks'}${pct != null ? ` · whole codebase ${Math.round(pct * 10) / 10}% duplicated` : ''}`,
       {
@@ -321,6 +398,32 @@ async function main() {
         details: missing.map((m) => `\`${m}\``),
         fix: missing.length ? ['Add the endpoint to shared/src/services/api.js (and export its hook), or remove the import. The build cannot catch this; the screen crashes when opened.'] : [],
       });
+  }
+
+  // 8c. Running cost: polling, unbounded reads and heavy images the PR adds (beyond SonarQube).
+  {
+    const { fails, warns } = extra.costScan({ diff: git('diff', '-U0', baseSha, 'HEAD'), live, root: ROOT });
+    check('cost', 'Running cost', fails.length ? 'fail' : warns.length ? 'warn' : 'pass',
+      fails.length || warns.length ? `${fails.length} costly change(s), ${warns.length} to check` : 'No new polling, unbounded reads or heavy images',
+      { details: [...fails, ...warns.map((w) => `check: ${w}`)].slice(0, 30),
+        fix: fails.length ? ['Poll at most once a minute (use the live connection and useLivePoll), bound every list read with .limit(), and keep images under 400 KB (WebP).'] : [] });
+  }
+
+  // 8d. Dependencies: known high or critical vulnerabilities the PR brings in, and licences we cannot ship.
+  {
+    const deps = extra.addedDependencies(git, baseSha, live, ROOT);
+    const lockDirs = [...new Set(live.filter((f) => /(^|\/)package-lock\.json$/.test(f)).map((f) => path.dirname(f)))];
+    const newAdvisories = [];
+    for (const d of lockDirs) {
+      const [now, was] = await Promise.all([extra.auditHigh(path.join(ROOT, d)), extra.auditHigh(path.join(baseDir, d))]);
+      if (now) newAdvisories.push(...now.filter((x) => !(was || []).includes(x)).map((x) => `\`${d}\`: ${x}`));
+    }
+    const badLicence = deps.filter((x) => /(^|[^L])GPL|AGPL|SSPL|BUSL|unknown|not installed/i.test(x.licence));
+    const fail = newAdvisories.length || badLicence.some((x) => !/not installed|unknown/.test(x.licence));
+    check('deps', 'Dependencies · vulnerabilities and licences', fail ? 'fail' : badLicence.length ? 'warn' : 'pass',
+      deps.length || newAdvisories.length ? `${deps.length} new package(s) · ${newAdvisories.length} new high/critical advisory(ies)` : 'No new packages or advisories',
+      { details: [...newAdvisories.map((x) => `advisory: ${x}`), ...deps.map((x) => `\`${x.name}@${x.range}\` in \`${x.file}\` — ${x.licence}`)].slice(0, 30),
+        fix: fail ? ['Upgrade or replace packages with high/critical advisories; do not add GPL, AGPL, SSPL or BUSL code to a closed product.'] : [] });
   }
 
   // 9. AI assistance: what the author declared, and what the commits say
@@ -377,7 +480,13 @@ async function main() {
 main()
   .catch((err) => check('gate', 'Gate itself', 'fail', `The gate crashed: ${err.message}`, { details: ['```', err.stack || '', '```'] }))
   .finally(() => {
-    try { git('worktree', 'remove', '--force', baseDir); } catch { fs.rmSync(baseDir, { recursive: true, force: true }); }
+    fs.rmSync(baseDir, { recursive: true, force: true });
+    const rel = quality.ratingByCount(newIssues.bugs);
+    const sec = quality.ratingByCount(newIssues.vulns);
+    const mnt = quality.ratingBySmells(newIssues.smells, added);
+    checks.unshift({ id: 'ratings', title: 'Quality on new code', status: 'info',
+      summary: `Reliability ${rel} · Security ${sec} · Maintainability ${mnt} · Coverage ${coveragePct == null ? 'n/a' : `${coveragePct}%`} · Duplication ${dupPct == null ? 'n/a' : `${dupPct}%`} · Hotspots ${newIssues.hotspots}`,
+      details: ['Ratings as SonarQube gives them, for the code this PR adds: A is clean; every new bug or vulnerability blocks the merge, smells are rated per 100 added lines.'], fix: [] });
     const verdict = checks.some((c) => c.status === 'fail') ? 'FAIL' : 'PASS';
     const meta = {
       verdict, base: BASE_REF, baseSha, headSha, added, removed,
