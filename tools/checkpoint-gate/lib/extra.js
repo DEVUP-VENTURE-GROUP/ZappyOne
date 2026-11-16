@@ -12,7 +12,7 @@ function runAsync(cmd, args, cwd, timeoutMs = 25 * 60 * 1000) {
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      if (process.platform === 'win32') spawn('taskkill', ['/pid', String(child.pid), '/T', '/F']);
+      if (process.platform === 'win32') require('child_process').spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
       else child.kill('SIGKILL');
     }, timeoutMs);
     child.stdout.on('data', (d) => { stdout += d; });
@@ -112,4 +112,26 @@ async function auditHigh(dir) {
   } catch { return null; }
 }
 
-module.exports = { runAsync, failedTestFiles, newCodeCoverage, costScan, addedDependencies, auditHigh };
+// The test files that use a changed server file directly: they require its path or name. A changed test file runs itself.
+// Through app.js every route reaches every test, so the import graph would pick the whole suite; direct use is the right signal for a PR.
+function selectTests(changed, serverRoot, max = 25) {
+  const testsDir = path.join(serverRoot, 'tests');
+  if (!fs.existsSync(testsDir)) return [];
+  const all = fs.readdirSync(testsDir).filter((f) => f.endsWith('.test.js'));
+  const text = new Map(all.map((f) => [f, fs.readFileSync(path.join(testsDir, f), 'utf8')]));
+  const picked = new Set(changed.filter((f) => /^server\/tests\/.*\.test\.js$/.test(f)).map((f) => path.basename(f)));
+  for (const f of changed.filter((x) => /^server\/src\/.*\.js$/.test(x))) {
+    const rel = f.replace(/^server\/src\//, '').replace(/\.js$/, '');
+    const base = path.basename(rel);
+    // Also its last two path parts without the role suffix (provider/pricing): tests call controllers and routes by URL.
+    const tail = rel.split('/').slice(-2).join('/').replace(/\.(controller|service|routes|model|worker)$/, '');
+    const needles = [rel, `/${base}'`, `/${base}"`, `/${base}.js'`, `/${base}.js"`, ...(tail.includes('/') ? [tail] : [])];
+    const byFile = all.filter((t) => needles.some((k) => text.get(t).includes(k)));
+    const mod = (rel.match(/^modules\/([^/]+)\//) || [])[1];
+    const byModule = byFile.length || !mod ? [] : all.filter((t) => text.get(t).includes(`modules/${mod}/`));
+    for (const t of [...byFile, ...byModule]) picked.add(t);
+  }
+  return [...picked].slice(0, max).map((t) => `tests/${t}`);
+}
+
+module.exports = { selectTests, runAsync, failedTestFiles, newCodeCoverage, costScan, addedDependencies, auditHigh };

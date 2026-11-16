@@ -160,13 +160,15 @@ async function main() {
   const FULL = flag('full');
   // Tests jest links to the changed server files by following imports, plus any test the PR touched; --full runs them all.
   const serverTouched = live.filter((f) => /^server\/(src|tests)\/.*\.js$/.test(f) || /^server\/package(-lock)?\.json$/.test(f));
-  const relatedArgs = FULL ? [] : ['--findRelatedTests', ...serverTouched.filter((f) => f.endsWith('.js')).map((f) => f.replace(/^server\//, ''))];
+  const selected = FULL ? [] : extra.selectTests(serverTouched, path.join(ROOT, 'server'));
+  const relatedArgs = FULL ? [] : selected;
   // An app is built when its own code changes; shared code or assets build all three; --full builds all.
   const appsToBuild = FULL ? WEB_APPS : WEB_APPS.filter((a) => live.some((f) => f.startsWith(`${a}/`) || /^(shared|assets)\//.test(f)));
   const covDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-cov-'));
   async function testsStep() {
     if (flag('skip-tests')) return { status: 'info', summary: 'Skipped (--skip-tests)' };
     if (!FULL && !serverTouched.length) return { status: 'pass', summary: 'No server code changed (run --full for the whole suite)' };
+    if (!FULL && !selected.length) return { status: 'warn', summary: 'Server code changed but no test uses it directly', fix: ['Add a test in server/tests for the changed code, or run the gate with --full.'] };
     const serverDir = path.join(ROOT, 'server');
     const cov = serverSrc.length
       ? ['--coverage', '--coverageReporters=json', `--coverageDirectory=${covDir}`, ...serverSrc.map((f) => `--collectCoverageFrom=${f.replace(/^server\//, '')}`)]
@@ -175,7 +177,7 @@ async function main() {
     if (res.timedOut) return { status: 'fail', summary: 'Server tests did not finish in 40 minutes', fix: ['Find the hanging test (`cd server && npm test`); a test left waiting on a timer or connection holds the whole run.'] };
     const out = `${res.stdout}\n${res.stderr}`;
     const summary = (out.match(/^Tests:.*$/m) || ['Tests: no summary'])[0].replace(/^Tests:\s*/, '');
-    if (res.status === 0) return { status: 'pass', summary };
+    if (res.status === 0) return { status: 'pass', summary: FULL ? `${summary} · whole suite` : `${summary} · ${selected.length} test file(s) that use the changed code` };
     // A file that fails only while ~2,000 tests share the machine is retried alone: a pass means load, not a bug.
     const files = extra.failedTestFiles(out);
     const failed = [...new Set([...out.matchAll(/^\s*● (.+)$/gm)].map((m) => m[1]).filter((t) => !/Validation Warning/.test(t)))];
@@ -186,7 +188,7 @@ async function main() {
           details: files.map((f) => `flaky under load: \`server/${f}\``), fix: ['Make these tests independent of timing (raise their timeout or wait on the condition, not the clock).'] };
       }
     }
-    return { status: 'fail', summary, details: failed.slice(0, 30).map((t) => `✗ ${t}`).concat(failed.length ? [] : ['```', lastLines(out), '```']),
+    return { status: 'fail', summary: FULL ? summary : `${summary} (${selected.length} test file(s) that use the changed code)`, details: failed.slice(0, 30).map((t) => `✗ ${t}`).concat(failed.length ? [] : ['```', lastLines(out), '```']),
       fix: ['Make every server test pass (`cd server && npm test`).'] };
   }
   async function buildStep() {
