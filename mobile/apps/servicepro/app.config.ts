@@ -20,7 +20,7 @@ const config: ExpoConfig = {
     supportsTablet: false,
     infoPlist: {
       NSLocationWhenInUseUsageDescription: 'ServicePro uses your location to show nearby jobs and to share your trip with the customer.',
-      NSLocationAlwaysAndWhenInUseUsageDescription: 'While you are online, ServicePro keeps your location live so nearby jobs reach you and customers see you arrive, even with the screen off.',
+      NSLocationAlwaysAndWhenInUseUsageDescription: 'While you are online, ServicePro uses your location in the background and with the screen locked, to send you nearby jobs and to show the customer your trip on an active job. It stops when you go offline.',
       UIBackgroundModes: ['location'],
       NSCameraUsageDescription: 'ServicePro uses the camera for KYC documents and job photos.',
       NSPhotoLibraryUsageDescription: 'ServicePro uses your photos for KYC documents and job photos.',
@@ -42,18 +42,23 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-dev-client',
-    'expo-secure-store',
+    // No Face ID: nothing in the app asks for biometric unlock, so no Face ID description ships.
+    ['expo-secure-store', { faceIDPermission: false }],
     'expo-font',
     // Release builds are shrunk and obfuscated (R8), as Google Play asks.
     ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
     ['expo-location', {
       locationWhenInUsePermission: 'ServicePro uses your location to show nearby jobs and to share your trip with the customer.',
-      locationAlwaysAndWhenInUsePermission: 'While you are online, ServicePro keeps your location live so nearby jobs reach you and customers see you arrive, even with the screen off.',
+      // Background location runs only while the pro is online (captain/backgroundLocation.ts) and stops when they go offline.
+      locationAlwaysAndWhenInUsePermission: 'While you are online, ServicePro uses your location in the background and with the screen locked, to send you nearby jobs and to show the customer your trip on an active job. It stops when you go offline.',
+      locationAlwaysPermission: 'While you are online, ServicePro uses your location in the background and with the screen locked, to send you nearby jobs and to show the customer your trip on an active job. It stops when you go offline.',
+      motionUsagePermission: false,
       isAndroidBackgroundLocationEnabled: true,
       isAndroidForegroundServiceEnabled: true,
     }],
-    ['expo-camera', { cameraPermission: 'ServicePro uses the camera for KYC documents and job photos.', recordAudioAndroid: false }],
+    // Photos only: the camera never records video or sound.
+    ['expo-camera', { cameraPermission: 'ServicePro uses the camera for KYC documents and job photos.', microphonePermission: false, recordAudioAndroid: false }],
     // The job-offer ringtone (core/lib/pushNotifications OFFER_CHANNEL_ID).
     ['expo-notifications', { sounds: ['./assets/sounds/zappy_ring.wav'], color: '#1F4FD8' }],
     ['expo-image-picker', { photosPermission: 'ServicePro uses your photos for KYC documents and job photos.', microphonePermission: false }],
