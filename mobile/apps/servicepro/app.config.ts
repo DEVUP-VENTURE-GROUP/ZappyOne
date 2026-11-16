@@ -10,8 +10,8 @@ const config: ExpoConfig = {
   scheme: 'zappyone-servicepro',
   // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
   platforms: ['ios', 'android'],
-  // 1.0.2 adds native parts (background location, bubble, ringtone): its own runtime, so no 1.0.1 phone gets this JS over the air.
-  version: '1.0.2',
+  // 1.1.0 is the Expo SDK 58 build. runtimeVersion follows this (policy appVersion), so no SDK 56 phone (1.0.x) gets this JS over the air, and this build never takes an SDK 56 update.
+  version: '1.1.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'light',
