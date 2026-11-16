@@ -151,6 +151,53 @@ export function PopularServices({ services, onOpen, onViewAll }) {
   );
 }
 
+/* Service promos (the team's web design): two cards under Explore Services */
+
+// Each card opens a live service here; a card whose services are not live at this address does not show.
+const SERVICE_PROMOS = [
+  {
+    key: 'cleaning', codes: ['daily_cleaning', 'bathroom_balcony', 'sofa_mattress'], area: 'home_daily_help', photo: '/services/daily_cleaning.jpg',
+    title: 'Home', accent: 'Deep Cleaning', line: 'Professional cleaning for a healthier, happier home.',
+    card: 'bg-[#4B2A9B]', fade: 'from-[#4B2A9B]', titleTone: 'text-white', lineTone: 'text-white/90', accentTone: 'text-orange-400',
+  },
+  {
+    key: 'ac', codes: ['appliance_repair'], photo: '/services/appliance_repair.jpg',
+    title: 'AC Service', accent: '& Repair', line: 'Keep your home cool and comfortable.',
+    card: 'bg-[#E8EFFC]', fade: 'from-[#E8EFFC]', titleTone: 'text-zappy-700', lineTone: 'text-ink-700', accentTone: 'text-orange-500',
+  },
+];
+
+export function ServicePromos({ services, onOpen, onOpenArea }) {
+  const byCode = new Map(services.map((s) => [s.code, s]));
+  const cards = SERVICE_PROMOS
+    .map((p) => ({ ...p, target: p.codes.map((c) => byCode.get(c)).find(Boolean) }))
+    .filter((p) => p.target);
+  if (!cards.length) return null;
+  return (
+    <section aria-label="Featured services" className={`grid gap-4 ${cards.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+      {cards.map((p) => (
+        <button key={p.key} type="button" onClick={() => (p.area ? onOpenArea(p.area) : onOpen(p.target))}
+          aria-label={`${p.title} ${p.accent}. ${p.line} Book now`}
+          className={`group relative flex h-[190px] overflow-hidden rounded-[20px] text-left shadow-[0_2px_12px_-3px_rgba(16,24,40,0.12)] sm:h-[250px] lg:h-[280px] ${p.card}`}>
+          <img src={p.photo} alt="" loading="lazy" decoding="async"
+            className="absolute inset-y-0 right-0 h-full w-[52%] object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+          {/* Solid up to where the photo starts (48%), so no edge shows; then it fades into the photo. */}
+          <span aria-hidden="true" className={`absolute inset-0 bg-gradient-to-r ${p.fade} from-[48%] to-transparent to-[76%]`} />
+          <span className="relative flex max-w-[62%] flex-col justify-center gap-2 p-5 sm:gap-3 sm:p-8">
+            <span className={`text-[24px] font-extrabold italic leading-[1.05] tracking-[-0.02em] sm:text-[34px] lg:text-[40px] ${p.titleTone}`}>
+              {p.title}<br /><span className={p.accentTone}>{p.accent}</span>
+            </span>
+            <span className={`text-[13px] leading-snug sm:text-[17px] ${p.lineTone}`}>{p.line}</span>
+            <span className="mt-1 inline-flex h-10 items-center gap-2 self-start rounded-full bg-white px-5 text-[14px] font-bold text-ink-900 shadow-[0_6px_16px_-6px_rgba(16,24,40,0.35)] transition-colors group-hover:bg-zappy-50 sm:mt-2 sm:h-12 sm:px-7 sm:text-[17px]">
+              Book Now <ArrowRight size={18} strokeWidth={2.4} />
+            </span>
+          </span>
+        </button>
+      ))}
+    </section>
+  );
+}
+
 /* Campaign banners (admin) */
 
 export function CampaignBanners({ ads, onOpen, onImageError }) {
