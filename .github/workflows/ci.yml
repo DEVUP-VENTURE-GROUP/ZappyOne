@@ -62,7 +62,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=moderate || true
 
   mobile:
-    name: Mobile · deps + types (customer, servicepro, rakshak)
+    name: Mobile SDK 56 · deps + types (rakshak, shared packages)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -77,12 +77,48 @@ jobs:
       - run: npm ci
       - name: Apps' API matches the websites' (shared/src/services)
         run: npm run check:api
-      - name: Customer app's bundled pictures match assets/web
-        run: node tools/sync-bundled-art.js --check
-      - name: ServicePro background-location state machine
-        run: node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tools/tests/locationController.test.mjs
-      - name: Type check all three apps
+      - name: Type check Rakshak (and the shared packages it uses)
         run: npm run typecheck
+      - name: Dependency audit (report-only)
+        run: npm audit --omit=dev --audit-level=moderate || true
+
+  mobile-apps:
+    # Customer and ServicePro are standalone Expo SDK 58 apps: each installs only its own
+    # node_modules (never mobile/, the SDK 56 workspace), so a missing dependency cannot be
+    # hidden by an SDK 56 copy.
+    name: Mobile SDK 58 · ${{ matrix.app }} · deps + types
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [customer, servicepro]
+    defaults:
+      run:
+        working-directory: mobile/apps/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/apps/${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      - name: Customer and ServicePro lockfiles agree on Expo, React Native and React
+        working-directory: mobile/apps
+        run: |
+          node -e "
+            const v = (a) => { const p = require('./' + a + '/package-lock.json').packages; return ['expo', 'react-native', 'react', 'react-dom'].map((n) => n + '@' + p['node_modules/' + n].version).join(' '); };
+            const [c, s] = [v('customer'), v('servicepro')];
+            console.log('customer  ', c); console.log('servicepro', s);
+            if (c !== s) { console.error('The two SDK 58 apps resolve different core versions.'); process.exit(1); }"
+      - name: Type check (shared packages through the shared link)
+        run: npm run typecheck
+      - name: Customer app's bundled pictures match assets/web
+        if: matrix.app == 'customer'
+        run: npm --prefix ../.. run check:art
+      - name: ServicePro background-location state machine
+        if: matrix.app == 'servicepro'
+        run: npm --prefix ../.. run test:location
       - name: Dependency audit (report-only)
         run: npm audit --omit=dev --audit-level=moderate || true
 

@@ -28,11 +28,27 @@ jobs:
         with:
           fetch-depth: 0   # the base branch and every PR commit, for before/after and AI trailers
 
+      # The phone apps need Node 22.13+ (Expo SDK 58 and React Native 0.88 require it), so their
+      # three roots install on Node 22: mobile (SDK 56: rakshak + shared core/ui) and the
+      # standalone SDK 58 apps mobile/apps/customer and mobile/apps/servicepro.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install (phone apps, for the app type checks)
+        run: |
+          set -e
+          for d in mobile mobile/apps/customer mobile/apps/servicepro; do
+            echo "::group::npm ci $d"; (cd "$d" && npm ci --no-audit --no-fund); echo "::endgroup::"
+          done
+
+      # The server tests and web builds stay on Node 20, like the CI jobs. The gate runs tsc
+      # (TypeScript 6 supports Node 14.17+) from these installs on the same Node.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install (server, apps, gate)
+      - name: Install (server, websites, gate)
         run: |
           set -e
           for d in server client servicepro rakshak admin tools/checkpoint-gate; do
