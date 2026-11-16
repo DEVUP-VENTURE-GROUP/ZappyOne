@@ -5,6 +5,7 @@
  * stops while a finger is on it, and stays still for reduced motion.
  */
 import { useEffect, useMemo, useRef } from 'react';
+import type { ComponentRef } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { problemPhotoIn } from '@zappy/core/shared/problemArt';
@@ -23,7 +24,7 @@ const TICK_MS = 36;   // about 28 px a second, as on the website
 export function ProblemChips({ services }: { services: HomeService[] }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const row = useRef<ScrollView>(null);
+  const row = useRef<ComponentRef<typeof ScrollView>>(null);
   const x = useRef(0);
   const holdUntil = useRef(0);
   const width = useRef({ content: 0, view: 0 });

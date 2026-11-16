@@ -1,5 +1,6 @@
 // Everything bookable here, by area (Asif's design): a chip per area that follows ?category=, photo cards three to a row; only live services show.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { PackageSearch } from 'lucide-react-native';
@@ -93,8 +94,8 @@ export function AllServicesPage() {
   const visible = selected === 'all' ? domains : domains.filter((d) => d.code === selected);
 
   // Opened from Home at an area far along the bar, or a chip tapped: bring that chip into view and start the list from the top.
-  const chipBar = useRef<ScrollView>(null);
-  const list = useRef<ScrollView>(null);
+  const chipBar = useRef<ComponentRef<typeof ScrollView>>(null);
+  const list = useRef<ComponentRef<typeof ScrollView>>(null);
   const chipX = useRef<Record<string, number>>({});
   const [chipsLaidOut, setChipsLaidOut] = useState(0);
   useEffect(() => {

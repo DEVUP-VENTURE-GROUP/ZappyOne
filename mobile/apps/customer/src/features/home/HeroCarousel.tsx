@@ -1,5 +1,6 @@
 // The top of Home (the website's HeroCarousel): admin hero banners when there are any, else photo slides tied to the live catalog.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { PITCH } from '@zappy/core/shared/serviceArt';
@@ -35,7 +36,7 @@ export function HeroCarousel({ banners = [], domains, onOpen, onOpenBanner, onIm
   const reduce = useReducedMotion();
   const { width: screen } = useWindowDimensions();
   const width = screen - spacing.base * 2;
-  const track = useRef<ScrollView>(null);
+  const track = useRef<ComponentRef<typeof ScrollView>>(null);
   const [index, setIndex] = useState(0);
   const [pausedUntil, setPausedUntil] = useState(0);
 

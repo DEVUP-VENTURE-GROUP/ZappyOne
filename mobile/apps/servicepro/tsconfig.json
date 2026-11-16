@@ -1,9 +1,26 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "preserveSymlinks": true,
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@zappy/core": [
+        "./shared/core"
+      ],
+      "@zappy/core/*": [
+        "./shared/core/*"
+      ],
+      "@zappy/ui": [
+        "./shared/ui"
+      ],
+      "@zappy/ui/*": [
+        "./shared/ui/*"
       ]
     }
   },
@@ -14,7 +31,10 @@
     "expo-env.d.ts",
     "nativewind-env.d.ts",
     "css.d.ts",
-    "../../packages/*/**/*.ts",
-    "../../packages/*/**/*.tsx"
+    "../../packages/native/**/*.ts",
+    "./shared/core/**/*.ts",
+    "./shared/core/**/*.tsx",
+    "./shared/ui/**/*.ts",
+    "./shared/ui/**/*.tsx"
   ]
 }

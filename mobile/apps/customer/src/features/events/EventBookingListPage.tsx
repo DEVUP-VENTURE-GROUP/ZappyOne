@@ -35,7 +35,7 @@ export function EventBookingListPage() {
               <Button label={t('common.newer', 'Newer')} variant="outline" size="small" disabled={page <= 1} onPress={() => setPage(page - 1)} />
               <Button label={t('common.older', 'Older')} variant="outline" size="small" disabled={page >= data.pages} onPress={() => setPage(page + 1)} />
             </View>
-          ) : null} />
+          ) : undefined} />
       )}
     </View>
   );

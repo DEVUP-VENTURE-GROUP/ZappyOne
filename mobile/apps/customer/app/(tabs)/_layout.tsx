@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { ClipboardList, Home, LayoutGrid, Store, User } from 'lucide-react-native';
 import { LIQUID_GLASS } from '@zappy/ui/components/Glass';
 import { useAppSelector } from '@zappy/core/store/hooks';

@@ -10,7 +10,7 @@
  *
  * assets/web stays the one source of truth: never edit the copies or the map.
  * The copies live inside the app because Metro (expo export, and so EAS Build)
- * only resolves files under the Expo server root, mobile/; requiring
+ * only resolves files under the Expo server root; requiring
  * assets/web directly works in the dev server but fails the production bundle.
  *
  * The map is keyed by the website path the shared logic already returns

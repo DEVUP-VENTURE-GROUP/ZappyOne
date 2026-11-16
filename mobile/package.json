@@ -2,19 +2,23 @@
   "name": "zappyone-mobile",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/rakshak",
+    "packages/core",
+    "packages/ui"
   ],
   "scripts": {
-    "customer": "npm run start -w @zappy/customer",
-    "customer:clear": "npm run start -w @zappy/customer -- --clear",
-    "servicepro": "npm run start -w @zappy/servicepro",
-    "servicepro:clear": "npm run start -w @zappy/servicepro -- --clear",
+    "customer": "npm --prefix apps/customer run start",
+    "customer:clear": "npm --prefix apps/customer run start -- --clear",
+    "servicepro": "npm --prefix apps/servicepro run start",
+    "servicepro:clear": "npm --prefix apps/servicepro run start -- --clear",
     "rakshak": "npm run start -w @zappy/rakshak",
     "rakshak:clear": "npm run start -w @zappy/rakshak -- --clear",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "sync:api": "node tools/sync-api-hooks.js",
-    "check:api": "node tools/sync-api-hooks.js --check"
+    "check:api": "node tools/sync-api-hooks.js --check",
+    "sync:art": "node tools/sync-bundled-art.js",
+    "check:art": "node tools/sync-bundled-art.js --check",
+    "test:location": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tools/tests/locationController.test.mjs"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

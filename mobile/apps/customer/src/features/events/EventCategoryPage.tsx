@@ -89,7 +89,7 @@ export function EventCategoryPage() {
         <View style={styles.pages}>
           {Array.from({ length: data.pages }, (_, i) => i + 1).map((p) => <Chip key={p} label={String(p)} selected={p === page} onPress={() => setPage(p)} />)}
         </View>
-      ) : null} />
+      ) : undefined} />
   );
 }
 
