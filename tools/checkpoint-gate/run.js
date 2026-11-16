@@ -100,7 +100,16 @@ const commits = git('log', '--format=%H%x1f%an%x1f%s%x1f%B%x1e', `${baseSha}..HE
 /* The base, checked out beside the PR for before/after comparisons */
 
 const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-base-'));
-git('worktree', 'add', '--detach', '--force', baseDir, baseSha);
+// Only the code folders the comparisons read, exported (git archive) rather than checked out: seconds, and the repo is never touched.
+{
+  const tarFile = path.join(os.tmpdir(), `gate-base-${process.pid}.tar`);
+  const paths = ['client/src', 'servicepro/src', 'admin/src', 'shared/src', 'server/src', 'mobile/apps', 'mobile/packages', ':(glob)**/package.json', ':(glob)**/package-lock.json']
+    .filter((p) => p.startsWith(':') || git('ls-tree', '--name-only', baseSha, p));
+  execFileSync('git', ['archive', '--format=tar', '-o', tarFile, baseSha, ...paths], { cwd: ROOT });
+  // A relative path: GNU tar reads a Windows drive letter (C:) as a remote host.
+  execFileSync('tar', ['-xf', path.relative(baseDir, tarFile)], { cwd: baseDir });
+  fs.rmSync(tarFile, { force: true });
+}
 
 async function main() {
   // 1. Forbidden files
@@ -148,14 +157,21 @@ async function main() {
 
   // 3-4b. Server tests (with coverage of new code), web builds and app type checks run side by side.
   const serverSrc = live.filter((f) => /^server\/src\/.*\.js$/.test(f) && !/(seed|migrations)\//.test(f));
+  const FULL = flag('full');
+  // Tests jest links to the changed server files by following imports, plus any test the PR touched; --full runs them all.
+  const serverTouched = live.filter((f) => /^server\/(src|tests)\/.*\.js$/.test(f) || /^server\/package(-lock)?\.json$/.test(f));
+  const relatedArgs = FULL ? [] : ['--findRelatedTests', ...serverTouched.filter((f) => f.endsWith('.js')).map((f) => f.replace(/^server\//, ''))];
+  // An app is built when its own code changes; shared code or assets build all three; --full builds all.
+  const appsToBuild = FULL ? WEB_APPS : WEB_APPS.filter((a) => live.some((f) => f.startsWith(`${a}/`) || /^(shared|assets)\//.test(f)));
   const covDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-cov-'));
   async function testsStep() {
     if (flag('skip-tests')) return { status: 'info', summary: 'Skipped (--skip-tests)' };
+    if (!FULL && !serverTouched.length) return { status: 'pass', summary: 'No server code changed (run --full for the whole suite)' };
     const serverDir = path.join(ROOT, 'server');
     const cov = serverSrc.length
       ? ['--coverage', '--coverageReporters=json', `--coverageDirectory=${covDir}`, ...serverSrc.map((f) => `--collectCoverageFrom=${f.replace(/^server\//, '')}`)]
       : [];
-    const res = await extra.runAsync('npm', ['test', '--', '--silent', ...cov], serverDir, 40 * 60 * 1000);
+    const res = await extra.runAsync('npm', ['test', '--', '--silent', ...relatedArgs, ...cov], serverDir, 40 * 60 * 1000);
     if (res.timedOut) return { status: 'fail', summary: 'Server tests did not finish in 40 minutes', fix: ['Find the hanging test (`cd server && npm test`); a test left waiting on a timer or connection holds the whole run.'] };
     const out = `${res.stdout}\n${res.stderr}`;
     const summary = (out.match(/^Tests:.*$/m) || ['Tests: no summary'])[0].replace(/^Tests:\s*/, '');
@@ -177,7 +193,8 @@ async function main() {
     if (flag('skip-build')) return { status: 'info', summary: 'Skipped (--skip-build)' };
     const budgets = JSON.parse(fs.readFileSync(path.join(__dirname, 'budgets.json'), 'utf8'));
     const results = [];
-    for (const app of WEB_APPS) results.push({ app, res: await extra.runAsync('npx', ['vite', 'build', '--logLevel', 'error'], path.join(ROOT, app), 10 * 60 * 1000) });
+    if (!appsToBuild.length) return { status: 'pass', summary: 'No web app code changed' };
+    for (const app of appsToBuild) results.push({ app, res: await extra.runAsync('npx', ['vite', 'build', '--logLevel', 'error'], path.join(ROOT, app), 10 * 60 * 1000) });
     const rows = [];
     const fix = [];
     let worst = 'pass';
@@ -204,7 +221,7 @@ async function main() {
       if (over) { worst = 'fail'; fix.push(`${app} ships ${kb(gz)} KB gzipped, over its ${budget} KB budget — lazy-load the new code or drop a dependency. Raise the budget in tools/checkpoint-gate/budgets.json only with a reason in the PR.`); }
       rows.push(`${over ? '✗' : '✓'} **${app}** — ${kb(raw)} KB raw · **${kb(gz)} KB gzipped**${budget ? ` (budget ${budget} KB)` : ''}`);
     }
-    return { status: worst, summary: worst === 'pass' ? `All ${WEB_APPS.length} apps build and stay within their gzip budgets` : 'A build failed or an app grew past its budget', details: rows, fix };
+    return { status: worst, summary: worst === 'pass' ? `${appsToBuild.join(', ')} build and stay within their gzip budgets` : 'A build failed or an app grew past its budget', details: rows, fix };
   }
   async function typesStep() {
     if (!live.some((f) => /^mobile\//.test(f))) return { status: 'pass', summary: 'No app code changed' };
@@ -461,7 +478,7 @@ async function main() {
 main()
   .catch((err) => check('gate', 'Gate itself', 'fail', `The gate crashed: ${err.message}`, { details: ['```', err.stack || '', '```'] }))
   .finally(() => {
-    try { git('worktree', 'remove', '--force', baseDir); } catch { fs.rmSync(baseDir, { recursive: true, force: true }); }
+    fs.rmSync(baseDir, { recursive: true, force: true });
     const rel = quality.ratingByCount(newIssues.bugs);
     const sec = quality.ratingByCount(newIssues.vulns);
     const mnt = quality.ratingBySmells(newIssues.smells, added);
