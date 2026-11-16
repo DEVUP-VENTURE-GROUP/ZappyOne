@@ -11,6 +11,7 @@ import { icon3dFor } from '@zappy/core/shared/icons3d';
 import { EmptyState, ErrorState, ScreenHeader, Skeleton, Text } from '@zappy/ui/components';
 import { GlassSurface } from '@zappy/ui/components/Glass';
 import { webAsset } from '@zappy/ui/lib/media';
+import { artSource } from '../../lib/art';
 import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -23,12 +24,12 @@ const GAP = 10;
 function ServiceCard({ service, domainCode, width, onPress }: { service: Service; domainCode: string; width: number; onPress: () => void }) {
   const [broken, setBroken] = useState(false);
   // A photo that fails to load (offline, website down) gives way to the 3D icon.
-  const photo = broken ? null : webAsset(servicePhoto(service));
+  const photo = broken ? null : artSource(servicePhoto(service));
   const tint = tintFor(domainCode);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={service.name} style={[styles.card, { width }]}>
       <View style={[styles.cardPhoto, { height: Math.round(width * 0.8), backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" onError={() => setBroken(true)} />
+        {photo ? <Image source={photo} style={styles.fill} resizeMode="cover" onError={() => setBroken(true)} />
           : <Image source={{ uri: webAsset(icon3dFor({ ...service, domainCode })) || undefined }} style={styles.icon3d} resizeMode="contain" accessibilityIgnoresInvertColors />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.cardLabel}>{service.name}</Text>
@@ -50,11 +51,11 @@ function Chip({ label, active, onPress, onX }: { label: string; active: boolean;
 
 function AreaHead({ domain, count }: { domain: Domain; count: number }) {
   const [broken, setBroken] = useState(false);
-  const photo = broken ? null : webAsset(areaPhoto(domain));
+  const photo = broken ? null : artSource(areaPhoto(domain));
   return (
     <View style={styles.head}>
       <View style={[styles.headThumb, { backgroundColor: tintFor(domain.code).bg }]}>
-        <Image source={{ uri: (photo || webAsset(icon3dFor(domain))) || undefined }} style={photo ? styles.fill : styles.icon3d} resizeMode={photo ? 'cover' : 'contain'}
+        <Image source={photo || { uri: webAsset(icon3dFor(domain)) || undefined }} style={photo ? styles.fill : styles.icon3d} resizeMode={photo ? 'cover' : 'contain'}
           onError={photo ? () => setBroken(true) : undefined} />
       </View>
       <View style={styles.flex}>

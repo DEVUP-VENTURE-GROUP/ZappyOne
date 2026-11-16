@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
-import { webAsset } from '@zappy/ui/lib/media';
+import { artSource } from '../../lib/art';
 import { ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -48,7 +48,7 @@ export function PromoBanner({ ad, variant = 'hero', width, onOpen, onImageError 
     // The 16:9 frame is a View and the image fills it: an image that reports its own size (a bundled one does) would beat aspectRatio on the Image itself.
     const art = (
       <View style={[{ aspectRatio: ART_RATIO, overflow: 'hidden', borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : null]}>
-        <Image source={{ uri: webAsset(c.imageUrl) || undefined }} resizeMode="cover" accessibilityLabel={c.headline} onError={() => setBroken(true)} style={styles.fill} />
+        <Image source={artSource(c.imageUrl) || undefined} resizeMode="cover" accessibilityLabel={c.headline} onError={() => setBroken(true)} style={styles.fill} />
       </View>
     );
     return onOpen && c.ctaLink ? <Pressable onPress={() => onOpen(ad)} accessibilityRole="button" accessibilityLabel={c.headline}>{art}</Pressable> : art;
