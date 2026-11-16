@@ -17,6 +17,11 @@ export interface HomeAd {
 export type BannerVariant = 'hero' | 'campaign' | 'offer';
 
 const HEIGHT: Record<BannerVariant, number> = { hero: 188, campaign: 164, offer: 132 };
+/** The bundled banner artwork is 1599×899; it keeps that shape so the words drawn into it are never cropped. */
+export const ART_RATIO = 1599 / 899;
+/** How tall a banner of this width is: finished artwork at its own shape, a designed banner at the variant's height. */
+export const bannerHeight = (ad: HomeAd, variant: BannerVariant, width?: number) =>
+  ad.fullImage && ad.content?.imageUrl && width ? Math.round(width / ART_RATIO) : HEIGHT[variant];
 const IMAGE_SHARE: Record<BannerVariant, string> = { hero: '46%', campaign: '44%', offer: '40%' };
 const TITLE_VARIANT: Record<BannerVariant, 'heading2' | 'heading3' | 'bodyLarge'> = { hero: 'heading2', campaign: 'heading3', offer: 'bodyLarge' };
 const hex = (v: string | undefined, fallback: string) => (/^#[0-9a-f]{6}$/i.test(v || '') ? (v as string) : fallback);
@@ -37,14 +42,19 @@ export function PromoBanner({ ad, variant = 'hero', width, onOpen, onImageError 
   const fg = hex(c.textColor, '#FFFFFF');
   const photo = c.imageUrl && !broken ? c.imageUrl : null;
   const tappable = Boolean(onOpen && c.ctaLink);
-  if (ad.fullImage && c.imageUrl) {
-    // Finished artwork (the bundled banners) carries its own words: the image fills the banner.
-    const art = <Image source={{ uri: webAsset(c.imageUrl) || undefined }} resizeMode="cover" accessibilityLabel={c.headline}
-      style={[{ height: HEIGHT[variant], borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : null]} />;
+  if (ad.fullImage && c.imageUrl && !broken) {
+    // Finished artwork (the bundled banners) carries its own words: the image fills the banner at its own 16:9 shape.
+    // If it cannot load (offline, website down) the banner falls back to the solid panel with its words.
+    // The 16:9 frame is a View and the image fills it: an image that reports its own size (a bundled one does) would beat aspectRatio on the Image itself.
+    const art = (
+      <View style={[{ aspectRatio: ART_RATIO, overflow: 'hidden', borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : null]}>
+        <Image source={{ uri: webAsset(c.imageUrl) || undefined }} resizeMode="cover" accessibilityLabel={c.headline} onError={() => setBroken(true)} style={styles.fill} />
+      </View>
+    );
     return onOpen && c.ctaLink ? <Pressable onPress={() => onOpen(ad)} accessibilityRole="button" accessibilityLabel={c.headline}>{art}</Pressable> : art;
   }
   const body = (
-    <View style={[styles.box, { height: HEIGHT[variant], backgroundColor: bg, borderRadius: variant === 'hero' ? 0 : radius.extraLarge }, width ? { width } : null]}>
+    <View style={[styles.box, { height: bannerHeight(ad, variant, width), backgroundColor: bg, borderRadius: variant === 'hero' ? 0 : radius.extraLarge }, width ? { width } : null]}>
       {photo ? (
         <Image source={{ uri: photo }} resizeMode="cover" style={[styles.photo, { width: IMAGE_SHARE[variant] as `${number}%` }]}
           onError={() => { setBroken(true); onImageError?.(); }} />
@@ -67,6 +77,7 @@ export function PromoBanner({ ad, variant = 'hero', width, onOpen, onImageError 
 
 const styles = StyleSheet.create({
   box: { overflow: 'hidden', justifyContent: 'center', padding: spacing.base },
+  fill: { width: '100%', height: '100%' },
   photo: { position: 'absolute', top: 0, right: 0, bottom: 0, height: '100%' },
   copy: { gap: 4 },
   badge: { alignSelf: 'flex-start', borderRadius: radius.small, paddingHorizontal: 8, paddingVertical: 2, marginBottom: 2 },

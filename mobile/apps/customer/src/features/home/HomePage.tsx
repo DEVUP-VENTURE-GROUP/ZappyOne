@@ -42,7 +42,7 @@ import { HeroCarousel } from './HeroCarousel';
 import { FloatingGlassHeader, HomeHeader, SearchBar, type HomeLocation } from './HomeHeader';
 import { BookAgain, CampaignBanners, LocalStores, ModeSwitch, OffersDeals, PopularServices, RecentActivity, ZappyOnePromo } from './HomeRails';
 import { useHomeAds } from './useHomeAds';
-import type { HomeAd } from './PromoBanner';
+import { ART_RATIO, type HomeAd } from './PromoBanner';
 import { bestOfferPct, localBanners, pickPopular } from '@zappy/core/shared/homepageContent';
 import { Skeleton, Text } from '@zappy/ui/components';
 import { ComingSoonRow } from './ComingSoonRow';
@@ -55,9 +55,22 @@ import { buildDomains, comingSoonOf, quickRebooks, searchTerms, type HomeDomain,
 
 let remembered = false;   // a precise fix is saved on the customer's record once per app session
 
+// The same shape as Explore services (two rows of four tiles with their names), so nothing jumps when it loads.
 function SkeletonGrid() {
-  return <View style={styles.skelGrid}>{Array.from({ length: 6 }).map((_, i) => <View key={i} style={styles.skel} />)}</View>;
+  return (
+    <View style={styles.skelSection}>
+      <View style={styles.skelTitle} />
+      <View style={styles.skelGrid}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <View key={i} style={styles.skelTile}><View style={styles.skel} /><View style={styles.skelLabel} /></View>
+        ))}
+      </View>
+    </View>
+  );
 }
+
+// Events run on their own module, not in All services: its tile opens Events, every other area its chip in All services.
+const areaPath = (d: HomeDomain) => (d.code === 'events' ? '/events' : `/services?category=${d.code}`);
 
 export function HomePage() {
   const router = useRouter();
@@ -172,9 +185,14 @@ export function HomePage() {
   const popular = useMemo(() => pickPopular(services) as HomeService[], [services]);
   const { data: promoData } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
   // Admin banners first; the bundled ones only where they are true for this address and customer.
-  const local = (slot: string) => localBanners(slot, { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }: { area?: string; offers?: boolean }) => (offers ? '/promos' : area ? `/services?category=${area}` : '/services') }) as HomeAd[];
-  const heroList = heroBanners.length ? heroBanners : local('hero');
-  const campaignList = [...campaignBanners, ...local('campaign')];
+  // Worked out only when the areas, offers or admin banners change, so the carousel isn't handed a new list on every render.
+  const { heroList, campaignList } = useMemo(() => {
+    const opts = { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }: { area?: string; offers?: boolean }) => (offers ? '/promos' : area ? `/services?category=${area}` : '/services') };
+    return {
+      heroList: (heroBanners.length ? heroBanners : localBanners('hero', opts)) as HomeAd[],
+      campaignList: [...campaignBanners, ...(localBanners('campaign', opts) as HomeAd[])],
+    };
+  }, [allDomains, promoData, heroBanners, campaignBanners]);
   const { width: screen } = useWindowDimensions();
   const tabSpace = useTabBarSpace();
   const goStores = () => router.push('/nearby-shops' as never);
@@ -226,10 +244,10 @@ export function HomePage() {
                 areas={svc?.areas || []} onChangeLocation={() => setLocSheet(true)} />
             ) : null}
             {nothingLive && !loadingCatalog ? <ComingSoonRow groups={comingSoon} loc={loc} /> : null}
-            {settling ? <Skeleton height={188} style={styles.heroSkel} /> : null}
+            {settling ? <Skeleton height={Math.round((screen - spacing.base * 2) / ART_RATIO)} style={styles.heroSkel} /> : null}
             {!settling && !nothingLive && !season ? <HeroCarousel banners={heroList} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} /> : null}
             {/* During a festival each section rises in after the last. */}
-            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={allDomains} onOpenArea={(d) => router.push(`/services?category=${d.code}` as never)} onMore={() => router.push('/services' as never)} /></Reveal>}
+            {settling || (loc.lat != null && !svc && checkingArea) ? <SkeletonGrid /> : <Reveal on={!!theme}><ServiceGrid domains={allDomains} onOpenArea={(d) => router.push(areaPath(d) as never)} onMore={() => router.push('/services' as never)} /></Reveal>}
             <Reveal on={!!theme}><ProblemChips services={services} /></Reveal>
             {theme ? <SafeSection name="festive-divider"><FestiveDivider accent={theme.accent} strip={theme.dark ? theme.accent : theme.paint[4] || theme.accent} /></SafeSection> : null}
             <ZappyOnePromo onExplore={goStores} />
@@ -256,12 +274,17 @@ export function HomePage() {
 }
 
 const styles = StyleSheet.create({
-  heroSkel: { marginHorizontal: 16, marginTop: 12, borderRadius: 14 },
+  // Same box as the carousel: the body already pads the sides.
+  heroSkel: { borderRadius: radius.large },
   page: { flex: 1, backgroundColor: colors.background },
   searchWrap: { paddingHorizontal: spacing.base, paddingBottom: spacing.md, paddingTop: 4, backgroundColor: colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   // Edge to edge, flush under the search: undoes the body's padding.
   festive: { marginHorizontal: -spacing.base, marginTop: -spacing.base },
   body: { padding: spacing.base, gap: spacing.xl, paddingBottom: spacing.xxxl },
-  skelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: spacing.base },
-  skel: { width: '31%', aspectRatio: 1, borderRadius: radius.large, backgroundColor: slate[100] },
+  skelSection: { gap: spacing.md },
+  skelTitle: { width: 140, height: 20, borderRadius: 6, backgroundColor: slate[100] },
+  skelGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: spacing.base, columnGap: '2.66%' },
+  skelTile: { width: '23%', alignItems: 'center', gap: spacing.sm },
+  skel: { width: '100%', aspectRatio: 1, borderRadius: 18, backgroundColor: slate[100] },
+  skelLabel: { width: '80%', height: 10, borderRadius: 5, backgroundColor: slate[100] },
 });
