@@ -1,5 +1,5 @@
 // Explore services (Asif's design): seven service areas with their photo, then More Services; each opens All services at that area.
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { LayoutGrid } from 'lucide-react-native';
 import { areaPhoto } from '@zappy/core/shared/serviceArt';
@@ -35,11 +35,15 @@ const HOME_AREA_LIMIT = 7;
 const AreaTile = memo(function AreaTile({ label, a11y, photo, icon = null, Icon, tint, onPress }: {
   label: string; a11y: string; photo: string | null; icon?: string | null; Icon: ReturnType<typeof serviceIcon>; tint: { bg: string; fg: string }; onPress: () => void;
 }) {
+  // A picture that fails to load (offline, website down) steps down: photo → 3D icon → line icon, never an empty box.
+  const [failed, setFailed] = useState<'none' | 'photo' | 'icon'>('none');
+  const showPhoto = photo && failed === 'none';
+  const showIcon = icon && failed !== 'icon';
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={styles.tile}>
       <View style={[styles.art, { backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.photo} resizeMode="cover" />
-          : icon ? <Image source={{ uri: icon }} style={styles.icon3d} resizeMode="contain" /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
+        {showPhoto ? <Image source={{ uri: photo }} style={styles.photo} resizeMode="cover" onError={() => setFailed('photo')} />
+          : showIcon ? <Image source={{ uri: icon }} style={styles.icon3d} resizeMode="contain" onError={() => setFailed('icon')} /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.name}>{label}</Text>
     </Pressable>

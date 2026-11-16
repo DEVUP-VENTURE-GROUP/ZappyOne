@@ -10,7 +10,7 @@ import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import type { HomeDomain, HomeService } from './homeCatalog';
-import { PromoBanner, type HomeAd } from './PromoBanner';
+import { PromoBanner, bannerHeight, type HomeAd } from './PromoBanner';
 
 /** `services`: catalog codes the slide stands for; it opens the first one offered. Photos are served at /hero. */
 const SLIDES = [
@@ -27,7 +27,7 @@ const SLIDES = [
 ] as { key: string; domain: string; services?: string[]; tab: string; photo: string; title?: string; line?: string; path?: string }[];
 // `line` is the wide-screen sub-line; phones show the title only, as on the website.
 const SLIDE_MS = 6000;
-const HEIGHT = 190;
+const HEIGHT = 188;
 
 export function HeroCarousel({ banners = [], domains, onOpen, onOpenBanner, onImageError }: {
   banners?: HomeAd[]; domains: HomeDomain[]; onOpen: (s: HomeService, path?: string) => void; onOpenBanner?: (ad: HomeAd) => void; onImageError?: () => void;
@@ -51,6 +51,8 @@ export function HeroCarousel({ banners = [], domains, onOpen, onOpenBanner, onIm
   }, [domains]);
   const useBanners = banners.length > 0;
   const count = useBanners ? banners.length : slides.length;
+  // The track is exactly as tall as its banners (a taller track showed a dark strip under each one).
+  const bannerTrack = useBanners ? Math.max(...banners.map((ad) => bannerHeight(ad, 'hero', width))) : HEIGHT;
 
   function go(i: number) {
     if (!count) return;
@@ -72,7 +74,7 @@ export function HeroCarousel({ banners = [], domains, onOpen, onOpenBanner, onIm
   if (useBanners) {
     return (
       <View style={styles.section}>
-        <ScrollView ref={track} horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={[styles.track, { width }]}
+        <ScrollView ref={track} horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={[styles.track, { width, height: bannerTrack, backgroundColor: '#E8EEFB' }]}
           onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
           onTouchStart={() => setPausedUntil(Date.now() + SLIDE_MS * 2)}>
           {banners.map((ad) => <PromoBanner key={ad._id} ad={ad} variant="hero" width={width} onOpen={onOpenBanner} onImageError={onImageError} />)}
