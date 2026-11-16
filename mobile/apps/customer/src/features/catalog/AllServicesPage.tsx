@@ -11,6 +11,7 @@ import { icon3dFor } from '@zappy/core/shared/icons3d';
 import { EmptyState, ErrorState, ScreenHeader, Skeleton, Text } from '@zappy/ui/components';
 import { GlassSurface } from '@zappy/ui/components/Glass';
 import { webAsset } from '@zappy/ui/lib/media';
+import { artSource } from '../../lib/art';
 import { colors, ink, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -21,12 +22,12 @@ interface Domain { code: string; name: string; imageUrl?: string; services: Serv
 const GAP = 10;
 
 function ServiceCard({ service, domainCode, width, onPress }: { service: Service; domainCode: string; width: number; onPress: () => void }) {
-  const photo = webAsset(servicePhoto(service));
+  const photo = artSource(servicePhoto(service));
   const tint = tintFor(domainCode);
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={service.name} style={[styles.card, { width }]}>
       <View style={[styles.cardPhoto, { height: Math.round(width * 0.8), backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" />
+        {photo ? <Image source={photo} style={styles.fill} resizeMode="cover" />
           : <Image source={{ uri: webAsset(icon3dFor({ ...service, domainCode })) || undefined }} style={styles.icon3d} resizeMode="contain" accessibilityIgnoresInvertColors />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.cardLabel}>{service.name}</Text>
@@ -45,11 +46,11 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 function AreaHead({ domain, count }: { domain: Domain; count: number }) {
-  const photo = webAsset(areaPhoto(domain));
+  const photo = artSource(areaPhoto(domain));
   return (
     <View style={styles.head}>
       <View style={[styles.headThumb, { backgroundColor: tintFor(domain.code).bg }]}>
-        <Image source={{ uri: (photo || webAsset(icon3dFor(domain))) || undefined }} style={photo ? styles.fill : styles.icon3d} resizeMode={photo ? 'cover' : 'contain'} />
+        <Image source={photo || { uri: webAsset(icon3dFor(domain)) || undefined }} style={photo ? styles.fill : styles.icon3d} resizeMode={photo ? 'cover' : 'contain'} />
       </View>
       <View style={styles.flex}>
         <Text variant="bodyLarge" weight="bold" numberOfLines={1} accessibilityRole="header">{domain.name}</Text>

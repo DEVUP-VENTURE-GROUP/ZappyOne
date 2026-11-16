@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 import { Text } from '@zappy/ui/components';
-import { webAsset } from '@zappy/ui/lib/media';
+import { artSource } from '../../lib/art';
 import { ink } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -39,8 +39,9 @@ export function PromoBanner({ ad, variant = 'hero', width, onOpen, onImageError 
   const tappable = Boolean(onOpen && c.ctaLink);
   if (ad.fullImage && c.imageUrl) {
     // Finished artwork (the bundled banners) carries its own words: the image fills the banner.
-    const art = <Image source={{ uri: webAsset(c.imageUrl) || undefined }} resizeMode="cover" accessibilityLabel={c.headline}
-      style={[{ height: HEIGHT[variant], borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : null]} />;
+    // A bundled image reports its own 1599 px size, so the banner always sets its width (full width when none is given).
+    const art = <Image source={artSource(c.imageUrl) || undefined} resizeMode="cover" accessibilityLabel={c.headline}
+      style={[{ height: HEIGHT[variant], borderRadius: variant === 'hero' ? 0 : radius.extraLarge, backgroundColor: '#E8EEFB' }, width ? { width } : { width: '100%' }]} />;
     return onOpen && c.ctaLink ? <Pressable onPress={() => onOpen(ad)} accessibilityRole="button" accessibilityLabel={c.headline}>{art}</Pressable> : art;
   }
   const body = (
