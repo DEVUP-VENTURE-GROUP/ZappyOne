@@ -26,7 +26,7 @@ import LocationSheet from './LocationSheet';
 import { ServiceGrid, ProblemChips } from './ServiceGrid';
 import {
   ModeSwitch, ZappyOnePromo, PopularServices, CampaignBanners, LocalStores,
-  OffersDeals, BookAgain, RecentActivity,
+  OffersDeals, BookAgain, RecentActivity, ServicePromos,
 } from './HomeRails';
 import HomeMarketplace from './HomeMarketplace';
 import { useHomeAds } from './useHomeAds';
@@ -70,15 +70,19 @@ function ActiveJobCard({ job, onOpen }) {
   );
 }
 
+// The same shape as Explore Services (twelve photo cards, six to a row on a desktop), so nothing jumps when it loads.
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8" aria-hidden="true">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col items-center gap-1.5">
-          <span className="aspect-square w-full animate-pulse rounded-card bg-sunken" />
-          <span className="h-3 w-3/4 animate-pulse rounded bg-sunken" />
-        </div>
-      ))}
+    <div aria-hidden="true">
+      <div className="h-7 w-52 animate-pulse rounded-lg bg-sunken sm:h-9" />
+      <div className="mt-4 grid grid-cols-3 gap-2.5 sm:mt-5 sm:grid-cols-4 sm:gap-4 lg:grid-cols-6">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-[16px] bg-white p-1.5 ring-1 ring-black/[0.04] sm:p-2">
+            <span className="aspect-[4/3] w-full animate-pulse rounded-[12px] bg-sunken" />
+            <span className="mx-auto mb-1.5 h-3.5 w-3/4 animate-pulse rounded bg-sunken" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -268,8 +272,9 @@ export default function HomePage() {
   const { data: promoData } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
   // Admin banners first; the bundled ones only where they are true for this address and customer.
   const local = (slot) => localBanners(slot, { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }) => (offers ? '/promos' : area ? `/services#domain-${area}` : '/services') });
-  const heroList = heroBanners.length ? heroBanners : local('hero');
-  const campaignList = [...campaignBanners, ...local('campaign')];
+  // The hero is the team's designed slides unless an admin has set hero banners; the bundled hero artwork then joins the campaign row, so none is lost.
+  const heroList = heroBanners;
+  const campaignList = [...campaignBanners, ...(heroBanners.length ? [] : local('hero')), ...local('campaign')];
 
   /* The customer's own jobs. */
   const { jobs, current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
@@ -378,14 +383,19 @@ export default function HomePage() {
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {settling && <div className="h-[188px] animate-pulse rounded-[20px] bg-sunken sm:h-[300px] lg:h-[340px]" aria-hidden="true" />}
+              {settling && <div className="h-[230px] animate-pulse rounded-[20px] bg-sunken sm:h-[340px] lg:h-[400px]" aria-hidden="true" />}
               {!settling && !nothingLive && !season && (
                 <HeroCarousel banners={heroList} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />
               )}
 
               {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={allDomains} onOpenArea={(d) => nav(`/services#domain-${d.code}`)} onMore={() => nav('/services')} />}
+                : (
+                  <>
+                    <ServiceGrid services={services} onOpen={openService} onViewAll={() => nav('/services')} />
+                    <ServicePromos services={services} onOpen={openService} onOpenArea={(area) => nav(`/services#domain-${area}`)} />
+                  </>
+                )}
               {/* The problem in the customer's own words, straight into its flow. */}
               <ProblemChips services={services} />
               {season && <FestiveDivider theme={theme} />}
