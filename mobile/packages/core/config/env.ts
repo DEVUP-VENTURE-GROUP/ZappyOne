@@ -101,7 +101,8 @@ export const SOCKET_URL = API_ORIGIN;
  * folder (service and problem photos) load from here, so the apps show the
  * same images without bundling them.
  */
-export const WEB_ORIGIN = (process.env.EXPO_PUBLIC_WEB_URL ?? 'https://zappyone.com').replace(/\/+$/, '');
+// The canonical host: zappyone.com answers every request with a 308 to www, which cost each picture an extra round trip.
+export const WEB_ORIGIN = (process.env.EXPO_PUBLIC_WEB_URL ?? 'https://www.zappyone.com').replace(/\/+$/, '');
 
 /**
  * Request timeout in ms. Mobile networks are slower and less reliable than the
