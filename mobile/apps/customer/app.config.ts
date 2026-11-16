@@ -39,13 +39,21 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-dev-client',
-    'expo-secure-store',
+    // No Face ID: nothing in the app asks for biometric unlock, so no Face ID description ships.
+    ['expo-secure-store', { faceIDPermission: false }],
     'expo-font',
     // Release builds are shrunk and obfuscated (R8), as Google Play asks.
     ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
-    ['expo-location', { locationWhenInUsePermission: 'ZappyOne uses your location to find professionals near you and to track your booking.' }],
-    ['expo-camera', { cameraPermission: 'ZappyOne uses the camera for photos of what needs fixing.', recordAudioAndroid: false }],
+    // While in use only: the customer app never tracks in the background, and uses no motion data.
+    ['expo-location', {
+      locationWhenInUsePermission: 'ZappyOne uses your location to find professionals near you and to track your booking.',
+      locationAlwaysAndWhenInUsePermission: false,
+      locationAlwaysPermission: false,
+      motionUsagePermission: false,
+    }],
+    // Photos only: the camera never records video or sound.
+    ['expo-camera', { cameraPermission: 'ZappyOne uses the camera for photos of what needs fixing.', microphonePermission: false, recordAudioAndroid: false }],
     'expo-notifications',
     ['expo-image-picker', { photosPermission: 'ZappyOne uses your photos to show what needs fixing.', microphonePermission: false }],
   ],

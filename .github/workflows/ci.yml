@@ -77,6 +77,10 @@ jobs:
       - run: npm ci
       - name: Apps' API matches the websites' (shared/src/services)
         run: npm run check:api
+      - name: Customer app's bundled pictures match assets/web
+        run: node tools/sync-bundled-art.js --check
+      - name: ServicePro background-location state machine
+        run: node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tools/tests/locationController.test.mjs
       - name: Type check all three apps
         run: npm run typecheck
       - name: Dependency audit (report-only)
