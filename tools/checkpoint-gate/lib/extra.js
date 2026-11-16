@@ -91,7 +91,9 @@ function addedDependencies(git, baseSha, changedFiles, root) {
     const old = deps(before);
     for (const [name, range] of Object.entries(deps(after))) {
       if (old[name]) continue;
-      const dirs = [path.join(root, path.dirname(f), 'node_modules', name), path.join(root, 'mobile', 'node_modules', name), path.join(root, 'node_modules', name)];
+      // The SDK 58 apps install their own node_modules and must never read the SDK 56 workspace copy in mobile/node_modules.
+      const sdk58App = /^mobile\/apps\/(customer|servicepro)\//.test(f);
+      const dirs = [path.join(root, path.dirname(f), 'node_modules', name), ...(sdk58App ? [] : [path.join(root, 'mobile', 'node_modules', name)]), path.join(root, 'node_modules', name)];
       const pkg = dirs.map((d) => path.join(d, 'package.json')).find((p) => fs.existsSync(p));
       const licence = pkg ? (JSON.parse(fs.readFileSync(pkg, 'utf8')).license || 'unknown') : 'not installed';
       out.push({ file: f, name, range, licence: typeof licence === 'string' ? licence : licence.type || 'unknown' });

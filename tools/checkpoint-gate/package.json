@@ -3,7 +3,8 @@
   "private": true,
   "description": "Verify-only quality gate for pull requests into checkpoint-main",
   "scripts": {
-    "gate": "node run.js"
+    "gate": "node run.js",
+    "test": "node --test lib/mobile.test.js"
   },
   "devDependencies": {
     "eslint": "9.39.1",

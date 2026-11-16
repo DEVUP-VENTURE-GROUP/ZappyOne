@@ -48,6 +48,7 @@ const kb = (bytes) => Math.round(bytes / 102.4) / 10;
 const checks = [];
 const quality = require('./lib/quality');
 const extra = require('./lib/extra');
+const mobile = require('./lib/mobile');
 let coveragePct = null;
 let dupPct = null;
 let newIssues = { bugs: 0, vulns: 0, smells: 0, hotspots: 0 };
@@ -226,14 +227,16 @@ async function main() {
     return { status: worst, summary: worst === 'pass' ? `${appsToBuild.join(', ')} build and stay within their gzip budgets` : 'A build failed or an app grew past its budget', details: rows, fix };
   }
   async function typesStep() {
-    if (!live.some((f) => /^mobile\//.test(f))) return { status: 'pass', summary: 'No app code changed' };
-    const apps = ['customer', 'servicepro'].filter((a) => fs.existsSync(path.join(ROOT, 'mobile/apps', a, 'tsconfig.json')));
+    // Each app with its own workspace's TypeScript: customer and servicepro on SDK 58, rakshak on SDK 56 (lib/mobile.js).
+    const touched = mobile.touchedPaths(changed);
+    const apps = mobile.appsAffected(touched);
+    if (!apps.length) return { status: 'pass', summary: 'No app code changed' };
     const results = [];
-    for (const a of apps) results.push({ a, res: await extra.runAsync('npx', ['tsc', '--noEmit', '-p', '.'], path.join(ROOT, 'mobile/apps', a), 10 * 60 * 1000) });
-    const errors = results.flatMap(({ a, res }) => `${res.stdout}`.split('\n').filter((l) => /error TS\d+/.test(l)).map((l) => `${a}: ${l.trim()}`));
-    return errors.length
-      ? { status: 'fail', summary: `${errors.length} type error(s) in the apps`, details: errors.slice(0, 30), fix: ['Fix the types (`npx tsc --noEmit -p .` inside each app). A type error here is a crash on a phone the web build never shows.'] }
-      : { status: 'pass', summary: `Both apps type-check (${apps.join(', ')})` };
+    for (const app of apps) {
+      const problem = mobile.cannotRun(ROOT, app);
+      results.push({ app, problem, res: problem ? null : await extra.runAsync(process.execPath, [mobile.tscPath(ROOT, app), '--noEmit', '-p', '.'], path.join(ROOT, app.dir), 10 * 60 * 1000) });
+    }
+    return mobile.judge(results, mobile.nativeFiles(live));
   }
   // Two lanes, not six jobs at once: tests in one, builds then app type checks in the other (one machine, not a cluster).
   // Each step's own time is in its summary, so a slow step shows itself.
