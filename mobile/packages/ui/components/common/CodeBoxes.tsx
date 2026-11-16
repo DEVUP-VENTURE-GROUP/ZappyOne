@@ -2,6 +2,7 @@
  * A row of boxes for typing a short numeric code.
  */
 import React, { useRef } from 'react';
+import type { ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { KeyRound } from 'lucide-react-native';
 import { Text } from '..';
@@ -11,7 +12,7 @@ import { spacing } from '../../theme/spacing';
 
 /* Six boxes over one hidden field: the customer's handover or start code. */
 export function CodeBoxes({ value, onChange, length = 6, title, hint }: { value: string; onChange: (v: string) => void; length?: number; title: string; hint: string }) {
-  const ref = useRef<TextInput>(null);
+  const ref = useRef<ComponentRef<typeof TextInput>>(null);
   return (
     <View style={styles.codeWrap}>
       <View style={styles.row}>

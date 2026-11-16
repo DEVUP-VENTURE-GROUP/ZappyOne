@@ -127,7 +127,7 @@ export function WorkerEarningsPage() {
             {isLoading ? <SkeletonList count={4} /> : null}
           </View>
         }
-        ListEmptyComponent={isLoading ? null : (
+        ListEmptyComponent={isLoading ? undefined : (
           <EmptyState title="No earnings found" message="Complete jobs in this period to see them here." icon={<BarChart2 size={24} color={ink[300]} />} />
         )}
         renderItem={({ item }) => <EarningRow job={item} open={open === item._id} onToggle={() => setOpen((p) => (p === item._id ? null : item._id))} />}

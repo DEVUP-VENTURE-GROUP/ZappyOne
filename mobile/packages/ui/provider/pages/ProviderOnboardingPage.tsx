@@ -9,6 +9,7 @@
  * Android's back button step back through the flow before leaving it.
  */
 import { useCallback, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { MyServiceRequests } from '../components/onboarding/MyServiceRequests';
 import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -37,7 +38,7 @@ export function ProviderOnboardingPage() {
   const [domain, setDomain] = useState<Domain | null>(null);
   const [lineCode, setLineCode] = useState<string | null>(null);
   const [showRequest, setShowRequest] = useState(false);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const go = useCallback((next: Step) => { setStep(next); scroll.current?.scrollTo({ y: 0, animated: false }); }, []);
   const back = useCallback(() => {

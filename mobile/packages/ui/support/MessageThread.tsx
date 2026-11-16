@@ -30,7 +30,7 @@ export function MessageThread({ messages, teamLabel, open, sending, placeholder,
   return (
     <>
       <FlatList ref={list} data={messages} keyExtractor={(m, i) => `${m.at}-${i}`} contentContainerStyle={styles.msgs}
-        onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} ListHeaderComponent={header} ListFooterComponent={footer}
+        onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} ListHeaderComponent={header ?? undefined} ListFooterComponent={footer ?? undefined}
         renderItem={({ item: m }) => {
           const team = m.from === 'admin';
           return (

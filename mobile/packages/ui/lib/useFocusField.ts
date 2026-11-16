@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
+import type { ComponentRef } from 'react';
 import type { LayoutChangeEvent, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 // A link with ?focus=<key> scrolls the screen to the section that holds that field (the website's useFocusField); sections register with field(...keys).
 export function useFocusField(ready: boolean) {
   const { focus } = useLocalSearchParams<{ focus?: string }>();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const ys = useRef<Record<string, number>>({});
   const done = useRef(false);
   const go = useCallback(() => {
