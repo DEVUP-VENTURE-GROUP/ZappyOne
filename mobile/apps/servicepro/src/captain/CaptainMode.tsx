@@ -23,11 +23,13 @@ export function CaptainMode() {
   const role = useAppSelector((s) => s.auth.role);
   const isWorker = signedIn && role === 'worker';
   const isShop = signedIn && role === 'shop';
-  const { data } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
-  const { data: shopMe } = useShopMeQuery(undefined, { skip: !isShop });
+  const { data, isSuccess: workerKnown } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
+  const { data: shopMe, isSuccess: shopKnown } = useShopMeQuery(undefined, { skip: !isShop });
   // A shop is online while its Live switch is ON (shops/me/live).
   const online = isWorker ? !!(data as { worker?: { isOnline?: boolean } } | undefined)?.worker?.isOnline : isShop && (shopMe as { shop?: { takingOrders?: boolean } } | undefined)?.shop?.takingOrders !== false;
-  useCaptainMode({ on: online, role });
+  // Known once the server has answered for this account; signed out (or any other role) is known too: off. While loading, nothing is decided on a guess.
+  const known = isWorker ? workerKnown : isShop ? shopKnown : true;
+  useCaptainMode({ known, on: known && online, role });
 
   // The phone's ZappyOne tile and widget show what the app last knew; signed out, they show offline.
   const { data: today } = useShopEarningsQuery('today', { skip: !isShop });
