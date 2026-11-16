@@ -19,7 +19,7 @@ The gate rates the code a PR **adds** the way SonarQube does: Reliability, Secur
 |---|---|
 | Forbidden files | adds an `.env`, key, certificate, build output or AI tool config (`.claude/`, `CLAUDE.md`, `AGENTS.md`, `.cursor/`…) |
 | Secrets in code | adds a line that looks like an AWS key, a database URI with a password, a private key, a live payment key or a token |
-| Server tests | breaks any test in `server/tests`. A file that fails only under load and passes on a calm retry is a warning (flaky), not a failure |
+| Server tests | breaks a test that uses the changed server code (by path, file name or URL, else its module's tests, at most 25 files). `--full` runs the whole suite. A file that fails only under load and passes on a calm retry is a warning (flaky) |
 | Coverage on new code | runs fewer than 80% of the new server statements in tests (SonarQube's default gate) |
 | Build every app · compressed size | breaks a build of client, servicepro or admin, or pushes one past its gzip budget in `budgets.json` |
 | App type check (iOS + Android) | changes `mobile/` and leaves a TypeScript error in the customer or ServicePro app |
@@ -44,6 +44,8 @@ These checks report and never fail the gate:
 | AI assistance | the declared share against commits marked with an AI co-author trailer |
 | Tests for server changes | server code changed with no test changed |
 | Size of the change | past 1,500 added lines |
+
+A PR run takes about 2 minutes: only the tests that use the changed code, only the web apps whose code changed, and both app type checks when `mobile/` changed. Run `--full` (the whole ~1,950-test suite and all three builds) before a release and nightly.
 
 Every lint-based check compares the PR with its base and fails only on what the PR adds, so older debt in a file you touch is shown but not blamed on you. Tests, the three web builds and both app type checks run at the same time.
 
