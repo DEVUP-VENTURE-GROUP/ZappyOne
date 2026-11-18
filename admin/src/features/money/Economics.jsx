@@ -13,6 +13,7 @@ import PartnerCommission from './economics/PartnerCommission';
 import SmallJobs from './economics/SmallJobs';
 import Travel from './economics/Travel';
 import RunnerAccess from './economics/RunnerAccess';
+import BookedVisits from './economics/BookedVisits';
 
 /**
  * Economics: every money rule in one place, a tab per kind of rule, so none of
@@ -200,6 +201,7 @@ const TABS = [
   ['cancellations', '8. Cancellations', 'What cancelling costs customers, and what backing out costs providers'],
   ['dispatch', '9. Dispatch', 'How fast a job finds its pro: auto-accept, first look, several at once, then wider'],
   ['dues', '10. Worker dues', 'What workers may owe from cash jobs, and recording what they pay'],
+  ['booked', '11. Booked visits', 'Pros confirm jobs booked for later, or the job moves to the next pro in time'],
 ];
 
 export default function Economics() {
@@ -226,6 +228,7 @@ export default function Economics() {
       {tab === 'runners' && <RunnerAccess />}
       {tab === 'cancellations' && <CancellationRules />}
       {tab === 'dues' && <WorkerDues />}
+      {tab === 'booked' && <BookedVisits />}
       {tab === 'boost' && <BoostTips />}
       {tab === 'dispatch' && <Dispatch />}
       {tab === 'surge' && <Surge />}

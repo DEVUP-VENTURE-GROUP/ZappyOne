@@ -382,6 +382,8 @@ function startMatchingWaves() {
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
     require("./modules/jobs/promise").sweep().catch((err) => logger.warn({ err: err.message }, "[PROMISE] sweep failed"));
+    // Booked visits: ask the pro to confirm, ask again, re-offer if silent, alert both sides 10 min before (jobs/time-check).
+    require("./modules/jobs/time-check").sweepTick();
     // Long time inside a customer's home: ask the pro, then SOS to ops if they do not answer (jobs/safety-check).
     require("./modules/jobs/safety-check").sweep().catch((err) => logger.warn({ err: err.message }, "[SAFETY] sweep failed"));
     // Automatic surge: every active zone, every minute (jobs/surge).

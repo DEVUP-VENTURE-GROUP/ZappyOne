@@ -13,7 +13,7 @@ export function planProblems({ type, name, itemCount, pricePaise, visitsPerMonth
   if (!itemCount) out.push('Tap at least one job below to put it in the plan');
   if (itemCount > L.itemsMax) out.push(`A plan can hold up to ${L.itemsMax} jobs`);
   if (!pricePaise || pricePaise < L.priceMinPaise) out.push('Set the price');
-  if (pricePaise > L.priceMaxPaise) out.push('The price can be up to Rs 5,00,000');
+  if (pricePaise > L.priceMaxPaise) out.push('The price can be up to ₹5,00,000');
   if (type === 'monthly') {
     const v = Number(visitsPerMonth);
     if (!v || v < L.visitsMin || v > L.visitsMax) out.push(`Visits a month must be from ${L.visitsMin} to ${L.visitsMax}`);

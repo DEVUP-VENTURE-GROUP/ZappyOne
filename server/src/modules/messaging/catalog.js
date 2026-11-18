@@ -98,6 +98,36 @@ const CATALOG = {
     sample: () => sampleJob(),
     build: ({ f }) => ({ push: { title: 'Finding you someone else', body: `Your ${noun(f)} could not make it. We are finding the next one now; you can also cancel free.`, link: f.link } }),
   },
+  'provider.time_check': {
+    audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: true, label: 'Confirm a booked job (1 h before; jobs/time-check)',
+    sample: () => ({ reference: 'ZP-2041', time: '3:00 pm', reofferIn: 20, link: '/worker/work' }),
+    build: ({ reference, time, link }) => ({ push: { title: `Confirm your ${time} job`, body: `${reference || 'A booked job'}: tap "I'll be there", or "Can't make it" and we find someone else at no charge.`, link } }),
+  },
+  'provider.time_check_last': {
+    audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: true, label: 'Last call to confirm a booked job',
+    sample: () => ({ reference: 'ZP-2041', time: '3:00 pm', reofferIn: 10, link: '/worker/work' }),
+    build: ({ reference, time, reofferIn, link }) => ({ push: { title: `Still on for ${time}?`, body: `${reference || 'Your booked job'} goes to another pro in ${reofferIn} min unless you confirm.`, link } }),
+  },
+  'provider.time_check_moved': {
+    audience: 'provider', type: 'job_removed', channels: ['push'], urgent: true, label: 'Booked job moved: not confirmed',
+    sample: () => ({ reference: 'ZP-2041', time: '3:00 pm', toShop: false, link: '/worker/work' }),
+    build: ({ reference, time, toShop, link }) => ({ push: { title: 'Booked job moved', body: `${reference || 'Your'} ${time} job was not confirmed, so it went ${toShop ? 'back to your shop owner' : 'to another pro'}. Confirm when asked to keep your jobs.`, link } }),
+  },
+  'provider.leave_now': {
+    audience: 'provider', type: 'job_reminder', channels: ['push'], urgent: true, label: 'Booked job in 10 min: set off',
+    sample: () => ({ reference: 'ZP-2041', time: '3:00 pm', link: '/worker/work' }),
+    build: ({ reference, time, link }) => ({ push: { title: `Your ${time} job is in 10 min`, body: `${reference || 'Booked job'}: set off now and tap "On the way" so the customer can follow you.`, link } }),
+  },
+  'customer.pro_confirmed': {
+    audience: 'customer', type: 'worker_assigned', channels: ['push'], label: 'Pro confirmed the booked time',
+    sample: () => ({ label: 'cleaning', time: '3:00 pm', link: '/bookings/x' }),
+    build: ({ label, time, link }) => ({ push: { title: `Confirmed for ${time}`, body: `Your ${label || 'service'} pro has confirmed. We will tell you when they set off.`, link } }),
+  },
+  'customer.pro_due_soon': {
+    audience: 'customer', type: 'worker_arriving_soon', channels: ['push'], urgent: true, label: 'Booked visit in 10 min',
+    sample: () => ({ label: 'cleaning', time: '3:00 pm', link: '/bookings/x' }),
+    build: ({ label, time, link }) => ({ push: { title: `Your ${label || 'service'} pro is due at ${time}`, body: 'Please be at the address. You can call them from the booking.', link } }),
+  },
   'booking.slow': {
     audience: 'customer', type: 'order_delayed', channels: ['push'], label: 'No pro free yet (2 min; jobs/fast-assign)',
     sample: () => ({ ...sampleJob({ provider: null }), boostable: true }),

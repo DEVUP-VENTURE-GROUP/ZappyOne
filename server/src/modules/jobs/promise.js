@@ -41,9 +41,15 @@ const schema = new mongoose.Schema({
   lateMinutes: { type: Number, default: null },
   missedAt: { type: Date, default: null },
   closed: { type: Boolean, default: false },
+  // Booked-for-later visits: the provider confirms before the time (jobs/time-check).
+  askedAt: { type: Date, default: null },
+  askedAgainAt: { type: Date, default: null },
+  confirmedAt: { type: Date, default: null },
+  alertedAt: { type: Date, default: null },
 }, { timestamps: true });
 schema.index({ closed: 1, arrivedAt: 1, missedAt: 1, promisedBy: 1 });
 schema.index({ createdAt: -1 });
+schema.index({ scheduled: 1, closed: 1, promisedBy: 1 });
 const ArrivalPromise = mongoose.models.ArrivalPromise || mongoose.model('ArrivalPromise', schema);
 
 const RULES = () => require('./give-back').RULES;
@@ -85,6 +91,9 @@ async function start(kind, doc) {
     minutes = est.minutes; source = est.source;
     promisedBy = new Date(now + minutes * 60000);
   }
+  // Taken already inside the confirm window: taking it is the confirmation.
+  const askMs = later ? (await require('./time-check').settings()).askBeforeMin * 60000 : 0;
+  const confirmedAt = later && booked - now <= askMs ? new Date(now) : null;
   return ArrivalPromise.findOneAndUpdate(
     { jobId: doc._id },
     { $set: {
@@ -92,6 +101,7 @@ async function start(kind, doc) {
       scheduled: !!later, promisedMinutes: minutes, promisedBy, source,
       area: `${at.lat.toFixed(2)},${at.lng.toFixed(2)}`, hour: istHour(now),
       arrivedAt: null, onTime: null, lateMinutes: null, missedAt: null, closed: false,
+      askedAt: null, askedAgainAt: null, confirmedAt, alertedAt: null,
     } },
     { upsert: true, new: true },
   );
@@ -170,8 +180,8 @@ async function onTimeRates(ids) {
 
 /** What the customer sees on the booking: due by when, and whether it was kept. */
 async function viewFor(jobId) {
-  const p = await ArrivalPromise.findOne({ jobId }).select('promisedBy promisedMinutes scheduled arrivedAt onTime missedAt closed').lean();
-  return p ? { dueBy: p.promisedBy, minutes: p.promisedMinutes, scheduled: p.scheduled, arrivedAt: p.arrivedAt, onTime: p.onTime, late: !!p.missedAt && !p.arrivedAt } : null;
+  const p = await ArrivalPromise.findOne({ jobId }).select('promisedBy promisedMinutes scheduled arrivedAt onTime missedAt closed confirmedAt').lean();
+  return p ? { dueBy: p.promisedBy, minutes: p.promisedMinutes, scheduled: p.scheduled, confirmedAt: p.closed ? null : p.confirmedAt, arrivedAt: p.arrivedAt, onTime: p.onTime, late: !!p.missedAt && !p.arrivedAt } : null;
 }
 
 /** Admin: on-time over the last N days — overall, by hour, by area, by provider. */
