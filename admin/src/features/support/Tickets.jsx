@@ -121,7 +121,7 @@ export default function Support() {
   const [category, setCategory] = useState('');
 
   // Refreshed often, so a conversation reads like a chat.
-  const { data, isLoading } = useAdminSupportTicketsQuery({ status, priority, kind, category, page }, { pollingInterval: 20000 });
+  const { data, isLoading } = useAdminSupportTicketsQuery({ status, priority, kind, category, page }, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
 
   if (isLoading) return <PageLoader />;
 

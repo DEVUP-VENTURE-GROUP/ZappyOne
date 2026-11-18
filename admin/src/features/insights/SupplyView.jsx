@@ -10,7 +10,7 @@ import { Kpi, Findings, Panel, rupees, count, minutes } from './charts';
  */
 export default function SupplyView({ days }) {
   const span = days === 1 ? 7 : days;
-  const { data, isLoading, isError, refetch } = useAdminInsightsSupplyQuery(span, { pollingInterval: 120000 });
+  const { data, isLoading, isError, refetch } = useAdminInsightsSupplyQuery(span, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (

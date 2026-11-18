@@ -11,7 +11,7 @@ export default function IssuesList({ onOpenBooking }) {
   const [state, setState] = useState('open');
   const [type, setType] = useState('');
   const [before, setBefore] = useState(null);
-  const { data, isFetching, isError } = useAdminIssuesQuery({ state, ...(type && { type }), ...(before && { before }) }, { pollingInterval: 30000 });
+  const { data, isFetching, isError } = useAdminIssuesQuery({ state, ...(type && { type }), ...(before && { before }) }, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const [markDone, { isLoading: closing }] = useAdminOpsAlertDoneMutation();
   const rows = data?.rows || [];
 

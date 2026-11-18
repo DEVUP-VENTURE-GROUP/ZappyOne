@@ -24,7 +24,7 @@ function CohortCell({ value }) {
 
 export default function CustomersView({ days }) {
   const span = days === 1 ? 30 : days;
-  const { data, isLoading, isError, refetch } = useAdminInsightsCustomersQuery(span, { pollingInterval: 300000 });
+  const { data, isLoading, isError, refetch } = useAdminInsightsCustomersQuery(span, { skipPollingIfUnfocused: true, pollingInterval: 300000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (

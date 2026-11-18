@@ -21,7 +21,7 @@ function notify(title, body) {
 
 // What is waiting on someone (server admin/todo.service) and urgent alerts (admin/ops-alerts), checked every 20 seconds; anything new pops a toast and, when allowed, a browser notification.
 export default function TodoBell({ onOpen }) {
-  const { data } = useAdminTodoQuery(undefined, { pollingInterval: 20000 });
+  const { data } = useAdminTodoQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   const [markDone, { isLoading: closing }] = useAdminOpsAlertDoneMutation();
   const [open, setOpen] = useState(false);
   const last = useRef(null);

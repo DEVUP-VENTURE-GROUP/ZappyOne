@@ -17,8 +17,8 @@ const pctTone = (p) => (p == null ? 'text-slate-400' : p >= 90 ? 'text-emerald-6
 
 export default function Arrivals() {
   const [days, setDays] = useState(7);
-  const { data, isLoading } = useAdminArrivalReportQuery(days, { pollingInterval: 60000 });
-  const { data: loc } = useAdminWorkerLocationsQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading } = useAdminArrivalReportQuery(days, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
+  const { data: loc } = useAdminWorkerLocationsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
 
   if (isLoading || !data) return <PageLoader />;
   const o = data.overall;

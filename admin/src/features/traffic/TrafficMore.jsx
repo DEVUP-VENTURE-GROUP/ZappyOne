@@ -81,7 +81,7 @@ export function NotificationsTrafficView() {
 // The supply side: pros online and shops live now, how fast jobs are accepted, and the partners doing the most jobs.
 export function PartnersTrafficView() {
   const [days, setDays] = useState(7);
-  const q = useAdminTrafficPartnersQuery(days, { pollingInterval: 30000 });
+  const q = useAdminTrafficPartnersQuery(days, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   return (
     <Loaded q={q}>{(d) => (
       <div className="space-y-4">
@@ -167,7 +167,7 @@ export function SourcesTrafficView() {
 
 // The slowest server calls since it last started (typical and worst 5%), refreshed every 30 s.
 export function SpeedTrafficView() {
-  const q = useAdminTrafficSpeedQuery(undefined, { pollingInterval: 30000 });
+  const q = useAdminTrafficSpeedQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const tone = (ms) => (ms >= 2000 ? 'text-rose-700' : ms >= 800 ? 'text-amber-700' : 'text-emerald-700');
   return (
     <Loaded q={q}>{(d) => (

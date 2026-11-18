@@ -61,7 +61,7 @@ export default function Helping() {
 function TasksTab({ exceptionsOnly }) {
   const { data, isLoading, refetch } = useAdminHelpingTasksQuery(
     exceptionsOnly ? { exceptions: 'true' } : {},
-    { pollingInterval: 30000 },
+    { skipPollingIfUnfocused: true, pollingInterval: 30000 },
   );
   const [setOutcome] = useAdminHelpingRefundOutcomeMutation();
 

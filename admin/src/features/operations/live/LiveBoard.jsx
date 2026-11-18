@@ -40,7 +40,7 @@ export default function LiveBoard() {
   const [poll, setPoll] = useState(10000);
   const [kind, setKind] = useState('');
   const [open, setOpen] = useState(null);
-  const { data, isLoading, isFetching, refetch } = useAdminLiveOpsQuery(undefined, { pollingInterval: poll });
+  const { data, isLoading, isFetching, refetch } = useAdminLiveOpsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: poll });
 
   const jobs = useMemo(() => (data?.jobs || [])
     .filter((j) => !kind || j.kind === kind)

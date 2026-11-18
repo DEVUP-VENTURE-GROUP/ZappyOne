@@ -66,7 +66,7 @@ export default function LiveErrors() {
   const [tab, setTab] = useState('live');
   const [filters, setFilters] = useState({ role: '', app: '', kind: '', severity: '' });
   const [openIssue, setOpenIssue] = useState(null);
-  const { data: pulse, isLoading } = useAdminErrorPulseQuery(undefined, { pollingInterval: 15000 });
+  const { data: pulse, isLoading } = useAdminErrorPulseQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
 
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: f[k] === v ? '' : v }));
 
@@ -193,7 +193,7 @@ function LiveFeed({ filters, onOpen }) {
   useEffect(() => { if (first) { setRows(first); newest.current = first[0]?.at || new Date().toISOString(); } }, [first]);
   const { data: fresh } = useAdminErrorLiveQuery(
     { ...params, since: newest.current, limit: 50 },
-    { skip: paused || !newest.current, pollingInterval: paused ? 0 : 4000 },
+    { skip: paused || !newest.current, skipPollingIfUnfocused: true, pollingInterval: paused ? 0 : 4000 },
   );
   useEffect(() => {
     if (!fresh?.length) return;
@@ -260,7 +260,7 @@ function IssueList({ filters, onOpen }) {
   const [sort, setSort] = useState('recent');
   const [q, setQ] = useState('');
   const params = { ...Object.fromEntries(Object.entries(filters).filter(([k, v]) => v && k !== 'severity')), status, sort, ...(q.trim() && { q: q.trim() }) };
-  const { data, isFetching } = useAdminErrorIssuesQuery(params, { pollingInterval: 15000 });
+  const { data, isFetching } = useAdminErrorIssuesQuery(params, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
 
   return (
     <Card className="overflow-hidden">

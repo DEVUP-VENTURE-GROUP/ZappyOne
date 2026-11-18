@@ -34,8 +34,8 @@ export default function Payments() {
   const [refundTarget, setRefundTarget] = useState(null);
   const [reference, setReference] = useState('');
 
-  const { data: summary } = useAdminPaymentsSummaryQuery(7, { pollingInterval: 60000 });
-  const { data: actionData, isLoading: loadingAction } = useAdminPaymentsQuery({ needsAction: true }, { pollingInterval: 30000 });
+  const { data: summary } = useAdminPaymentsSummaryQuery(7, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
+  const { data: actionData, isLoading: loadingAction } = useAdminPaymentsQuery({ needsAction: true }, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const params = Object.fromEntries(Object.entries({ ...filters, page }).filter(([, v]) => v !== '' && v != null));
   const { data, isFetching } = useAdminPaymentsQuery(params);
 

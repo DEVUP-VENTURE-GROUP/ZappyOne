@@ -374,6 +374,8 @@ function startMatchingWaves() {
     require("./modules/workforce/watchdog.service").tick().catch((err) => logger.warn({ err: err.message }, "[FLEET] watchdog failed"));
     // Partner plans: visits not started are missed and made up; finished plans close (service-plan/).
     require("./modules/service-plan/plan.service").sweep().catch((err) => logger.warn({ err: err.message }, "[PLANS] sweep failed"));
+    // Jobs left 12 hours at the customer's door with no step forward are closed, not left in the queue (jobs/abandoned).
+    require("./modules/jobs/abandoned").sweep().catch((err) => logger.warn({ err: err.message }, "[ABANDONED] sweep failed"));
   }, 5 * 60 * 1000);
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).

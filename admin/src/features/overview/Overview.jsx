@@ -12,9 +12,9 @@ import { Kpi, TrendChart, Panel, rupees, count } from '../insights/charts';
  * people counts (providers online, customers) from the accounts.
  */
 export default function Overview() {
-  const { data: today, isLoading } = useAdminInsightsOverviewQuery(1, { pollingInterval: 60000 });
-  const { data: week } = useAdminInsightsOverviewQuery(7, { pollingInterval: 120000 });
-  const { data: m } = useAdminMetricsQuery(undefined, { pollingInterval: 60000 });
+  const { data: today, isLoading } = useAdminInsightsOverviewQuery(1, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
+  const { data: week } = useAdminInsightsOverviewQuery(7, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
+  const { data: m } = useAdminMetricsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   const { data: me } = useAdminMeQuery();
 
   if (isLoading) return <PageLoader />;

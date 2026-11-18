@@ -197,7 +197,7 @@ export default function MapView({ days }) {
   const span = days === 1 ? 30 : days;
   const [layer, setLayer] = useState('demand');
   const [service, setService] = useState('');
-  const { data, isLoading, isError, refetch, isFetching } = useAdminInsightsGeoQuery({ days: span, service: service || undefined }, { pollingInterval: 120000 });
+  const { data, isLoading, isError, refetch, isFetching } = useAdminInsightsGeoQuery({ days: span, service: service || undefined }, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
   const current = LAYERS.find((l) => l.id === layer);
   const services = useMemo(() => data?.services || [], [data]);
 

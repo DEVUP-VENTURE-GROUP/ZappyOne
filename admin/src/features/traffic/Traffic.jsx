@@ -30,7 +30,7 @@ const toRows = (obj, names = {}) => Object.entries(obj || {}).sort((a, b) => b[1
 
 // Who is on the website and the apps this minute; refreshed every 15 s.
 export function LiveNowView() {
-  const { data, isLoading, isError, refetch } = useAdminTrafficLiveQuery(undefined, { pollingInterval: 15000 });
+  const { data, isLoading, isError, refetch } = useAdminTrafficLiveQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   if (isLoading) return <PageSkeleton rows={4} />;
   if (isError && !data) return <ErrorState onRetry={refetch} />;
   return (

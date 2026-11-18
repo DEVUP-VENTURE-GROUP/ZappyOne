@@ -11,7 +11,7 @@ const pressureTone = (p) => (p == null ? 'text-rose-600' : p >= 10 ? 'text-amber
 
 export default function DemandView({ days }) {
   const span = days === 1 ? 7 : days;
-  const { data, isLoading, isError, refetch } = useAdminInsightsDemandQuery(span, { pollingInterval: 120000 });
+  const { data, isLoading, isError, refetch } = useAdminInsightsDemandQuery(span, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (
