@@ -4,8 +4,8 @@
  *   capture   four sources, one shape (ErrorEvent):
  *               crash    a screen fell over (React error boundary)
  *               js       an uncaught error / rejected promise in the browser
- *               api      a request the person made failed (5xx, network, or a
- *                        4xx they were shown — 401 never, it is a sign-in refresh)
+ *               api      a request the person made failed with a server fault (5xx);
+ *                        a 4xx is an answer they were shown and is never kept
  *               server   an unexpected 5xx raised on the API itself
  *             Each carries who it happened to (role + id, from their verified
  *             token — never from what the browser claims), the app, the screen.
@@ -120,7 +120,9 @@ async function record(input) {
     const where = kind === 'api' || kind === 'server'
       ? `${input.api?.method || ''} ${pattern(input.api?.url || input.path)}`.trim()
       : pattern(input.path);
-    const severity = input.severity === 'warning' ? 'warning' : 'error';
+    // Small things (a refused form, a 4xx, a warning) are not issues: only faults are kept, so the list stays short enough to act on.
+    if (input.severity === 'warning' || (kind === 'api' && Number(input.api?.status) < 500)) return null;
+    const severity = 'error';
     const app = clip(input.app, 40);
     const fingerprint = crypto.createHash('sha1').update([kind, app, normalise(message), where].join('|')).digest('hex');
     const person = input.userId ? `${input.role}:${input.userId}` : null;
@@ -209,7 +211,7 @@ async function pulse() {
   const day = new Date(Date.now() - 86400e3);
   const [lastHour, people, byRole, byApp, perMin, openIssues, newToday, p0] = await Promise.all([
     ErrorEvent.countDocuments({ at: { $gte: hour }, severity: 'error' }),
-    ErrorEvent.distinct('userId', { at: { $gte: hour }, userId: { $ne: null } }),
+    ErrorEvent.distinct('userId', { at: { $gte: hour }, severity: 'error', userId: { $ne: null } }),
     ErrorEvent.aggregate([{ $match: { at: { $gte: day } } }, { $group: { _id: '$role', n: { $sum: 1 } } }]),
     ErrorEvent.aggregate([{ $match: { at: { $gte: day } } }, { $group: { _id: '$app', n: { $sum: 1 } } }]),
     ErrorEvent.aggregate([
@@ -308,4 +310,18 @@ async function message(id, { to = 'all', title, body }, adminName = '') {
   return { sent, message: `Sent to ${sent} ${sent === 1 ? 'person' : 'people'}.` };
 }
 
-module.exports = { record, whoFrom, live, pulse, issues, issue, plan, message, normalise, ErrorEvent, ErrorIssue };
+const QUIET_DAYS = 7;
+
+// Keeps the open list to what is still happening: old warnings are set aside, and an issue quiet for a week is resolved (it reopens itself if it comes back).
+async function tidy({ now = Date.now() } = {}) {
+  const [warnings, quiet] = await Promise.all([
+    ErrorIssue.updateMany({ severity: 'warning', status: { $in: ['open', 'planned', 'fixing'] } }, { $set: { status: 'ignored' } }),
+    ErrorIssue.updateMany({ status: 'open', lastSeen: { $lt: new Date(now - QUIET_DAYS * 86400e3) } }, { $set: { status: 'resolved', resolvedAt: new Date(now), cameBack: false } }),
+  ]);
+  return { ignored: warnings.modifiedCount, resolved: quiet.modifiedCount };
+}
+
+// The timer's call: a failed tidy is logged, never thrown into the interval.
+const tidyTick = (opts) => tidy(opts).catch((e) => { logger.warn({ err: e.message }, '[errors] tidy failed'); return null; });
+
+module.exports = { tidy, tidyTick, QUIET_DAYS, record, whoFrom, live, pulse, issues, issue, plan, message, normalise, ErrorEvent, ErrorIssue };

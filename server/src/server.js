@@ -376,6 +376,8 @@ function startMatchingWaves() {
     require("./modules/service-plan/plan.service").sweep().catch((err) => logger.warn({ err: err.message }, "[PLANS] sweep failed"));
     // Jobs left 12 hours at the customer's door with no step forward are closed, not left in the queue (jobs/abandoned).
     require("./modules/jobs/abandoned").sweep().catch((err) => logger.warn({ err: err.message }, "[ABANDONED] sweep failed"));
+    // Live errors: old warnings set aside and week-quiet issues resolved, so open issues are only what is still happening (telemetry/errors).
+    require("./modules/telemetry/errors.service").tidyTick();
   }, 5 * 60 * 1000);
   setInterval(() => {
     // Arrival promises past due with nobody there: customer told, provider nudged (jobs/promise).
