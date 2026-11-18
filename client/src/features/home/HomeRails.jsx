@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import {
-  ArrowRight, CheckCircle2, ChevronRight, Clock, MapPin, RotateCcw, ShieldCheck, Star, Store, Wrench, XCircle,
+  ArrowRight, CheckCircle2, ChevronRight, Clock, MapPin, RotateCcw, ShieldCheck, Star, Store, XCircle,
 } from 'lucide-react';
 import { useGetAvailablePromosQuery, useNearbyShopsQuery } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
@@ -8,8 +8,8 @@ import { offerEnds } from '@shared/customer/season';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import PromoBanner from '@shared/components/home/PromoBanner';
 import { artFor, servicePhoto } from '@shared/components/home/serviceArt';
-import { tintFor } from './ServiceGrid';
-import { AREA_PHOTO } from '@shared/config/homepageContent';
+import { explorePhoto, SHORT_NAME, tintFor } from './ServiceGrid';
+import { AREA_PHOTO, pickPopular } from '@shared/config/homepageContent';
 import { icon3dFor } from '@shared/config/icons3d';
 
 // The sections of Home below the hero.
@@ -37,24 +37,6 @@ function Rail({ children, cols = 'sm:grid-cols-2 lg:grid-cols-4', className = ''
 }
 
 const fmtDay = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
-
-/* Book a service / Local stores */
-
-export function ModeSwitch({ onStores }) {
-  return (
-    <nav aria-label="What would you like to do" className="grid grid-cols-2 gap-1 rounded-[16px] bg-zappy-50 p-1 ring-1 ring-inset ring-zappy-100">
-      <span aria-current="page"
-        className="relative flex h-12 items-center justify-center gap-2 rounded-[12px] bg-zappy-600 text-[14px] font-bold text-white shadow-soft-lg sm:text-[15px]">
-        <Wrench size={17} strokeWidth={2.2} /> Book a service
-      </span>
-      <button type="button" onClick={onStores}
-        className="flex h-12 items-center justify-center gap-2 rounded-[12px] text-[14px] font-bold text-zappy-700 transition-colors hover:bg-white sm:text-[15px]">
-        <Store size={17} strokeWidth={2.2} /> Shop from Stores
-        <span className="rounded-full bg-accent-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">New</span>
-      </button>
-    </nav>
-  );
-}
 
 /* ZappyOne promotion */
 
@@ -169,9 +151,22 @@ const SERVICE_PROMOS = [
 
 export function ServicePromos({ services, onOpen, onOpenArea }) {
   const byCode = new Map(services.map((s) => [s.code, s]));
-  const cards = SERVICE_PROMOS
-    .map((p) => ({ ...p, target: p.codes.map((c) => byCode.get(c)).find(Boolean) }))
-    .filter((p) => p.target);
+  const designed = SERVICE_PROMOS.map((p) => ({ ...p, target: p.codes.map((c) => byCode.get(c)).find(Boolean) }));
+  // The row is always two cards, as designed. A card whose service is not live at this
+  // address keeps its look and features the most popular other live service with a photo.
+  const taken = new Set(designed.filter((p) => p.target).map((p) => p.target.code));
+  const spare = pickPopular(services.filter((s) => !taken.has(s.code) && explorePhoto(s)), services.length);
+  const cards = designed.map((p) => {
+    if (p.target) return p;
+    const s = spare.shift();
+    if (!s) return null;
+    const words = (SHORT_NAME[s.code] || s.name).split(' ');
+    return {
+      ...p, key: `${p.key}:${s.code}`, area: null, target: s, photo: explorePhoto(s),
+      title: words.length > 1 ? words.slice(0, -1).join(' ') : words[0], accent: words.length > 1 ? words[words.length - 1] : '',
+      line: s.tagline || s.description || 'Verified pros, with the price before work starts.',
+    };
+  }).filter(Boolean);
   if (!cards.length) return null;
   return (
     <section aria-label="Featured services" className={`grid gap-4 ${cards.length > 1 ? 'sm:grid-cols-2' : ''}`}>
@@ -194,27 +189,6 @@ export function ServicePromos({ services, onOpen, onOpenArea }) {
           </span>
         </button>
       ))}
-    </section>
-  );
-}
-
-/* Campaign banners (admin) */
-
-export function CampaignBanners({ ads, onOpen, onImageError }) {
-  if (!ads.length) return null;
-  return (
-    <section aria-label="Campaigns">
-      {ads.length === 1
-        ? <PromoBanner ad={ads[0]} variant="campaign" onOpen={onOpen} onImageError={onImageError} />
-        : (
-          <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0">
-            {ads.map((ad) => (
-              <div key={ad._id} className="w-[88%] shrink-0 snap-start sm:w-auto">
-                <PromoBanner ad={ad} variant="campaign" onOpen={onOpen} onImageError={onImageError} />
-              </div>
-            ))}
-          </div>
-        )}
     </section>
   );
 }
