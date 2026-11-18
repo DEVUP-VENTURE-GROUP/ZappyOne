@@ -54,3 +54,53 @@ test('an approved independent professional\'s Aadhaar counts as the owner ID on 
   const has = (code) => (docs.get ? docs.get(code) : docs[code]);
   expect(has('aadhaar')?.url).toBe('kyc/aadhaar.jpg');
 });
+
+describe('Shop documents for an independent professional', () => {
+  const selfieMetadata = { capturedAt: new Date().toISOString(), captureMethod: 'live_camera', lat: 17.44, lng: 78.38 };
+  const submit = (token, body) => request(app).post('/api/shops/me/kyc/submit').set('Authorization', `Bearer ${token}`).send({ selfieMetadata, ...body });
+
+  test('the status tells the screen how they work', async () => {
+    const { token } = await tokenFor('individual', '9811100010');
+    const res = await request(app).get('/api/shops/me/kyc/status').set('Authorization', `Bearer ${token}`);
+    expect(res.body).toMatchObject({ partnerType: 'individual', kyc: { status: 'not_submitted' } });
+  });
+
+  test('ID and a live selfie are enough; no shop photo is asked for', async () => {
+    const { shop, token } = await tokenFor('individual', '9811100011');
+    const res = await submit(token, { ownerIdUrl: 'kyc/a.jpg', selfieUrl: 'kyc/s.jpg' });
+    expect(res.status).toBe(200);
+    expect((await Shop.findById(shop._id).lean()).kyc).toMatchObject({ status: 'pending_review', ownerIdUrl: 'kyc/a.jpg' });
+  });
+
+  test('an independent professional still needs their ID and selfie', async () => {
+    const { token } = await tokenFor('individual', '9811100012');
+    const res = await submit(token, { selfieUrl: 'kyc/s.jpg' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/ID and a live selfie/);
+  });
+
+  test('a shop must still send its shop photo', async () => {
+    const { token } = await tokenFor('shop', '9811100013');
+    const res = await submit(token, { ownerIdUrl: 'kyc/a.jpg', selfieUrl: 'kyc/s.jpg' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/shop photo/);
+  });
+});
+
+describe('a draft begun on the other checklist', () => {
+  test('its uploaded owner ID stands for Aadhaar, so nothing is asked twice', async () => {
+    const identity = require('../src/modules/onboarding/identity');
+    const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
+    const { shop } = await tokenFor('individual', '9811100020');
+    const draft = await ProviderEnrolment.create({ shopId: shop._id, providerKind: 'shop', lineCode: 'mobile_repair', domainCode: 'electronics', status: 'draft', documents: [{ code: 'owner_id', url: 'kyc/owner.jpg' }] });
+    await identity.carryIdentity(draft);
+    const after = await ProviderEnrolment.findById(draft._id).lean();
+    expect(after.documents.find((d) => d.code === 'aadhaar')?.url).toBe('kyc/owner.jpg');
+  });
+
+  test('my documents shows the individual names for what they gave', async () => {
+    const { token } = await tokenFor('individual', '9811100021');
+    const res = await request(app).get('/api/provider/onboarding/my-documents').set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+  });
+});

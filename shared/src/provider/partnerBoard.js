@@ -57,3 +57,6 @@ export function leadView(board) {
     people: (board?.members || []).map((m) => ({ ...m, jobs: jobs.filter((j) => j.workerId === m.id) })),
   };
 }
+
+// A shop photo proves a counter or an office; an independent professional has neither (server shop.controller submitKyc keeps the same rule).
+export const needsShopPhoto = (partnerType) => partnerType !== 'individual';

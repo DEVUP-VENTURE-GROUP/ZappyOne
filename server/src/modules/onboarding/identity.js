@@ -110,13 +110,24 @@ async function shopOnFile(shopId, { exceptEnrolmentId = null } = {}) {
     const nums = { gst_number: k.gstNumber, pan_number: k.panNumber, years_active: shop?.yearsActive != null ? String(shop.yearsActive) : null };
     for (const [code, value] of Object.entries(nums)) if (value && !fields.has(code)) fields.set(code, value);
   }
+  aliasOwnerId(docs);
   return { docs, fields };
+}
+
+// The business checklist asks for the owner's ID, the individual one for Aadhaar: either already given answers the other.
+function aliasOwnerId(docs) {
+  if (docs.has('owner_id') && !docs.has('aadhaar')) docs.set('aadhaar', docs.get('owner_id'));
+  if (docs.has('aadhaar') && !docs.has('owner_id')) docs.set('owner_id', docs.get('aadhaar'));
 }
 
 async function carryShop(enrolment) {
   const haveDocs = new Set((enrolment.documents || []).filter((d) => d.url).map((d) => d.code));
   const haveFields = new Set((enrolment.fields || []).filter((f) => f.value).map((f) => f.code));
   const { docs, fields } = await shopOnFile(enrolment.shopId, { exceptEnrolmentId: enrolment._id });
+  // A draft begun on the other checklist keeps what it uploaded: its own owner ID stands for Aadhaar and back.
+  const own = new Map((enrolment.documents || []).filter((d) => d.url).map((d) => [d.code, d]));
+  aliasOwnerId(own);
+  for (const [code, row] of own) if (!haveDocs.has(code) && !docs.has(code)) docs.set(code, row);
   let added = 0;
   for (const [code, row] of docs) {
     if (haveDocs.has(code)) continue;

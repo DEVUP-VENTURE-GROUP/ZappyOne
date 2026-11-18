@@ -32,15 +32,15 @@ async function updateProfile(req, res, next) {
 
 async function getKycStatus(req, res, next) {
   try {
-    const shop = await Shop.findById(req.auth.sub).select('kyc').lean();
+    const shop = await Shop.findById(req.auth.sub).select('kyc partnerType').lean();
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
-    res.json({ kyc: shop.kyc || { status: 'not_submitted' } });
+    res.json({ kyc: shop.kyc || { status: 'not_submitted' }, partnerType: shop.partnerType || 'shop' });
   } catch (err) { next(err); }
 }
 
 async function submitKyc(req, res, next) {
   try {
-    const shop = await Shop.findById(req.auth.sub).select('kyc').lean();
+    const shop = await Shop.findById(req.auth.sub).select('kyc partnerType').lean();
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
     const clar = shop.kyc?.clarification?.active ? shop.kyc.clarification : null;
@@ -70,15 +70,17 @@ async function submitKyc(req, res, next) {
     }
 
     const { ownerIdUrl, shopPhotoUrl, selfieUrl, gstCertificateUrl, businessRegistrationUrl, gstNumber, panNumber } = req.body;
-    if (!ownerIdUrl || !shopPhotoUrl || !selfieUrl) {
-      return res.status(400).json({ error: 'Owner ID, shop photo and selfie are required', code: 'KYC_DOCS_REQUIRED' });
+    // An independent professional has no counter or office to photograph (shared/provider/partnerBoard needsShopPhoto).
+    const solo = shop.partnerType === 'individual';
+    if (!ownerIdUrl || !selfieUrl || (!solo && !shopPhotoUrl)) {
+      return res.status(400).json({ error: solo ? 'Your ID and a live selfie are required' : 'Owner ID, shop photo and selfie are required', code: 'KYC_DOCS_REQUIRED' });
     }
 
     await Shop.updateOne({ _id: req.auth.sub }, {
       $set: {
         'kyc.status': 'pending_review',
         'kyc.ownerIdUrl': ownerIdUrl,
-        'kyc.shopPhotoUrl': shopPhotoUrl,
+        'kyc.shopPhotoUrl': shopPhotoUrl || undefined,
         'kyc.selfieUrl': selfieUrl,
         'kyc.selfieMetadata': req.body.selfieMetadata,
         'kyc.gstCertificateUrl': gstCertificateUrl || undefined,
