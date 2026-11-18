@@ -4,6 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { planProblems } from '@zappy/core/shared/planRules';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CalendarDays, Check, Pause, Play, Plus, Repeat, Send } from 'lucide-react-native';
@@ -15,7 +16,7 @@ import { Appear, BottomSheet, Button, Chip, EmptyState, ScreenHeader, Skeleton, 
 import { toast } from '@zappy/ui/components/Toast';
 import { VisitCard, type Visit } from '../components/PlanVisitCard';
 import { errText } from '@zappy/ui/lib/feedback';
-import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
+import { accent, colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 
@@ -42,8 +43,12 @@ function NewPlan({ services, onClose }: { services: Svc[]; onClose: () => void }
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const items = Object.keys(picked).filter((k) => picked[k]).map((k) => { const [repairCode, brandCode] = k.split('|'); return { repairCode, brandCode }; });
   const pricePaise = Math.round(Number(price) * 100) || 0;
-  const ok = items.length > 0 && name.trim().length >= 3 && pricePaise >= 100;
+  // Never a silently grey button: a tap says what is missing (shared/provider/planRules, the server's own limits).
+  const problems = planProblems({ type, name, itemCount: items.length, pricePaise, visitsPerMonth: visits, d3, d5, pauses });
+  const [tried, setTried] = useState(false);
   async function go(publish: boolean) {
+    setTried(true);
+    if (problems.length) { toast.error(problems[0]); return; }
     try {
       const body = { vertical, name: name.trim(), type, items, pricePaise, weekdays: type === 'pack' ? [] : weekdays,
         ...(type === 'monthly' && { visitsPerMonth: Number(visits) || 1, durations: [{ months: 1, discountPct: 0 }, { months: 3, discountPct: Number(d3) || 0 }, { months: 5, discountPct: Number(d5) || 0 }], pauseDaysPerMonth: Number(pauses) || 0 }) };
@@ -54,11 +59,12 @@ function NewPlan({ services, onClose }: { services: Svc[]; onClose: () => void }
   }
   return (
     <BottomSheet visible onClose={onClose} title="New plan" heightFraction={0.9}>
-      <ScrollView contentContainerStyle={styles.sheet}>
+      <View style={styles.flex}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled">
         <View style={styles.row}>{[['monthly', 'Monthly plan'], ['pack', 'One-day pack']].map(([k, l]) => <Chip key={k} label={l} selected={type === k} onPress={() => setType(k as 'monthly' | 'pack')} />)}</View>
         <View style={styles.row}>{services.map((s) => <Chip key={s.vertical} label={s.name} selected={vertical === s.vertical} onPress={() => { setVertical(s.vertical); setPicked({}); }} />)}</View>
         <TextInput value={name} onChangeText={setName} maxLength={80} placeholder="Plan name, e.g. Daily clean 2 BHK" placeholderTextColor={ink[400]} style={styles.input} />
-        <Text variant="caption" weight="bold" color={ink[500]}>{type === 'pack' ? 'JOBS IN THIS PACK' : 'DONE ON EVERY VISIT'}</Text>
+        <Text variant="caption" weight="bold" color={ink[500]}>{type === 'pack' ? 'JOBS IN THIS PACK' : 'DONE ON EVERY VISIT'} · <Text variant="caption" color={ink[400]}>tap a price to add the job</Text></Text>
         {service?.items.map((i) => (
           <View key={i.repairCode} style={styles.job}>
             <Text variant="bodySmall" weight="semibold">{i.name}</Text>
@@ -80,11 +86,16 @@ function NewPlan({ services, onClose }: { services: Svc[]; onClose: () => void }
         ) : null}
         <Text variant="caption" color={ink[500]}>{type === 'pack' ? 'Pack price (₹)' : 'Price a month (₹)'}</Text>
         <TextInput value={price} onChangeText={(v) => setPrice(v.replace(/[^\d.]/g, ''))} keyboardType="decimal-pad" style={styles.input} />
-        <View style={styles.pair}>
-          <Button label="Save draft" variant="outline" onPress={() => go(false)} disabled={!ok || saving || sending} style={styles.flex} />
-          <Button label="Publish" icon={<Send size={15} color="#fff" />} onPress={() => go(true)} loading={sending} disabled={!ok || saving} style={styles.flex} />
-        </View>
       </ScrollView>
+      {/* Pinned under the list: always in reach, however many jobs the trade has. */}
+      <View style={styles.footer}>
+        {tried && problems.length ? <View style={styles.problems} accessibilityRole="alert">{problems.map((p) => <Text key={p} variant="caption" weight="semibold" color={accent[700]}>• {p}</Text>)}</View> : null}
+        <View style={styles.pair}>
+          <Button label="Save draft" variant="outline" onPress={() => go(false)} disabled={saving || sending} style={styles.flex} />
+          <Button label="Publish" icon={<Send size={15} color="#fff" />} onPress={() => go(true)} loading={sending} disabled={saving} style={styles.flex} />
+        </View>
+      </View>
+      </View>
     </BottomSheet>
   );
 }
@@ -155,6 +166,8 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   body: { gap: spacing.md, padding: spacing.base },
   sheet: { gap: spacing.md, padding: spacing.base, paddingBottom: spacing.xl },
+  footer: { gap: spacing.sm, paddingTop: spacing.sm, paddingHorizontal: spacing.base, paddingBottom: spacing.base, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  problems: { gap: 2, padding: spacing.sm, borderRadius: radius.button, backgroundColor: accent[50] },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pair: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-end' },
   flex: { flex: 1, minWidth: 0 },

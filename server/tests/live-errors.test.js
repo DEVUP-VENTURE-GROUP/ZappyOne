@@ -51,3 +51,35 @@ test('plan, resolve, come back; message everyone affected', async () => {
   const r = await errors.message(issue._id, { to: 'all', title: 'Fixed', body: 'Please try again.' }, 'Ops');
   expect(r.sent).toBe(3);
 });
+
+test('small things are never kept: a 4xx or a warning makes no issue and no event', async () => {
+  const before = await errors.ErrorEvent.countDocuments();
+  expect(await errors.record({ kind: 'api', app: 'servicepro', role: 'shop', message: 'Give the plan a name', api: { method: 'POST', url: '/shop/plans', status: 400 } })).toBeNull();
+  expect(await errors.record({ kind: 'js', app: 'servicepro', severity: 'warning', message: 'slow image' })).toBeNull();
+  expect(await errors.ErrorEvent.countDocuments()).toBe(before);
+  expect(await errors.ErrorIssue.countDocuments({ title: /plan a name|slow image/ })).toBe(0);
+});
+
+test('tidy: old warnings set aside, a week-quiet issue resolved, a planned or recent one left alone', async () => {
+  const day = 86400e3;
+  const now = Date.now();
+  const mk = (over) => errors.ErrorIssue.create({ fingerprint: String(Math.random()), kind: 'api', title: 't', ...over });
+  const warning = await mk({ severity: 'warning', lastSeen: new Date(now) });
+  const quiet = await mk({ lastSeen: new Date(now - 8 * day) });
+  const recent = await mk({ lastSeen: new Date(now - 2 * day) });
+  const planned = await mk({ status: 'planned', lastSeen: new Date(now - 30 * day) });
+  const out = await errors.tidy({ now });
+  expect(out.ignored).toBeGreaterThanOrEqual(1);
+  const get = async (d) => (await errors.ErrorIssue.findById(d._id).lean()).status;
+  expect(await get(warning)).toBe('ignored');
+  expect(await get(quiet)).toBe('resolved');
+  expect(await get(recent)).toBe('open');
+  expect(await get(planned)).toBe('planned');
+});
+
+test('the timer call never throws: a failed tidy is logged and returns nothing', async () => {
+  const spy = jest.spyOn(errors.ErrorIssue, 'updateMany').mockRejectedValueOnce(new Error('db down'));
+  await expect(errors.tidyTick()).resolves.toBeNull();
+  spy.mockRestore();
+  await expect(errors.tidyTick()).resolves.toMatchObject({ ignored: expect.any(Number), resolved: expect.any(Number) });
+});

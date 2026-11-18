@@ -4,14 +4,14 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, ShieldCheck, Undo2, UserX } from 'lucide-react-native';
-import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation, useConfirmJobSafeMutation, useAskJobMoreTimeMutation } from '@zappy/core/api';
+import { CalendarCheck, Clock, ShieldCheck, Undo2, UserX } from 'lucide-react-native';
+import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation, useConfirmJobSafeMutation, useAskJobMoreTimeMutation, useAnswerTimeCheckMutation } from '@zappy/core/api';
 import { minsUntil } from '@zappy/core/shared/jobFlows';
 import { Button, Text } from '../components';
 import { toast } from '../components/Toast';
 import { JobCard } from '../components/jobs/JobCard';
 import { errText } from '../lib/feedback';
-import { colors, zappy, ink, slate, accent } from '../theme/colors';
+import { colors, zappy, ink, slate, accent, success } from '../theme/colors';
 import { radius } from '../theme/radius';
 import { spacing } from '../theme/spacing';
 
@@ -34,6 +34,42 @@ function SafetyCheck({ jobId, safety, onDone }: { jobId: string; safety?: { aske
 
 interface More { canAsk?: boolean; until?: string; minutes?: number[]; reasons?: { code: string; label: string }[] }
 const clock = (d: string) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+
+interface Check { dueAt: string; confirmedAt?: string | null; askOpen?: boolean; freeUntil: string; canDeclineFree?: boolean }
+
+// A job booked for later: confirm before the time, or say early that you can't and it goes to someone else free (server: jobs/time-check).
+function TimeCheck({ jobId, check, onDone }: { jobId: string; check?: Check | null; onDone: () => void }) {
+  const router = useRouter();
+  const [answer, { isLoading }] = useAnswerTimeCheckMutation();
+  if (!check) return null;
+  if (check.confirmedAt) {
+    return <View style={styles.row}><CalendarCheck size={14} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>You confirmed. Be there by {clock(check.dueAt)}.</Text></View>;
+  }
+  if (!check.askOpen) return null;
+  async function send(a: 'yes' | 'no') {
+    try {
+      const out = await answer({ id: jobId, answer: a }).unwrap();
+      toast.success(out.message);
+      if (out.handedBack) router.replace('/worker/work' as never); else onDone();
+    } catch (err) { toast.error(errText(err, 'Could not send. Try again.')); }
+  }
+  function decline() {
+    Alert.alert("Can't make it?", `Hand this job back? It is free until ${clock(check!.freeUntil)} and goes to someone else.`, [
+      { text: 'Keep it', style: 'cancel' },
+      { text: 'Hand it back', style: 'destructive', onPress: () => send('no') },
+    ]);
+  }
+  return (
+    <View accessibilityRole="alert" style={styles.timeCheck}>
+      <Text variant="bodySmall" weight="bold">Confirm you will be there at {clock(check.dueAt)}</Text>
+      <Text variant="caption" color={ink[500]}>{check.canDeclineFree ? `Not confirmed by ${clock(check.freeUntil)}, it goes to another pro. Can't make it? Say so now, no charge.` : 'Confirm now to keep this job.'}</Text>
+      <View style={styles.row}>
+        <Button label="I'll be there" icon={<CalendarCheck size={15} color={colors.surface} />} onPress={() => send('yes')} loading={isLoading} style={styles.flex} />
+        {check.canDeclineFree ? <Button label="Can't make it" variant="outline" onPress={decline} disabled={isLoading} style={styles.flex} /> : null}
+      </View>
+    </View>
+  );
+}
 
 // "This needs longer": pick how long and why; the customer is told the new finish time (server: jobs/more-time).
 function MoreTime({ jobId, more, onDone }: { jobId: string; more?: More | null; onDone: () => void }) {
@@ -97,8 +133,10 @@ export function GiveBackCard({ jobId, status }: { jobId: string; status: string 
   const safetyCard = <SafetyCheck jobId={jobId} safety={data?.safety} onDone={refetch} />;
   const more: More | undefined = data?.moreTime;
   const moreCard = <MoreTime jobId={jobId} more={more} onDone={refetch} />;
+  const check: Check | undefined = data?.timeCheck;
+  const timeCard = <TimeCheck jobId={jobId} check={check} onDone={refetch} />;
   if (!data || (!data.canGiveBack && !absent)) {
-    return data?.safety?.asked || more?.canAsk || more?.until ? <JobCard>{safetyCard}{moreCard}</JobCard> : null;
+    return data?.safety?.asked || more?.canAsk || more?.until || check?.askOpen || check?.confirmedAt ? <JobCard>{timeCard}{safetyCard}{moreCard}</JobCard> : null;
   }
   const quote = data.quote;
   const waitLeft = minsUntil(absent?.opensAt, now);
@@ -128,6 +166,7 @@ export function GiveBackCard({ jobId, status }: { jobId: string; status: string 
 
   return (
     <JobCard>
+      {timeCard}
       {safetyCard}
       {moreCard}
       {absent ? (
@@ -174,6 +213,7 @@ export function GiveBackCard({ jobId, status }: { jobId: string; status: string 
 }
 
 const styles = StyleSheet.create({
+  timeCheck: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, borderWidth: 2, borderColor: zappy[100], backgroundColor: zappy[50] },
   safety: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, borderWidth: 2, borderColor: accent[100], backgroundColor: accent[50] },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

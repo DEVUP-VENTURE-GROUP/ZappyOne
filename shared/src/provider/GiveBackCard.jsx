@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Clock, Loader2, ShieldCheck, UserX, Undo2 } from 'lucide-react';
-import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation, useConfirmJobSafeMutation, useAskJobMoreTimeMutation } from '../services/api';
+import { CalendarCheck, Clock, Loader2, ShieldCheck, UserX, Undo2 } from 'lucide-react';
+import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation, useConfirmJobSafeMutation, useAskJobMoreTimeMutation, useAnswerTimeCheckMutation } from '../services/api';
 import { minsUntil } from './jobFlows';
 
 // "Are you OK?" after a long time at the customer (server: jobs/safety-check); unanswered, ops is alerted.
@@ -25,6 +25,35 @@ function SafetyCheck({ jobId, safety, onDone }) {
 }
 
 const clock = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+
+// A job booked for later: confirm before the time, or say early that you can't and it goes to someone else free (server: jobs/time-check).
+function TimeCheck({ jobId, check, onDone }) {
+  const nav = useNavigate();
+  const [answer, { isLoading }] = useAnswerTimeCheckMutation();
+  if (!check) return null;
+  if (check.confirmedAt) return <p className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700"><CalendarCheck size={14} /> You confirmed. Be there by {clock(check.dueAt)}.</p>;
+  if (!check.askOpen) return null;
+  async function reply(a) {
+    if (a === 'no' && !window.confirm(`Hand this job back? It is free until ${clock(check.freeUntil)} and goes to someone else.`)) return;
+    try {
+      const out = await answer({ id: jobId, answer: a }).unwrap();
+      toast.success(out.message);
+      if (out.handedBack) nav('/worker/work'); else onDone();
+    } catch (err) { toast.error(err?.data?.error || 'Could not send. Try again.'); }
+  }
+  return (
+    <div role="alert" className="rounded-2xl border-2 border-zappy-200 bg-zappy-50 p-4">
+      <p className="text-sm font-bold text-slate-900">Confirm you will be there at {clock(check.dueAt)}</p>
+      <p className="mt-0.5 text-[12px] text-slate-600">{check.canDeclineFree ? `Not confirmed by ${clock(check.freeUntil)}, it goes to another pro. Can't make it? Say so now, no charge.` : 'Confirm now to keep this job.'}</p>
+      <div className="mt-2.5 flex gap-2">
+        <button type="button" onClick={() => reply('yes')} disabled={isLoading} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zappy-600 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+          {isLoading ? <Loader2 size={15} className="animate-spin" /> : <CalendarCheck size={15} />} I&apos;ll be there
+        </button>
+        {check.canDeclineFree && <button type="button" onClick={() => reply('no')} disabled={isLoading} className="flex-1 rounded-xl bg-white py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 disabled:opacity-60">Can&apos;t make it</button>}
+      </div>
+    </div>
+  );
+}
 
 // "This needs longer": pick how long and why; the customer is told the new finish time (server: jobs/more-time).
 function MoreTime({ jobId, more, onDone }) {
@@ -86,8 +115,9 @@ export default function GiveBackCard({ jobId, status }) {
   const safetyCard = <SafetyCheck jobId={jobId} safety={data?.safety} onDone={refetch} />;
   const more = data?.moreTime;
   const moreCard = <MoreTime jobId={jobId} more={more} onDone={refetch} />;
+  const timeCard = <TimeCheck jobId={jobId} check={data?.timeCheck} onDone={refetch} />;
   if (!data || (!data.canGiveBack && !absent)) {
-    return data?.safety?.asked || more?.canAsk || more?.until ? <div className="card space-y-3">{safetyCard}{moreCard}</div> : null;
+    return data?.safety?.asked || more?.canAsk || more?.until || data?.timeCheck?.askOpen || data?.timeCheck?.confirmedAt ? <div className="card space-y-3">{timeCard}{safetyCard}{moreCard}</div> : null;
   }
   const quote = data.quote;
   const waitLeft = minsUntil(absent?.opensAt, now);
@@ -117,6 +147,7 @@ export default function GiveBackCard({ jobId, status }) {
 
   return (
     <div className="card space-y-3">
+      {timeCard}
       {safetyCard}
       {moreCard}
       {absent && (

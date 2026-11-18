@@ -19,7 +19,7 @@ const minutes = (m) => (m < 60 ? `${m} min` : m < 48 * 60 ? `${Math.floor(m / 60
 
 export default function StuckJobs() {
   const [open, setOpen] = useState(null);
-  const { data, isLoading, isFetching, refetch } = useAdminStuckJobsQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading, isFetching, refetch } = useAdminStuckJobsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   if (isLoading) return <PageLoader />;
   const jobs = data?.jobs || [];
 

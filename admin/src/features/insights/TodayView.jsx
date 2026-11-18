@@ -10,8 +10,8 @@ import { Kpi, TrendChart, RankBars, Findings, Panel, LiveNow, rupees, count, min
 const ROUND = (n) => (n == null ? '-' : `${n}%`);
 
 export default function TodayView({ days }) {
-  const { data, isLoading, isError, refetch } = useAdminInsightsOverviewQuery(days, { pollingInterval: 120000 });
-  const { data: live } = useAdminInsightsLiveQuery(undefined, { pollingInterval: 15000 });
+  const { data, isLoading, isError, refetch } = useAdminInsightsOverviewQuery(days, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
+  const { data: live } = useAdminInsightsLiveQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (

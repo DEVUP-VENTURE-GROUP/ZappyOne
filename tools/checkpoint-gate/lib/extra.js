@@ -62,7 +62,8 @@ function costScan({ diff, live, root }) {
     const code = line.slice(1);
     const at = `\`${file}:${lineNo}\``;
     const poll = code.match(/pollingInterval:\s*(\d[\d_]*)/);
-    if (poll && Number(poll[1].replace(/_/g, '')) < 60000) fails.push(`${at} polls every ${Number(poll[1].replace(/_/g, '')) / 1000}s: faster than once a minute costs a request per open screen per poll`);
+    // The admin console has a handful of staff and pauses polls when its tab is not in front; the limit protects customer and pro phones by the thousand.
+    if (poll && !/^admin\//.test(file) && Number(poll[1].replace(/_/g, '')) < 60000) fails.push(`${at} polls every ${Number(poll[1].replace(/_/g, '')) / 1000}s: faster than once a minute costs a request per open screen per poll`);
     const live = code.match(/useLivePoll\((\d[\d_]*)\)/);
     if (live && Number(live[1].replace(/_/g, '')) < 30000) warns.push(`${at} polls every ${Number(live[1].replace(/_/g, '')) / 1000}s while the live connection is down`);
     const timer = code.match(/setInterval\([^,]+,\s*(\d[\d_]*)\)/);

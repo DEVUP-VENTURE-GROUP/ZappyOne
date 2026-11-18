@@ -86,7 +86,7 @@ function BackingOut({ rows }) {
 
 export default function InterventionQueue() {
   const [open, setOpen] = useState(null);
-  const { data, isLoading, isFetching, refetch } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading, isFetching, refetch } = useAdminBookingAttentionQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   if (isLoading) return <PageLoader />;
   const stuck = data?.stuck || [];
   const waiting = data?.waiting || [];

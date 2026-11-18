@@ -9,7 +9,7 @@ const label = (s) => String(s).replace(/^fa_/, '').replace(/_/g, ' ');
 // Where bookings go wrong (server admin-portal/booking-health): per service, made, finished, cancelled, never got a provider, still waiting, and minutes to acceptance.
 export default function BookingHealth() {
   const [days, setDays] = useState(7);
-  const { data, isLoading, isFetching } = useAdminBookingHealthQuery(days, { pollingInterval: 120000 });
+  const { data, isLoading, isFetching } = useAdminBookingHealthQuery(days, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
 
   return (
     <div className="space-y-4">

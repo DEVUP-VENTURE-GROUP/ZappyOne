@@ -23,7 +23,7 @@ function Stat({ icon: Icon, label, value, tone = 'slate' }) {
  */
 export default function WorkerOps() {
   const [, setParams] = useSearchParams();
-  const { data, isLoading, isError } = useAdminWorkerOpsQuery(undefined, { pollingInterval: 20000 });
+  const { data, isLoading, isError } = useAdminWorkerOpsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
 
   if (isLoading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-500" /></div>;
   if (isError || !data) return <p className="p-6 text-sm text-rose-600">Could not load worker operations.</p>;

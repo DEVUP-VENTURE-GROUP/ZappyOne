@@ -9,7 +9,7 @@ import { Kpi, TrendChart, Findings, Panel, RankBars, rupees, count } from './cha
  */
 export default function MoneyView({ days }) {
   const span = days === 1 ? 30 : days;
-  const { data, isLoading, isError, refetch } = useAdminInsightsMoneyQuery(span, { pollingInterval: 300000 });
+  const { data, isLoading, isError, refetch } = useAdminInsightsMoneyQuery(span, { skipPollingIfUnfocused: true, pollingInterval: 300000 });
   if (isLoading) return <PageLoader />;
   if (isError || !data) {
     return (

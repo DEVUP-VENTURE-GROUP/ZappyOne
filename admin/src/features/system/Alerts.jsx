@@ -14,7 +14,7 @@ export default function Alerts() {
   const [pollInterval] = useState(15000);
   const [, setParams] = useSearchParams();
   const { data, isLoading, isFetching, refetch } = useAdminAlertsQuery(undefined, {
-    pollingInterval: pollInterval,
+    skipPollingIfUnfocused: true, pollingInterval: pollInterval,
   });
 
   if (isLoading) return <PageLoader />;

@@ -3,7 +3,8 @@ import { animate, useReducedMotion } from 'framer-motion';
 
 // A number that climbs to its value ("₹1,240", "12", "4.8"): new money and jobs land with a beat. Text that is not a number shows as it is.
 export default function CountUp({ value, duration = 0.9 }) {
-  const m = typeof value === 'number' ? ['', String(value), ''] : /^(\D*)([\d,]+(?:\.\d+)?)(\D*)$/.exec(String(value ?? ''));
+  // Same shape as the match below: [whole, prefix, number, suffix]; a plain number has no prefix or suffix.
+  const m = typeof value === 'number' && Number.isFinite(value) ? [String(value), '', String(value), ''] : /^(\D*)([\d,]+(?:\.\d+)?)(\D*)$/.exec(String(value ?? ''));
   const target = m ? Number(m[2].replace(/,/g, '')) : null;
   const decimals = m && m[2].includes('.') ? m[2].split('.')[1].length : 0;
   const still = useReducedMotion();

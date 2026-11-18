@@ -97,7 +97,8 @@ const giveBackSchema = new mongoose.Schema({
   providerKind: { type: String, enum: ['worker', 'shop'], required: true },
   providerId: { type: mongoose.Schema.Types.ObjectId, required: true },
   /** give_back: they backed out · provider_no_show: the customer reported them · customer_no_show: they reported the customer. */
-  type: { type: String, enum: ['give_back', 'provider_no_show', 'customer_no_show', 'cash_refused'], default: 'give_back' },
+  // schedule_decline: said "can't make it" with notice (free) · no_confirm: never confirmed a booked time (jobs/time-check).
+  type: { type: String, enum: ['give_back', 'provider_no_show', 'customer_no_show', 'cash_refused', 'schedule_decline', 'no_confirm'], default: 'give_back' },
   reason: { type: String, default: '' },
   note: { type: String, default: '', maxlength: 300 },
   status: { type: String, default: '' },
@@ -453,7 +454,7 @@ async function waiveCashDue(userId, jobId) {
 
 // The provider let the customer down: handed it back, or missed the arrival promise and is still not there. Cancelling is then free.
 async function wasHandedBack(jobId) {
-  if (await JobGiveBack.exists({ jobId, type: { $in: ['give_back', 'provider_no_show'] }, toShop: false })) return true;
+  if (await JobGiveBack.exists({ jobId, type: { $in: ['give_back', 'provider_no_show', 'schedule_decline', 'no_confirm'] }, toShop: false })) return true;
   return !!(await require('./promise').ArrivalPromise.exists({ jobId, missedAt: { $ne: null }, arrivedAt: null, closed: false }));
 }
 
@@ -479,6 +480,6 @@ async function providerView(kind, doc) {
 
 module.exports = {
   reportCashRefused, openCashDues, waiveCashDue,
-  REASONS, RULES, JobGiveBack, preview, giveBack, reportProviderAbsent, reportCustomerAbsent,
+  REASONS, RULES, JobGiveBack, preview, giveBack, quote, release, consequences, holderOf, reportProviderAbsent, reportCustomerAbsent,
   wasHandedBack, customerView, providerView, enteredAt, CUSTOMER_WAIT_MIN, PROVIDER_LATE_MIN,
 };

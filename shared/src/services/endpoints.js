@@ -168,6 +168,8 @@ export function endpoints(b, { adminApiPath }) {
     adminTravel: b.query({ query: () => adminApiPath('/economics/travel'), providesTags: ['PricingCfg'] }),
     adminRunnerAccess: b.query({ query: () => adminApiPath('/economics/runner-access'), providesTags: ['PricingCfg'] }),
     adminUpdateRunnerAccess: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/runner-access'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
+    adminScheduleCheck: b.query({ query: () => adminApiPath('/economics/schedule-check'), providesTags: ['PricingCfg'] }),
+    adminUpdateScheduleCheck: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/schedule-check'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminUpdateTravel: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/travel'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminPartnerRate: b.query({ query: ({ kind, id }) => adminApiPath(`/economics/partner-commission/${kind}/${id}`), providesTags: ['PartnerRates'] }),
     adminSetPartnerRate: b.mutation({ query: ({ kind, id, ...body }) => ({ url: adminApiPath(`/economics/partner-commission/${kind}/${id}`), method: 'PUT', body }), invalidatesTags: ['PartnerRates', 'ShopWorkers'] }),
@@ -176,6 +178,8 @@ export function endpoints(b, { adminApiPath }) {
     /** Provider: may they hand it back, what it costs, and the wait at the door. */
     jobGiveBack: b.query({ query: ({ id, reason = 'other' }) => `/jobs/${id}/give-back?reason=${reason}`, keepUnusedDataFor: 0 }),
     giveBackJob: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/give-back`, method: 'POST', body }) }),
+    // "I'll be there" / "Can't make it" on a job booked for later (jobs/time-check).
+    answerTimeCheck: b.mutation({ query: ({ id, answer }) => ({ url: `/jobs/${id}/time-check`, method: 'POST', body: { answer } }) }),
     confirmJobSafe: b.mutation({ query: (id) => ({ url: `/jobs/${id}/safe`, method: 'POST' }) }),
     askJobMoreTime: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/more-time`, method: 'POST', body }) }),
     // "Booked for someone else?": a private live link for the person at the door (jobs/share).

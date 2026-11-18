@@ -134,10 +134,10 @@ export default function Fraud() {
   const [page, setPage]       = useState(1);
   const [actor, setActor]     = useState(null);
 
-  const { data: summary } = useAdminFraudSummaryQuery(undefined, { pollingInterval: 30000 });
+  const { data: summary } = useAdminFraudSummaryQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const { data, isLoading, isFetching } = useAdminFraudEventsQuery(
     { type: type || undefined, severity: severity || undefined, status: status || undefined, page },
-    { pollingInterval: 30000 },
+    { skipPollingIfUnfocused: true, pollingInterval: 30000 },
   );
   const [resolve, { isLoading: resolving }] = useAdminResolveFraudEventMutation();
 

@@ -103,6 +103,15 @@ const TRAVEL_DEFAULTS = {
 };
 
 // Errand runners pay no commission; a pass per window with enough errands instead (jobs/runner-access).
+// Booked-for-later visits: when the pro is asked to confirm, asked again, the job re-offered, and both sides alerted (jobs/time-check).
+const SCHEDULE_CHECK_DEFAULTS = {
+  on: true,
+  askBeforeMin: 60,
+  askAgainBeforeMin: 50,
+  reofferBeforeMin: 40,
+  alertBeforeMin: 10,
+};
+
 const RUNNER_ACCESS_DEFAULTS = {
   on: true,
   feePaise: 5000,        // per window
@@ -134,6 +143,7 @@ function toView(doc) {
     partnerCommission: { ...PARTNER_COMMISSION_DEFAULTS, ...((doc.partnerCommission && typeof doc.partnerCommission === 'object') ? doc.partnerCommission : {}) },
     travel: { ...TRAVEL_DEFAULTS, ...((doc.travel && typeof doc.travel === 'object') ? doc.travel : {}) },
     runnerAccess: { ...RUNNER_ACCESS_DEFAULTS, ...((doc.runnerAccess && typeof doc.runnerAccess === 'object') ? doc.runnerAccess : {}) },
+    scheduleCheck: { ...SCHEDULE_CHECK_DEFAULTS, ...((doc.scheduleCheck && typeof doc.scheduleCheck === 'object') ? doc.scheduleCheck : {}) },
     baseFeePaise: doc.baseFeePaise,
     perKmFeePaise: doc.perKmFeePaise,
     perMinFeePaise: doc.perMinFeePaise,
@@ -415,6 +425,11 @@ async function runnerAccessSettings() {
   return { ...RUNNER_ACCESS_DEFAULTS, ...(cfg.runnerAccess || {}) };
 }
 
+async function scheduleCheckSettings() {
+  const cfg = await getActiveConfig();
+  return { ...SCHEDULE_CHECK_DEFAULTS, ...(cfg.scheduleCheck || {}) };
+}
+
 async function travelSettings() {
   const cfg = await getActiveConfig();
   return { ...TRAVEL_DEFAULTS, ...(cfg.travel || {}) };
@@ -434,6 +449,8 @@ module.exports = {
   TRAVEL_DEFAULTS,
   RUNNER_ACCESS_DEFAULTS,
   runnerAccessSettings,
+  SCHEDULE_CHECK_DEFAULTS,
+  scheduleCheckSettings,
   WAIT_GRACE_CHOICES,
   travelSettings,
   fastAssignSettings,

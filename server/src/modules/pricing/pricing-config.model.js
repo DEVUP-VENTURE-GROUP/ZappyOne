@@ -52,6 +52,8 @@ const pricingConfigSchema = new mongoose.Schema(
     travel: { type: mongoose.Schema.Types.Mixed, default: undefined },
     // Errand runners' pass instead of commission (config.service RUNNER_ACCESS_DEFAULTS); Economics → Errand runners.
     runnerAccess: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    // Confirm-before-the-time for booked visits (config.service SCHEDULE_CHECK_DEFAULTS); Economics → Booked visits.
+    scheduleCheck: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
     // Auto-pricing: Night surcharge
     nightSurchargeEnabled:    { type: Boolean, default: false },

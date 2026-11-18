@@ -47,8 +47,8 @@ export default function Bookings() {
   const [open, setOpen] = useState(null);
   // Two views: every booking, or only what needs a person now.
   const [view, setView] = useState(['attention', 'issues'].includes(params.get('view')) ? params.get('view') : 'all');
-  const { data: attention } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
-  const { data: issues } = useAdminIssuesQuery({ state: 'open', limit: 1 }, { pollingInterval: 30000 });
+  const { data: attention } = useAdminBookingAttentionQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
+  const { data: issues } = useAdminIssuesQuery({ state: 'open', limit: 1 }, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const query = { page, limit: 25, ...(source && { source }), ...(bucket && { bucket }), ...(q.trim() && { q: q.trim() }) };
   const { data, isFetching } = useAdminBookingsQuery(query);
   const rows = data?.rows || [];

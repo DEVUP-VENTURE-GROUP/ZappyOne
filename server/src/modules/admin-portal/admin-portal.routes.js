@@ -392,6 +392,36 @@ router.put('/economics/runner-access',
     } catch (err) { next(err); }
   });
 
+/* Economics → Booked visits: confirm before the time, re-offer if silent, alerts (jobs/time-check) */
+
+router.get('/economics/schedule-check', async (req, res, next) => {
+  try { res.json({ scheduleCheck: await require('../pricing/services/config.service').scheduleCheckSettings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/schedule-check',
+  validate(Joi.object({
+    on: Joi.boolean(),
+    askBeforeMin: Joi.number().integer().min(20).max(240),
+    askAgainBeforeMin: Joi.number().integer().min(15).max(235),
+    reofferBeforeMin: Joi.number().integer().min(10).max(230),
+    alertBeforeMin: Joi.number().integer().min(5).max(60),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const cfg = require('../pricing/services/config.service');
+      const before = await cfg.scheduleCheckSettings();
+      const next_ = { ...before, ...req.body };
+      // Each step must come before the next, or a pro is moved before they were ever asked.
+      if (!(next_.askBeforeMin > next_.askAgainBeforeMin && next_.askAgainBeforeMin > next_.reofferBeforeMin && next_.reofferBeforeMin > next_.alertBeforeMin)) {
+        return res.status(400).json({ error: 'The times must go down in order: ask, ask again, move the job, alert.', code: 'BAD_ORDER' });
+      }
+      await cfg.updateActiveConfig({ scheduleCheck: next_ }, req.auth.sub);
+      const after = await cfg.scheduleCheckSettings();
+      await auditService.fromRequest(req, 'economics.schedule_check', { kind: 'system', id: null }, before, after);
+      res.json({ scheduleCheck: after });
+    } catch (err) { next(err); }
+  });
+
 /* Economics → Partner commission: percent taken from each kind of partner (shop/partner-commission) */
 
 router.get('/economics/partner-commission', async (req, res, next) => {

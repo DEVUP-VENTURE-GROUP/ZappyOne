@@ -27,8 +27,8 @@ function Line({ Icon, tone, children }) {
 }
 
 export default function DemandAlerts() {
-  const { data: d } = useAdminSearchDemandQuery(undefined, { pollingInterval: 120000 });
-  const { data: attention } = useAdminBookingAttentionQuery(undefined, { pollingInterval: 30000 });
+  const { data: d } = useAdminSearchDemandQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
+  const { data: attention } = useAdminBookingAttentionQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const needs = attention?.count || 0;
   const unserved = d?.unserved || [];
   const top = d?.topSearches || [];

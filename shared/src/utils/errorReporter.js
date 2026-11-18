@@ -3,7 +3,7 @@
  *
  * One reporter for all five apps: screen crashes (ErrorBoundary), uncaught
  * errors and rejected promises (installed once, below), and failed requests
- * (services/api). Who it happened to comes from their own token, verified on
+ * (services/api, server faults only). Who it happened to comes from their own token, verified on
  * the server. Best-effort and quiet: the same error is sent at most once every
  * 30 s and no more than 30 a minute, and a report never throws.
  */
@@ -50,15 +50,15 @@ export function reportApiFailure(args, error) {
   const url = typeof args === 'string' ? args : args?.url || '';
   if (/\/telemetry\/|\/auth\/refresh/.test(url)) return;
   const status = typeof error?.status === 'number' ? error.status : 0;
-  if (status === 401) return; // a sign-in refresh, handled
-  const network = ['FETCH_ERROR', 'TIMEOUT_ERROR', 'PARSING_ERROR'].includes(error?.status);
+  // Only a server fault is worth a request: a 4xx is an answer the person was already shown, and a lost signal cannot be fixed by us (nor would the report arrive).
+  if (status < 500) return;
   reportError({
     kind: 'api',
-    severity: status >= 500 || network ? 'error' : 'warning',
-    message: error?.data?.error || error?.error || (network ? `${error.status}: could not reach the server` : `Request failed (${status})`),
+    severity: 'error',
+    message: error?.data?.error || error?.error || `Request failed (${status})`,
     api: {
       method: (typeof args === 'string' ? 'GET' : args?.method || 'GET').toUpperCase(),
-      url, status: status || 0, code: error?.data?.code || (network ? error.status : ''), requestId: error?.data?.requestId || '',
+      url, status, code: error?.data?.code || '', requestId: error?.data?.requestId || '',
     },
   });
 }

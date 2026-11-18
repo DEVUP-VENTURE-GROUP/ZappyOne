@@ -9,7 +9,7 @@ import { useAdminCoverageGapsQuery } from '@shared/services/api';
 const WHY = { nobody_does: 'Nobody does it', no_price: 'No price yet' };
 
 export default function CoverageGaps() {
-  const { data, isLoading } = useAdminCoverageGapsQuery(undefined, { pollingInterval: 120000 });
+  const { data, isLoading } = useAdminCoverageGapsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 120000 });
   const [open, setOpen] = useState(null);
   if (isLoading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-slate-400" /></div>;
   const lines = data?.lines || [];

@@ -20,7 +20,7 @@ import { RupeeInput, UnitInput, Setting, toRupees, toPaise } from './fields';
  */
 export default function Surge() {
   const [days, setDays] = useState(7);
-  const { data, isLoading, isError } = useAdminSurgeQuery(days, { pollingInterval: 30000 });
+  const { data, isLoading, isError } = useAdminSurgeQuery(days, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   const [save, { isLoading: saving }] = useAdminUpdateSurgeMutation();
   const [form, setForm] = useState(null);
   const s = data?.settings;

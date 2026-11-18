@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { planProblems } from '@shared/provider/planRules';
 import { CalendarDays, Check, ClipboardList, Loader2, Pause, Play, Plus, Repeat, Send, Users, X } from 'lucide-react';
 import {
   useProviderPlanCatalogQuery, useProviderPlansQuery, useSaveProviderPlanMutation, useSubmitProviderPlanMutation, useSetProviderPlanLiveMutation,
@@ -26,8 +27,13 @@ function PlanForm({ services, onClose }) {
   const visits = f.type === 'pack' ? 1 : Number(f.visitsPerMonth) || 1;
   const price = Math.round(Number(f.price) * 100) || 0;
   const vsYours = perVisitStd ? Math.round((price / (perVisitStd * visits)) * 100) : null;
+  // Never a silently grey button: a tap says what is missing (shared/provider/planRules, the server's own limits).
+  const problems = planProblems({ type: f.type, name: f.name, itemCount: items.length, pricePaise: price, visitsPerMonth: f.visitsPerMonth, d3: f.d3, d5: f.d5, pauses: f.pauses });
+  const [tried, setTried] = useState(false);
 
   async function go(andSubmit) {
+    setTried(true);
+    if (problems.length) { toast.error(problems[0]); return; }
     try {
       const body = { vertical, name: f.name.trim(), description: f.description.trim(), type: f.type, items, pricePaise: price, weekdays: f.type === 'pack' ? [] : f.weekdays,
         ...(f.type === 'monthly' && { visitsPerMonth: visits, durations: [{ months: 1, discountPct: 0 }, { months: 3, discountPct: Number(f.d3) || 0 }, { months: 5, discountPct: Number(f.d5) || 0 }], pauseDaysPerMonth: Number(f.pauses) || 0 }) };
@@ -56,7 +62,7 @@ function PlanForm({ services, onClose }) {
           </select>
           <input className="input w-full text-sm" placeholder="Plan name, e.g. Daily clean 2 BHK" value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} />
           <div>
-            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">{f.type === 'pack' ? 'Jobs in this pack' : 'Done on every visit'}</p>
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">{f.type === 'pack' ? 'Jobs in this pack' : 'Done on every visit'} <span className="font-semibold normal-case tracking-normal text-slate-400">· tap a price to add the job</span></p>
             <div className="space-y-1.5">
               {service?.items.map((i) => (
                 <div key={i.repairCode} className="rounded-xl border border-slate-200 p-2.5">
@@ -91,9 +97,14 @@ function PlanForm({ services, onClose }) {
           <label className="block text-xs font-semibold text-slate-600">{f.type === 'pack' ? 'Pack price (₹)' : 'Price a month (₹)'}<input className="input mt-1 w-full text-sm" inputMode="decimal" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value.replace(/[^\d.]/g, '') })} /></label>
           {vsYours != null && price > 0 && <p className="text-xs text-slate-500">That is {vsYours}% of your own single-visit prices for the same visits{f.type === 'monthly' ? ` (${rupees(Math.round(price / visits))} a visit)` : ''}.</p>}
           <textarea rows={2} className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="What the customer gets (optional)" maxLength={500} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+          {tried && problems.length > 0 && (
+            <ul className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] font-semibold text-amber-800" role="alert">
+              {problems.map((p) => <li key={p}>• {p}</li>)}
+            </ul>
+          )}
           <div className="flex gap-2">
-            <button type="button" disabled={saving || sending || !items.length || f.name.trim().length < 3 || price < 100} onClick={() => go(false)} className="btn-secondary flex-1">Save draft</button>
-            <button type="button" disabled={saving || sending || !items.length || f.name.trim().length < 3 || price < 100} onClick={() => go(true)} className="btn-primary flex-1">{sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Publish</button>
+            <button type="button" disabled={saving || sending} onClick={() => go(false)} className="btn-secondary flex-1">Save draft</button>
+            <button type="button" disabled={saving || sending} onClick={() => go(true)} className="btn-primary flex-1">{sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Publish</button>
           </div>
         </div>
       </motion.div>

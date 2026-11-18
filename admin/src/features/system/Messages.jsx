@@ -101,7 +101,7 @@ function Catalog({ events, emailReady }) {
 }
 
 function DeliveryLog() {
-  const { data, isLoading } = useAdminMessageLogQuery(undefined, { pollingInterval: 30000 });
+  const { data, isLoading } = useAdminMessageLogQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 30000 });
   if (isLoading) return <PageLoader />;
   const rows = data?.rows || [];
   if (!rows.length) return <EmptyState message="Nothing sent yet." />;

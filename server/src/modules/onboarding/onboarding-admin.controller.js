@@ -114,7 +114,8 @@ async function syncLegacyKyc(enrolment) {
     shop.kyc = {
       ...(shop.kyc?.toObject?.() || shop.kyc || {}),
       ...reviewed,
-      ownerIdUrl: byCode.owner_id || shop.kyc?.ownerIdUrl,
+      // An independent professional's checklist asks for Aadhaar where a business gives the owner's ID.
+      ownerIdUrl: byCode.owner_id || byCode.aadhaar || shop.kyc?.ownerIdUrl,
       shopPhotoUrl: byCode.shop_photo || shop.kyc?.shopPhotoUrl,
       selfieUrl: byCode.selfie || shop.kyc?.selfieUrl,
       gstCertificateUrl: byCode.gst_certificate || shop.kyc?.gstCertificateUrl,

@@ -160,7 +160,8 @@ function BottomSheetBase({
               </View>
             ) : null}
 
-            <View style={styles.body}>{children}</View>
+            {/* A fixed-height sheet gives its content the whole height, so a long form can scroll and pin its buttons. */}
+            <View style={[styles.body, heightFraction ? styles.fill : null]}>{children}</View>
           </Animated.View>
         </GestureDetector>
       </GestureHandlerRootView>
@@ -211,4 +212,5 @@ const styles = StyleSheet.create({
     paddingTop: spacing.base,
     flexShrink: 1,
   },
+  fill: { flex: 1 },
 });

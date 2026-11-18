@@ -8,7 +8,7 @@ import { ink, slate } from '@zappy/ui/theme/colors';
 import { Row, Section } from '../redesign/Section';
 
 export interface JobOptions {
-  arrival?: { arrivedAt?: string; late?: boolean; dueBy?: string; scheduled?: boolean };
+  arrival?: { arrivedAt?: string; late?: boolean; dueBy?: string; scheduled?: boolean; confirmedAt?: string | null };
   providerChangedAt?: string; providerAbsent?: { open?: boolean };
 }
 

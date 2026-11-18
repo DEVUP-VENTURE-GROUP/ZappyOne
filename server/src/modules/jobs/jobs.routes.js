@@ -451,10 +451,22 @@ router.get('/:id/give-back',
       const doc = await require('./kinds').KINDS[kind].model().findById(req.params.id).lean();
       const actor = actorOf(req);
       const mt = require('./more-time');
-      const [view, safety, moreTime] = await Promise.all([gb.providerView(kind, doc), require('./safety-check').viewFor(doc._id), mt.viewFor(doc._id)]);
+      const [view, safety, moreTime, timeCheck] = await Promise.all([gb.providerView(kind, doc), require('./safety-check').viewFor(doc._id), mt.viewFor(doc._id), require('./time-check').providerView(doc._id)]);
       const quote = view.canGiveBack ? await gb.preview({ kind, id: req.params.id, actor, reason: req.query.reason || 'other' }) : null;
       const canAskMore = mt.canAsk(kind, doc.status) && (moreTime?.left ?? mt.MAX_PER_JOB) > 0;
-      res.json({ kind, ...view, quote, safety, moreTime: { ...(moreTime || {}), canAsk: canAskMore, minutes: mt.MINUTES, reasons: mt.REASONS } });
+      res.json({ kind, ...view, quote, safety, timeCheck, moreTime: { ...(moreTime || {}), canAsk: canAskMore, minutes: mt.MINUTES, reasons: mt.REASONS } });
+    } catch (err) { next(err); }
+  });
+
+/** "I'll be there" or "Can't make it" on a job booked for later (jobs/time-check). */
+router.post('/:id/time-check',
+  authenticate, requireRole('worker', 'shop'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobtimecheck' }),
+  validate(Joi.object({ answer: Joi.string().valid('yes', 'no').required() })),
+  async (req, res, next) => {
+    try {
+      const { kind } = await jobFor(req, '_id');
+      res.json(await require('./time-check').answer({ kind, id: req.params.id, actor: actorOf(req), answer: req.body.answer }));
     } catch (err) { next(err); }
   });
 

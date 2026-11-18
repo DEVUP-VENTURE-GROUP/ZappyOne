@@ -9,6 +9,7 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, Clock, FileText, IdCard, ShieldCheck, Store, XCircle } from 'lucide-react-native';
 import { useShopKycStatusQuery, useSubmitShopKycMutation } from '@zappy/core/api';
+import { needsShopPhoto } from '@zappy/core/shared/partnerBoard';
 import { captureLive, type LiveCaptureMeta } from '@zappy/core/lib/liveCapture';
 import { pickDocument } from '@zappy/core/lib/pickDocument';
 import { uploadPhoto, type PickedPhoto } from '@zappy/core/lib/upload';
@@ -54,7 +55,10 @@ export function ShopKycPage() {
   const clar = data?.kyc?.clarification?.active ? data.kyc.clarification : null;
   const asked: Set<string> | null = clar?.docCodes?.length ? new Set(clar.docCodes) : null;
   const opens = (key: string) => !asked || asked.has(key);
-  const ready = asked ? [...asked].every((k) => urls[k]) : !!(urls.ownerIdUrl && urls.shopPhotoUrl && urls.selfieUrl);
+  // An independent professional is not asked for a shop photo (the website's ShopKycPage).
+  const shopPhoto = needsShopPhoto(data?.partnerType);
+  const docs = DOCS.filter((d) => shopPhoto || d.key !== 'shopPhotoUrl');
+  const ready = asked ? [...asked].every((k) => urls[k]) : !!(urls.ownerIdUrl && urls.selfieUrl && (!shopPhoto || urls.shopPhotoUrl));
 
   if ((status === 'pending_review' && !clar) || status === 'approved' || status === 'suspended') {
     const m = DONE[status];
@@ -92,7 +96,7 @@ export function ShopKycPage() {
   }
 
   async function submit() {
-    if (!ready) { toast.error(asked ? 'Add a new copy of each document asked for' : 'Owner ID, shop photo and selfie are all required'); return; }
+    if (!ready) { toast.error(asked ? 'Add a new copy of each document asked for' : (shopPhoto ? 'Owner ID, shop photo and selfie are all required' : 'Your ID and a live selfie are required')); return; }
     if (opens('selfieUrl') && !selfieMeta) { toast.error('Take your selfie with the camera'); return; }
     try {
       const docs = asked ? Object.fromEntries([...asked].map((k) => [k, urls[k]])) : urls;
@@ -126,7 +130,7 @@ export function ShopKycPage() {
           <Text variant="caption" weight="medium" color={zappy[700]} style={styles.flex}>When we approve your shop, customers trust you more and find you in Nearby Shops. We check within 24 hours.</Text>
         </View>
 
-        {DOCS.map((d) => (
+        {docs.map((d) => (
           <KycDocRow key={d.key} Icon={d.Icon} label={d.label} sublabel={d.sublabel} required={d.required} live={d.live}
             uploaded={!!urls[d.key]} busy={uploading === d.key} locked={!opens(d.key)} onPick={() => add(d.key, !!d.live)} />
         ))}

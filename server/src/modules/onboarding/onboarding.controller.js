@@ -65,6 +65,7 @@ async function getRequirements(req, res, next) {
     const { line, set } = await service.resolveRequirements({
       lineCode: req.params.lineCode,
       providerKind: owner.providerKind,
+      shopId: owner.kind === 'shop' ? owner.id : null,
     });
 
     const doc = await ProviderEnrolment.findOne({ ...service.ownerFilter(owner), lineCode: line.code });
@@ -509,7 +510,8 @@ async function myDocuments(req, res, next) {
     const isShop = owner.kind === 'shop';
 
     // Labels as the provider was asked for them.
-    const sets = await KycRequirementSet.find({ providerKind: owner.providerKind }).select('documents fields').lean();
+    const asked = await service.checklistKind(owner.providerKind, isShop ? owner.id : null);
+    const sets = await KycRequirementSet.find({ providerKind: { $in: [...new Set([asked, owner.providerKind])] } }).select('documents fields').lean();
     const label = new Map();
     for (const set of sets) for (const x of [...(set.documents || []), ...(set.fields || [])]) if (!label.has(x.code)) label.set(x.code, x.label);
     const nameOf = (code) => label.get(code) || code.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());

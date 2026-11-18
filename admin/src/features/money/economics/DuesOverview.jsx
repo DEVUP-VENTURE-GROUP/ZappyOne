@@ -109,7 +109,7 @@ function Collected({ months }) {
 
 // What every ServicePro partner owes ZappyOne and has paid, in one place (server wallet/dues-overview); the lists below are where payments are confirmed or recorded.
 export default function DuesOverview() {
-  const { data, isLoading } = useAdminDuesOverviewQuery(undefined, { pollingInterval: 60000 });
+  const { data, isLoading } = useAdminDuesOverviewQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   const [q, setQ] = useState('');
   if (isLoading) return <PageLoader />;
   if (!data) return null;

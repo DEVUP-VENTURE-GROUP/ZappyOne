@@ -7,6 +7,7 @@ import {
   IdCard, Store, Camera, FileText, Loader2,
 } from 'lucide-react';
 import { useShopKycStatusQuery, useSubmitShopKycMutation, usePresignUploadMutation } from '@shared/services/api';
+import { needsShopPhoto } from '@shared/provider/partnerBoard';
 import toast from 'react-hot-toast';
 import LiveSelfieCapture from '@shared/components/kyc/LiveSelfieCapture';
 import { prepareImage } from '@shared/utils/prepareImage';
@@ -41,6 +42,9 @@ export default function ShopKycPage() {
   const nav = useNavigate();
   const t = useT();
   const { data, refetch, isLoading } = useShopKycStatusQuery();
+  // An independent professional is not asked for a shop photo.
+  const shopPhoto = needsShopPhoto(data?.partnerType);
+  const docs = DOCS.filter((d) => shopPhoto || d.key !== 'shopPhotoUrl');
   const [presign] = usePresignUploadMutation();
   const [submitKyc, { isLoading: submitting }] = useSubmitShopKycMutation();
 
@@ -79,8 +83,8 @@ export default function ShopKycPage() {
   async function submit() {
     if (asked) {
       if (![...asked].every((k) => urls[k])) return toast.error('Add a new copy of each document asked for');
-    } else if (!urls.ownerIdUrl || !urls.shopPhotoUrl || !urls.selfieUrl) {
-      return toast.error('Owner ID, shop photo, and selfie are all required');
+    } else if (!urls.ownerIdUrl || !urls.selfieUrl || (shopPhoto && !urls.shopPhotoUrl)) {
+      return toast.error(shopPhoto ? 'Owner ID, shop photo, and selfie are all required' : 'Your ID and a live selfie are required');
     }
     if (opens('selfieUrl') && !selfieMeta) return toast.error('Take your selfie with the camera');
     try {
@@ -173,7 +177,7 @@ export default function ShopKycPage() {
           />
         )}
 
-        {DOCS.map(({ key, tk, label, sublabel, Icon, required, live }) => {
+        {docs.map(({ key, tk, label, sublabel, Icon, required, live }) => {
           const uploaded = !!urls[key];
           const isUploading = uploading === key;
           return (

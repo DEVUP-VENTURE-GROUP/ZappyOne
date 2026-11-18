@@ -76,7 +76,7 @@ function Row({ row }) {
 
 // Partner businesses that owe fees from cash jobs; the same limits as workers stop their new jobs (server shop/shop-dues).
 export default function ShopDues() {
-  const { data, isLoading } = useAdminShopDuesQuery(undefined, { pollingInterval: 60000 });
+  const { data, isLoading } = useAdminShopDuesQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   const rows = data?.shops || [];
   return (
     <Card className="overflow-hidden p-0">

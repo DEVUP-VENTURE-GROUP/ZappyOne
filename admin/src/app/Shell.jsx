@@ -14,7 +14,7 @@ import { NAV_GROUPS, SECTIONS, REDIRECTS } from '@/config/sections';
 
 /** The sidebar status, from the live alert checks — never a hardcoded "all good". */
 function useSystemStatus() {
-  const { data, isError } = useAdminAlertsQuery(undefined, { pollingInterval: 60000 });
+  const { data, isError } = useAdminAlertsQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   if (isError) return { tone: 'rose', text: 'Status unavailable' };
   if (!data) return { tone: 'slate', text: 'Checking…' };
   const critical = data.alerts.filter((a) => a.severity === 'critical').length;

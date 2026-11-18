@@ -158,7 +158,7 @@ function Row({ row }) {
 }
 
 export default function WorkerDues() {
-  const { data, isLoading } = useAdminDuesQuery(undefined, { pollingInterval: 60000 });
+  const { data, isLoading } = useAdminDuesQuery(undefined, { skipPollingIfUnfocused: true, pollingInterval: 60000 });
   return (
     <div className="space-y-5">
       <DuesOverview />
