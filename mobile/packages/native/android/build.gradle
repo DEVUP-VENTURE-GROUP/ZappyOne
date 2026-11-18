@@ -19,7 +19,9 @@ android {
 def expoNotificationsProject = rootProject.findProject(':expo-notifications')
 def expoNotificationsVersion = {
   def pkgJson = providers.exec {
-    workingDir(projectDir)
+    // Resolve from the app being built, not from this package: packages/native sits beside the
+    // SDK 56 mobile/node_modules, whose expo-notifications is the wrong version for SDK 58 apps.
+    workingDir(rootProject.projectDir)
     commandLine("node", "--print", "require.resolve('expo-notifications/package.json')")
   }.standardOutput.asText.get().trim()
   new groovy.json.JsonSlurper().parse(new File(pkgJson)).version
