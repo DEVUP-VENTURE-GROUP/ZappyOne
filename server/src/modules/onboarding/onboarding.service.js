@@ -54,7 +54,14 @@ async function listLines({ domainCode, providerKind = null, staff = false } = {}
  * Resolution is most-specific-first: a set naming the line wins over the
  * domain-wide one, so admins write the common case once.
  */
-async function resolveRequirements({ lineCode, providerKind }) {
+// Which checklist a provider is asked for: a ServicePro account that works alone (partnerType individual) is asked what an individual is, not for a storefront.
+async function checklistKind(providerKind, shopId) {
+  if (providerKind !== 'shop' || !shopId) return providerKind;
+  const shop = await require('../shop/shop.model').findById(shopId).select('partnerType').lean();
+  return shop?.partnerType === 'individual' ? 'individual' : 'shop';
+}
+
+async function resolveRequirements({ lineCode, providerKind, shopId = null }) {
   const line = await ServiceLine.findOne({
     code: String(lineCode).toLowerCase(), isActive: true, isArchived: false,
   }).lean();
@@ -62,7 +69,7 @@ async function resolveRequirements({ lineCode, providerKind }) {
 
   const sets = await KycRequirementSet.find({
     domainCode: line.domainCode,
-    providerKind,
+    providerKind: await checklistKind(providerKind, shopId),
     isActive: true,
     isArchived: false,
     $or: [{ lineCode: line.code }, { lineCode: null }],
@@ -227,6 +234,7 @@ async function submitForReview({ owner, enrolmentId }) {
   const { set } = await resolveRequirements({
     lineCode: enrolment.lineCode,
     providerKind: enrolment.providerKind,
+    shopId: enrolment.shopId,
   });
   if (!set) {
     throw httpError(
@@ -444,6 +452,7 @@ async function myLineRequests(owner) {
 }
 
 module.exports = {
+  checklistKind,
   myLineRequests,
   listDomains,
   listLines,

@@ -87,7 +87,7 @@ async function carryIdentity(enrolment) {
 /* Shops */
 
 /** Documents and numbers that describe the shop, not the service. */
-const SHOP_CODES = ['owner_id', 'selfie', 'shop_photo', 'gst_certificate'];
+const SHOP_CODES = ['owner_id', 'selfie', 'shop_photo', 'gst_certificate', 'aadhaar', 'pan'];
 const SHOP_FIELD_CODES = ['gst_number', 'pan_number', 'years_active'];
 
 /** What the shop already gave, by code: its other applications first (approved best), then Shop Verification. */
@@ -105,7 +105,7 @@ async function shopOnFile(shopId, { exceptEnrolmentId = null } = {}) {
   const shop = await require('../shop/shop.model').findById(shopId).select('kyc yearsActive').lean();
   const k = shop?.kyc || {};
   if (k.status !== 'rejected') {
-    const fromKyc = { owner_id: k.ownerIdUrl, selfie: k.selfieUrl, shop_photo: k.shopPhotoUrl, gst_certificate: k.gstCertificateUrl };
+    const fromKyc = { owner_id: k.ownerIdUrl, aadhaar: k.ownerIdUrl, selfie: k.selfieUrl, shop_photo: k.shopPhotoUrl, gst_certificate: k.gstCertificateUrl };
     for (const [code, url] of Object.entries(fromKyc)) if (url && !docs.has(code)) docs.set(code, { url, uploadedAt: k.submittedAt, captureMethod: 'upload' });
     const nums = { gst_number: k.gstNumber, pan_number: k.panNumber, years_active: shop?.yearsActive != null ? String(shop.yearsActive) : null };
     for (const [code, value] of Object.entries(nums)) if (value && !fields.has(code)) fields.set(code, value);
