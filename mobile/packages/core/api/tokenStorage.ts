@@ -47,11 +47,20 @@ if (isWeb) {
 // Every request needs the token; SecureStore decrypts through the Android Keystore on each read, which queues up on low-end phones. Read once, then from memory, as the websites do.
 const cache = new Map<string, string | null>();
 
+// iOS: readable once the phone has been unlocked after a restart, so a background refresh with the screen locked can save the rotated pair. Still this device only, never in backups.
+const KEYCHAIN = { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY };
+// Items saved before this setting keep their old one (WHEN_UNLOCKED) until rewritten; re-saving once on read moves them over.
+const migrated = new Set<string>();
+
 async function readItem(key: string): Promise<string | null> {
   if (isWeb) return memoryStore.get(key) ?? null;
   if (cache.has(key)) return cache.get(key) ?? null;
-  const value = await SecureStore.getItemAsync(key);
+  const value = await SecureStore.getItemAsync(key, KEYCHAIN);
   cache.set(key, value);
+  if (value && !migrated.has(key)) {
+    migrated.add(key);
+    SecureStore.setItemAsync(key, value, KEYCHAIN).catch(() => migrated.delete(key));
+  }
   return value;
 }
 
@@ -61,7 +70,8 @@ async function writeItem(key: string, value: string): Promise<void> {
     return;
   }
   cache.set(key, value);
-  await SecureStore.setItemAsync(key, value);
+  migrated.add(key);
+  await SecureStore.setItemAsync(key, value, KEYCHAIN);
 }
 
 async function deleteItem(key: string): Promise<void> {

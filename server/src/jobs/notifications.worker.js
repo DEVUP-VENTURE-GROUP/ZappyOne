@@ -75,8 +75,20 @@ function liveStage(kind, status) {
 }
 
 // native: phones running ZappyOne's own push code (packages/native) get data only and draw it themselves: 'ring' a job offer full-screen, 'live' one card per job.
-async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null } = {}) {
+// iPhones' raw APNs tokens go straight to Apple (notification/apns); `kind` (the recipient's account type) picks the app they belong to.
+async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null, kind = null } = {}) {
   if (!tokens?.length) return { skipped: true, reason: 'no_tokens' };
+  const apns = require('../modules/notification/apns');
+  const iphones = native ? [] : tokens.filter(apns.isApnsToken);
+  if (iphones.length) {
+    const [ios, rest] = await Promise.all([
+      apns.sendApns({ tokens: iphones, kind, title, body, data, offer: isOffer(data), windowSec: data.windowSec }),
+      sendFcm({ tokens: tokens.filter((t) => !apns.isApnsToken(t)), title, body, data, imageUrl, native, kind }),
+    ]);
+    if (ios.stale?.length) require('../modules/notification/devices').prune(ios.stale).catch(() => {});
+    logger.info({ success: ios.success, failure: ios.failure, title }, '[APNs] Push sent');
+    return { ok: !!(ios.ok || rest.ok), success: (ios.success || 0) + (rest.success || 0), failure: (ios.failure || 0) + (rest.failure || 0) };
+  }
 
   const app = getFirebaseApp();
   if (!app) {
@@ -126,7 +138,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null
         },
         apns: {
           headers: { 'apns-priority': '10' },
-          payload: { aps: { sound: 'default', badge: 1 } },
+          payload: { aps: { sound: isOffer(data) ? 'zappy_ring.wav' : 'default', badge: 1 } },
         },
         webpush: {
           headers: { Urgency: 'high', TTL: '86400' },
@@ -232,6 +244,7 @@ async function processJob(job) {
     if (!order) return { skipped: true, reason: 'no_order' };
 
     return sendFcm({
+      kind: 'worker',
       tokens: worker.deviceTokens,
       title: 'New job offer',
       body: `${order.service.replace(/_/g, ' ')}, ₹${order.pricing.total}, ${order.pickupLocation.address?.slice(0, 60)}`,
@@ -241,11 +254,11 @@ async function processJob(job) {
 
   /* Generic push notification */
   if (job.name === 'push') {
-    const { notificationId, recipient, title, body, data, bulkTokens } = job.data;
+    const { notificationId, recipient, title, body, data, bulkTokens, recipientKind } = job.data;
 
     // Admin broadcast: tokens provided directly as bulk array
     if (bulkTokens?.length) {
-      const fcmResult = await sendFcm({ tokens: bulkTokens, title, body, data });
+      const fcmResult = await sendFcm({ tokens: bulkTokens, title, body, data, kind: recipientKind });
       logger.info({ title, recipients: bulkTokens.length, ...fcmResult }, '[Push] Broadcast complete');
       return fcmResult;
     }
@@ -264,8 +277,8 @@ async function processJob(job) {
     const nativeTokens = tokens.filter((t) => nativeSet.has(t));
     const rest = tokens.filter((t) => !nativeSet.has(t));
     const parts = await Promise.all([
-      rest.length ? sendFcm({ tokens: rest, title, body, data }) : null,
-      nativeTokens.length ? sendFcm({ tokens: nativeTokens, title, body, data, native: mode }) : null,
+      rest.length ? sendFcm({ tokens: rest, title, body, data, kind: recipient.kind }) : null,
+      nativeTokens.length ? sendFcm({ tokens: nativeTokens, title, body, data, native: mode, kind: recipient.kind }) : null,
     ]);
     const sent = parts.filter(Boolean);
     const fcmResult = { ok: sent.some((r) => r.ok), success: sent.reduce((a, r) => a + (r.success || 0), 0), failure: sent.reduce((a, r) => a + (r.failure || 0), 0) };

@@ -7,11 +7,23 @@ const MODELS = {
   event_partner: () => require('../events/event-partner.model'),
 };
 
+// iPhones hand the app a raw APNs device token; it is kept as is and sent straight to Apple (notification/apns), FCM tokens go to Firebase.
+
 async function saveToken(kind, id, token, platform) {
   const M = MODELS[kind];
   if (!M || !id || !token) return false;
+  // One phone, one account: a token signed in elsewhere before leaves that account first.
+  await prune([token]);
   const add = { deviceTokens: token, ...(platform === 'android-native' && { nativeTokens: token }) };
   await M().updateOne({ _id: id }, { $addToSet: add });
+  return true;
+}
+
+// Sign-out: this phone's token comes off the account it signed out of.
+async function removeToken(kind, id, token) {
+  const M = MODELS[kind];
+  if (!M || !id || !token) return false;
+  await M().updateOne({ _id: id }, { $pull: { deviceTokens: token, nativeTokens: token } });
   return true;
 }
 
@@ -28,4 +40,4 @@ async function prune(stale) {
   await Promise.all(Object.values(MODELS).map((M) => M().updateMany({ deviceTokens: { $in: stale } }, pull).catch(() => {})));
 }
 
-module.exports = { saveToken, tokensOf, prune, KINDS: Object.keys(MODELS) };
+module.exports = { saveToken, removeToken, tokensOf, prune, KINDS: Object.keys(MODELS) };

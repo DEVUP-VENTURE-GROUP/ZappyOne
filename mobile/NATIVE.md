@@ -139,16 +139,13 @@ npm run ios                # simulator build + Metro on :8082
 
 ### 4.4 What is NOT done yet, in priority order
 
-**1. Push notifications (blocking for ServicePro).**
-- *The problem:*
-  - The app registers with `getDevicePushTokenAsync()`, which returns a raw **APNs** token on iPhone (`packages/core/lib/pushNotifications.ts`).
-  - The server sends every push through **Firebase** (`server/src/jobs/notifications.worker.js`, `sendEachForMulticast`).
-  - Firebase cannot deliver to an APNs token, so iPhones receive nothing: no job rings, no booking updates.
-- *Recommended fix:* get an **FCM token on iOS** (Firebase iOS SDK via `@react-native-firebase/app` + `messaging`, with `GoogleService-Info.plist` set in `app.config.ts` `ios.googleServicesFile`). The server stays the same for both platforms.
-- *Needs:*
-  - the Firebase iOS app file;
-  - an **APNs key (.p8)** uploaded to Firebase.
-  - It also adds native code, so it needs a **new store build**, not an over-the-air update.
+**1. Push notifications: code done, the APNs key needed on the server.**
+- iPhones send their raw APNs token; the server keeps it as is and sends straight to Apple over HTTP/2 (`server/src/modules/notification/apns.js`). Android keeps Firebase. No Firebase iOS app and no deprecated Firebase token swap.
+- *Needs, once:* in the Apple Developer account, create an **APNs Auth Key (.p8)**, then set on the server `APNS_KEY_ID`, `APNS_TEAM_ID` and `APNS_KEY` (the .p8 contents) or `APNS_KEY_PATH`.
+- Development builds use Apple's sandbox, TestFlight and App Store builds production: the server tries production first and falls back to sandbox by itself.
+- Taps open the right screen: routing data rides in the payload's `body` key, where expo-notifications reads it on iOS.
+- Signing out removes the phone's token from that account; a phone that signs in to another account leaves the first one.
+- Job offers play `zappy_ring.wav` and are time-sensitive (ServicePro has the `com.apple.developer.usernotifications.time-sensitive` entitlement), so they come through Focus. The ring-through-silent-mode and lock-screen card are Android-only.
 
 **2. App Store setup.**
 - *The problem:* `eas.json` submit settings are Android only.
