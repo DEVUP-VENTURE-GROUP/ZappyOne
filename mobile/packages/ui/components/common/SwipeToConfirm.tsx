@@ -15,16 +15,18 @@ export function SwipeToConfirm({ label, onConfirm, disabled = false, loading = f
   const x = useRef(new Animated.Value(0)).current;
   const [width, setWidth] = useState(0);
   const max = Math.max(0, width - KNOB - PAD * 2);
-  const live = useRef({ max, off: disabled || loading, busy: false });
+  // The gesture handler is made once, so it reads the latest action from here: a stale one would send the first render's state (no photos).
+  const live = useRef({ max, off: disabled || loading, busy: false, onConfirm });
   live.current.max = max;
   live.current.off = disabled || loading;
+  live.current.onConfirm = onConfirm;
 
   const back = () => Animated.spring(x, { toValue: 0, useNativeDriver: true, bounciness: 8, speed: 14 }).start();
   const finish = () => {
     live.current.busy = true;
     Vibration.vibrate(35);
     Animated.timing(x, { toValue: live.current.max, duration: 110, useNativeDriver: true }).start(() => {
-      Promise.resolve().then(onConfirm).catch(() => {}).finally(() => { live.current.busy = false; back(); });
+      Promise.resolve().then(() => live.current.onConfirm()).catch(() => {}).finally(() => { live.current.busy = false; back(); });
     });
   };
 

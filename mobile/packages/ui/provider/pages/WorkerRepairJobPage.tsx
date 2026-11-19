@@ -277,15 +277,6 @@ export function WorkerRepairJobPage() {
 
         {codeDue ? <Button label="Enter the customer's code" onPress={() => setCodeOpen(true)} fullWidth size="large" /> : null}
 
-        {!ownerWatching && mustBePaid ? <Text variant="caption" color={accent[700]} style={styles.centerText}>Get paid first, then complete.</Text> : null}
-
-        {/* Finishing is a slide, never a tap that can happen by accident; every other step stays a button. */}
-        {!ownerWatching && action ? (action.to === 'COMPLETED'
-          ? <SwipeToConfirm label={action.label} onConfirm={() => move(action.to)} loading={moving}
-            disabled={(!!gateKind && !gatePassed) || photosBlocked || mustBePaid} />
-          : <Button label={action.label} onPress={() => move(action.to)} loading={moving}
-            disabled={(!!gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid} fullWidth size="large" />
-        ) : null}
 
         {showQuote ? (
           <QuoteBuilder bookingId={id} bookedRepair={booking.repairCode || null} vertical={booking.vertical} additional={showQuote === 'additional'}
@@ -388,6 +379,18 @@ export function WorkerRepairJobPage() {
 
 
       </ScrollView>
+
+      {/* The next step stays pinned to the bottom while the pro scrolls; finishing is a slide, every other step a button. */}
+      {!ownerWatching && action ? (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+          {mustBePaid ? <Text variant="caption" color={accent[700]} style={styles.centerText}>Get paid first, then complete.</Text> : null}
+          {action.to === 'COMPLETED'
+            ? <SwipeToConfirm label={action.label} onConfirm={() => move(action.to)} loading={moving}
+              disabled={(!!gateKind && !gatePassed) || photosBlocked || mustBePaid} />
+            : <Button label={action.label} onPress={() => move(action.to)} loading={moving}
+              disabled={(!!gateKind && !gatePassed) || tooFarToArrive || photosBlocked || mustBePaid} fullWidth size="large" />}
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -410,6 +413,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   back: { width: 40, height: 40, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
   body: { padding: spacing.base, gap: spacing.md },
+  footer: { gap: spacing.sm, paddingHorizontal: spacing.base, paddingTop: spacing.md, backgroundColor: colors.surface, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: slate[200] },
   num: { width: 22, height: 22, borderRadius: 11, backgroundColor: slate[100], alignItems: 'center', justifyContent: 'center' },
   chip: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, minHeight: 36, justifyContent: 'center' },
 });

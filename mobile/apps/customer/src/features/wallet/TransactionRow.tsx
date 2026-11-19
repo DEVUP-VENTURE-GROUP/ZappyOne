@@ -12,6 +12,8 @@ export interface Txn { _id: string; amountPaise: number; reason?: string; create
 
 const META: Record<string, [LucideIcon, string, string, string]> = {
   cashback: [Gift, '#FDF4FF', '#C026D3', 'Cashback Reward'],
+  reward_redeem: [Gift, '#FDF4FF', '#C026D3', 'Reward points'],
+  reward_scratch: [Gift, '#FDF4FF', '#C026D3', 'Scratch card'],
   referral_reward: [Gift, danger[50], danger[600], 'Referral Bonus'],
   admin_adjustment_credit: [Crown, accent[50], accent[600], 'Bonus Credit'],
   admin_adjustment_debit: [Receipt, slate[50], ink[500], 'Adjustment Debit'],
@@ -23,7 +25,7 @@ const META: Record<string, [LucideIcon, string, string, string]> = {
   cancellation_fee: [AlertCircle, danger[50], danger[600], 'Cancel Fee'],
   subscription_revenue: [Star, accent[50], accent[600], 'Subscription'],
 };
-const REWARDS = new Set(['cashback', 'referral_reward', 'admin_adjustment_credit']);
+const REWARDS = new Set(['cashback', 'reward_redeem', 'reward_scratch', 'referral_reward', 'admin_adjustment_credit']);
 
 export const TransactionRow = memo(function TransactionRow({ txn }: { txn: Txn }) {
   const t = useT();

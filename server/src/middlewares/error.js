@@ -13,7 +13,9 @@ function fromDatabase(err) {
   if (err.name === 'CastError') return { status: 400, code: 'BAD_ID', message: 'We could not find that. Check the link and try again.' };
   if (err.name === 'ValidationError') {
     const first = Object.values(err.errors || {})[0];
-    return { status: 400, code: 'VALIDATION_FAILED', message: first?.message || 'Some details are missing or not right.' };
+    // The database's own wording (`path`, enum) means our code wrote a bad value: our fault, logged as a fault, never shown.
+    if (!first?.message || /`|enum value|Path |validation failed/i.test(first.message)) return null;
+    return { status: 400, code: 'VALIDATION_FAILED', message: first.message };
   }
   if (err.code === 11000) return { status: 409, code: 'ALREADY_EXISTS', message: 'This already exists.' };
   return null;
@@ -23,7 +25,7 @@ function fromDatabase(err) {
  * A message written for us, not for the person: job states in capitals
  * (IN_PROGRESS), database or library wording. Replaced by what it means.
  */
-const INTERNAL = /\b[A-Z]{2,}(?:_[A-Z]+)+\b|Cast to|ObjectId|E11000|\bundefined\b|\bnull\b|is not a function|Cannot read prop|[Ii]llegal transition|Cannot move a/;
+const INTERNAL = /`|enum value|\b[A-Z]{2,}(?:_[A-Z]+)+\b|Cast to|ObjectId|E11000|\bundefined\b|\bnull\b|is not a function|Cannot read prop|[Ii]llegal transition|Cannot move a/;
 const PLAIN_BY_STATUS = {
   400: 'Some details are not quite right. Check them and try again.',
   401: 'Please sign in again to continue.',

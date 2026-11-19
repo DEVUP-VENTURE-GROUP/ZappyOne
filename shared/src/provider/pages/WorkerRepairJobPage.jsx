@@ -619,9 +619,11 @@ export default function WorkerRepairJobPage() {
         {codeDue && (
           <button type="button" onClick={() => setCodeOpen(true)} className="btn-primary w-full">Enter the customer's code</button>
         )}
-        {!ownerWatching && mustBePaid && <p className="text-center text-[12px] font-semibold text-amber-700">Get paid first, then complete.</p>}
-        {/* Finishing is a slide, never a click that can happen by accident; every other step stays a button. */}
-        {!ownerWatching && action && (action.to === 'COMPLETED' ? (
+        {/* The next step stays pinned to the bottom while the pro scrolls; finishing is a slide, every other step a button. */}
+        {!ownerWatching && action && (
+        <div className="sticky bottom-0 z-10 -mx-4 space-y-2 border-t border-slate-100 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 backdrop-blur">
+        {mustBePaid && <p className="text-center text-[12px] font-semibold text-amber-700">Get paid first, then complete.</p>}
+        {action.to === 'COMPLETED' ? (
           <SwipeToConfirm label={action.label} onConfirm={() => move(action.to)} loading={moving}
             disabled={(gateKind && !gatePassed) || photosBlocked || mustBePaid} />
         ) : (
@@ -632,7 +634,9 @@ export default function WorkerRepairJobPage() {
           >
             {moving ? <><Loader2 size={15} className="animate-spin" /> Updating…</> : action.label}
           </button>
-        ))}
+        )}
+        </div>
+        )}
         {showQuote ? (
           <QuoteBuilder
             bookingId={id}

@@ -53,3 +53,16 @@ test('a class finishes without a photo; a repair trade still needs one', async (
   const fix = await booking('mobile', 'QA_PENDING');
   await expect(lifecycle.transition(fix._id, 'COMPLETED', { actorRole: 'worker', actorId: fix.workerId })).rejects.toMatchObject({ code: 'PHOTO_REQUIRED' });
 });
+
+test('photos attached over HTTP let the pro complete', async () => {
+  const request = require('supertest');
+  const { signAccessToken } = require('../src/modules/auth/token.service');
+  const app = require('../src/app')();
+  const b = await booking('two_wheeler', 'QA_PENDING');
+  const auth = { Authorization: `Bearer ${signAccessToken({ sub: String(b.workerId), role: 'worker' })}` };
+  const att = await request(app).post(`/api/repair/bookings/${b._id}/completion-photos`).set(auth).send({ photos: ['completion-photos/a.jpg'] });
+  expect(att.status).toBe(200);
+  const res = await request(app).post(`/api/repair/bookings/${b._id}/status`).set(auth).send({ status: 'COMPLETED' });
+  expect(res.status).not.toBe(404);
+  expect(res.body.code).not.toBe('PHOTO_REQUIRED');
+});

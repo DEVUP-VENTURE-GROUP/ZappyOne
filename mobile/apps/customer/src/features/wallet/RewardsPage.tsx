@@ -18,7 +18,7 @@ import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { ScratchCard, type Card } from './ScratchCard';
 
-const REASON: Record<string, string> = { order: 'Order reward', referral: 'Referral bonus', referee_join: 'Welcome bonus', scratch: 'Scratch card', redeem: 'Redeemed to wallet', admin_grant: 'Bonus from ZappyOne' };
+const REASON: Record<string, string> = { order: 'Order reward', referral: 'Referral bonus', referee_join: 'Welcome bonus', scratch: 'Scratch card', redeem: 'Redeemed to wallet', redeem_rollback: 'Points returned (redeem did not go through)', admin_grant: 'Bonus from ZappyOne' };
 
 export function RewardsPage() {
   const router = useRouter();

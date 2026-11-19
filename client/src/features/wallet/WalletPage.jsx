@@ -167,6 +167,8 @@ export default function WalletPage() {
                     const positive = t.amountPaise > 0;
                     const TXN_META = {
                       cashback:                { Icon: Gift, bg: 'bg-zappy-50 border-zappy-100 text-zappy-600', label: tr('wallet.txn.cashback', 'Cashback Reward') },
+                      reward_redeem:           { Icon: Gift, bg: 'bg-zappy-50 border-zappy-100 text-zappy-600', label: tr('wallet.txn.rewardRedeem', 'Reward points') },
+                      reward_scratch:          { Icon: Gift, bg: 'bg-zappy-50 border-zappy-100 text-zappy-600', label: tr('wallet.txn.rewardScratch', 'Scratch card') },
                       referral_reward:         { Icon: Gift,     bg: 'bg-rose-50 border-rose-100 text-rose-600',   label: tr('wallet.txn.referral', 'Referral Bonus') },
                       admin_adjustment_credit: { Icon: Crown,    bg: 'bg-amber-50 border-amber-100 text-amber-600',  label: tr('wallet.txn.bonusCredit', 'Bonus Credit') },
                       admin_adjustment_debit:  { Icon: Receipt,  bg: 'bg-slate-50 border-slate-200 text-slate-600',    label: tr('wallet.txn.adjustmentDebit', 'Adjustment Debit') },

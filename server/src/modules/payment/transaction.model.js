@@ -23,7 +23,9 @@ const REASONS = {
   WALLET_TOPUP: 'wallet_topup',
   ADMIN_ADJUSTMENT_CREDIT: 'admin_adjustment_credit',
   DUES_PAYMENT: 'dues_payment',
-  TIP: 'tip',                                 // a customer's thank-you, all of it the provider's               // a worker paid what they owed ZappyOne
+  TIP: 'tip',                                 // a customer's thank-you, all of it the provider's
+  REWARD_REDEEM: 'reward_redeem',             // reward points turned into wallet money
+  REWARD_SCRATCH: 'reward_scratch',           // a scratch card's cashback
 
   // Debits (negative)
   ORDER_PAYMENT: 'order_payment',
