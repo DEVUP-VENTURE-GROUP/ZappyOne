@@ -18,6 +18,7 @@
  */
 
 import React, { memo, useEffect, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import {
   Platform,
   Pressable,
@@ -60,7 +61,7 @@ export const PhoneField = memo(function PhoneField({
   ...rest
 }: PhoneFieldProps) {
   const [focused, setFocused] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   return (
     <View>
@@ -155,7 +156,7 @@ export const OtpBoxes = memo(function OtpBoxes({
   error,
   autoFocus,
 }: OtpBoxesProps) {
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
 
   const digits = value.split('');

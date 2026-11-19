@@ -1,6 +1,6 @@
 // Explore services (Asif's design): seven service areas with their photo, then More Services; each opens All services at that area.
-import { memo } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { memo, useState } from 'react';
+import { Image, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import { LayoutGrid } from 'lucide-react-native';
 import { areaPhoto } from '@zappy/core/shared/serviceArt';
 import { icon3dFor } from '@zappy/core/shared/icons3d';
@@ -9,6 +9,7 @@ import { serviceIcon } from '@zappy/ui/components/home/serviceIcons';
 import { webAsset } from '@zappy/ui/lib/media';
 import { zappy } from '@zappy/ui/theme/colors';
 import { spacing } from '@zappy/ui/theme/spacing';
+import { artSource } from '../../lib/art';
 import type { HomeDomain } from './homeCatalog';
 
 // Light surfaces only, one per service area; the icon or character carries the colour (same tints as the website).
@@ -33,13 +34,17 @@ const SHORT_AREA: Record<string, string> = {
 const HOME_AREA_LIMIT = 7;
 
 const AreaTile = memo(function AreaTile({ label, a11y, photo, icon = null, Icon, tint, onPress }: {
-  label: string; a11y: string; photo: string | null; icon?: string | null; Icon: ReturnType<typeof serviceIcon>; tint: { bg: string; fg: string }; onPress: () => void;
+  label: string; a11y: string; photo: ImageSourcePropType | null; icon?: string | null; Icon: ReturnType<typeof serviceIcon>; tint: { bg: string; fg: string }; onPress: () => void;
 }) {
+  // A picture that fails to load (offline, website down) steps down: photo → 3D icon → line icon, never an empty box.
+  const [failed, setFailed] = useState<'none' | 'photo' | 'icon'>('none');
+  const showPhoto = photo && failed === 'none';
+  const showIcon = icon && failed !== 'icon';
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={a11y} style={styles.tile}>
       <View style={[styles.art, { backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.photo} resizeMode="cover" />
-          : icon ? <Image source={{ uri: icon }} style={styles.icon3d} resizeMode="contain" /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
+        {showPhoto ? <Image source={photo} style={styles.photo} resizeMode="cover" onError={() => setFailed('photo')} />
+          : showIcon ? <Image source={{ uri: icon }} style={styles.icon3d} resizeMode="contain" onError={() => setFailed('icon')} /> : <Icon size={28} color={tint.fg} strokeWidth={1.8} />}
       </View>
       <Text variant="caption" weight="semibold" numberOfLines={2} style={styles.name}>{label}</Text>
     </Pressable>
@@ -55,7 +60,7 @@ export function ServiceGrid({ domains, onOpenArea, onMore }: { domains: HomeDoma
       <View style={styles.grid}>
         {domains.slice(0, HOME_AREA_LIMIT).map((d) => (
           <AreaTile key={d.code} label={SHORT_AREA[d.code] ?? d.name} a11y={`${d.name}, ${d.services.length} services`}
-            photo={webAsset(areaPhoto(d))} icon={webAsset(icon3dFor(d))} Icon={serviceIcon((d as { icon?: string }).icon)} tint={tintFor(d.code)} onPress={() => onOpenArea(d)} />
+            photo={artSource(areaPhoto(d))} icon={webAsset(icon3dFor(d))} Icon={serviceIcon((d as { icon?: string }).icon)} tint={tintFor(d.code)} onPress={() => onOpenArea(d)} />
         ))}
         <AreaTile label="More Services" a11y="More services: see all services" photo={null} Icon={LayoutGrid} tint={DEFAULT_TINT} onPress={onMore} />
       </View>

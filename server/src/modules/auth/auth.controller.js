@@ -268,6 +268,13 @@ async function refresh(req, res, next) {
 async function logout(req, res, next) {
   try {
     const rt = readRt(req);
+    // The phone's push token leaves the account it signed out of (only that account: the refresh token proves which).
+    if (rt && req.body?.pushToken) {
+      try {
+        const t = require('jsonwebtoken').verify(rt, config.jwt.secret, { ignoreExpiration: true });
+        if (t.type === 'refresh') await require('../notification/devices').removeToken(t.role, t.sub, String(req.body.pushToken));
+      } catch { /* not a valid session: nothing to remove */ }
+    }
     if (rt) await authService.revoke(rt).catch(() => {});
     clearRtCookie(req, res);
     res.json({ ok: true });
@@ -358,7 +365,8 @@ async function loginWithPassword(req, res, next) {
     const { role, identifier, password } = req.body;
     assertPortalServes(req, role);
     const account = await require('../account/account.service').loginWithPassword({ role, identifier, password });
-    if (role === 'worker') authService.assertWorkerPortal(account, portalOf(req));
+    // The apps too: a shop's technician signs in to ServicePro, an individual worker to Rakshak (as the code sign-in does).
+    if (role === 'worker') authService.assertWorkerPortal(account, portalOf(req) || appOf(req));
     const tokens = await require('./token.service').issueTokenPair({ sub: account._id.toString(), role, phone: account.phone });
     setRtCookie(req, res, tokens.refreshToken);
     const out = account.toObject();

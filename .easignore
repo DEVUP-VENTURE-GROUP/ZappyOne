@@ -1,24 +1,47 @@
-# What EAS uploads for a mobile build. Replaces .gitignore for EAS, so keep
-# the usual exclusions here too. The apps need only mobile/.
+# What EAS uploads for a mobile build. Replaces .gitignore for EAS, so keep the
+# usual exclusions here too. Every app lives in mobile/: Rakshak (Expo SDK 56,
+# the mobile/ workspace with the shared core/ui) and the standalone SDK 58 apps
+# mobile/apps/customer and mobile/apps/servicepro, which also read mobile/packages.
 
 # Everything at the top level except mobile/
 /*
 !/mobile
 
-# Installed and generated files (EAS installs dependencies itself)
+# Installed and generated files (EAS installs dependencies and generates the native projects itself)
 node_modules/
 .expo/
 dist/
 web-build/
 ios/
 android/
+.kotlin/
+*.tsbuildinfo
 *.log
+.DS_Store
 
-# Local settings and secrets never leave this computer
+# The native sources of the local modules are code, not generated output
+!/mobile/packages/native/android/
+!/mobile/apps/servicepro/modules/*/android/
+/mobile/packages/native/android/build/
+/mobile/packages/native/android/.gradle/
+/mobile/packages/native/android/.cxx/
+/mobile/apps/servicepro/modules/*/android/build/
+/mobile/apps/servicepro/modules/*/android/.gradle/
+/mobile/apps/servicepro/modules/*/android/.cxx/
+
+# Personal notes, AI tool settings and loose images kept beside the code (untracked, never part of a build)
+/mobile/AGENTS.md
+/mobile/CLAUDE.md
+/mobile/.claude/
+/mobile/banners/
+
+# Local settings and secrets never leave this computer (EAS keeps the signing credentials)
 .env
 .env*.local
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
+*.pem
 *.mobileprovision

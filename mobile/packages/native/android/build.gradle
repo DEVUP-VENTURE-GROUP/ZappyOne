@@ -14,8 +14,25 @@ android {
   }
 }
 
+// Expo SDK 56 links expo-notifications as a prebuilt AAR (its local-maven-repo), so the
+// ':expo-notifications' Gradle project exists only when it is built from source.
+def expoNotificationsProject = rootProject.findProject(':expo-notifications')
+def expoNotificationsVersion = {
+  def pkgJson = providers.exec {
+    // Resolve from the app being built, not from this package: packages/native sits beside the
+    // SDK 56 mobile/node_modules, whose expo-notifications is the wrong version for SDK 58 apps.
+    workingDir(rootProject.projectDir)
+    commandLine("node", "--print", "require.resolve('expo-notifications/package.json')")
+  }.standardOutput.asText.get().trim()
+  new groovy.json.JsonSlurper().parse(new File(pkgJson)).version
+}
+
 dependencies {
-  implementation project(':expo-notifications')
+  if (expoNotificationsProject != null) {
+    implementation expoNotificationsProject
+  } else {
+    implementation "host.exp.exponent:expo.modules.notifications:${expoNotificationsVersion()}"
+  }
   implementation 'com.google.firebase:firebase-messaging:25.0.1'
   implementation 'androidx.core:core:1.17.0'
   implementation 'androidx.work:work-runtime:2.10.0'

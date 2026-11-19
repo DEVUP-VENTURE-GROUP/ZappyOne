@@ -106,7 +106,7 @@ export function ProviderReviewsPage() {
               <Text variant="caption" color={ink[500]}>Page {page} of {data.pages}</Text>
               <Button label="Older" size="small" variant="outline" disabled={page >= data.pages} onPress={() => setPage((p) => p + 1)} />
             </View>
-          ) : null}
+          ) : undefined}
         />
       )}
     </View>

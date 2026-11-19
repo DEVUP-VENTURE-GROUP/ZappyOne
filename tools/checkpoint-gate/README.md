@@ -22,7 +22,7 @@ The gate rates the code a PR **adds** the way SonarQube does: Reliability, Secur
 | Server tests | breaks a test that uses the changed server code (by path, file name or URL, else its module's tests, at most 25 files). `--full` runs the whole suite. A file that fails only under load and passes on a calm retry is a warning (flaky) |
 | Coverage on new code | runs fewer than 80% of the new server statements in tests (SonarQube's default gate) |
 | Build every app · compressed size | breaks a build of client, servicepro or admin, or pushes one past its gzip budget in `budgets.json` |
-| App type check (iOS + Android) | changes `mobile/` and leaves a TypeScript error in the customer or ServicePro app |
+| App type check (iOS + Android) | leaves a TypeScript error in an app it touches: Customer and ServicePro (Expo SDK 58) are each checked with their own install in `mobile/apps/<app>`, Rakshak with the `mobile` workspace (SDK 56), and a change to the shared `mobile/packages/core` or `ui` checks all three. An app that cannot be checked (missing lockfile, not installed, broken `shared` link) fails; changed Kotlin/Swift is a warning because the gate does not compile native code |
 | Reliability · bugs | adds an undefined name or component, a hook outside a component, identical branches or conditions, an impossible comparison, an ignored return value… (SonarJS + core rules) |
 | Security · vulnerabilities | adds `eval` or `new Function`, a shell call, an exponential regex, a hard-coded password or IP, an insecure cookie, a timing-unsafe comparison… |
 | Maintainability · code smells | adds a function over cognitive complexity 15 or cyclomatic complexity 20, over 250 lines, nested over 5 deep or with over 5 parameters, an identical function, a dead store, an unused value, missing hook dependencies… |
@@ -45,9 +45,9 @@ These checks report and never fail the gate:
 | Tests for server changes | server code changed with no test changed |
 | Size of the change | past 1,500 added lines |
 
-A PR run takes about 2 minutes: only the tests that use the changed code, only the web apps whose code changed, and both app type checks when `mobile/` changed. Run `--full` (the whole ~1,950-test suite and all three builds) before a release and nightly.
+A PR run takes about 2 minutes: only the tests that use the changed code, only the web apps whose code changed, and the type checks of the phone apps a change reaches (documentation alone reaches none). Run `--full` (the whole ~1,950-test suite and all three builds) before a release and nightly.
 
-Every lint-based check compares the PR with its base and fails only on what the PR adds, so older debt in a file you touch is shown but not blamed on you. Tests, the three web builds and both app type checks run at the same time.
+Every lint-based check compares the PR with its base and fails only on what the PR adds, so older debt in a file you touch is shown but not blamed on you. Tests, the three web builds and the app type checks run at the same time.
 
 Test files may use fake passwords and random values, and translation files contain the word "password" in every language, so those rules skip them (`eslint.config.mjs`).
 
@@ -58,6 +58,7 @@ cd tools/checkpoint-gate && npm ci && cd ../..
 git fetch origin checkpoint-main
 node tools/checkpoint-gate/run.js --base origin/checkpoint-main
 # faster while iterating:  --skip-tests --skip-build
+# the gate's own tests:     cd tools/checkpoint-gate && npm test
 # open gate-report/report.html
 ```
 

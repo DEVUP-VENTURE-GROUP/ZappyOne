@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import {
-  ArrowRight, CheckCircle2, ChevronRight, Clock, MapPin, RotateCcw, ShieldCheck, Star, Store, Wrench, XCircle,
+  ArrowRight, CheckCircle2, ChevronRight, Clock, MapPin, RotateCcw, ShieldCheck, Star, Store, XCircle,
 } from 'lucide-react';
 import { useGetAvailablePromosQuery, useNearbyShopsQuery } from '@shared/services/api';
 import { formatPaise } from '@shared/utils/money';
@@ -8,8 +8,8 @@ import { offerEnds } from '@shared/customer/season';
 import { ZappyWordmark } from '@shared/components/common/ZappyLogo';
 import PromoBanner from '@shared/components/home/PromoBanner';
 import { artFor, servicePhoto } from '@shared/components/home/serviceArt';
-import { tintFor } from './ServiceGrid';
-import { AREA_PHOTO } from '@shared/config/homepageContent';
+import { explorePhoto, SHORT_NAME, tintFor } from './ServiceGrid';
+import { AREA_PHOTO, pickPopular } from '@shared/config/homepageContent';
 import { icon3dFor } from '@shared/config/icons3d';
 
 // The sections of Home below the hero.
@@ -37,24 +37,6 @@ function Rail({ children, cols = 'sm:grid-cols-2 lg:grid-cols-4', className = ''
 }
 
 const fmtDay = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '');
-
-/* Book a service / Local stores */
-
-export function ModeSwitch({ onStores }) {
-  return (
-    <nav aria-label="What would you like to do" className="grid grid-cols-2 gap-1 rounded-[16px] bg-zappy-50 p-1 ring-1 ring-inset ring-zappy-100">
-      <span aria-current="page"
-        className="relative flex h-12 items-center justify-center gap-2 rounded-[12px] bg-zappy-600 text-[14px] font-bold text-white shadow-soft-lg sm:text-[15px]">
-        <Wrench size={17} strokeWidth={2.2} /> Book a service
-      </span>
-      <button type="button" onClick={onStores}
-        className="flex h-12 items-center justify-center gap-2 rounded-[12px] text-[14px] font-bold text-zappy-700 transition-colors hover:bg-white sm:text-[15px]">
-        <Store size={17} strokeWidth={2.2} /> Shop from Stores
-        <span className="rounded-full bg-accent-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">New</span>
-      </button>
-    </nav>
-  );
-}
 
 /* ZappyOne promotion */
 
@@ -151,23 +133,62 @@ export function PopularServices({ services, onOpen, onViewAll }) {
   );
 }
 
-/* Campaign banners (admin) */
+/* Service promos (the team's web design): two cards under Explore Services */
 
-export function CampaignBanners({ ads, onOpen, onImageError }) {
-  if (!ads.length) return null;
+// Each card opens a live service here; a card whose services are not live at this address does not show.
+const SERVICE_PROMOS = [
+  {
+    key: 'cleaning', codes: ['daily_cleaning', 'bathroom_balcony', 'sofa_mattress'], area: 'home_daily_help', photo: '/services/daily_cleaning.jpg',
+    title: 'Home', accent: 'Deep Cleaning', line: 'Professional cleaning for a healthier, happier home.',
+    card: 'bg-[#4B2A9B]', fade: 'from-[#4B2A9B]', titleTone: 'text-white', lineTone: 'text-white/90', accentTone: 'text-orange-400',
+  },
+  {
+    key: 'ac', codes: ['appliance_repair'], photo: '/services/appliance_repair.jpg',
+    title: 'AC Service', accent: '& Repair', line: 'Keep your home cool and comfortable.',
+    card: 'bg-[#E8EFFC]', fade: 'from-[#E8EFFC]', titleTone: 'text-zappy-700', lineTone: 'text-ink-700', accentTone: 'text-orange-500',
+  },
+];
+
+export function ServicePromos({ services, onOpen, onOpenArea }) {
+  const byCode = new Map(services.map((s) => [s.code, s]));
+  const designed = SERVICE_PROMOS.map((p) => ({ ...p, target: p.codes.map((c) => byCode.get(c)).find(Boolean) }));
+  // The row is always two cards, as designed. A card whose service is not live at this
+  // address keeps its look and features the most popular other live service with a photo.
+  const taken = new Set(designed.filter((p) => p.target).map((p) => p.target.code));
+  const spare = pickPopular(services.filter((s) => !taken.has(s.code) && explorePhoto(s)), services.length);
+  const cards = designed.map((p) => {
+    if (p.target) return p;
+    const s = spare.shift();
+    if (!s) return null;
+    const words = (SHORT_NAME[s.code] || s.name).split(' ');
+    return {
+      ...p, key: `${p.key}:${s.code}`, area: null, target: s, photo: explorePhoto(s),
+      title: words.length > 1 ? words.slice(0, -1).join(' ') : words[0], accent: words.length > 1 ? words[words.length - 1] : '',
+      line: s.tagline || s.description || 'Verified pros, with the price before work starts.',
+    };
+  }).filter(Boolean);
+  if (!cards.length) return null;
   return (
-    <section aria-label="Campaigns">
-      {ads.length === 1
-        ? <PromoBanner ad={ads[0]} variant="campaign" onOpen={onOpen} onImageError={onImageError} />
-        : (
-          <div className="-mx-4 flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:px-0">
-            {ads.map((ad) => (
-              <div key={ad._id} className="w-[88%] shrink-0 snap-start sm:w-auto">
-                <PromoBanner ad={ad} variant="campaign" onOpen={onOpen} onImageError={onImageError} />
-              </div>
-            ))}
-          </div>
-        )}
+    <section aria-label="Featured services" className={`grid gap-4 ${cards.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+      {cards.map((p) => (
+        <button key={p.key} type="button" onClick={() => (p.area ? onOpenArea(p.area) : onOpen(p.target))}
+          aria-label={`${p.title} ${p.accent}. ${p.line} Book now`}
+          className={`group relative flex h-[190px] overflow-hidden rounded-[20px] text-left shadow-[0_2px_12px_-3px_rgba(16,24,40,0.12)] sm:h-[250px] lg:h-[280px] ${p.card}`}>
+          <img src={p.photo} alt="" loading="lazy" decoding="async"
+            className="absolute inset-y-0 right-0 h-full w-[52%] object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+          {/* Solid up to where the photo starts (48%), so no edge shows; then it fades into the photo. */}
+          <span aria-hidden="true" className={`absolute inset-0 bg-gradient-to-r ${p.fade} from-[48%] to-transparent to-[76%]`} />
+          <span className="relative flex max-w-[62%] flex-col justify-center gap-2 p-5 sm:gap-3 sm:p-8">
+            <span className={`text-[24px] font-extrabold italic leading-[1.05] tracking-[-0.02em] sm:text-[34px] lg:text-[40px] ${p.titleTone}`}>
+              {p.title}<br /><span className={p.accentTone}>{p.accent}</span>
+            </span>
+            <span className={`text-[13px] leading-snug sm:text-[17px] ${p.lineTone}`}>{p.line}</span>
+            <span className="mt-1 inline-flex h-10 items-center gap-2 self-start rounded-full bg-white px-5 text-[14px] font-bold text-ink-900 shadow-[0_6px_16px_-6px_rgba(16,24,40,0.35)] transition-colors group-hover:bg-zappy-50 sm:mt-2 sm:h-12 sm:px-7 sm:text-[17px]">
+              Book Now <ArrowRight size={18} strokeWidth={2.4} />
+            </span>
+          </span>
+        </button>
+      ))}
     </section>
   );
 }

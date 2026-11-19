@@ -40,7 +40,7 @@ export function PartnerBookingsPage() {
                   <Text variant="caption" color={ink[500]}>Page {page} of {data.pages}</Text>
                   <Button label="Next" size="small" variant="outline" disabled={page >= data.pages} onPress={() => setPage(page + 1)} />
                 </View>
-              ) : null} />
+              ) : undefined} />
           )}
         </>
       )}

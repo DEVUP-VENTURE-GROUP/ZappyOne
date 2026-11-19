@@ -10,8 +10,8 @@ const config: ExpoConfig = {
   scheme: 'zappyone',
   // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
   platforms: ['ios', 'android'],
-  // 1.0.2 adds native parts (image shrinking, file upload): its own runtime, so no 1.0.1 phone gets this JS over the air.
-  version: '1.0.2',
+  // 1.1.0 is the Expo SDK 58 build. runtimeVersion follows this (policy appVersion), so no SDK 56 phone (1.0.x) gets this JS over the air, and this build never takes an SDK 56 update.
+  version: '1.1.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'light',
@@ -39,13 +39,21 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-dev-client',
-    'expo-secure-store',
+    // No Face ID: nothing in the app asks for biometric unlock, so no Face ID description ships.
+    ['expo-secure-store', { faceIDPermission: false }],
     'expo-font',
     // Release builds are shrunk and obfuscated (R8), as Google Play asks.
     ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, enableShrinkResourcesInReleaseBuilds: true } }],
     ['expo-splash-screen', { image: './assets/images/splash.png', imageWidth: 200, resizeMode: 'contain', backgroundColor: '#FFFFFF' }],
-    ['expo-location', { locationWhenInUsePermission: 'ZappyOne uses your location to find professionals near you and to track your booking.' }],
-    ['expo-camera', { cameraPermission: 'ZappyOne uses the camera for photos of what needs fixing.', recordAudioAndroid: false }],
+    // While in use only: the customer app never tracks in the background, and uses no motion data.
+    ['expo-location', {
+      locationWhenInUsePermission: 'ZappyOne uses your location to find professionals near you and to track your booking.',
+      locationAlwaysAndWhenInUsePermission: false,
+      locationAlwaysPermission: false,
+      motionUsagePermission: false,
+    }],
+    // Photos only: the camera never records video or sound.
+    ['expo-camera', { cameraPermission: 'ZappyOne uses the camera for photos of what needs fixing.', microphonePermission: false, recordAudioAndroid: false }],
     'expo-notifications',
     ['expo-image-picker', { photosPermission: 'ZappyOne uses your photos to show what needs fixing.', microphonePermission: false }],
   ],

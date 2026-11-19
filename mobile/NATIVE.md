@@ -4,7 +4,7 @@ For: everyone working on the apps. Read §1 and §2 first. Android developers th
 
 ## 1. One codebase, three outputs
 
-The customer app and ServicePro are each **one** React Native (Expo SDK 56) app.
+The customer app and ServicePro are each **one** React Native app on **Expo SDK 58** (React Native 0.88). Rakshak stays on Expo SDK 56 (React Native 0.85). See `README.md` → *Two Expo SDK generations* for how the two live under `mobile/`.
 
 - The same TypeScript code ships to Android and to iOS.
 - The website is a separate React app (`client/`, `servicepro/`). It shares logic with the apps through `shared/` and the sync tool.
@@ -26,18 +26,21 @@ hyperlocal-platform/
     │   │   ├── src/                The app's own features
     │   │   ├── app.config.ts       ★ Native settings for BOTH platforms
     │   │   ├── eas.json            Build profiles (dev, simulator, preview, production)
+    │   │   ├── package-lock.json   Its own SDK 58 install (node_modules beside it)
+    │   │   ├── shared              Link to ../../packages (TypeScript reads the shared code through it)
     │   │   ├── android/            GENERATED, not in git (see §2)
     │   │   └── ios/                GENERATED, not in git (see §2)
     │   ├── servicepro/             ServicePro app (same layout)
     │   │   └── modules/            ★ Our own native code (committed)
     │   │       ├── zappy-bubble/       android/: floating job bubble (Android only)
     │   │       └── zappy-shortcuts/    android/: app-icon shortcuts (Android only)
-    │   └── rakshak/                On hold: do not touch
+    │   └── rakshak/                On hold: do not touch (SDK 56, installed by mobile/package.json)
     ├── packages/
     │   ├── core/                   API hooks (generated), store, shared logic (synced)
     │   ├── ui/                     Shared screens and components for both apps
-    │   └── native/                 ★ Shared native module (android/ today)
-    └── tools/sync-api-hooks.js     Copies endpoints and logic from shared/ into packages/core
+    │   └── native/                 ★ Shared native module (android/ today), file:../../packages/native in both apps
+    ├── package.json                SDK 56 workspace: apps/rakshak, packages/core, packages/ui
+    └── tools/                      sync-api-hooks.js (shared/ → packages/core), sync-bundled-art.js, tests/
 ```
 
 ## 2. Why `android/` and `ios/` are not in git
@@ -64,20 +67,21 @@ We use Expo's **Continuous Native Generation**:
 | `npm run native:android` | Generates `android/`. Open it in Android Studio | Windows, macOS, Linux |
 | `npm run native:ios` | Generates `ios/` and runs `pod install`. Open `ios/*.xcworkspace` in Xcode | **macOS only.** Expo refuses on Windows |
 | `npm run native:clean` | Deletes both and regenerates from `app.config.ts` | Use after changing plugins or permissions |
+
+On SDK 58, `expo prebuild` regenerates `ios/` from scratch even without `--clean`: `Pods/`, `Podfile.lock` and the `.xcworkspace` are removed. Keep a copy of `ios/Podfile.lock` if you need the same pods, put it back, then run `pod install`.
 | `npm run android` / `npm run ios` | Builds and runs on a device or emulator | `ios` needs macOS + Xcode |
 
 ## 3. Android developer
 
 **Setup:**
 - Android Studio (latest)
-- JDK 17
-- Android SDK 35
+- JDK 17 (`JAVA_HOME` pointing at it; newer JDKs are not used by this Gradle setup)
+- Android SDK: compile SDK 37 and build-tools 37.0.0 for the SDK 58 apps (Gradle installs them on the first build once the licences are accepted)
 - An emulator, or a phone with USB debugging
 
 **Run it:**
 ```
-cd mobile && npm install
-cd apps/servicepro
+cd mobile/apps/servicepro && npm ci   # SDK 58 apps install on their own (Rakshak: cd mobile && npm ci)
 npm run native:android     # optional: view the native project
 npm run android            # build, install, start Metro on :8082
 ```
@@ -91,9 +95,9 @@ npm run android            # build, install, start Metro on :8082
 
 EAS holds the signing keystore. Never generate your own or commit one.
 
-**JavaScript-only fixes go over the air.** The command is `EAS_SKIP_AUTO_FINGERPRINT=1 npx eas-cli update --channel production --environment production --platform android --non-interactive`. Before any update, check that the change adds no native module. An update that needs a native part the installed build lacks crashes the app (this happened on 19 Oct). Runtimes in use:
-- ServicePro: 1.0.2
-- customer: 1.0.0 (its next store build is 1.0.2)
+**JavaScript-only fixes go over the air.** The command is `EAS_SKIP_AUTO_FINGERPRINT=1 npx eas-cli update --channel production --environment production --platform android --non-interactive`. Before any update, check that the change adds no native module. An update that needs a native part the installed build lacks crashes the app (this happened on 19 Oct). Runtimes in use (the runtime follows the app version):
+- customer and ServicePro: 1.1.0, the SDK 58 builds. Store builds on 1.0.x (SDK 56) never receive a 1.1.0 update, and 1.1.0 builds never take a 1.0.x one.
+- Rakshak: 1.0.1 (SDK 56).
 
 **Android-only native code today:**
 - the ServicePro bubble (`SYSTEM_ALERT_WINDOW`);
@@ -103,7 +107,7 @@ EAS holds the signing keystore. Never generate your own or commit one.
 ## 4. iOS developer
 
 ### 4.1 What you need
-- **A Mac with Xcode 16+**, and CocoaPods (`sudo gem install cocoapods`). You cannot generate or build the iOS project on Windows.
+- **A Mac with Xcode 16+**, and CocoaPods (`sudo gem install cocoapods`). You cannot generate or build the iOS project on Windows. The SDK 58 apps target iOS 16.4 and were last built in Release with Xcode 27.2.
 - **The ZappyOne Apple Developer team** ($99/yr, owned by the company). Ask the owner to add you.
 - **Bundle IDs:**
   - customer: `com.zappyone.app`
@@ -111,8 +115,7 @@ EAS holds the signing keystore. Never generate your own or commit one.
 
 ### 4.2 Run it
 ```
-cd mobile && npm install
-cd apps/servicepro
+cd mobile/apps/servicepro && npm ci
 npm run native:ios         # generates ios/ and installs pods
 npm run ios                # simulator build + Metro on :8082
 ```
@@ -136,16 +139,13 @@ npm run ios                # simulator build + Metro on :8082
 
 ### 4.4 What is NOT done yet, in priority order
 
-**1. Push notifications (blocking for ServicePro).**
-- *The problem:*
-  - The app registers with `getDevicePushTokenAsync()`, which returns a raw **APNs** token on iPhone (`packages/core/lib/pushNotifications.ts`).
-  - The server sends every push through **Firebase** (`server/src/jobs/notifications.worker.js`, `sendEachForMulticast`).
-  - Firebase cannot deliver to an APNs token, so iPhones receive nothing: no job rings, no booking updates.
-- *Recommended fix:* get an **FCM token on iOS** (Firebase iOS SDK via `@react-native-firebase/app` + `messaging`, with `GoogleService-Info.plist` set in `app.config.ts` `ios.googleServicesFile`). The server stays the same for both platforms.
-- *Needs:*
-  - the Firebase iOS app file;
-  - an **APNs key (.p8)** uploaded to Firebase.
-  - It also adds native code, so it needs a **new store build**, not an over-the-air update.
+**1. Push notifications: code done, the APNs key needed on the server.**
+- iPhones send their raw APNs token; the server keeps it as is and sends straight to Apple over HTTP/2 (`server/src/modules/notification/apns.js`). Android keeps Firebase. No Firebase iOS app and no deprecated Firebase token swap.
+- *Needs, once:* in the Apple Developer account, create an **APNs Auth Key (.p8)**, then set on the server `APNS_KEY_ID`, `APNS_TEAM_ID` and `APNS_KEY` (the .p8 contents) or `APNS_KEY_PATH`.
+- Development builds use Apple's sandbox, TestFlight and App Store builds production: the server tries production first and falls back to sandbox by itself.
+- Taps open the right screen: routing data rides in the payload's `body` key, where expo-notifications reads it on iOS.
+- Signing out removes the phone's token from that account; a phone that signs in to another account leaves the first one.
+- Job offers play `zappy_ring.wav` and are time-sensitive (ServicePro has the `com.apple.developer.usernotifications.time-sensitive` entitlement), so they come through Focus. The ring-through-silent-mode and lock-screen card are Android-only.
 
 **2. App Store setup.**
 - *The problem:* `eas.json` submit settings are Android only.

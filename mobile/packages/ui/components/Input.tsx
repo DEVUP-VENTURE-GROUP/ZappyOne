@@ -7,6 +7,7 @@
  */
 
 import React, { forwardRef, memo, useState } from 'react';
+import type { ComponentRef } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -36,7 +37,7 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
 }
 
 export const Input = memo(
-  forwardRef<TextInput, InputProps>(function InputBase(
+  forwardRef<ComponentRef<typeof TextInput>, InputProps>(function InputBase(
     {
       label,
       error,

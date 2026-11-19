@@ -52,7 +52,7 @@ export function PartnerNotificationsPage() {
               <Button label="Newer" variant="outline" size="small" disabled={page <= 1} onPress={() => setPage(page - 1)} />
               <Button label="Older" variant="outline" size="small" disabled={page >= data.pages} onPress={() => setPage(page + 1)} />
             </View>
-          ) : null} />
+          ) : undefined} />
       )}
     </View>
   );

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ChevronRight } from 'lucide-react';
 import { selectAuth, selectIsAuthed } from '@shared/modules/auth/authSlice';
 import { setLocation } from '@shared/store/locationSlice';
-import { useGetAvailablePromosQuery, useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
+import { useGetServiceabilityQuery, useLiveCatalogQuery, useGetEventCategoriesQuery, useLensStatusQuery, useSaveRecentLocationMutation } from '@shared/services/api';
 import useSeason from './useSeason';
 import { useGeolocation, loadGeoLocation, tooRough, roughLocationMessage } from '@shared/hooks/useGeolocation';
 import { saveGeoLocation } from '@shared/utils/geoCache';
@@ -23,14 +23,13 @@ import { useMyJobs } from '@shared/customer/useMyJobs';
 import { trackSearch } from '@shared/hooks/useTelemetry';
 import HomeHeader, { SearchBar } from './HomeHeader';
 import LocationSheet from './LocationSheet';
-import { ServiceGrid, ProblemChips } from './ServiceGrid';
+import { ServiceGrid } from './ServiceGrid';
 import {
-  ModeSwitch, ZappyOnePromo, PopularServices, CampaignBanners, LocalStores,
-  OffersDeals, BookAgain, RecentActivity,
+  ZappyOnePromo, PopularServices, LocalStores,
+  OffersDeals, BookAgain, RecentActivity, ServicePromos,
 } from './HomeRails';
-import HomeMarketplace from './HomeMarketplace';
+import { pickPopular } from '@shared/config/homepageContent';
 import { useHomeAds } from './useHomeAds';
-import { bestOfferPct, localBanners, pickPopular } from '@shared/config/homepageContent';
 import { eventPhoto } from '../events/eventPhotos';
 import ContinueBookingCard from './ContinueBookingCard';
 import FestiveHero from '@shared/components/home/festive/FestiveHero';
@@ -70,15 +69,19 @@ function ActiveJobCard({ job, onOpen }) {
   );
 }
 
+// The same shape as Explore Services (twelve photo cards, six to a row on a desktop), so nothing jumps when it loads.
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8" aria-hidden="true">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col items-center gap-1.5">
-          <span className="aspect-square w-full animate-pulse rounded-card bg-sunken" />
-          <span className="h-3 w-3/4 animate-pulse rounded bg-sunken" />
-        </div>
-      ))}
+    <div aria-hidden="true">
+      <div className="h-7 w-52 animate-pulse rounded-lg bg-sunken sm:h-9" />
+      <div className="mt-4 grid grid-cols-3 gap-2.5 sm:mt-5 sm:grid-cols-4 sm:gap-4 lg:grid-cols-6">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-[16px] bg-white p-1.5 ring-1 ring-black/[0.04] sm:p-2">
+            <span className="aspect-[4/3] w-full animate-pulse rounded-[12px] bg-sunken" />
+            <span className="mx-auto mb-1.5 h-3.5 w-3/4 animate-pulse rounded bg-sunken" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -262,14 +265,9 @@ export default function HomePage() {
     nav(path || s.path);
   }
 
-  /* Admin banners (hero, campaign, offer). */
-  const { hero: heroBanners, campaign: campaignBanners, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
+  /* Admin banners: hero slides (else the team's designed slides) and personal offers. */
+  const { hero: heroList, offer: offerBanners, open: openBanner, onImageError: onBannerImageError } = useHomeAds();
   const popular = useMemo(() => pickPopular(services), [services]);
-  const { data: promoData } = useGetAvailablePromosQuery(undefined, { skip: !isAuthed });
-  // Admin banners first; the bundled ones only where they are true for this address and customer.
-  const local = (slot) => localBanners(slot, { liveAreas: new Set(allDomains.map((d) => d.code)), bestOfferPct: bestOfferPct(promoData?.promos), link: ({ area, offers }) => (offers ? '/promos' : area ? `/services#domain-${area}` : '/services') });
-  const heroList = heroBanners.length ? heroBanners : local('hero');
-  const campaignList = [...campaignBanners, ...local('campaign')];
 
   /* The customer's own jobs. */
   const { jobs, current: activeJob, past: pastJobs } = useMyJobs({ skip: !isAuthed });
@@ -353,8 +351,6 @@ export default function HomePage() {
         {season && <FestiveHero season={season} theme={theme} services={services} onOpen={(s) => openService(s)} />}
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-4 pb-10 pt-4 sm:gap-10 sm:px-6 sm:pt-7">
-          <ModeSwitch onStores={() => nav('/nearby-shops')} />
-
           {activeJob && <ActiveJobCard job={activeJob} onOpen={() => nav(activeJob.href)} />}
           {/* A booking started and left: back to where they stopped (jobs/checkout-draft). */}
           <ContinueBookingCard isAuthed={isAuthed} />
@@ -378,35 +374,33 @@ export default function HomePage() {
               )}
               {nothingLive && !loadingCatalog && <ComingSoonRow groups={comingSoon} loc={loc} />}
 
-              {settling && <div className="h-[188px] animate-pulse rounded-[20px] bg-sunken sm:h-[300px] lg:h-[340px]" aria-hidden="true" />}
+              {settling && <div className="h-[230px] animate-pulse rounded-[20px] bg-sunken sm:h-[340px] lg:h-[400px]" aria-hidden="true" />}
               {!settling && !nothingLive && !season && (
                 <HeroCarousel banners={heroList} domains={allDomains} onOpen={openService} onOpenBanner={openBanner} onImageError={onBannerImageError} />
               )}
 
               {settling || (loc.lat != null && !svc && checkingArea)
                 ? <SkeletonGrid />
-                : <ServiceGrid domains={allDomains} onOpenArea={(d) => nav(`/services#domain-${d.code}`)} onMore={() => nav('/services')} />}
-              {/* The problem in the customer's own words, straight into its flow. */}
-              <ProblemChips services={services} />
+                : (
+                  <>
+                    <ServiceGrid services={services} onOpen={openService} onViewAll={() => nav('/services')} />
+                    <ServicePromos services={services} onOpen={openService} onOpenArea={(area) => nav(`/services?category=${area}`)} />
+                  </>
+                )}
               {season && <FestiveDivider theme={theme} />}
 
               <ZappyOnePromo onExplore={() => nav('/nearby-shops')} />
 
               {!loadingCatalog && <PopularServices services={popular} onOpen={openService} onViewAll={() => nav('/services')} />}
 
-              <CampaignBanners ads={campaignList} onOpen={openBanner} onImageError={onBannerImageError} />
-
               <LocalStores lat={loc.lat} lng={loc.lng} enabled={isAuthed} onOpenShop={(id) => nav(`/shops/${id}`)} onViewAll={() => nav('/nearby-shops')} />
 
+              {/* The customer's own offers and bookings, when they have any. */}
               <OffersDeals ads={offerBanners} isAuthed={isAuthed} onOpenAd={openBanner} onViewAll={() => nav('/promos')} onImageError={onBannerImageError} />
 
               {/* Personal and real only: the customer's own bookings. */}
               <BookAgain items={quickRebooks} onOpen={nav} onViewAll={() => nav('/orders')} />
               <RecentActivity jobs={recent} onOpen={nav} onViewAll={() => nav('/orders')} />
-
-              {isAuthed && <HomeMarketplace />}
-              {/* Only live services show above; the rest waits here, by category. */}
-              {!loadingCatalog && !nothingLive && <ComingSoonRow groups={comingSoon} loc={loc} />}
             </>
           )}
         </main>
