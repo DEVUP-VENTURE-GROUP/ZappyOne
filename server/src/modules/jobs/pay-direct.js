@@ -90,7 +90,7 @@ async function claim({ id, userId, method, utr = null }) {
       body: method === 'upi'
         ? `${doc.reference || 'A booking'}: check your UPI app for ${rupees} (ref ${ref}), then tap Received.`
         : `${doc.reference || 'A booking'}: take ${rupees} in cash, then tap Received.`,
-      deepLink: KINDS[kind].providerLink(String(doc._id)), data: payload,
+      deepLink: KINDS[kind].providerLink(String(doc._id)), data: { ...payload, key: 'provider.pay_claim' },
     }).catch(() => {});
   }
   // The pro already said it was not paid: now two stories about the same money, so a person decides.

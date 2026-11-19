@@ -31,6 +31,8 @@ import HotZonesCard from '../../components/worker/HotZonesCard';
 import BusyCard from '../../components/worker/BusyCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
+import MissingPhotosCard from '../../components/worker/MissingPhotosCard';
+import ActiveJobBar from '../../components/worker/ActiveJobBar';
 import { last7, weekDeltaPct, hm, ratingLabel, kycBannerText } from '../workerHome';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview,
@@ -294,6 +296,7 @@ export default function WorkerDashboard() {
       </header>
 
       <main className="mx-auto flex max-w-5xl flex-col gap-5 px-4 pb-28 pt-4 lg:px-8 lg:pb-10">
+        {!STAFF_PORTAL && kycApproved && <MissingPhotosCard />}
         {token && kycData && !kycApproved && !verificationInFlight && (
           <button
             type="button"
@@ -407,6 +410,7 @@ export default function WorkerDashboard() {
           </div>
         </div>
       </main>
+      <ActiveJobBar jobs={mine} />
 
       <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />
     </div>

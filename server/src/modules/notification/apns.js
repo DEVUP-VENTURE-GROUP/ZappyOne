@@ -67,12 +67,12 @@ function post(env, deviceToken, headers, body, auth) {
 }
 
 // One APNs request: data rides in `body` (expo-notifications reads it there); job offers ring with zappy_ring.wav, break through Focus and expire with the offer.
-function buildRequest({ title, body, data = {}, offer = false, windowSec = 60 }) {
+function buildRequest({ title, body, data = {}, offer = false, loud = offer, windowSec = 60 }) {
   const payload = {
     aps: {
       alert: { title: String(title || ''), body: String(body || '') },
-      sound: offer ? 'zappy_ring.wav' : 'default',
-      ...(offer && { 'interruption-level': 'time-sensitive' }),
+      sound: loud ? 'zappy_ring.wav' : 'default',
+      ...(loud && { 'interruption-level': 'time-sensitive' }),
     },
     body: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
   };
@@ -86,7 +86,7 @@ function buildRequest({ title, body, data = {}, offer = false, windowSec = 60 })
 }
 
 // Sends to raw APNs tokens for the recipient's app, retrying once on the other app or the sandbox; returns { ok, success, failure, stale } (stale = tokens to prune).
-async function sendApns({ tokens, kind, title, body, data, offer, windowSec }) {
+async function sendApns({ tokens, kind, title, body, data, offer, loud, windowSec }) {
   const list = [...new Set((tokens || []).filter(isApnsToken))];
   if (!list.length) return { skipped: true, reason: 'no_tokens', success: 0, failure: 0, stale: [] };
   const cfg = keyConfig();
@@ -94,7 +94,7 @@ async function sendApns({ tokens, kind, title, body, data, offer, windowSec }) {
     logger.info({ tokens: list.length, title }, '[APNs] not configured - skipping iPhone push');
     return { skipped: true, reason: 'apns_not_configured', success: 0, failure: 0, stale: [] };
   }
-  const req = buildRequest({ title, body, data, offer, windowSec });
+  const req = buildRequest({ title, body, data, offer, loud, windowSec });
   const auth = providerToken(cfg);
   let success = 0; let failure = 0; const stale = [];
   // A few hundred streams at a time, so a broadcast never opens thousands at once on one connection.

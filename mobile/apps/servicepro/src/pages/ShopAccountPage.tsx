@@ -1,8 +1,9 @@
 // More on the owner's bar: who they are, every page not on the bar (shared ownerMenu, the website's menu), and sign out.
 import { useEffect, useState } from 'react';
 import { zappyBubble } from '../../modules/zappy-bubble';
+import { bubbleOff, onBubbleOff, setBubbleOff } from '../captain/bubblePref';
 import { zappyNative } from '@zappy/native';
-import { AppState, Linking, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { AppState, Linking, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BarChart3, ChevronRight, Headphones, KanbanSquare, Landmark, LogOut, Mail, MessageSquareQuote, Phone, PhoneCall, PlusCircle, Repeat, Scale, ShieldCheck, Star, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useProviderWorkspaceQuery, useShopMeQuery, useUpdateShopMeMutation } from '@zappy/core/api';
@@ -55,6 +56,8 @@ function RingSetting() {
 
 function BubbleSetting() {
   const [on, setOn] = useState(zappyBubble.canShow());
+  const [hidden, setHidden] = useState(bubbleOff());
+  useEffect(() => onBubbleOff(setHidden), []);
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => { if (st === 'active') setOn(zappyBubble.canShow()); });
     return () => sub.remove();
@@ -64,9 +67,11 @@ function BubbleSetting() {
     <View style={[styles.card, styles.row]}>
       <View style={styles.flex}>
         <Text variant="bodySmall" weight="semibold">ZappyOne bubble</Text>
-        <Text variant="caption" color={ink[500]}>{on ? 'On. While you are online it stays on your screen, even with the app closed.' : 'A ZappyOne button on your screen while you are online. Tap it to open a job fast.'}</Text>
+        <Text variant="caption" color={ink[500]}>{on && !hidden ? 'On. While you are online it stays on your screen, even with the app closed.' : 'A ZappyOne button on your screen while you are online. Tap it to open a job fast.'}</Text>
       </View>
-      {on ? <Text variant="caption" weight="bold" color="#047857">On</Text> : <Button label="Turn on" size="small" onPress={() => zappyBubble.askPermission()} />}
+      {on
+        ? <Switch value={!hidden} onValueChange={(v) => setBubbleOff(!v)} accessibilityLabel="ZappyOne bubble" />
+        : <Button label="Turn on" size="small" onPress={() => { setBubbleOff(false); zappyBubble.askPermission(); }} />}
     </View>
   );
 }

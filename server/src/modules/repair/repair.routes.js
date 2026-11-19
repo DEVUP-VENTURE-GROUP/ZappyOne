@@ -617,6 +617,8 @@ router.put('/provider/inspection-fee', ...providerOnly, validate(Joi.object({ ve
   await ProviderInspectionFee.updateOne({ ...who, vertical: req.body.vertical }, { $set: { feePaise: req.body.feePaise }, $setOnInsert: { ...who, vertical: req.body.vertical } }, { upsert: true });
   return { feePaise: req.body.feePaise };
 }));
+// Offered jobs with no photo yet: the home reminder sends the pro to add one.
+router.get('/provider/menu/missing-photos', ...providerOnly, wrap((req) => menuSvc.missingPhotos(menuSvc.ownerFromAuth(req.auth))));
 router.get('/provider/menu', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
   wrap((req) => menuSvc.menu(menuSvc.ownerFromAuth(req.auth), req.query.vertical)));
 router.put('/provider/menu/item', ...providerOnly,

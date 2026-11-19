@@ -53,7 +53,7 @@ test('the starter menu shows sample jobs with suggested starting prices, nothing
 test('using the samples prices every sample at the suggestion; editing one changes only that job, live at once', async () => {
   let m = await menu.useSamples(own(shop), V, actor(shop));
   expect(m.items.filter((i) => !i.own).every((i) => i.offered)).toBe(true);
-  m = await menu.saveItem(own(shop), V, { repairCode: 'daicle_full_daily', includes: ['Sweep', 'Mop', 'Dust', 'Sweep'], minutes: 80, prices: { daicle_1bhk: 39900, daicle_2bhk: 49900, daicle_3bhk: null, daicle_4bhk: null } }, actor(shop));
+  m = await menu.saveItem(own(shop), V, { repairCode: 'daicle_full_daily', includes: ['Sweep', 'Mop', 'Dust', 'Sweep'], minutes: 80, photoKey: 'menu/daily.jpg', prices: { daicle_1bhk: 39900, daicle_2bhk: 49900, daicle_3bhk: null, daicle_4bhk: null } }, actor(shop));
   const full = m.items.find((i) => i.repairCode === 'daicle_full_daily');
   expect(full).toMatchObject({ offered: true, includes: ['Sweep', 'Mop', 'Dust'], minutes: 80 });
   expect(full.prices).toMatchObject({ daicle_1bhk: 39900, daicle_2bhk: 49900, daicle_3bhk: null });
@@ -114,7 +114,7 @@ test('a new job needs a name and a price', async () => {
 
 test('one search across nearby menus finds matching jobs from every provider pricing them, cheapest first, and nothing far away', async () => {
   const { searchMenus } = require('../src/modules/repair/services/storefront.service');
-  await menu.saveItem(own(other), V, { repairCode: 'daicle_full_daily', prices: { daicle_2bhk: 42900 } }, actor(other));
+  await menu.saveItem(own(other), V, { repairCode: 'daicle_full_daily', photoKey: 'menu/daily.jpg', prices: { daicle_2bhk: 42900 } }, actor(other));
   const near = await searchMenus({ q: 'daily clean', lat: LAT, lng: LNG });
   const names = near.items.filter((i) => i.repairCode === 'daicle_full_daily').map((i) => i.provider.name);
   expect(names).toEqual(expect.arrayContaining(['Sparkle Helpers', 'Other Helpers']));
@@ -141,4 +141,15 @@ test('at a known address the shared job list shows only jobs a provider covering
   expect(here.every((c) => everywhere.includes(c))).toBe(true);
   expect(here).toContain('daicle_full_daily_req');
   expect(farAway).toEqual([]);
+});
+
+test('a job offered to customers needs a photo; one already saved is kept; the samples go on first', async () => {
+  await expect(menu.saveItem(own(shop), V, { name: 'Balcony wash', prices: { daicle_2bhk: 19900 } }, actor(shop))).rejects.toMatchObject({ code: 'PHOTO_REQUIRED', status: 400 });
+  const m = await menu.saveItem(own(shop), V, { name: 'Balcony wash', photoKey: 'menu/balcony.jpg', prices: { daicle_2bhk: 19900 } }, actor(shop));
+  const job = m.items.find((i) => i.name === 'Balcony wash');
+  const again = await menu.saveItem(own(shop), V, { repairCode: job.repairCode, prices: { daicle_2bhk: 21900 } }, actor(shop));
+  expect(again.items.find((i) => i.repairCode === job.repairCode).photoKey).toBe('menu/balcony.jpg');
+  const missing = await menu.missingPhotos(own(shop));
+  expect(missing.names).not.toContain('Balcony wash');
+  expect(missing.count).toBeGreaterThan(0);
 });

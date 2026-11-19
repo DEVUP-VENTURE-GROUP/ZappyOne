@@ -23,6 +23,8 @@ import { accent, colors, danger, ink, slate, success, zappy } from '@zappy/ui/th
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { ShopJobs } from '../components/ShopJobs';
+import { MissingPhotosCard } from '@zappy/ui/components/worker/MissingPhotosCard';
+import { ActiveJobBar } from '@zappy/ui/components/worker/ActiveJobBar';
 import { PartnerTermsCard } from '../components/PartnerTermsCard';
 import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { ShareStorefront } from '../components/ShareStorefront';
@@ -108,6 +110,7 @@ export function ShopDashboard() {
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={!!liveNow} isOpen={isOpen}
           blocker={shop?.bookable?.reason || (kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null)} />
+        <MissingPhotosCard to="/shop/work" />
         {askingNow > 0 ? (
           <Pressable onPress={() => go('/shop/price-requests')} accessibilityRole="button" style={styles.asking}>
             <View style={styles.flex}>
@@ -172,6 +175,7 @@ export function ShopDashboard() {
           </View>
         </Panel>
       </ScrollView>
+      <ActiveJobBar jobs={jobs as { id: string; to: string; title: string; status: string }[]} />
     </View>
   );
 }
@@ -180,7 +184,7 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1, minWidth: 0 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-  body: { padding: spacing.base, gap: spacing.base, paddingBottom: spacing.xxxl },
+  body: { padding: spacing.base, gap: spacing.base, paddingBottom: 120 },
   asking: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1, borderColor: zappy[200], backgroundColor: zappy[50] },
   block: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, padding: spacing.base, borderRadius: radius.large, borderWidth: 1 },
   blockAmber: { borderColor: accent[100], backgroundColor: accent[50] },

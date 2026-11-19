@@ -15,6 +15,8 @@ import ProviderServicesCard from '@shared/components/provider/ProviderServicesCa
 import PartnerTermsCard from '@shared/provider/components/PartnerTermsCard';
 import PartnerDuesCard from '@shared/provider/components/PartnerDuesCard';
 import ShopJobs from '../components/ShopJobs';
+import MissingPhotosCard from '@shared/components/worker/MissingPhotosCard';
+import ActiveJobBar from '@shared/components/worker/ActiveJobBar';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
 import { last7, weekDeltaPct } from '@shared/provider/workerHome';
@@ -232,6 +234,7 @@ export default function ShopDashboard() {
 
       <div className="mx-auto max-w-6xl px-4 pt-4">
         <SetupJourney />
+        <MissingPhotosCard className="mb-4" />
         {liveNow && <div className="mb-4"><ShareStorefront /></div>}
         {askingNow > 0 && (
           <button type="button" onClick={() => nav('/shop/price-requests')}
@@ -332,6 +335,7 @@ export default function ShopDashboard() {
           </div>
         </div>
       </div>
+      <ActiveJobBar jobs={jobs} />
     </div>
   );
 }

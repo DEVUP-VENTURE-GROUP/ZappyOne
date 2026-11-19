@@ -31,7 +31,7 @@ test('menu service: the pro builds their menu, a customer finds and books their 
   const samples = await request(app).post('/api/repair/provider/menu/samples').set(pro).send({ vertical: 'daily_cleaning' });
   expect(samples.status).toBe(200);
   const added = await request(app).put('/api/repair/provider/menu/item').set(pro)
-    .send({ vertical: 'daily_cleaning', name: 'Fridge inside clean', includes: ['Shelves', 'Trays'], minutes: 45, prices: { daicle_2bhk: 29900 } });
+    .send({ vertical: 'daily_cleaning', name: 'Fridge inside clean', includes: ['Shelves', 'Trays'], minutes: 45, photoKey: 'menu/fridge.jpg', prices: { daicle_2bhk: 29900 } });
   expect(added.status).toBe(200);
   const own = added.body.items.find((i) => i.own);
   expect(own).toMatchObject({ offered: true, prices: { daicle_2bhk: 29900 } });

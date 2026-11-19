@@ -45,6 +45,8 @@ import { ProviderServicesCard } from '../../components/provider/ProviderServices
 import { Panel, LinkButton, StatTile, NoticeRow, inr } from '../../components/worker/DashboardUI';
 import { HotZonesCard } from '../../components/worker/HotZonesCard';
 import { BusyCard } from '../../components/worker/BusyCard';
+import { MissingPhotosCard } from '../../components/worker/MissingPhotosCard';
+import { ActiveJobBar } from '../../components/worker/ActiveJobBar';
 import { MineRow } from '../../components/worker/MineRow';
 import { MyAreaChip } from '../../components/worker/MyAreaChip';
 import { OnlineSwitch } from '../../components/worker/OnlineSwitch';
@@ -215,6 +217,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
         ) : null}
 
         {staffMe?.staff ? <StaffDutyCard me={staffMe} /> : STAFF_APP ? <StaffWaitingCard /> : <DuesCard />}
+        {!STAFF_APP && kycApproved ? <MissingPhotosCard /> : null}
         {isOnline && !STAFF_APP && !staffMe?.staff ? <BusyCard /> : null}
         {isOnline && !STAFF_APP ? <HotZonesCard coords={lastCoords} /> : null}
 
@@ -271,6 +274,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
 
         {!STAFF_APP ? <EarningsOverview weekRupees={weekData?.earningsRupees ?? 0} deltaPct={deltaPct} points={weekPoints(week)} onViewDetails={() => go('/worker/earnings')} /> : null}
       </ScrollView>
+      <ActiveJobBar jobs={mine as { id: string; to: string; title: string; status: string }[]} />
 
       <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
   iconBtn: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   dot: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: danger[500], alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
   dotText: { fontSize: 10, lineHeight: 12 },
-  body: { padding: spacing.base, gap: spacing.base, paddingBottom: spacing.xxxl },
+  body: { padding: spacing.base, gap: spacing.base, paddingBottom: 120 },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.medium, borderWidth: 1, borderColor: colors.border, padding: spacing.base },
   heroOn: { borderColor: success[100], backgroundColor: success[50] },
   grid: { flexDirection: 'row', gap: spacing.md },

@@ -2182,6 +2182,8 @@ export function endpoints(b, { adminApiPath }) {
     savePetProviderRates: b.mutation({ query: (body) => ({ url: '/pet/provider/rates', method: 'PUT', body }), invalidatesTags: ['ProviderMenu'] }),
     // A helper's own rates per errand (helping/services/provider-rates).
     providerMenu: b.query({ query: (vertical) => ({ url: '/repair/provider/menu', params: { vertical } }), providesTags: ['ProviderMenu'] }),
+    /** Offered jobs with no photo yet, for the home reminder (repair provider-menu missingPhotos). */
+    providerMissingPhotos: b.query({ query: () => '/repair/provider/menu/missing-photos', providesTags: ['ProviderMenu'] }),
     saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     adjustProviderMenu: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/adjust', method: 'POST', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),

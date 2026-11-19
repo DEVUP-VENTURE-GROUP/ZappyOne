@@ -261,6 +261,7 @@ export const useRescheduleJobMutation = h.useRescheduleJobMutation;
 export const useJobArrivalQuery = h.useJobArrivalQuery;
 export const useMyBusyQuery = h.useMyBusyQuery;
 export const useJobPayQrQuery = h.useJobPayQrQuery;
+export const useProviderMissingPhotosQuery = h.useProviderMissingPhotosQuery;
 export const useSetBusyMutation = h.useSetBusyMutation;
 export const useAdminReinstateEventPartnerMutation = h.useAdminReinstateEventPartnerMutation;
 export const useEventDeclineQuoteQuery = h.useEventDeclineQuoteQuery;

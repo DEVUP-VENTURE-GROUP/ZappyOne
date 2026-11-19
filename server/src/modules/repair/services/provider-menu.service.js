@@ -65,6 +65,18 @@ async function menu(owner, vertical) {
   return { vertical, types: types.map((t) => ({ code: t.code, name: t.name })), items, tips };
 }
 
+// Offered jobs with no photo, for the reminder that sends the pro to add one.
+async function missingPhotos(owner) {
+  const caps = await ProviderCapability.find({ ...filterOf(owner), isActive: true, $or: [{ photoKey: '' }, { photoKey: null }, { photoKey: { $exists: false } }] })
+    .select('repairCode vertical').limit(200).lean();
+  if (!caps.length) return { count: 0, vertical: null, names: [] };
+  const repairs = await Repair.find({ code: { $in: caps.map((c) => c.repairCode) }, vertical: { $in: [...new Set(caps.map((c) => c.vertical))] } })
+    .select('code vertical name photoKey').lean();
+  const byKey = new Map(repairs.map((r) => [`${r.vertical}:${r.code}`, r]));
+  const missing = caps.map((c) => byKey.get(`${c.vertical}:${c.repairCode}`)).filter((r) => r && !r.photoKey);
+  return { count: missing.length, vertical: missing[0]?.vertical || null, names: missing.slice(0, 3).map((r) => r.name) };
+}
+
 // A new job of the provider's own, inside the service, under its first heading.
 async function createOwnJob(owner, vertical, { name, minutes, includes, photoKey }) {
   if ((await Repair.countDocuments({ vertical, 'owner.id': owner.shopId || owner.workerId, isArchived: false })) >= MAX_OWN) {
@@ -91,7 +103,7 @@ async function createOwnJob(owner, vertical, { name, minutes, includes, photoKey
 }
 
 // Save one job on the menu (a sample kept or one of their own): a blank price takes that option off, no prices at all takes the job off the menu.
-async function saveItem(owner, vertical, body, actor) {
+async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
   await assertMenuService(vertical);
   const types = await Brand.find({ category: vertical, isActive: { $ne: false } }).select('code').lean();
   const typeCodes = new Set(types.map((t) => t.code));
@@ -106,25 +118,35 @@ async function saveItem(owner, vertical, body, actor) {
   if (body.repairCode) {
     repair = await Repair.findOne({ vertical, code: body.repairCode, isActive: true, isArchived: false }).lean();
     if (!repair || (repair.owner && String(repair.owner.id) !== String(owner.shopId || owner.workerId))) throw httpError('That job is not on this service.', 404, 'UNKNOWN_JOB');
+  }
+  // A job offered to customers shows at least one photo of the work: kept when the app does not send it again.
+  const kept = repair ? (await ProviderCapability.findOne({ ...filterOf(owner), repairCode: repair.code }).select('photoKey').lean())?.photoKey || repair.photoKey || '' : '';
+  const photoKey = body.photoKey || kept;
+  // Samples from the catalogue go on first; the home reminder then asks for their photos.
+  const needPhoto = () => { if (priced.length && !photoKey && !sample) throw httpError('Add at least one photo of this job. Customers book what they can see.', 400, 'PHOTO_REQUIRED'); };
+  if (body.repairCode) {
     if (repair.owner) {
       const name = String(body.name || repair.name).trim();
       if (name.length < 2) throw httpError('Name the job.', 400, 'NAME_REQUIRED');
-      await Repair.updateOne({ _id: repair._id }, { $set: { name, includes, photoKey: body.photoKey || '', ...(minutes && { estimatedDurationMin: minutes }) } });
+      needPhoto();
+      await Repair.updateOne({ _id: repair._id }, { $set: { name, includes, photoKey, ...(minutes && { estimatedDurationMin: minutes }) } });
       await Problem.updateOne({ vertical, code: `${repair.code}_req`, ownerKey: ownerKey(owner) }, { $set: { name } });
     }
   } else {
     const name = String(body.name || '').trim();
     if (name.length < 2 || name.length > 80) throw httpError('Name the job in 2 to 80 letters.', 400, 'NAME_REQUIRED');
     if (!priced.length) throw httpError('Set a price for at least one option.', 400, 'PRICE_REQUIRED');
-    const code = await createOwnJob(owner, vertical, { name, minutes: minutes || 60, includes, photoKey: body.photoKey });
+    needPhoto();
+    const code = await createOwnJob(owner, vertical, { name, minutes: minutes || 60, includes, photoKey });
     repair = await Repair.findOne({ vertical, code }).lean();
   }
 
+  needPhoto();
   await ProviderCapability.updateOne(
     { ...filterOf(owner), repairCode: repair.code },
     {
       $set: {
-        vertical, isActive: priced.length > 0, includes, photoKey: body.photoKey || '',
+        vertical, isActive: priced.length > 0, includes, photoKey,
         estimatedDurationMin: minutes, serviceModes: repair.allowedServiceModes, skillLevel: Math.max(1, repair.minSkillLevel || 1),
       },
       $setOnInsert: { ...filterOf(owner), repairCode: repair.code, verificationStatus: 'not_required' },
@@ -188,7 +210,7 @@ async function useSamples(owner, vertical, actor) {
   for (const item of current.items.filter((i) => !i.own && !i.offered)) {
     const prices = Object.fromEntries(Object.entries(item.suggested).filter(([, p]) => p != null));
     if (!Object.keys(prices).length) continue;
-    await saveItem(owner, vertical, { repairCode: item.repairCode, includes: item.includes, minutes: item.minutes, photoKey: item.photoKey, prices }, actor);
+    await saveItem(owner, vertical, { repairCode: item.repairCode, includes: item.includes, minutes: item.minutes, photoKey: item.photoKey, prices }, actor, { sample: true });
   }
   return menu(owner, vertical);
 }
@@ -197,4 +219,4 @@ const ownerFromAuth = (auth) => (auth.role === 'shop'
   ? { shopId: new mongoose.Types.ObjectId(auth.sub), workerId: null }
   : { shopId: null, workerId: new mongoose.Types.ObjectId(auth.sub) });
 
-module.exports = { isMenuService, menu, saveItem, removeItem, adjustAll, useSamples, ownerFromAuth, cleanIncludes };
+module.exports = { isMenuService, menu, saveItem, removeItem, adjustAll, useSamples, ownerFromAuth, cleanIncludes, missingPhotos };

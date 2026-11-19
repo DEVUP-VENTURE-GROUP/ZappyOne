@@ -64,6 +64,9 @@ function getFirebaseApp() {
 // Job offers ring on ServicePro's own loud channel with the ZappyOne ringtone (mobile core/lib/pushNotifications OFFER_CHANNEL_ID).
 const OFFER_KEYS = new Set(['provider.job_nearby', 'provider.job_waiting']);
 const isOffer = (data) => data?.channel === 'offers' || OFFER_KEYS.has(data?.key);
+// Not offers, but a pro must notice them with the app closed: same ringtone and vibration, no full-screen ring.
+const URGENT_KEYS = new Set(['provider.time_check', 'provider.time_check_last', 'provider.leave_now', 'provider.job_cancelled', 'provider.pay_claim']);
+const isLoud = (data) => isOffer(data) || URGENT_KEYS.has(data?.key);
 
 // Where a job stands for its live card: finished and ended jobs stop being sticky. Read from the kind's own lists, not a copy of the apps' tables.
 function liveStage(kind, status) {
@@ -82,7 +85,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null
   const iphones = native ? [] : tokens.filter(apns.isApnsToken);
   if (iphones.length) {
     const [ios, rest] = await Promise.all([
-      apns.sendApns({ tokens: iphones, kind, title, body, data, offer: isOffer(data), windowSec: data.windowSec }),
+      apns.sendApns({ tokens: iphones, kind, title, body, data, offer: isOffer(data), loud: isLoud(data), windowSec: data.windowSec }),
       sendFcm({ tokens: tokens.filter((t) => !apns.isApnsToken(t)), title, body, data, imageUrl, native, kind }),
     ]);
     if (ios.stale?.length) require('../modules/notification/devices').prune(ios.stale).catch(() => {});
@@ -134,11 +137,11 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null
         data: stringData,
         android: {
           priority: 'high',
-          notification: isOffer(data) ? { sound: 'zappy_ring', channelId: 'zappy_offers', defaultVibrateTimings: false, visibility: 'public' } : { sound: 'default', channelId: 'zappy_alerts' },
+          notification: isLoud(data) ? { sound: 'zappy_ring', channelId: 'zappy_offers', defaultVibrateTimings: false, visibility: 'public' } : { sound: 'default', channelId: 'zappy_alerts' },
         },
         apns: {
           headers: { 'apns-priority': '10' },
-          payload: { aps: { sound: isOffer(data) ? 'zappy_ring.wav' : 'default', badge: 1 } },
+          payload: { aps: { sound: isLoud(data) ? 'zappy_ring.wav' : 'default', badge: 1 } },
         },
         webpush: {
           headers: { Urgency: 'high', TTL: '86400' },
@@ -410,4 +413,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { processJob, isOffer };
+module.exports = { processJob, isOffer, isLoud };

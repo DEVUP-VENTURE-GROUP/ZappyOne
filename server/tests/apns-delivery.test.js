@@ -115,7 +115,7 @@ test('a job offer to a worker iPhone goes through APNs with the offer sound', as
   const Order = require('../src/modules/order/order.model');
   const workerId = new mongoose.Types.ObjectId(); const orderId = new mongoose.Types.ObjectId();
   await Worker.collection.insertOne({ _id: workerId, phone: '9100000302', deviceTokens: [OK] });
-  await Order.collection.insertOne({ _id: orderId, service: 'ac_repair', pricing: { total: 499 }, pickupLocation: { address: 'Madhapur' } });
+  await Order.collection.insertOne({ _id: orderId, service: 'ac_repair', pricing: { total: 499 }, pickupLocation: { type: 'Point', coordinates: [78.39, 17.44], address: 'Madhapur' } });
   const { processJob } = require('../src/jobs/notifications.worker');
   const r = await processJob({ name: 'worker_offer', data: { workerId: String(workerId), orderId: String(orderId) } });
   expect(r).toMatchObject({ ok: true, success: 1 });
