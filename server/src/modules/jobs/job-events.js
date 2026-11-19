@@ -102,6 +102,8 @@ async function announce(kind, doc, status) {
   require('./job-count').onStatus(kind, doc, status).catch(() => {});
   // Pros who offered a time hear the job is gone (taken, or cancelled), and their offers are cleared (jobs/offers).
   require('./offers').onStatus(kind, doc).catch(() => {});
+  // The customer's iPhone Lock Screen and Dynamic Island card follows the job (notification/live-activity).
+  require('../notification/live-activity').onStatus(kind, doc).catch(() => {});
   // Time inside the customer's home, for the safety check (jobs/safety-check).
   require('./safety-check').onStatus(kind, doc, status).catch(() => {});
   // Personal channels too, so lists and home cards update without the job open.

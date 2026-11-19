@@ -9,6 +9,7 @@ import { BookedCelebration } from '@zappy/ui/components/common/BookedCelebration
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { useAccountMeQuery, useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
+import { useJobLiveActivity } from './useJobLiveActivity';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import { useTrackingFeed } from '@zappy/core/hooks/useTrackingFeed';
@@ -72,6 +73,7 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const { data: options, isFetching: optionsLoading, refetch: refetchOptions } = useJobOptionsQuery({ id: job.id, status }, { skip: !optionsOn });
 
   const feed = useTrackingFeed(job.kind === 'order' ? null : job.id, { enabled: Boolean(job.trip), live: !job.terminal });
+  useJobLiveActivity({ id: job.id, title: job.service, reference: job.reference, terminal: job.terminal, state: options?.liveActivity ?? null });
   const eta = feed.etaMinutes;
   const firstName = firstNameOf(job.provider?.name);
   const feedEvents = useMemo(() => job.history

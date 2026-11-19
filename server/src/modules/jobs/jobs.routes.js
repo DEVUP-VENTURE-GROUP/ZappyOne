@@ -223,6 +223,8 @@ router.get('/:id/options',
         contact: { allowed: !terminal && ['repair', 'pet', 'helping'].includes(kind), onSite: doc.onSite?.name ? doc.onSite : null },
         extras: terminal ? { allowed: false } : await require('./extras').view(kind, doc),
         payTo: await require('./pay-direct').view(kind, doc),
+        // The iPhone Lock Screen card's starting state; the server keeps it current by push after (notification/live-activity).
+        liveActivity: terminal ? null : require('../notification/live-activity').stateFor(kind, doc),
         addedExtras: (doc.extras || []).map((e) => ({ name: e.name, pricePaise: e.pricePaise + (e.taxPaise || 0), addedAt: e.addedAt })),
         arrival: await require('./promise').viewFor(doc._id),
         search: await require('./fast-assign').searchView(kind, doc),
@@ -393,6 +395,18 @@ router.get('/:id/pay-qr', authenticate, requireRole('worker', 'shop'), async (re
     res.json({ pay: v ? { upiId: v.to.upiId, name: v.to.name, amountPaise: v.amountPaise, reference: v.reference } : null });
   } catch (err) { next(err); }
 });
+// The customer's iPhone started a Live Activity for this job: its push token, so status changes update it.
+router.post('/:id/live-activity', authenticate, requireRole('user'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'liveact' }),
+  validate(Joi.object({ token: Joi.string().hex().min(32).max(400).required() })),
+  async (req, res, next) => {
+    try {
+      const { kind, doc } = await jobFor(req, 'userId');
+      if (String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
+      res.json(await require('../notification/live-activity').register({ userId: req.auth.sub, kind, jobId: doc._id, token: req.body.token }));
+    } catch (err) { next(err); }
+  });
+
 router.post('/:id/pay-claim', authenticate, requireRole('user'),
   makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobpayclaim' }),
   validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required(), utr: Joi.string().trim().max(20).allow('', null) })),

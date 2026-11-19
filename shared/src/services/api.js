@@ -407,6 +407,7 @@ export const {
   useProviderMissingPhotosQuery,
   useAdminCompleteJobMutation,
   usePendingCustomerRatingQuery,
+  useRegisterLiveActivityMutation,
   useSetBusyMutation,
   useAdminReinstateEventPartnerMutation,
   useEventDeclineQuoteQuery,

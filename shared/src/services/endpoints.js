@@ -82,6 +82,8 @@ export function endpoints(b, { adminApiPath }) {
     /** The money on one finished job, for its provider (server jobs/earnings forJob). */
     jobEarnings: b.query({ query: (id) => `/jobs/${id}/earnings`, keepUnusedDataFor: 0 }),
     /** The last finished job the pro has not rated the customer on (jobs/customer-rating pendingFor); rating it clears this. */
+    /** The customer's iPhone started a Live Activity for this job: its push token (notification/live-activity). */
+    registerLiveActivity: b.mutation({ query: ({ id, token }) => ({ url: `/jobs/${id}/live-activity`, method: 'POST', body: { token } }) }),
     pendingCustomerRating: b.query({ query: () => '/jobs/rate-customer/pending', providesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     rateCustomer: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/rate-customer`, method: 'POST', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Worker's week: hours and days off (jobs/work-hours). */

@@ -1,4 +1,5 @@
 {
-  "platforms": ["android"],
-  "android": { "modules": ["expo.modules.zappynative.ZappyNativeModule"] }
+  "platforms": ["android", "apple"],
+  "android": { "modules": ["expo.modules.zappynative.ZappyNativeModule"] },
+  "apple": { "modules": ["ZappyNativeModule"] }
 }

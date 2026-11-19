@@ -264,6 +264,7 @@ export const useJobPayQrQuery = h.useJobPayQrQuery;
 export const useProviderMissingPhotosQuery = h.useProviderMissingPhotosQuery;
 export const useAdminCompleteJobMutation = h.useAdminCompleteJobMutation;
 export const usePendingCustomerRatingQuery = h.usePendingCustomerRatingQuery;
+export const useRegisterLiveActivityMutation = h.useRegisterLiveActivityMutation;
 export const useSetBusyMutation = h.useSetBusyMutation;
 export const useAdminReinstateEventPartnerMutation = h.useAdminReinstateEventPartnerMutation;
 export const useEventDeclineQuoteQuery = h.useEventDeclineQuoteQuery;

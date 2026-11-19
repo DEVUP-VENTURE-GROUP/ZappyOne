@@ -118,4 +118,26 @@ async function sendApns({ tokens, kind, title, body, data, offer, loud, windowSe
   return { ok: success > 0, success, failure, stale };
 }
 
-module.exports = { sendApns, isApnsToken, isConfigured, buildRequest, bundleFor, HOSTS, _post: post };
+// Live Activity push (iOS 16.1+): updates or ends the customer's Lock Screen and Dynamic Island card for a job (notification/live-activity).
+async function sendLiveActivity({ token, event = 'update', contentState, dismissAfterSec = null, bundle = BUNDLE.customer }) {
+  const cfg = keyConfig();
+  if (!cfg) return { ok: false, skipped: true, reason: 'apns_not_configured' };
+  if (!isApnsToken(token)) return { ok: false, reason: 'bad_token' };
+  const now = Math.floor(Date.now() / 1000);
+  const body = JSON.stringify({
+    aps: {
+      timestamp: now, event, 'content-state': contentState,
+      ...(event === 'end' && dismissAfterSec != null && { 'dismissal-date': now + dismissAfterSec }),
+      'stale-date': now + 2 * 3600,
+    },
+  });
+  const headers = { 'apns-push-type': 'liveactivity', 'apns-topic': `${bundle}.push-type.liveactivity`, 'apns-priority': event === 'end' ? '10' : '5' };
+  const auth = providerToken(cfg);
+  let r = await post('production', token, headers, body, auth);
+  if (r.reason === 'BadDeviceToken') r = await post('sandbox', token, headers, body, auth);
+  if (r.status === 200) return { ok: true };
+  logger.warn({ status: r.status, reason: r.reason }, '[APNs] live activity refused');
+  return { ok: false, reason: r.reason, stale: r.status === 410 || r.reason === 'Unregistered' || r.reason === 'BadDeviceToken' };
+}
+
+module.exports = { sendApns, sendLiveActivity, isApnsToken, isConfigured, buildRequest, bundleFor, HOSTS, _post: post };

@@ -18,7 +18,10 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.zappyone.app',
     supportsTablet: false,
+    // The Live Activity widget extension (targets/job-activity) needs the Apple team; set APPLE_TEAM_ID in the EAS environment to build it.
+    ...(process.env.APPLE_TEAM_ID ? { appleTeamId: process.env.APPLE_TEAM_ID } : {}),
     infoPlist: {
+      NSSupportsLiveActivities: true,
       NSLocationWhenInUseUsageDescription: 'ZappyOne uses your location to find professionals near you and to track your booking.',
       NSCameraUsageDescription: 'ZappyOne uses the camera for photos of what needs fixing.',
       NSPhotoLibraryUsageDescription: 'ZappyOne uses your photos to show what needs fixing.',
@@ -38,6 +41,8 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    // Swift extension targets in targets/ (Live Activity); only with an Apple team, so other builds are unchanged.
+    ...(process.env.APPLE_TEAM_ID ? ['@bacons/apple-targets'] : []),
     'expo-dev-client',
     // No Face ID: nothing in the app asks for biometric unlock, so no Face ID description ships.
     ['expo-secure-store', { faceIDPermission: false }],
