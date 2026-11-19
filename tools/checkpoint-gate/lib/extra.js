@@ -6,7 +6,9 @@ const { spawn } = require('child_process');
 // Every step has a time limit: a step that hangs is stopped and reported, never left to hold the gate for hours.
 function runAsync(cmd, args, cwd, timeoutMs = 25 * 60 * 1000) {
   return new Promise((resolve) => {
-    const child = spawn(cmd, args, { cwd, shell: process.platform === 'win32' });
+    const win = process.platform === 'win32';
+    // Through the Windows shell a path with spaces (C:\Program Files\nodejs\node.exe) must be quoted or it splits.
+    const child = spawn(win && /\s/.test(cmd) ? `"${cmd}"` : cmd, args, { cwd, shell: win });
     let stdout = '';
     let stderr = '';
     let timedOut = false;

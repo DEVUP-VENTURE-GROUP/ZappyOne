@@ -19,7 +19,7 @@ const SOURCES = [
   ['/api/rewards', '../src/modules/rewards/rewards.routes'],
   ['/api/wallet', '../src/modules/wallet/wallet.routes'],
 ];
-const LEAK = /`|enum value|Cast to|ObjectId|E11000|is not a function|Cannot read prop|undefined|\b[A-Z]{2,}(?:_[A-Z]+)+\b|validation failed|ValidationError|TypeError|ReferenceError/;
+const LEAK = /`|enum value|Cast to|ObjectId|E11000|is not a function|Cannot read prop|undefined|\b[A-Z]{2,}_[A-Z_]{2,}\b|validation failed|ValidationError|TypeError|ReferenceError/;
 
 // The catalogue customers browse before signing in.
 const PUBLIC = /public|catalog|config|categories|themes|share|\/repair\/(verticals|product-types|brands|problems|addons)|\/helping\/services$/i;
@@ -57,31 +57,41 @@ function routesOf() {
 const fill = (path, id) => path.replace(/:(\w+)\??/g, (_, name) => (/kind$/i.test(name) ? 'repair' : /action$/i.test(name) ? 'pause' : id));
 const BODIES = [{}, { status: { $gt: '' }, amountPaise: -5, photos: 'x', reason: 12, date: 'not-a-date', lat: 'x', items: [{}] }];
 
+// Every call one route gets: each identity, each id kind, each body kind.
+function callsFor(r) {
+  const ids = /:\w/.test(r.path) ? [String(new mongoose.Types.ObjectId()), 'not-an-id'] : [null];
+  const bodies = ['get', 'delete'].includes(r.method) ? [null] : BODIES;
+  return Object.keys(tokens).flatMap((who) => ids.flatMap((id) => bodies.map((body) => ({ who, id, body, url: id ? fill(r.path, id) : r.path }))));
+}
+
+async function send(r, c) {
+  const ip = `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+  const req = request(app)[r.method](c.url).set(tokens[c.who]).set('X-Forwarded-For', ip);
+  return c.body ? req.send(c.body) : req;
+}
+
+// What is wrong with one answer, or null.
+function judge(r, c, res) {
+  const msg = res.body?.error || res.body?.message || '';
+  const what = `${r.method.toUpperCase()} ${r.path} as ${c.who}`;
+  if (res.status >= 500 && !PAY_OFF(res, r.path)) return `${res.status} ${what} id=${c.id}: ${msg}`;
+  if (res.status >= 400 && typeof msg === 'string' && LEAK.test(msg)) return `WORDING ${res.status} ${what}: "${msg}"`;
+  if (c.who === 'none' && res.status < 400 && !PUBLIC.test(r.path)) return `OPEN ${res.status} ${what} answers without sign-in`;
+  return null;
+}
+
 test('no booking route crashes or shows code wording, whatever is sent', async () => {
   const routes = routesOf();
   expect(routes.length).toBeGreaterThan(100);
   for (const r of routes) {
-    const ids = /:\w/.test(r.path) ? [String(new mongoose.Types.ObjectId()), 'not-an-id'] : [null];
-    for (const who of Object.keys(tokens)) {
-      for (const id of ids) {
-        const url = id ? fill(r.path, id) : r.path;
-        const bodies = ['get', 'delete'].includes(r.method) ? [null] : BODIES;
-        for (const body of bodies) {
-          let res;
-          try {
-            let req = request(app)[r.method](url).set(tokens[who]).set('X-Forwarded-For', `10.0.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`);
-            if (body) req = req.send(body);
-            res = await req;
-          } catch (e) { found.push(`${r.method.toUpperCase()} ${r.path} as ${who}: request threw ${e.message}`); continue; }
-          const msg = res.body?.error || res.body?.message || '';
-          if (res.status >= 500 && !PAY_OFF(res, r.path)) found.push(`${res.status} ${r.method.toUpperCase()} ${r.path} as ${who} id=${id} body=${body ? 'junk/empty' : '-'}: ${msg}`);
-          else if (res.status >= 400 && typeof msg === 'string' && LEAK.test(msg)) found.push(`WORDING ${res.status} ${r.method.toUpperCase()} ${r.path} as ${who}: "${msg}"`);
-          else if (who === 'none' && res.status < 400 && !PUBLIC.test(r.path)) found.push(`OPEN ${res.status} ${r.method.toUpperCase()} ${r.path} answers without sign-in`);
-        }
-      }
+    for (const c of callsFor(r)) {
+      const problem = await send(r, c).then((res) => judge(r, c, res), (e) => `${r.method.toUpperCase()} ${r.path} as ${c.who}: request threw ${e.message}`);
+      if (problem) found.push(problem);
     }
   }
   const uniq = [...new Set(found)];
-  console.log(`routes: ${routes.length}, findings: ${uniq.length}\n${uniq.slice(0, 200).join('\n')}`);
+  console.log(`routes: ${routes.length}, findings: ${uniq.length}
+${uniq.slice(0, 200).join('
+')}`);
   expect(uniq).toEqual([]);
 });

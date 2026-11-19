@@ -28,6 +28,7 @@ const answer = (env, token, topic) => (ANSWERS.get(token) || (() => [400, 'BadDe
 function listen(env) {
   return new Promise((resolve) => {
     const server = http2.createServer();
+    server.on('session', (session) => sessions.add(session));
     server.on('stream', (stream, headers) => {
       let body = '';
       stream.on('data', (c) => { body += c; });
@@ -43,6 +44,8 @@ function listen(env) {
   });
 }
 
+// The push code keeps its connection open (as Apple asks), so the fake servers' sessions are ended here or close() never returns.
+const sessions = new Set();
 let apns;
 beforeAll(async () => {
   await startMongo();
@@ -58,6 +61,8 @@ beforeAll(async () => {
   apns.HOSTS.sandbox = `http://127.0.0.1:${servers.sandbox.address().port}`;
 });
 afterAll(async () => {
+  sessions.forEach((x) => x.destroy());
+  ['APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_KEY_PATH'].forEach((k) => delete process.env[k]);
   await Promise.all(Object.values(servers).map((s) => new Promise((r) => s.close(r))));
   await stopMongo();
 });
