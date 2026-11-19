@@ -11,6 +11,7 @@ import { Skeleton, Text } from '@zappy/ui/components';
 import { GlassSurface } from '@zappy/ui/components/Glass';
 import { toast } from '@zappy/ui/components/Toast';
 import { webAsset } from '@zappy/ui/lib/media';
+import { artSource } from '../../lib/art';
 import { accent, colors, ink, success, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
@@ -66,13 +67,14 @@ export function ZappyOnePromo({ onExplore }: { onExplore: () => void }) {
 const photoFor = (s: HomeService) => servicePhoto(s) || (AREA_PHOTO as Record<string, string>)[s.code] || (AREA_PHOTO as Record<string, string>)[s.domainCode] || artFor(s.code, s.domainCode)?.still || null;
 
 function PopularCard({ s, onOpen }: { s: HomeService & { isPopular?: boolean }; onOpen: () => void }) {
-  const photo = webAsset(photoFor(s));
+  // The copy shipped in the app first (bundledArt), as Explore services does; the website only for pictures not bundled.
+  const photo = artSource(photoFor(s));
   const tint = tintFor(s.domainCode);
   const covers = s.coverage?.reduce((n, g) => n + (g.problems?.length || 0), 0) || 0;
   return (
     <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={s.name} style={styles.card}>
       <View style={[styles.cardArt, { backgroundColor: tint.bg }]}>
-        {photo ? <Image source={{ uri: photo }} style={styles.fill} resizeMode="cover" />
+        {photo ? <Image source={photo} style={styles.fill} resizeMode="cover" />
           : <Image source={{ uri: webAsset(icon3dFor(s)) || undefined }} style={styles.icon3d} resizeMode="contain" />}
         {s.isPopular ? <View style={styles.pill}><Text variant="caption" weight="bold" color={accent[700]}>Popular</Text></View> : null}
       </View>

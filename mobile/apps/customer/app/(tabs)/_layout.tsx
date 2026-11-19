@@ -1,8 +1,9 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs, useRouter } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { ClipboardList, Home, LayoutGrid, Store, User } from 'lucide-react-native';
-import { LIQUID_GLASS } from '@zappy/ui/components/Glass';
+import { FROSTED, LIQUID_GLASS } from '@zappy/ui/components/Glass';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { useUnread } from '../../src/features/home/useUnread';
 import { useCurrentSeasonQuery } from '@zappy/core/api';
@@ -11,7 +12,7 @@ import { useReducedMotion } from '@zappy/core/hooks/useReducedMotion';
 import { useT } from '@zappy/ui/lib/i18n';
 import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
 import { SafeSection } from '@zappy/ui/components/common/SafeSection';
-import { colors } from '@zappy/ui/theme/colors';
+import { colors, zappy } from '@zappy/ui/theme/colors';
 import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
 
 // Apple's Liquid Glass tab bar on iOS 26+: same slots and order; Stores is disabled there so its press only opens the stores screen.
@@ -46,6 +47,7 @@ function GlassTabs({ unread }: { unread: number }) {
 }
 
 // The website's bottom bar on a phone: Home, Services, Stores, Bookings, Profile; tracking opens from the live-job card and Bookings. A festival wears it lightly.
+// Without Liquid Glass (Android, older iOS) it is the same floating rounded bar as on iOS 26, on a frosted surface, the selected tab in a capsule.
 export default function CustomerTabs() {
   const t = useT();
   const router = useRouter();
@@ -54,15 +56,19 @@ export default function CustomerTabs() {
   const unread = useUnread(isAuthed);
   const { data } = useCurrentSeasonQuery(undefined);
   const festive = useFestiveLook(data?.season?.theme, useReducedMotion());
+  const insets = useSafeAreaInsets();
   if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs unread={unread} /><ActiveJobPill /></View>;
   return (
-    <View style={{ flex: 1 }}>
-    <Tabs screenOptions={{
+    <View style={{ flex: 1, backgroundColor: festive ? festive.wash : colors.background }}>
+    <Tabs safeAreaInsets={{ bottom: 0 }} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: festive ? festive.accent : colors.primary,
+      tabBarStyle: [styles.bar, { marginBottom: Math.max(insets.bottom, 12) }],
+      tabBarItemStyle: styles.item,
+      tabBarActiveBackgroundColor: festive ? 'rgba(255,255,255,0.55)' : zappy[50],
       ...(festive ? {
         tabBarBackground: () => (
-          <View style={{ flex: 1, backgroundColor: festive.wash }}>
+          <View style={[styles.festiveBack, { backgroundColor: festive.wash }]}>
             <SafeSection name="festive-tabbar"><JhalarEdge color={festive.dark ? festive.accent : festive.paint[4] || festive.accent} /></SafeSection>
           </View>
         ),
@@ -82,3 +88,10 @@ export default function CustomerTabs() {
     </View>
   );
 }
+
+const BAR_RADIUS = 30;
+const styles = StyleSheet.create({
+  bar: { ...FROSTED, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(15,23,42,0.08)', marginHorizontal: 16, height: 60, paddingTop: 0, paddingBottom: 0, borderRadius: BAR_RADIUS },
+  item: { marginVertical: 6, marginHorizontal: 3, borderRadius: BAR_RADIUS - 6, overflow: 'hidden' },
+  festiveBack: { flex: 1, borderRadius: BAR_RADIUS, overflow: 'hidden' },
+});
