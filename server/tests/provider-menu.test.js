@@ -27,6 +27,18 @@ beforeAll(async () => {
 });
 afterAll(stopMongo);
 
+// The job codes a customer sees for the 2 BHK model, as the catalogue lists them.
+async function problemCodes() {
+  const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
+  const DeviceModel = require('../src/modules/service/device-model.model');
+  const model = await DeviceModel.findOne({ brandCode: 'daicle_2bhk' }).lean();
+  return async (query) => {
+    let body;
+    await listProblems({ query: { vertical: V, modelCode: model.code, ...query } }, { json: (b) => { body = b; } }, (e) => { throw e; });
+    return body.categories.flatMap((c) => c.problems).map((p) => p.code);
+  };
+}
+
 test('a fixed-price service is a menu; a phone repair priced model by model is not', async () => {
   const { Repair } = require('../src/modules/repair/models/repair.model');
   await Repair.collection.insertOne({ vertical: 'mobile', code: 'screen_test', name: 'Screen', pricingMode: 'range', isActive: true, isArchived: false, owner: null });
@@ -71,14 +83,8 @@ test('a job of their own: on their storefront and in the flow from it, never in 
   const item = front.items.find((i) => i.repairCode === job.repairCode);
   expect(item).toMatchObject({ name: 'Fridge inside clean', fromPaise: 29900 });
 
-  const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
-  const DeviceModel = require('../src/modules/service/device-model.model');
-  const model = await DeviceModel.findOne({ brandCode: 'daicle_2bhk' }).lean();
-  const codes = async (query) => {
-    let body;
-    await listProblems({ query: { vertical: V, modelCode: model.code, ...query } }, { json: (b) => { body = b; } }, (e) => { throw e; });
-    return body.categories.flatMap((c) => c.problems).map((p) => p.code);
-  };
+  const codes = await problemCodes();
+  const model = await require('../src/modules/service/device-model.model').findOne({ brandCode: 'daicle_2bhk' }).lean();
   expect(await codes({})).not.toContain(`${job.repairCode}_req`);
   expect(await codes({ provider: `shop:${shop._id}` })).toContain(`${job.repairCode}_req`);
   expect(await codes({ provider: `shop:${other._id}` })).not.toContain(`${job.repairCode}_req`);
@@ -126,14 +132,7 @@ test('one search across nearby menus finds matching jobs from every provider pri
 });
 
 test('at a known address the shared job list shows only jobs a provider covering it has priced', async () => {
-  const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
-  const DeviceModel = require('../src/modules/service/device-model.model');
-  const model = await DeviceModel.findOne({ brandCode: 'daicle_2bhk' }).lean();
-  const codes = async (query) => {
-    let body;
-    await listProblems({ query: { vertical: V, modelCode: model.code, ...query } }, { json: (b) => { body = b; } }, (e) => { throw e; });
-    return body.categories.flatMap((c) => c.problems).map((p) => p.code);
-  };
+  const codes = await problemCodes();
   const everywhere = await codes({});
   const here = await codes({ lat: LAT, lng: LNG });
   const farAway = await codes({ lat: 12.97, lng: 77.59 });

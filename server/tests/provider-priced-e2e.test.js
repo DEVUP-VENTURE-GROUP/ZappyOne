@@ -1,6 +1,5 @@
 // End to end over the API: providers price their own work (menu, inspection, pet care, helping), customers are quoted and book at those prices, the job runs to done, the customer pays the pro directly, and the pro owes ZappyOne only its amount.
 const request = require('supertest');
-const mongoose = require('mongoose');
 const { startMongo, stopMongo, passHandoverGates } = require('./helpers');
 const { signAccessToken } = require('../src/modules/auth/token.service');
 
