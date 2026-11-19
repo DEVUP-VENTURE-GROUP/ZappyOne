@@ -1,12 +1,17 @@
 import '../global.css';
 // Registers the background location task at load, before any screen (expo-task-manager needs it there).
 import '../src/captain/backgroundLocation';
+import { setPayQrDrawer } from '@zappy/ui/components/common/payQrSlot';
+import { PayQr } from '../src/PayQr';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
 import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
 import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
 import { isPublic, resolveRoute } from '../routes';
 import { homeFor } from '../src/menus';
 import { CaptainMode } from '../src/captain/CaptainMode';
+
+// The collect card's scan-to-pay QR (shared payQrSlot).
+setPayQrDrawer(PayQr);
 
 /** Shops and their technicians, and event partners, as on the web. */
 const ROLES = ['shop', 'worker', 'event_partner'] as const;
