@@ -1,0 +1,12 @@
+// "Busy for…" choices for a pro: 1 h, 2 h, or until a whole hour later today (server jobs/busy caps it at 12 h).
+export const BUSY_MINUTES = [60, 120];
+
+export function busyUntilChoices(now = Date.now()) {
+  const d = new Date(now);
+  d.setMinutes(0, 0, 0);
+  const out = [];
+  for (let h = 3; h <= 8; h += 1) out.push(new Date(d.getTime() + h * 3600000));
+  return out;
+}
+
+export const busyClock = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });

@@ -5,7 +5,7 @@ import { useAdminScheduleCheckQuery, useAdminUpdateScheduleCheckMutation } from 
 import { Card, PageLoader, EmptyState } from '../../../ui/kit';
 import { Setting, UnitInput } from './fields';
 
-const KEYS = ['askBeforeMin', 'askAgainBeforeMin', 'reofferBeforeMin', 'alertBeforeMin'];
+const KEYS = ['askBeforeMin', 'askAgainBeforeMin', 'reofferBeforeMin', 'alertBeforeMin', 'clashGapMin'];
 
 // Jobs booked for later: the pro confirms before the time, or the job goes to the next pro or store while there is still time (server jobs/time-check).
 export default function BookedVisits() {
@@ -20,7 +20,7 @@ export default function BookedVisits() {
   if (isLoading || !form) return <PageLoader />;
 
   const body = { on: form.on, ...Object.fromEntries(KEYS.map((k) => [k, Number(form[k])])) };
-  const ordered = body.askBeforeMin > body.askAgainBeforeMin && body.askAgainBeforeMin > body.reofferBeforeMin && body.reofferBeforeMin > body.alertBeforeMin && body.alertBeforeMin >= 5;
+  const ordered = body.askBeforeMin > body.askAgainBeforeMin && body.askAgainBeforeMin > body.reofferBeforeMin && body.reofferBeforeMin > body.alertBeforeMin && body.alertBeforeMin >= 5 && body.clashGapMin >= 0 && body.clashGapMin <= 240;
   const dirty = JSON.stringify(body) !== JSON.stringify({ on: s.on, ...Object.fromEntries(KEYS.map((k) => [k, s[k]])) });
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -58,6 +58,9 @@ export default function BookedVisits() {
         </Setting>
         <Setting title="Alert pro and customer" hint="The pro is told to set off; the customer that the pro is due.">
           <UnitInput value={form.alertBeforeMin} onChange={set('alertBeforeMin')} label="Alert pro and customer" unit="min" min={5} max={60} step={1} />
+        </Setting>
+        <Setting title="Time between two booked jobs" hint="A pro cannot take a job this close to one they already have booked. 0 = no check.">
+          <UnitInput value={form.clashGapMin} onChange={set('clashGapMin')} label="Time between two booked jobs" unit="min" min={0} max={240} step={15} />
         </Setting>
       </Card>
       {!ordered && <p role="alert" className="text-[12.5px] font-semibold text-amber-700">The times must go down in order: ask, ask again, move the job, alert (at least 5 min).</p>}

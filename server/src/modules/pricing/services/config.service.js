@@ -110,6 +110,7 @@ const SCHEDULE_CHECK_DEFAULTS = {
   askAgainBeforeMin: 50,
   reofferBeforeMin: 40,
   alertBeforeMin: 10,
+  clashGapMin: 90, // a pro cannot hold two visits closer than this; 0 = off
 };
 
 const RUNNER_ACCESS_DEFAULTS = {

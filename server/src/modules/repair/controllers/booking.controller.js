@@ -65,7 +65,7 @@ async function claimBooking(req, res, next) {
       const me = await require('../../worker/worker.model').findById(who.id).select('shopId').lean();
       if (me?.shopId) return res.status(403).json({ error: 'Your shop gives you its jobs', code: 'SHOP_TECHNICIAN' });
       await require('../../worker/worker-dues.service').assertCanWork(who.id);
-      await require('../../jobs/workload').assertCanTakeAnother(who.id);
+      await require('../../jobs/workload').assertCanTakeAnother(who.id, { kind: 'repair', jobId: current._id });
     }
     await require('../../onboarding/eligibility').assertApproved({ role: who.kind, id: who.id }, await require('../../jobs/kinds').KINDS.repair.line(current));
     if (who.kind === 'shop' && (await require('../../shop/partner.service').atCapacity([who.id])).has(who.id)) {
@@ -240,7 +240,7 @@ async function transitionBooking(req, res, next) {
   try {
     // Accepting a job: one person, a few jobs at a time (jobs/workload; cap set in Economics).
     if (req.body.status === 'WORKER_ACCEPTED' && req.auth.role === 'worker') {
-      await require('../../jobs/workload').assertCanTakeAnother(req.auth.sub);
+      await require('../../jobs/workload').assertCanTakeAnother(req.auth.sub, { kind: 'repair', jobId: req.params.id });
     }
     const booking = await bookingService.transition(req.params.id, req.body.status, {
       ...actorFrom(req),

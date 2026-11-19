@@ -405,6 +405,7 @@ router.put('/economics/schedule-check',
     askAgainBeforeMin: Joi.number().integer().min(15).max(235),
     reofferBeforeMin: Joi.number().integer().min(10).max(230),
     alertBeforeMin: Joi.number().integer().min(5).max(60),
+    clashGapMin: Joi.number().integer().min(0).max(240),
   }).min(1)),
   async (req, res, next) => {
     try {

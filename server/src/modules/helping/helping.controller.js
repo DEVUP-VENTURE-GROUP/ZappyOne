@@ -327,7 +327,7 @@ async function acceptTask(req, res, next) {
     await assertApproved({ role: 'worker', id: req.auth.sub }, await lineOf('helping', open));
     await require('../jobs/runner-access').assertCanTakeErrand(req.auth.sub);
     // One person, a few jobs at a time (jobs/workload; cap set in Economics).
-    await require('../jobs/workload').assertCanTakeAnother(req.auth.sub);
+    await require('../jobs/workload').assertCanTakeAnother(req.auth.sub, { kind: 'helping', jobId: open._id });
 
     /*
      * Claimed atomically. Two helpers tapping accept at the same instant must

@@ -126,6 +126,8 @@ const workerSchema = new mongoose.Schema(
     commissionOverride: { pct: { type: Number, default: null, min: 0, max: 50 }, until: { type: Date, default: null }, note: { type: String, default: '', maxlength: 200 }, setBy: { type: mongoose.Schema.Types.ObjectId, default: null }, setAt: { type: Date, default: null } },
     // Jobs taken today and when last, for fair dispatch (jobs/fairness).
     dispatchStats: { day: { type: String, default: null }, jobs: { type: Number, default: 0 }, lastAt: { type: Date, default: null } },
+    // "Busy for…" (jobs/busy): online with their jobs, but no new offers until then.
+    busyUntil: { type: Date, default: null },
     autoAccept: {
       enabled: { type: Boolean, default: false },
       maxKm: { type: Number, default: null, min: 1, max: 30 },

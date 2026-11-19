@@ -44,6 +44,7 @@ import { toast } from '../../components/Toast';
 import { ProviderServicesCard } from '../../components/provider/ProviderServicesCard';
 import { Panel, LinkButton, StatTile, NoticeRow, inr } from '../../components/worker/DashboardUI';
 import { HotZonesCard } from '../../components/worker/HotZonesCard';
+import { BusyCard } from '../../components/worker/BusyCard';
 import { MineRow } from '../../components/worker/MineRow';
 import { MyAreaChip } from '../../components/worker/MyAreaChip';
 import { OnlineSwitch } from '../../components/worker/OnlineSwitch';
@@ -214,6 +215,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
         ) : null}
 
         {staffMe?.staff ? <StaffDutyCard me={staffMe} /> : STAFF_APP ? <StaffWaitingCard /> : <DuesCard />}
+        {isOnline && !STAFF_APP && !staffMe?.staff ? <BusyCard /> : null}
         {isOnline && !STAFF_APP ? <HotZonesCard coords={lastCoords} /> : null}
 
         <View style={styles.grid}>

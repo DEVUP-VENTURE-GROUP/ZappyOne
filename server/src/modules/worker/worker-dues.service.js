@@ -147,7 +147,9 @@ async function filterWorkingWorkers(workerIds) {
     const staff = await require('./worker.model').find({ _id: { $in: [...blocked] }, 'employment.type': 'staff' }).select('_id').lean();
     staff.forEach((w) => blocked.delete(String(w._id)));
   }
-  return new Set(workerIds.map(String).filter((id) => !blocked.has(id)));
+  // A pro who said "busy for…" takes no new work until then (jobs/busy).
+  const busy = await require('../jobs/busy').busyAmong(workerIds);
+  return new Set(workerIds.map(String).filter((id) => !blocked.has(id) && !busy.has(id)));
 }
 
 /**

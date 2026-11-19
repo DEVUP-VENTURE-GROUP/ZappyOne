@@ -402,6 +402,8 @@ export const {
   useAdminArrivalReportQuery, useAdminWorkerLocationsQuery, useAdminSurgeQuery, useAdminUpdateSurgeMutation,
   useRescheduleJobMutation,
   useJobArrivalQuery,
+  useMyBusyQuery,
+  useSetBusyMutation,
   useAdminReinstateEventPartnerMutation,
   useEventDeclineQuoteQuery,
   useRequestActionOtpMutation, useVerifyActionOtpMutation, useCheckUpiIdMutation, useShopPayoutsQuery, useRequestShopPayoutMutation, useAdminShopPayoutsQuery, useAdminDecideShopPayoutMutation,

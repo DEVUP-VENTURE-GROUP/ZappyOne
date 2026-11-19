@@ -260,6 +260,21 @@ router.post('/:id/tip',
     } catch (err) { next(err); }
   });
 
+// "Busy for 1 h / 2 h / until": no new offers until then; the pro keeps their jobs (jobs/busy).
+router.get('/busy', authenticate, requireRole('worker'), async (req, res, next) => {
+  try {
+    const w = await require('../worker/worker.model').findById(req.auth.sub).select('busyUntil').lean();
+    res.json({ busyUntil: require('./busy').viewOf(w) });
+  } catch (err) { next(err); }
+});
+router.post('/busy',
+  authenticate, requireRole('worker'),
+  makeLimiter({ windowMs: 60_000, max: 10, prefix: 'jobbusy' }),
+  validate(Joi.object({ minutes: Joi.number().integer(), until: Joi.date().iso(), off: Joi.boolean() }).xor('minutes', 'until', 'off')),
+  async (req, res, next) => {
+    try { res.json(await require('./busy').set({ workerId: req.auth.sub, ...req.body })); } catch (err) { next(err); }
+  });
+
 /**
  * How soon someone verified for a service can be at this spot, before booking
  * (jobs/arrival). line: a service line code, or a helping serviceType.
@@ -273,7 +288,12 @@ router.get('/arrival',
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(400).json({ error: 'Choose a location first.' });
       const { HELPING_LINE } = require('./kinds');
       const line = HELPING_LINE[req.query.line] || String(req.query.line || '').slice(0, 60);
-      res.json({ arrival: await require('./arrival').nearest({ lineCode: line, lat, lng }) });
+      const arrival = await require('./arrival').nearest({ lineCode: line, lat, lng });
+      // Nobody free: when a nearby pro said "busy for…", the customer hears roughly when one is free.
+      const freeInMin = arrival ? null : await require('./busy').freeInMin({
+        workerIds: (await require('../onboarding/eligibility').approvedProviders(line)).filter((p) => p.kind === 'worker').map((p) => p.id), lat, lng,
+      });
+      res.json({ arrival, freeInMin });
     } catch (err) { next(err); }
   });
 

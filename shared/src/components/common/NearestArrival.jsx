@@ -18,7 +18,9 @@ export default function NearestArrival({ line, loc, noun = 'provider', className
   if (!a) {
     return (
       <p className={`rounded-xl bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900 ${className}`}>
-        No {noun} is free near here right now. Book anyway: we keep looking and tell you the moment someone is near.
+        {data?.freeInMin
+          ? `Every ${noun} near here is busy. One should be free in about ${data.freeInMin} min. Book anyway: we keep looking and tell you the moment someone is near.`
+          : `No ${noun} is free near here right now. Book anyway: we keep looking and tell you the moment someone is near.`}
       </p>
     );
   }

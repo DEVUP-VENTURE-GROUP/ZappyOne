@@ -17,7 +17,7 @@ export function NearestArrival({ line, loc, noun = 'provider' }: { line?: string
   if (skip) return null;
   if (isFetching && !data) return <View style={styles.row}><ActivityIndicator size="small" color={slate[400]} /><Text variant="caption" color={ink[500]}>Checking who is near…</Text></View>;
   const a = data?.arrival;
-  if (!a) return <View style={[styles.box, { backgroundColor: accent[50] }]}><Text variant="caption" color={accent[700]}>No {noun} is free near here right now. Book anyway: we keep looking and tell you the moment someone is near.</Text></View>;
+  if (!a) return <View style={[styles.box, { backgroundColor: accent[50] }]}><Text variant="caption" color={accent[700]}>{data?.freeInMin ? `Every ${noun} near here is busy. One should be free in about ${data.freeInMin} min.` : `No ${noun} is free near here right now.`} Book anyway: we keep looking and tell you the moment someone is near.</Text></View>;
   return (
     <View style={[styles.box, styles.row, { backgroundColor: success[50] }]}>
       <ArrivalBadge minutes={a.minutes} withinPromise={a.withinPromise} busy={a.busy} />

@@ -42,6 +42,7 @@ const LOGIC = [
   { from: 'provider/statementMonths.js', to: 'shared/statementMonths.js', imports: {} },
   { from: 'config/icons3d.js', to: 'shared/icons3d.js', imports: {} },
   { from: 'provider/planRules.js', to: 'shared/planRules.js', imports: {} },
+  { from: 'provider/busyTimes.js', to: 'shared/busyTimes.js', imports: {} },
   { from: 'components/provider/weeklyHoursRules.js', to: 'shared/weeklyHoursRules.js', imports: {} },
   { from: 'components/provider/autoAccept.js', to: 'shared/autoAccept.js', imports: {} },
   { from: 'provider/partnerPages.js', to: 'shared/partnerPages.js', imports: {} },

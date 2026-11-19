@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------------
  */
 
-export const TAG_TYPES = ['AdminTodo', 'JobOffers', 'ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
+export const TAG_TYPES = ['AdminTodo', 'WorkerBusy', 'JobOffers', 'ProviderMenu', 'CheckoutDrafts', 'ServicePlans', 'MyPlans', 'ProviderPlans', 'PlanVisits', 'PartnerRates', 'PriceRequest', 'Reviews', 'Fees', 'JobChat', 'Account', 'AdminTeam', 'Payments', 'Me', 'Order', 'Worker', 'Earnings', 'AdminMetrics', 'Kyc', 'Plan', 'Subscription', 'Wallet', 'Notification', 'AdminUsers', 'Disputes', 'Payouts', 'Incentives', 'CancellationConfig', 'PricingCfg', 'AuditLogs', 'Addresses', 'Ad', 'Promo', 'Gamification', 'Recommendations', 'FeatureFlags', 'SupportTickets', 'Referral', 'ShieldFund', 'EventTheme', 'EventBooking', 'EventPartner', 'EventConfig', 'EventCategory', 'PartnerNotification', 'Fraud', 'Zone', 'City', 'PaymentMethods', 'UserDisputes', 'UserTickets', 'AdminAppeals', 'AdminTraining', 'WorkerGoals', 'Plans', 'Content', 'Rewards', 'WorkerOps', 'ReadyMode', 'Shop', 'ShopWorkers', 'ShopKyc',
     'RepairCatalog', 'RepairConfig', 'RepairPricing', 'RepairRequests', 'RepairBookings', 'RepairProvider', 'MyAssets',
     'HelpingConfig', 'HelpingTasks', 'HelpingAvailable', 'AdminHelpingTasks',
     'PetCatalog', 'MyPets', 'PetBookings', 'PetAvailable', 'PetRecurring', 'AdminPetBookings', 'AdminPetPricing', 'AdminPetCapabilities',
@@ -136,6 +136,9 @@ export function endpoints(b, { adminApiPath }) {
     repeatJob: b.mutation({ query: ({ id, every, endAfter }) => ({ url: `/jobs/${id}/repeat`, method: 'POST', body: { every, endAfter } }), invalidatesTags: ['Repeats'] }),
     repeatAction: b.mutation({ query: ({ planId, action }) => ({ url: `/jobs/recurring/${planId}/${action}`, method: 'POST' }), invalidatesTags: ['Repeats'] }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
+    /** "Busy for…": the pro stays online with their jobs but gets no new offers until then (jobs/busy). */
+    myBusy: b.query({ query: () => '/jobs/busy', providesTags: ['WorkerBusy'] }),
+    setBusy: b.mutation({ query: (body) => ({ url: '/jobs/busy', method: 'POST', body }), invalidatesTags: ['WorkerBusy'] }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
     // Fix the address or door directions before the pro sets off (jobs/place-edit).
     editJobPlace: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/place`, method: 'PATCH', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),

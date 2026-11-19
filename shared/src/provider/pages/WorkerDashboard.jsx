@@ -28,6 +28,7 @@ import { STAFF_HELP_PHONE } from '../partnerPages';
 import { useInWorkerFrame, useFrameGoOnline } from '../WorkerFrame';
 import MyAreaChip from '../../components/worker/MyAreaChip';
 import HotZonesCard from '../../components/worker/HotZonesCard';
+import BusyCard from '../../components/worker/BusyCard';
 import ProviderServicesCard from '../../components/provider/ProviderServicesCard';
 import { useProviderJobs } from '../useProviderJobs';
 import { last7, weekDeltaPct, hm, ratingLabel, kycBannerText } from '../workerHome';
@@ -315,6 +316,7 @@ export default function WorkerDashboard() {
         {/* A partner's team lead gives out their group's jobs. */}
         {me?.shopId && me?.team?.role === 'lead' && <LeadBoardCard />}
         {/* Where surge is on for their services: go there, earn more (jobs/surge). Partners only. */}
+        {isOnline && !STAFF_PORTAL && !staffMe?.staff && <BusyCard />}
         {isOnline && !STAFF_PORTAL && <HotZonesCard coords={lastCoords} />}
 
         <div className="lg:hidden">

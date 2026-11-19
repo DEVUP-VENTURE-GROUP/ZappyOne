@@ -34,8 +34,28 @@ async function staffAmong(ids) {
   return new Set(rows.map((r) => String(r._id)));
 }
 
-/** Throws when this worker already holds as many jobs as they may (staff only). */
-async function assertCanTakeAnother(workerId) {
+const clock = (d) => new Date(d).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+
+// Two visits too close together cannot both be kept: the pro is told which booking is in the way (gap set in Economics → Booked visits).
+async function assertNoClash(workerId, { kind, jobId } = {}) {
+  if (!kind || !jobId || !KINDS[kind]) return;
+  const { clashGapMin = 90, on } = await require('../pricing/services/config.service').scheduleCheckSettings();
+  if (!on || !clashGapMin) return;
+  const doc = await KINDS[kind].model().findById(jobId).select('scheduledAt').lean();
+  const at = doc?.scheduledAt && new Date(doc.scheduledAt).getTime() > Date.now() ? new Date(doc.scheduledAt).getTime() : Date.now();
+  const gap = clashGapMin * 60000;
+  const other = await require('./promise').ArrivalPromise.findOne({
+    providerKind: 'worker', providerId: workerId, closed: false, arrivedAt: null, scheduled: true, jobId: { $ne: jobId },
+    promisedBy: { $gt: new Date(at - gap), $lt: new Date(at + gap) },
+  }).select('promisedBy reference').lean();
+  if (other) {
+    throw err(409, 'TIME_CLASH', `You already have a booked job at ${clock(other.promisedBy)}${other.reference ? ` (${other.reference})` : ''}. Jobs need ${clashGapMin} minutes between them.`);
+  }
+}
+
+/** Throws when this worker already holds as many jobs as they may (staff only), or the job's time clashes with a booking they hold. */
+async function assertCanTakeAnother(workerId, job) {
+  await assertNoClash(workerId, job);
   if (!(await staffAmong([workerId])).has(String(workerId))) return;
   const { maxActiveJobs = 2 } = await require('../order/cancellation.service').getConfig();
   const n = await activeJobs(workerId);
@@ -103,4 +123,4 @@ async function offerable(workerIds = []) {
 /** Extra minutes before a busy worker can reach a new job (their current one finishes first). */
 const BUSY_EXTRA_MIN = 60;
 
-module.exports = { activeJobs, assertCanTakeAnother, offerable, classify, FINISHING, BUSY_EXTRA_MIN };
+module.exports = { activeJobs, assertCanTakeAnother, assertNoClash, offerable, classify, FINISHING, BUSY_EXTRA_MIN };
