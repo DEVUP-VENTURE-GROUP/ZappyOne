@@ -1,5 +1,4 @@
-// iPhone push straight to Apple (APNs HTTP/2, token auth with the team's .p8 key). The apps hand the server a raw APNs device token, which Firebase cannot send to; no Firebase iOS app or deprecated token swap is needed.
-// Config: APNS_KEY_ID, APNS_TEAM_ID and APNS_KEY (the .p8 contents, \n allowed) or APNS_KEY_PATH. Unset: iPhone push is skipped and logged.
+// iPhone push straight to Apple (APNs HTTP/2, .p8 token auth); needs APNS_KEY_ID, APNS_TEAM_ID and APNS_KEY or APNS_KEY_PATH, else iPhone push is skipped and logged.
 const http2 = require('http2');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
@@ -67,10 +66,7 @@ function post(env, deviceToken, headers, body, auth) {
   });
 }
 
-/**
- * The APNs request for one notification. expo-notifications reads a tapped push's data from the payload's `body` key, so routing data (deepLink…) goes there.
- * Job offers ring with zappy_ring.wav (bundled in ServicePro) and break through Focus as time-sensitive; they expire with the offer.
- */
+// One APNs request: data rides in `body` (expo-notifications reads it there); job offers ring with zappy_ring.wav, break through Focus and expire with the offer.
 function buildRequest({ title, body, data = {}, offer = false, windowSec = 60 }) {
   const payload = {
     aps: {
@@ -89,10 +85,7 @@ function buildRequest({ title, body, data = {}, offer = false, windowSec = 60 })
   return { headers, body: JSON.stringify(payload) };
 }
 
-/**
- * Send to raw APNs tokens. `kind` (the recipient's account type) picks the app; a token from the other app, or from a development build (sandbox), is retried there once.
- * Returns { ok, success, failure, stale } where stale are tokens Apple says are dead (prune them).
- */
+// Sends to raw APNs tokens for the recipient's app, retrying once on the other app or the sandbox; returns { ok, success, failure, stale } (stale = tokens to prune).
 async function sendApns({ tokens, kind, title, body, data, offer, windowSec }) {
   const list = [...new Set((tokens || []).filter(isApnsToken))];
   if (!list.length) return { skipped: true, reason: 'no_tokens', success: 0, failure: 0, stale: [] };

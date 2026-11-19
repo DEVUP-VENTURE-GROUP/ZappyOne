@@ -15,13 +15,15 @@ const config = require('../../config');
 
 const fail = (message, status, code) => Object.assign(new Error(message), { status, code });
 
+const WORK_DONE = ['QA_PENDING', 'READY_FOR_RETURN', 'OUT_FOR_RETURN', 'COMPLETED'];
+
 const PAYABLES = {
   repair: {
     load: (id) => require('../repair/models/booking.model').RepairBooking.findById(id),
     isPaid: (b) => b.paymentStatus === 'paid',
     payable(b) {
-      // A diagnosis-first repair is not charged its estimate before a real quote is approved.
-      if (b.priceSnapshot?.isEstimate && b.status !== 'APPROVED') {
+      // A diagnosis-first repair is not charged its estimate before a quote is approved; once the work is done, the bill is due (as the pro collects it).
+      if (b.priceSnapshot?.isEstimate && !['APPROVED', ...WORK_DONE].includes(b.status)) {
         throw fail('This repair is priced after diagnosis - approve the quote before paying.', 409, 'QUOTE_APPROVAL_REQUIRED');
       }
       // An earlier cancellation fee riding on the booking is paid with it (jobs/cancel-fee).

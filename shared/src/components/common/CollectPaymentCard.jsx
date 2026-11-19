@@ -2,8 +2,9 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Check, Loader2, Heart, Phone } from 'lucide-react';
 import { formatPaise } from '../../utils/money';
-import { useReportCashRefusedMutation, useHelpLineQuery } from '../../services/api';
-import { helpPhoneFor } from '../../customer/upiPay';
+import { useReportCashRefusedMutation, useHelpLineQuery, useJobPayQrQuery } from '../../services/api';
+import { helpPhoneFor, upiLink } from '../../customer/upiPay';
+import { payQrDrawer } from './payQrSlot';
 
 // "Customer did not pay", with a confirm step; the same control on every kind of job (server: jobs/give-back reportCashRefused).
 export function CashRefusedControl({ jobId }) {
@@ -23,6 +24,22 @@ export function CashRefusedControl({ jobId }) {
         <button type="button" onClick={send} disabled={isLoading} className="rounded-lg bg-red-600 px-3 py-1.5 font-bold text-white disabled:opacity-60">Yes, report</button>
         <button type="button" onClick={() => setAsking(false)} className="rounded-lg bg-white px-3 py-1.5 font-semibold ring-1 ring-red-200">Cancel</button>
       </div>
+    </div>
+  );
+}
+
+// The pro's own UPI QR with the amount filled in: the customer scans it with any UPI app.
+function ScanToPay({ jobId }) {
+  const { data, isLoading } = useJobPayQrQuery(jobId, { skip: !jobId });
+  const pay = data?.pay;
+  if (isLoading || !pay) return null;
+  if (!pay.upiId) return <p className="mt-2.5 rounded-xl bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">Add your UPI ID under Bank &amp; UPI so customers can scan and pay you.</p>;
+  const Qr = payQrDrawer();
+  const link = upiLink({ upiId: pay.upiId, name: pay.name, amountPaise: pay.amountPaise, reference: pay.reference });
+  return (
+    <div className="mt-3 flex items-center gap-3 rounded-xl border border-line p-3">
+      {Qr && <Qr value={link} size={128} label={`UPI QR to pay ${formatPaise(pay.amountPaise)} to ${pay.name}`} />}
+      <p className="min-w-0 text-[13px] text-ink-700">{Qr ? 'Show this to the customer. They scan it with any UPI app; the amount is filled in.' : 'The customer pays to your UPI ID:'} <span className="block truncate font-semibold text-ink-900">{pay.upiId}</span></p>
     </div>
   );
 }
@@ -70,6 +87,7 @@ export default function CollectPaymentCard({ amountPaise, paymentMethod, paid, c
         </p>
       )}
       {tipLine}
+      {jobId && <ScanToPay jobId={jobId} />}
       <button type="button" onClick={onCollect} disabled={collecting} className="btn-primary mt-3 h-12 w-full">
         {collecting ? <><Loader2 size={15} className="animate-spin" /> Recording</> : `Received ${amount}`}
       </button>

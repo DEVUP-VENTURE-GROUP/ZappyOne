@@ -5,16 +5,36 @@
 import React, { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Check, Heart, Phone } from 'lucide-react-native';
-import { useReportCashRefusedMutation, useHelpLineQuery } from '@zappy/core/api';
-import { helpPhoneFor } from '@zappy/core/shared/upiPay';
+import { useReportCashRefusedMutation, useHelpLineQuery, useJobPayQrQuery } from '@zappy/core/api';
+import { helpPhoneFor, upiLink } from '@zappy/core/shared/upiPay';
+import { payQrDrawer } from './payQrSlot';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '..';
 import { toast } from '../Toast';
 import { errText } from '../../lib/feedback';
-import { ink, success, danger, zappy } from '../../theme/colors';
+import { accent, ink, slate, success, danger, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { JobCard } from '../jobs/JobCard';
+
+// The pro's own UPI QR with the amount filled in: the customer scans it with any UPI app (the websites' ScanToPay).
+function ScanToPay({ jobId }: { jobId: string }) {
+  const { data, isLoading } = useJobPayQrQuery(jobId);
+  const pay = data?.pay as { upiId: string | null; name: string; amountPaise: number; reference: string | null } | null | undefined;
+  if (isLoading || !pay) return null;
+  if (!pay.upiId) return <View style={styles.noUpi}><Text variant="caption" color={accent[700]}>Add your UPI ID under Bank & UPI so customers can scan and pay you.</Text></View>;
+  const Qr = payQrDrawer();
+  const link = upiLink({ upiId: pay.upiId, name: pay.name, amountPaise: pay.amountPaise, reference: pay.reference });
+  return (
+    <View style={[styles.row, styles.scan]}>
+      {Qr ? <Qr value={link} size={128} label={`UPI QR to pay ${formatPaise(pay.amountPaise)} to ${pay.name}`} /> : null}
+      <View style={styles.flex}>
+        <Text variant="bodySmall" color={ink[700]}>{Qr ? 'Show this to the customer. They scan it with any UPI app; the amount is filled in.' : 'The customer pays to your UPI ID:'}</Text>
+        <Text variant="bodySmall" weight="semibold" selectable numberOfLines={1}>{pay.upiId}</Text>
+      </View>
+    </View>
+  );
+}
 
 // "Customer did not pay", with a confirm step; the same control on every kind of job (server: jobs/give-back reportCashRefused).
 export function CashRefusedControl({ jobId }: { jobId: string }) {
@@ -76,6 +96,7 @@ export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collectin
         </View>
       ) : null}
       {tip}
+      {jobId ? <ScanToPay jobId={jobId} /> : null}
       <Button label={`Received ${amount}`} onPress={onCollect} loading={collecting} fullWidth size="large" style={styles.mtSm} />
       {jobId ? <CashRefusedControl jobId={jobId} /> : null}
       {helpPhone ? (
@@ -91,6 +112,9 @@ export function CollectPaymentCard({ amountPaise, paymentMethod, paid, collectin
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   mtXs: { marginTop: 2 },
+  flex: { flex: 1, minWidth: 0, gap: 2 },
+  scan: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: slate[200] },
+  noUpi: { marginTop: spacing.sm, padding: spacing.sm, borderRadius: radius.medium, backgroundColor: accent[50] },
   mtSm: { marginTop: spacing.sm },
   link: { textAlign: 'center', paddingVertical: spacing.xs, marginTop: spacing.sm },
   unpaid: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, backgroundColor: danger[50], marginTop: spacing.sm },

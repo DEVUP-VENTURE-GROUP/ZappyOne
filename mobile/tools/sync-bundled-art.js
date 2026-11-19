@@ -1,26 +1,5 @@
 #!/usr/bin/env node
-/**
- * Ships the customer app's catalogue photos and banners inside the app, so
- * they show instantly, offline, and whether or not the website is deployed
- * with them.
- *
- *   canonical source   assets/web/{areas,services,services/pet,services/helping,banners}
- *   generated copies   mobile/apps/customer/assets/catalog/<same paths>
- *   generated map      mobile/apps/customer/src/lib/bundledArt.generated.ts
- *
- * assets/web stays the one source of truth: never edit the copies or the map.
- * The copies live inside the app because Metro (expo export, and so EAS Build)
- * only resolves files under the Expo server root; requiring
- * assets/web directly works in the dev server but fails the production bundle.
- *
- * The map is keyed by the website path the shared logic already returns
- * ("/areas/vehicles.jpg"), so serviceArt.js and homepageContent.js stay as they
- * are; anything not bundled still loads from the website.
- *
- *   node tools/sync-bundled-art.js           copy changed pictures, remove stale copies, rewrite the map
- *   node tools/sync-bundled-art.js --check   fail if any copy is missing, different or stale, or the map is out of date (CI)
- * (run from mobile/)
- */
+// Copies assets/web catalogue pictures into the customer app (Metro cannot bundle files outside it) and writes bundledArt.generated.ts; assets/web stays the only source. --check fails on drift.
 const fs = require('fs');
 const path = require('path');
 

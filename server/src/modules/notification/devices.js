@@ -12,8 +12,8 @@ const MODELS = {
 async function saveToken(kind, id, token, platform) {
   const M = MODELS[kind];
   if (!M || !id || !token) return false;
-  // One phone, one account: a token signed in elsewhere before leaves that account first.
-  await prune([token]);
+  // One phone, one account: a token new to this account leaves any other account first (a repeat save skips the sweep).
+  if (!(await M().exists({ _id: id, deviceTokens: token }))) await prune([token]);
   const add = { deviceTokens: token, ...(platform === 'android-native' && { nativeTokens: token }) };
   await M().updateOne({ _id: id }, { $addToSet: add });
   return true;

@@ -379,6 +379,15 @@ router.patch('/:id/place', authenticate, requireRole('user'),
   });
 
 /** The customer says they paid the pro (UPI or cash); the pro confirms it (jobs/pay-direct). */
+// The pro's own UPI QR for this job: their ID and the amount due, so the customer scans it (jobs/pay-direct).
+router.get('/:id/pay-qr', authenticate, requireRole('worker', 'shop'), async (req, res, next) => {
+  try {
+    const { kind, doc } = await jobFor(req, 'userId workerId shopId status reference priceSnapshot paymentStatus payClaim extras serviceType charge');
+    if (!require('./give-back').holderOf(doc, actorOf(req))) return res.status(403).json({ error: 'This job is not yours' });
+    const v = await require('./pay-direct').view(kind, doc);
+    res.json({ pay: v ? { upiId: v.to.upiId, name: v.to.name, amountPaise: v.amountPaise, reference: v.reference } : null });
+  } catch (err) { next(err); }
+});
 router.post('/:id/pay-claim', authenticate, requireRole('user'),
   makeLimiter({ windowMs: 10 * 60_000, max: 10, prefix: 'jobpayclaim' }),
   validate(Joi.object({ method: Joi.string().valid('upi', 'cash').required(), utr: Joi.string().trim().max(20).allow('', null) })),

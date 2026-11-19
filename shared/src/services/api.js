@@ -403,6 +403,7 @@ export const {
   useRescheduleJobMutation,
   useJobArrivalQuery,
   useMyBusyQuery,
+  useJobPayQrQuery,
   useSetBusyMutation,
   useAdminReinstateEventPartnerMutation,
   useEventDeclineQuoteQuery,

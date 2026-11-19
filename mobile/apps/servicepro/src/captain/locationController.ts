@@ -1,25 +1,4 @@
-/**
- * When ServicePro's background location may run, as one race-safe state machine.
- *
- * Pure: the native calls (expo-location), the permission prompt and the app
- * state come in as `LocationPlatform`, so tests drive it with fakes
- * (mobile/tools/tests/locationController.test.mjs).
- *
- * Rules
- * - Nothing happens while the server's online state is unknown (profile still
- *   loading): a task left from an earlier launch is neither stopped nor started
- *   on a guess.
- * - Every change is queued and run one at a time, and each step re-reads the
- *   latest wanted state after every await. Offline therefore wins over any
- *   start still in flight: a start that finishes after the pro went offline is
- *   stopped at once.
- * - Offline (known), signed out, or permission missing: the native task is
- *   stopped whether or not this launch started it (an Android service can
- *   outlive the app and come back with a fresh JavaScript context).
- * - A task is started (or restarted for a new pace) only while the app is in
- *   the foreground, as Android requires for a foreground service; otherwise it
- *   waits for the next `revalidate()`.
- */
+// When background location may run, as one race-safe queue (offline always wins, nothing runs while online state is unknown); native calls come in as LocationPlatform so tests use fakes.
 
 export type DenialReason = 'foreground' | 'background';
 

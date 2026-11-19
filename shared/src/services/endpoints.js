@@ -137,6 +137,8 @@ export function endpoints(b, { adminApiPath }) {
     repeatAction: b.mutation({ query: ({ planId, action }) => ({ url: `/jobs/recurring/${planId}/${action}`, method: 'POST' }), invalidatesTags: ['Repeats'] }),
     jobArrival: b.query({ query: ({ line, lat, lng }) => ({ url: '/jobs/arrival', params: { line, lat, lng } }), keepUnusedDataFor: 30 }),
     /** "Busy for…": the pro stays online with their jobs but gets no new offers until then (jobs/busy). */
+    /** The pro's own UPI QR for a job: their UPI ID and the amount due (jobs/pay-direct). */
+    jobPayQr: b.query({ query: (id) => `/jobs/${id}/pay-qr`, keepUnusedDataFor: 30 }),
     myBusy: b.query({ query: () => '/jobs/busy', providesTags: ['WorkerBusy'] }),
     setBusy: b.mutation({ query: (body) => ({ url: '/jobs/busy', method: 'POST', body }), invalidatesTags: ['WorkerBusy'] }),
     /** Move a booking made for later (jobs/reschedule): repairs, pet care, helping. */
