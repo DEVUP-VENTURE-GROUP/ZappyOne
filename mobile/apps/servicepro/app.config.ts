@@ -1,4 +1,11 @@
 import type { ExpoConfig } from 'expo/config';
+import { withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
+
+// expo-task-manager adds Background fetch on its own; ServicePro only runs location in the background, and Apple asks that no unused background mode be declared.
+const withoutBackgroundFetch: ConfigPlugin = (c) => withInfoPlist(c, (m) => {
+  m.modResults.UIBackgroundModes = (m.modResults.UIBackgroundModes as string[] | undefined)?.filter((mode) => mode !== 'fetch');
+  return m;
+});
 
 /**
  * ZappyOne ServicePro. Store identity, permissions and native plugins.
@@ -26,6 +33,8 @@ const config: ExpoConfig = {
       NSPhotoLibraryUsageDescription: 'ServicePro uses your photos for KYC documents and job photos.',
       ITSAppUsesNonExemptEncryption: false,
     },
+    // Job offers are time-sensitive: they ring through Focus (server notification/apns sends interruption-level time-sensitive).
+    entitlements: { 'com.apple.developer.usernotifications.time-sensitive': true },
   },
   android: {
     package: 'com.zappyone.servicepro',
@@ -75,4 +84,4 @@ const config: ExpoConfig = {
   owner: 'devup-ventures-01',
 };
 
-export default config;
+export default withoutBackgroundFetch(config);

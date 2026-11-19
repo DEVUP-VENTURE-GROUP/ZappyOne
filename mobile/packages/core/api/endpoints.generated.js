@@ -274,8 +274,9 @@ export function endpoints(b, { adminApiPath }) {
     loginShop: b.mutation({
       query: (body) => ({ url: '/auth/shop/login', method: 'POST', body }),
     }),
+    // The apps also send this phone's push token, so a signed-out phone stops getting that account's notifications.
     logout: b.mutation({
-      query: (refreshToken) => ({ url: '/auth/logout', method: 'POST', body: { refreshToken } }),
+      query: (arg) => ({ url: '/auth/logout', method: 'POST', body: typeof arg === 'string' ? { refreshToken: arg } : arg }),
     }),
 
     // --- User ---

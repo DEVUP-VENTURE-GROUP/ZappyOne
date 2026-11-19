@@ -105,6 +105,9 @@ const optionsFor = (trip: boolean): Location.LocationTaskOptions => ({
   accuracy: trip ? Location.Accuracy.High : Location.Accuracy.Balanced,
   timeInterval: trip ? 12000 : 120000,
   distanceInterval: trip ? 20 : 0,
+  // iOS ignores timeInterval: there Expo batches readings natively and wakes this task in the background at most this often, so the server gets the same 12 s / 2 min pace instead of a POST per GPS fix.
+  deferredUpdatesInterval: trip ? 12000 : 120000,
+  activityType: trip ? Location.ActivityType.AutomotiveNavigation : Location.ActivityType.Other,
   pausesUpdatesAutomatically: false,
   showsBackgroundLocationIndicator: true,
   foregroundService: { notificationTitle: notice.title, notificationBody: notice.body, notificationColor: '#1F4FD8', killServiceOnDestroy: false },

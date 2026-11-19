@@ -213,6 +213,7 @@ router.post(
           title,
           body:       body || '',
           bulkTokens: allTokens,
+          recipientKind,
           data: { deepLink: deepLink || '/', type: type || 'promotional', sentByAdmin: String(req.auth.sub) },
           sentByAdmin: String(req.auth.sub),
         });

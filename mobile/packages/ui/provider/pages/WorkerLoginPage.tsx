@@ -18,7 +18,7 @@ import { setSession } from '@zappy/core/store/authSlice';
 import { AuthShell } from '../../auth/AuthShell';
 import { PhoneOtpForm } from '../../auth/PhoneOtpForm';
 import { PasswordLogin, type PasswordLoginResult } from '../../components/account/PasswordLogin';
-import { Text } from '../../components';
+import { Chip, Text } from '../../components';
 import { colors, ink, slate, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -26,16 +26,23 @@ import { spacing } from '../../theme/spacing';
 type Mode = 'otp' | 'password';
 const MODES: [Mode, string][] = [['otp', 'OTP'], ['password', 'Password']];
 
-export function WorkerLoginPage({ title, subtitle, role = 'worker', header, footer, params, otpPath = '/(auth)/otp' }: {
-  title: string; subtitle: string; role?: 'user' | 'worker' | 'shop' | 'event_partner'; header?: ReactNode; footer?: ReactNode; params?: Record<string, string>; otpPath?: string;
+type Role = 'user' | 'worker' | 'shop' | 'event_partner';
+// The account each role's password sign-in returns (server auth.controller ACCOUNT_KEY).
+const ACCOUNT_KEY: Record<Role, string> = { user: 'user', worker: 'worker', shop: 'shop', event_partner: 'partner' };
+
+export function WorkerLoginPage({ title, subtitle, role = 'worker', passwordRoles, header, footer, params, otpPath = '/(auth)/otp' }: {
+  title: string; subtitle: string; role?: Role; header?: ReactNode; footer?: ReactNode; params?: Record<string, string>; otpPath?: string;
+  /** Passwords belong to one account each: an app serving several kinds (ServicePro) lets the person say which. */
+  passwordRoles?: [Role, string][];
 }) {
   const [mode, setMode] = useState<Mode>('otp');
+  const [pwRole, setPwRole] = useState<Role>(passwordRoles?.[0]?.[0] ?? role);
   const dispatch = useDispatch();
 
   // Password sign-in keeps the session the way the OTP screen does; the root guard then goes home.
   async function signedIn(r: PasswordLoginResult) {
-    await saveSession({ accessToken: r.accessToken, refreshToken: r.refreshToken ?? '', role });
-    dispatch(setSession({ user: ((r as Record<string, unknown>)[role] as never) ?? null, role }));
+    await saveSession({ accessToken: r.accessToken, refreshToken: r.refreshToken ?? '', role: pwRole });
+    dispatch(setSession({ user: ((r as Record<string, unknown>)[ACCOUNT_KEY[pwRole]] as never) ?? null, role: pwRole }));
     socketClient.connect();
   }
 
@@ -50,7 +57,16 @@ export function WorkerLoginPage({ title, subtitle, role = 'worker', header, foot
         ))}
       </View>
       {mode === 'otp' ? <PhoneOtpForm role={role} otpPath={otpPath} params={params} />
-        : <PasswordLogin role={role} idLabel={role === 'worker' ? 'Worker ID, email or phone' : undefined} onSuccess={signedIn} onUseOtp={() => setMode('otp')} />}
+        : (
+          <>
+            {passwordRoles ? (
+              <View style={styles.roles} accessibilityRole="radiogroup">
+                {passwordRoles.map(([r, label]) => <Chip key={r} label={label} selected={pwRole === r} onPress={() => setPwRole(r)} />)}
+              </View>
+            ) : null}
+            <PasswordLogin key={pwRole} role={pwRole} idLabel={pwRole === 'worker' ? 'Worker ID, email or phone' : undefined} onSuccess={signedIn} onUseOtp={() => setMode('otp')} />
+          </>
+        )}
     </AuthShell>
   );
 }
@@ -59,4 +75,5 @@ const styles = StyleSheet.create({
   toggle: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.large, backgroundColor: slate[100], marginBottom: spacing.base },
   tab: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.medium },
   tabOn: { backgroundColor: colors.surface },
+  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.base },
 });
