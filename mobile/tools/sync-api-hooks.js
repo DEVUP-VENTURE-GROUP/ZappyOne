@@ -58,6 +58,7 @@ const LOGIC = [
   { from: 'i18n/translations.js', to: 'shared/translations.js', imports: {} },
   { from: 'components/events/eventPhotos.js', to: 'shared/eventPhotos.js', imports: {} },
   { from: 'customer/useMyJobs.js', to: 'shared/useMyJobs.js', imports: { react: 'react', '../services/api': '../api/hooks', '../i18n/translations': './translations', './helpModes': './helpModes', './repairBasket': './repairBasket' } },
+  { from: 'customer/useRateLastJob.js', to: 'shared/useRateLastJob.js', imports: { react: 'react', '../services/api': '../api/hooks', './useMyJobs': './useMyJobs' } },
   { from: 'constants/services.js', to: 'shared/services.js', imports: {} },
   { from: 'customer/schedule.js', to: 'shared/schedule.js', imports: {} },
   { from: 'customer/jobsDone.js', to: 'shared/jobsDone.js', imports: {} },

@@ -1,0 +1,30 @@
+// The last finished job the customer has not rated yet (last 7 days), and one way to rate it whatever its kind.
+import { useMemo } from 'react';
+import { useMyJobs } from './useMyJobs';
+import { useRateRepairBookingMutation, useRatePetBookingMutation, useRateHelpingTaskMutation, useRateOrderMutation } from '../services/api';
+
+const WINDOW_MS = 7 * 86400000;
+
+export function useRateLastJob({ skip = false } = {}) {
+  const { past = [], refetch } = useMyJobs({ skip });
+  const [rateRepair, r] = useRateRepairBookingMutation();
+  const [ratePet, p] = useRatePetBookingMutation();
+  const [rateHelping, h] = useRateHelpingTaskMutation();
+  const [rateOrder, o] = useRateOrderMutation();
+  const job = useMemo(() => past.find((j) => j.outcome === 'completed' && j.rating == null && Date.now() - new Date(j.createdAt).getTime() < WINDOW_MS) || null, [past]);
+
+  async function rate(stars, comment = '') {
+    if (!job) return null;
+    const call = {
+      repair: () => rateRepair({ id: job.id, rating: stars, comment }),
+      pet: () => ratePet({ id: job.id, rating: stars }),
+      helping: () => rateHelping({ id: job.id, rating: stars }),
+      order: () => rateOrder({ id: job.id, rating: stars, review: comment }),
+    }[job.kind];
+    if (!call) return null;
+    const out = await call().unwrap();
+    refetch?.();
+    return out;
+  }
+  return { job, rate, saving: r.isLoading || p.isLoading || h.isLoading || o.isLoading };
+}

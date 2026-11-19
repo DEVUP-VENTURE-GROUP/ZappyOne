@@ -92,6 +92,8 @@ function actionsFor(source, raw) {
     reassign: source === 'order' && bucket === 'active',
     // Assign or move a live repair, pet or helping job (jobs/intervention).
     intervene: require('../jobs/intervention.service').canIntervene(source, raw.status),
+    // Finish a started job for the customer after support has spoken to both sides (jobs/support-complete).
+    complete: require('../jobs/support-complete').canComplete(source, raw.status),
     helpingRefundOutcome: source === 'helping' && ['CANCELLED', 'FAILED', 'REFUNDED'].includes(raw.status),
   };
 }
@@ -143,6 +145,20 @@ router.post('/bookings/:source/:id/assign',
       if (!validJob(req, res)) return;
       const out = await intervention.assign({ kind: req.params.source, id: req.params.id, ...req.body, adminId: req.auth.sub });
       await auditService.fromRequest(req, 'job.assign', { kind: req.params.source, id: req.params.id }, null, { ...req.body, ...out });
+      res.json(out);
+    } catch (err) { next(err); }
+  });
+
+router.post('/bookings/:source/:id/complete',
+  validate(Joi.object({
+    paidHow: Joi.string().valid('cash', 'upi', 'already').required(),
+    decision: Joi.string().trim().min(10).max(500).required(),
+  })),
+  async (req, res, next) => {
+    try {
+      if (!validJob(req, res)) return;
+      const out = await require('../jobs/support-complete').complete({ kind: req.params.source, id: req.params.id, ...req.body, adminId: req.auth.sub, adminEmail: req.auth.email });
+      await auditService.fromRequest(req, 'job.support_complete', { kind: req.params.source, id: req.params.id }, null, { ...req.body, ...out });
       res.json(out);
     } catch (err) { next(err); }
   });

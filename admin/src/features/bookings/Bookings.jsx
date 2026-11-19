@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin } from 'lucide-react';
+import { Search, X, Loader2, RotateCcw, Ban, Store, User, MapPin, CheckCircle2 } from 'lucide-react';
 import {
   useAdminBookingAttentionQuery,
   useAdminBookingsQuery, useAdminBookingDetailQuery, useAdminForceCancelOrderMutation, useAdminIssuesQuery,
   useCancelRepairBookingMutation, useAdminCancelPetBookingMutation, useAdminCancelHelpingTaskMutation,
-  useAdminRefundOrderMutation, useAdminCancelEventBookingMutation,
+  useAdminRefundOrderMutation, useAdminCancelEventBookingMutation, useAdminCompleteJobMutation,
 } from '@shared/services/api';
 import { SectionHeader, Card, Th, Td, EmptyState, Pagination, fmt, fmtDate } from '../../ui/kit';
 import { InterventionPanel, NotesPanel } from './InterventionPanel';
@@ -221,11 +221,65 @@ export function BookingDrawer({ source, id, onClose }) {
               </div>
             )}
 
+            {data.actions.complete && <CompleteForCustomer source={source} id={id} amount={fmt(b.totalPaise)} paid={b.paymentStatus === 'paid'} onDone={refetch} />}
             {data.actions.intervene && <InterventionPanel source={source} id={id} onDone={refetch} />}
             <NotesPanel source={source} id={id} />
           </div>
         )}
       </aside>
+    </div>
+  );
+}
+
+const PAID = [['cash', 'Cash to the pro'], ['upi', 'UPI to the pro'], ['already', 'Already paid']];
+
+// Support finishes a started job after speaking to both sides: how it was paid and what was decided go on the timeline and in team notes.
+function CompleteForCustomer({ source, id, amount, paid, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [paidHow, setPaidHow] = useState(paid ? 'already' : '');
+  const [decision, setDecision] = useState('');
+  const [complete, { isLoading }] = useAdminCompleteJobMutation();
+  const ready = paidHow && decision.trim().length >= 10;
+  async function send() {
+    try {
+      await complete({ source, id, paidHow, decision: decision.trim() }).unwrap();
+      toast.success('Job completed. The customer and the pro have been told.');
+      setOpen(false); onDone?.();
+    } catch (err) { toast.error(err?.data?.error || 'That did not work'); }
+  }
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-100">
+        <CheckCircle2 size={14} /> Complete for the customer
+      </button>
+    );
+  }
+  return (
+    <div className="space-y-2.5 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+      <p className="text-xs font-bold text-emerald-900">Complete this job after speaking to the customer and the pro.</p>
+      <fieldset>
+        <legend className="mb-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">How the customer paid {amount}</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {PAID.filter(([v]) => paid || v !== 'already').map(([v, l]) => (
+            <label key={v} className={`cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold ring-1 ${paidHow === v ? 'bg-emerald-600 text-white ring-emerald-600' : 'bg-white text-slate-700 ring-slate-200'}`}>
+              <input type="radio" name="paidHow" value={v} checked={paidHow === v} onChange={() => setPaidHow(v)} className="sr-only" />{l}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label className="block">
+        <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">What happened and what was decided</span>
+        <textarea rows={3} value={decision} onChange={(e) => setDecision(e.target.value)} maxLength={500}
+          placeholder="e.g. Pro finished the wash but the app did not close; customer confirmed and paid cash"
+          className="w-full resize-none rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400" />
+      </label>
+      {!ready && <p className="text-[11px] text-slate-500">Pick how it was paid and write at least a sentence.</p>}
+      <div className="flex gap-2">
+        <button type="button" onClick={() => setOpen(false)} className="flex-1 rounded-lg bg-white py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200">Back</button>
+        <button type="button" onClick={send} disabled={!ready || isLoading} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white disabled:opacity-50">
+          {isLoading && <Loader2 size={13} className="animate-spin" />} Complete job
+        </button>
+      </div>
     </div>
   );
 }

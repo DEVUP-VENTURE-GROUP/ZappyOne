@@ -47,6 +47,7 @@ import { HotZonesCard } from '../../components/worker/HotZonesCard';
 import { BusyCard } from '../../components/worker/BusyCard';
 import { MissingPhotosCard } from '../../components/worker/MissingPhotosCard';
 import { ActiveJobBar } from '../../components/worker/ActiveJobBar';
+import { RateCustomerPrompt } from '../../components/worker/RateCustomerPrompt';
 import { MineRow } from '../../components/worker/MineRow';
 import { MyAreaChip } from '../../components/worker/MyAreaChip';
 import { OnlineSwitch } from '../../components/worker/OnlineSwitch';
@@ -275,6 +276,7 @@ export function WorkerDashboard({ kinds = KINDS }: { kinds?: string[] }) {
         {!STAFF_APP ? <EarningsOverview weekRupees={weekData?.earningsRupees ?? 0} deltaPct={deltaPct} points={weekPoints(week)} onViewDetails={() => go('/worker/earnings')} /> : null}
       </ScrollView>
       <ActiveJobBar jobs={mine as { id: string; to: string; title: string; status: string }[]} />
+      {!STAFF_APP ? <RateCustomerPrompt /> : null}
 
       <WorkerMenuSheet visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </View>

@@ -4,6 +4,7 @@ import BottomNav from './BottomNav';
 import DesktopNav from './DesktopNav';
 import InstallPrompt from '../pwa/InstallPrompt';
 import ActiveJobPill from './ActiveJobPill';
+import RateLastJob from './RateLastJob';
 
 /** Phones: content + bottom bar. Tablet and up: top bar, no bottom bar. */
 export default function MainLayout() {
@@ -21,6 +22,7 @@ export default function MainLayout() {
       </main>
       <InstallPrompt />
       <ActiveJobPill />
+      <RateLastJob />
       <div className="md:hidden">
         <BottomNav />
       </div>

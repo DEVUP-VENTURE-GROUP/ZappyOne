@@ -91,6 +91,19 @@ export function JobTrackingPage({ job, extras = null, startCode = null, codeStag
   const openCancel = () => { setCancelOpen(true); if (optionsOn) refetchOptions(); };
   const support = () => router.push('/support' as never);
 
+  // Work done and money due: the screen becomes just the payment, until the customer says they have paid.
+  if (options?.payTo && !options.payTo.claim) {
+    return (
+      <View style={styles.page}>
+        <TrackingHeader job={job} onBack={back} onSOS={() => setSosOpen(true)} onSupport={support} />
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}>
+          <PayPro jobId={job.id} payTo={options.payTo} onClaimed={refetchOptions} />
+          {job.provider ? <WorkerRichCard job={job} onCall={job.provider.phone ? () => callNumber(job.provider!.phone!) : undefined} /> : null}
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.page}>
       <TrackingHeader job={job} onBack={back} onSOS={() => setSosOpen(true)} onSupport={support} />

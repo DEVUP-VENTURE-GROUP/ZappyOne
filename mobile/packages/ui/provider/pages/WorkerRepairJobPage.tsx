@@ -56,6 +56,7 @@ import { JobChatButton } from '../../components/jobs/JobChatButton';
 import { JobEarningsCard } from '../../components/worker/JobEarningsCard';
 import { JobMapCard } from '../../components/worker/JobMapCard';
 import { RateCustomerCard } from '../../components/worker/RateCustomerCard';
+import { JobDoneScreen } from '../components/JobDoneScreen';
 import { SOSButton } from '../../components/worker/SOSButton';
 import { TripSharingBanner } from '../../components/worker/TripSharingBanner';
 import { errText } from '../../lib/feedback';
@@ -92,6 +93,7 @@ export function WorkerRepairJobPage() {
   const [codeOpen, setCodeOpen] = useState(true);
   const [photos, setPhotos] = useState<ProofPhoto[]>([]);
   const [askingPass, setAskingPass] = useState(false);
+  const [justDone, setJustDone] = useState(false);
 
   const booking = data?.booking;
   const status: string | undefined = booking?.status;
@@ -157,7 +159,8 @@ export function WorkerRepairJobPage() {
       const keys = readyKeys(photos);
       if (keys.length) await attachPhotos({ id, photos: keys }).unwrap();
       await checkedIn(() => transition({ id, status: to }).unwrap());
-      toast.success('Updated'); refetch();
+      if (to === 'COMPLETED') setJustDone(true); else toast.success('Updated');
+      refetch();
     } catch (err) { toast.error(errText(err, 'Could not update this job')); }
   }
 
@@ -201,6 +204,13 @@ export function WorkerRepairJobPage() {
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  if (justDone) {
+    return (
+      <JobDoneScreen jobId={booking._id} reference={booking.reference}
+        onHome={() => router.replace((isOwner ? '/shop' : '/worker') as never)} onNext={() => router.replace((isOwner ? '/shop/work' : '/worker/work') as never)} />
     );
   }
 

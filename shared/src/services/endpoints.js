@@ -81,6 +81,8 @@ export function endpoints(b, { adminApiPath }) {
     /** Provider rates the customer after the job (jobs/customer-rating). */
     /** The money on one finished job, for its provider (server jobs/earnings forJob). */
     jobEarnings: b.query({ query: (id) => `/jobs/${id}/earnings`, keepUnusedDataFor: 0 }),
+    /** The last finished job the pro has not rated the customer on (jobs/customer-rating pendingFor); rating it clears this. */
+    pendingCustomerRating: b.query({ query: () => '/jobs/rate-customer/pending', providesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     rateCustomer: b.mutation({ query: ({ id, ...body }) => ({ url: `/jobs/${id}/rate-customer`, method: 'POST', body }), invalidatesTags: ['RepairBookings', 'PetBookings', 'HelpingTasks'] }),
     /** Worker's week: hours and days off (jobs/work-hours). */
     // Auto-accept: jobs nearby come with no tap (server jobs/fast-assign). `who` is 'workers' or 'shops'.
@@ -2323,6 +2325,11 @@ export function endpoints(b, { adminApiPath }) {
     adminAssignJob: b.mutation({
       query: ({ source, id, ...body }) => ({ url: adminApiPath(`/bookings/${source}/${id}/assign`), method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }, 'AdminBookings'],
+    }),
+    /** Support finishes a started job: how the customer paid and what was decided (jobs/support-complete). */
+    adminCompleteJob: b.mutation({
+      query: ({ source, id, ...body }) => ({ url: adminApiPath(`/bookings/${source}/${id}/complete`), method: 'POST', body }),
+      invalidatesTags: (r, e, a) => [{ type: 'AdminBookings', id: `${a.source}:${a.id}` }, { type: 'AdminBookings', id: `notes:${a.source}:${a.id}` }, 'AdminBookings'],
     }),
     adminJobNotes: b.query({
       query: ({ source, id }) => adminApiPath(`/bookings/${source}/${id}/notes`),

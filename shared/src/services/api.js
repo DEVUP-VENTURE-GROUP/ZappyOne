@@ -405,6 +405,8 @@ export const {
   useMyBusyQuery,
   useJobPayQrQuery,
   useProviderMissingPhotosQuery,
+  useAdminCompleteJobMutation,
+  usePendingCustomerRatingQuery,
   useSetBusyMutation,
   useAdminReinstateEventPartnerMutation,
   useEventDeclineQuoteQuery,

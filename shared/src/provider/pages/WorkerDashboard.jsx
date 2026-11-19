@@ -33,6 +33,7 @@ import ProviderServicesCard from '../../components/provider/ProviderServicesCard
 import { useProviderJobs } from '../useProviderJobs';
 import MissingPhotosCard from '../../components/worker/MissingPhotosCard';
 import ActiveJobBar from '../../components/worker/ActiveJobBar';
+import RateCustomerPrompt from '../../components/worker/RateCustomerPrompt';
 import { last7, weekDeltaPct, hm, ratingLabel, kycBannerText } from '../workerHome';
 import {
   Avatar, GreetingCard, StatCard, Panel, EarningsOverview,
@@ -411,6 +412,7 @@ export default function WorkerDashboard() {
         </div>
       </main>
       <ActiveJobBar jobs={mine} />
+      {!STAFF_PORTAL && <RateCustomerPrompt />}
 
       <WorkerBottomNav activeKey="dashboard" onNavigate={handleNav} />
     </div>

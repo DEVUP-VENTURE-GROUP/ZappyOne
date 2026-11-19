@@ -25,6 +25,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { ShopJobs } from '../components/ShopJobs';
 import { MissingPhotosCard } from '@zappy/ui/components/worker/MissingPhotosCard';
 import { ActiveJobBar } from '@zappy/ui/components/worker/ActiveJobBar';
+import { RateCustomerPrompt } from '@zappy/ui/components/worker/RateCustomerPrompt';
 import { PartnerTermsCard } from '../components/PartnerTermsCard';
 import { PartnerDuesCard } from '../components/PartnerDuesCard';
 import { ShareStorefront } from '../components/ShareStorefront';
@@ -176,6 +177,7 @@ export function ShopDashboard() {
         </Panel>
       </ScrollView>
       <ActiveJobBar jobs={jobs as { id: string; to: string; title: string; status: string }[]} />
+      <RateCustomerPrompt />
     </View>
   );
 }

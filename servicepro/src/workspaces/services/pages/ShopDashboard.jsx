@@ -17,6 +17,7 @@ import PartnerDuesCard from '@shared/provider/components/PartnerDuesCard';
 import ShopJobs from '../components/ShopJobs';
 import MissingPhotosCard from '@shared/components/worker/MissingPhotosCard';
 import ActiveJobBar from '@shared/components/worker/ActiveJobBar';
+import RateCustomerPrompt from '@shared/components/worker/RateCustomerPrompt';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { StatCard, Panel, inr, EarningsOverview, PerformanceGrid } from '@shared/components/worker/DashboardUI';
 import { last7, weekDeltaPct } from '@shared/provider/workerHome';
@@ -336,6 +337,7 @@ export default function ShopDashboard() {
         </div>
       </div>
       <ActiveJobBar jobs={jobs} />
+      <RateCustomerPrompt />
     </div>
   );
 }

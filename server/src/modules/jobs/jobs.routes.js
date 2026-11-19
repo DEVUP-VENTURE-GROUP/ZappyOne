@@ -260,6 +260,11 @@ router.post('/:id/tip',
     } catch (err) { next(err); }
   });
 
+// The last finished job the pro has not rated the customer on yet (jobs/customer-rating pendingFor).
+router.get('/rate-customer/pending', authenticate, requireRole('worker', 'shop'), async (req, res, next) => {
+  try { res.json({ pending: await require('./customer-rating').pendingFor({ role: req.auth.role, providerId: req.auth.sub }) }); } catch (err) { next(err); }
+});
+
 // "Busy for 1 h / 2 h / until": no new offers until then; the pro keeps their jobs (jobs/busy).
 router.get('/busy', authenticate, requireRole('worker'), async (req, res, next) => {
   try {

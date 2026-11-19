@@ -21,6 +21,7 @@ import { selectRole } from '../../modules/auth/authSlice';
 import AssignTechnician from '../components/AssignTechnician';
 import { formatPaise } from '../../utils/money';
 import RateCustomerCard from '../../components/worker/RateCustomerCard';
+import JobDoneScreen from '../components/JobDoneScreen';
 import JobMapCard, { pointOf } from '../../components/worker/JobMapCard';
 import JobEarningsCard from '../../components/worker/JobEarningsCard';
 import { usePublishTripLocation, MOVING_STATUSES, tripOf } from '../../hooks/useLiveTrip';
@@ -374,6 +375,7 @@ export default function WorkerRepairJobPage() {
   const status = data?.booking?.status;
   const onTrip = MOVING_STATUSES.includes(status);
   // The shop owner manages the job; the technician on it is the one travelling.
+  const [justDone, setJustDone] = useState(false);
   const isOwner = useSelector(selectRole) === 'shop';
   // The owner shares their own position when they go themselves (no technician on the job).
   const ownerGoing = isOwner && !data?.booking?.workerId;
@@ -497,7 +499,7 @@ export default function WorkerRepairJobPage() {
       const keys = readyKeys(photos);
       if (keys.length) await attachPhotos({ id, photos: keys }).unwrap();
       await checkedIn(() => transition({ id, status: to }).unwrap());
-      toast.success('Updated');
+      if (to === 'COMPLETED') setJustDone(true); else toast.success('Updated');
       refetch();
     } catch (err) {
       // Surface the server's real reason — e.g. QA still failing.
@@ -532,6 +534,10 @@ export default function WorkerRepairJobPage() {
         </div>
       </div>
     );
+  }
+
+  if (justDone) {
+    return <JobDoneScreen jobId={booking._id} reference={booking.reference} onHome={() => nav(isOwner ? '/shop' : '/worker', { replace: true })} onNext={() => nav(isOwner ? '/shop/orders' : '/worker/work', { replace: true })} />;
   }
 
   return (

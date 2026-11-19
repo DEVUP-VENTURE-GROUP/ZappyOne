@@ -136,6 +136,21 @@ export default function JobTrackingPage({ job, extras = null, startCode = null, 
   const needsYou = ['CUSTOMER_APPROVAL_PENDING', 'AWAITING_CUSTOMER_APPROVAL', 'APPROVAL_REQUIRED'].includes(job.rawStatus);
   const openCancel = () => { setCancelReason(''); setCancelOpen(true); if (optionsOn) refetchOptions(); };
 
+  // Work done and money due: the screen becomes just the payment, until the customer says they have paid.
+  if (options?.payTo && !options.payTo.claim) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-sunken">
+          <div className="mx-auto min-h-screen w-full max-w-2xl bg-white pb-10">
+            <TrackingHeader job={job} terminal={job.terminal} onBack={onBack || (() => goBack())} onSOS={() => setSosOpen(true)} onSupport={() => nav('/support')} />
+            <PayPro jobId={job.id} payTo={options.payTo} onClaimed={refetchOptions} />
+            {job.provider && <WorkerRichCard job={job} onCall={job.provider.phone ? () => { window.location.href = `tel:${job.provider.phone}`; } : undefined} />}
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
       <StatusNotificationBanner

@@ -14,6 +14,7 @@ import { JhalarEdge } from '../../src/features/home/festive/JhalarEdge';
 import { SafeSection } from '@zappy/ui/components/common/SafeSection';
 import { colors, zappy } from '@zappy/ui/theme/colors';
 import { ActiveJobPill } from '../../src/features/home/ActiveJobPill';
+import { RateLastJob } from '../../src/features/home/RateLastJob';
 
 // Apple's Liquid Glass tab bar on iOS 26+: same slots and order; Stores is disabled there so its press only opens the stores screen.
 function GlassTabs({ unread }: { unread: number }) {
@@ -57,7 +58,7 @@ export default function CustomerTabs() {
   const { data } = useCurrentSeasonQuery(undefined);
   const festive = useFestiveLook(data?.season?.theme, useReducedMotion());
   const insets = useSafeAreaInsets();
-  if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs unread={unread} /><ActiveJobPill /></View>;
+  if (LIQUID_GLASS) return <View style={{ flex: 1 }}><GlassTabs unread={unread} /><ActiveJobPill /><RateLastJob /></View>;
   return (
     <View style={{ flex: 1, backgroundColor: festive ? festive.wash : colors.background }}>
     <Tabs safeAreaInsets={{ bottom: 0 }} screenOptions={{
@@ -85,6 +86,7 @@ export default function CustomerTabs() {
       <Tabs.Screen name="profile" options={{ title: t('nav.profile', 'Profile'), tabBarBadge: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined, tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
     </Tabs>
     <ActiveJobPill />
+    <RateLastJob />
     </View>
   );
 }

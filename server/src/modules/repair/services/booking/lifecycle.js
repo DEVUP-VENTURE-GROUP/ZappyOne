@@ -41,11 +41,13 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
    * "collected" or "returned" without the customer's code having been typed in
    * front of them.
    */
-  await handoverService.assertGatePassed(booking, next);
+  // Support finishing a job after speaking to both sides (jobs/support-complete) has already checked the work; the money check still applies.
+  const support = actorRole === 'admin' && meta?.support === true;
+  if (!support) await handoverService.assertGatePassed(booking, next);
 
   // Completion is gated on QA, not on the worker's say-so.
   if (next === 'COMPLETED') {
-    const gate = await assertQAPassed(booking);
+    const gate = support ? { ok: true } : await assertQAPassed(booking);
     if (!gate.ok) throw httpError(gate.message, 409, gate.code);
 
     // …and on the money actually being in hand for a cash job.

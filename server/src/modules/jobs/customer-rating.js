@@ -35,6 +35,21 @@ function holderIs(doc, role, id) {
   return String(doc.workerId || '') === String(id);
 }
 
+// The last job this provider finished without rating the customer (inside RATE_DAYS): Home asks for it before anything else. A technician rates their own jobs.
+async function pendingFor({ role, providerId }) {
+  const since = new Date(Date.now() - RATE_DAYS * 86400e3);
+  const who = role === 'shop' ? { shopId: providerId, workerId: null } : { workerId: providerId };
+  for (const kind of ['repair', 'pet', 'helping']) {
+    const k = KINDS[kind];
+    if (!k?.earning) continue;
+    const doneField = kind === 'pet' ? 'execution.completedAt' : 'completedAt';
+    const doc = await k.model().findOne({ ...who, status: { $in: k.earning.done }, 'customerRating.stars': { $exists: false }, [doneField]: { $gte: since } })
+      .sort({ [doneField]: -1 }).select('reference').lean();
+    if (doc) return { kind, id: String(doc._id), reference: doc.reference || '', label: k.label || 'job' };
+  }
+  return null;
+}
+
 async function rate({ kind, id, role, providerId, stars, tags = [], note = '' }) {
   const Model = KINDS[kind]?.model();
   if (!Model || !KINDS[kind].earning) throw err(400, 'NOT_SUPPORTED', 'This booking cannot be rated.');
@@ -82,4 +97,4 @@ async function summaryFor(userId) {
   return u.ratingCount ? { rating: u.rating, count: u.ratingCount, ...record } : { rating: null, count: 0, ...record };
 }
 
-module.exports = { rate, summaryFor, TAGS, LABEL, RATE_DAYS };
+module.exports = { rate, pendingFor, summaryFor, TAGS, LABEL, RATE_DAYS };
