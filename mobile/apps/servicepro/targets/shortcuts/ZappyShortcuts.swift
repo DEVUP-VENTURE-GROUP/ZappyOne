@@ -32,3 +32,7 @@ struct ZappyShortcuts: AppShortcutsProvider {
                 shortTitle: "Go online", systemImageName: "power")
   }
 }
+
+// The extension's entry point: without an @main type the binary has no __swift5_entry and App Store Connect rejects the upload (ITMS 90896). Not gated to iOS 18: the extension itself runs on 17.
+@main
+struct ZappyShortcutsExtension: AppIntentsExtension {}
