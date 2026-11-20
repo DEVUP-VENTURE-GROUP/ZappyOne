@@ -113,7 +113,6 @@ async function bookingsToJobs(p, shop, codeOf, { apply, report }) {
     report.bookings += 1;
     if (b.advancePayment?.status === 'paid') report.warnings.push({ booking: String(b._id), why: `advance of ${b.pricing?.advancePaise} paise was paid online: settle by hand` });
     if (!apply || !shop) continue;
-    const status = STATUS[b.status] || 'PROVIDER_ASSIGNED';
     await RepairBooking.create(jobFields(b, shop, codeOf));
   }
 }
