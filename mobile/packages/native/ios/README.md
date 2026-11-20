@@ -23,6 +23,7 @@ Each app's extensions live in `apps/<app>/targets/` (added at build time by `@ba
 
 - `job-activity/`: the Live Activity (Lock Screen, Dynamic Island) and the Home Screen widget, in SwiftUI.
 - `notification-service/`: downloads a push's picture (`imageUrl`) and shows it on the notification.
+- `shortcuts/`: Siri, Spotlight and Shortcuts (App Intents, iOS 18+). Each shortcut opens the app at its link (`zappyone://…`, `zappyone-servicepro://…`), so no app start-up code is involved. Customer: Book a service, My bookings. ServicePro: My jobs, Go online.
 
 New features get their own folder (for example `Upload/` for background photo upload, `Notifications/` for offer actions), and the module in `Module/` calls into them.
 
@@ -47,4 +48,4 @@ New features get their own folder (for example `Upload/` for background photo up
 
 ## Not built yet
 
-- Siri and Shortcuts (open a booking or go online by voice). They need code in the app's own launch path; build and test it on a Mac before shipping.
+Everything planned is written. None of it is compiled until the 1.1.0 iOS build: build it on EAS (or a Mac) and test each piece on a real iPhone before release.
