@@ -12,8 +12,8 @@ export default function MissingPhotosCard({ to = '/provider/services', className
     <button type="button" onClick={() => nav(to)} className={`flex w-full items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-left ${className}`}>
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700"><Camera size={17} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-semibold text-navy">{data.count === 1 ? '1 job has no photo' : `${data.count} jobs have no photo`}</span>
-        <span className="block truncate text-[12px] text-slate-600">Customers book what they can see. Add a photo to {names}.</span>
+        <span className="block text-[14px] font-semibold text-navy">{data.count === 1 ? '1 job is hidden: no photo' : `${data.count} jobs are hidden: no photo`}</span>
+        <span className="block truncate text-[12px] text-slate-600">Hidden from customers until it has a photo. Add one to {names}.</span>
       </span>
       <ChevronRight size={18} className="shrink-0 text-slate-400" />
     </button>

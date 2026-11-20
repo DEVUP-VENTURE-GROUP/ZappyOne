@@ -171,6 +171,7 @@ async function menuItems({ kind, id, vertical }) {
       return [{ brandCode: b.code, typeName: b.name, totalPaise: row.totalPaise, warrantyDays: row.warrantyDays || 0, path: `${pathOf}?${q}` }];
     });
     return {
+      hasPhoto: !!photoKey,
       repairCode: r.code, name: r.name, description: r.description || '', own: !!r.owner,
       includes: cap?.includes?.length ? cap.includes : (r.includes || []),
       photoUrl: photoKey ? await s3Service.signMedia(photoKey).catch(() => null) : null,
@@ -178,7 +179,13 @@ async function menuItems({ kind, id, vertical }) {
       quoted: r.pricingMode === 'diagnosis_required', options, fromPaise: options.length ? Math.min(...options.map((o) => o.totalPaise)) : null,
     };
   }));
-  return { items: items.filter((i) => i.options.length).sort((a, b) => a.fromPaise - b.fromPaise) };
+  // A menu job with no photo is not shown to customers: every service shows at least one photo of the work.
+  const photoRule = await require('./provider-menu.service').isMenuService(vertical).catch(() => false);
+  return {
+    items: items.filter((i) => i.options.length && (!photoRule || i.hasPhoto))
+      .map(({ hasPhoto, ...i }) => i) // eslint-disable-line no-unused-vars
+      .sort((a, b) => a.fromPaise - b.fromPaise),
+  };
 }
 
 // The menu plus how this provider presents in the service: the name they registered for it and a photo of their work, for the storefront heading.
@@ -213,6 +220,11 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
       vertical, ...BOOKABLE, repairCode: { $in: jobs.map((j) => j.code) },
       $or: [{ shopId: { $in: fronts.filter((f) => f.kind === 'shop').map((f) => f.id) } }, { workerId: { $in: fronts.filter((f) => f.kind === 'worker').map((f) => f.id) } }],
     }).select('shopId workerId repairCode totalPaise').lean();
+    // Each provider's own photo for the job, else the catalogue's: a job with neither is not shown (every service shows a photo).
+    const caps = await ProviderCapability.find({ repairCode: { $in: [...new Set(rows.map((r) => r.repairCode))] }, isActive: true,
+      $or: [{ shopId: { $in: rows.map((r) => r.shopId).filter(Boolean) } }, { workerId: { $in: rows.map((r) => r.workerId).filter(Boolean) } }] })
+      .select('shopId workerId repairCode photoKey').lean();
+    const capPhoto = new Map(caps.map((c) => [`${keyOf(c)}|${c.repairCode}`, c.photoKey || '']));
     const best = new Map();
     for (const r of rows) {
       const k = `${keyOf(r)}|${r.repairCode}`;
@@ -223,8 +235,10 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
       const job = jobs.find((j) => j.code === code);
       const front = byKey.get(provider);
       if (!job || !front || (job.owner && `${job.owner.kind}:${job.owner.id}` !== provider)) continue;
+      const photoKey = capPhoto.get(k) || job.photoKey || '';
+      if (!photoKey) continue;
       out.push({
-        repairCode: code, name: job.name, vertical, fromPaise, photoKey: job.photoKey || '',
+        repairCode: code, name: job.name, vertical, fromPaise, photoKey,
         provider: { kind: front.kind, id: front.id, name: front.name, rating: front.rating, imageUrl: front.imageUrl, arrivalMinutes: front.arrivalMinutes ?? null, openNow: front.openNow },
         path: `/storefront/${front.kind}/${front.id}?service=${vertical}`,
       });

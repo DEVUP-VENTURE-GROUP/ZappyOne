@@ -20,6 +20,8 @@ const AZ_DOMAINS = [
   { code: 'specialist_home', name: 'Specialist Home Services', icon: 'ShieldCheck', displayOrder: 7, description: 'Pest control, sofa cleaning, painting and installations' },
   { code: 'local_pros', name: 'Other Local Services', icon: 'GraduationCap', displayOrder: 8, description: 'Tutors, trainers, photographers and local professionals' },
   { code: 'moving', name: 'Moving & Shifting', icon: 'Truck', displayOrder: 9, description: 'House and office shifting, packing and goods transport' },
+  // Event partners are stores on the one store engine (was a separate events engine): packages are their menu.
+  { code: 'events', name: 'Events & Celebrations', icon: 'PartyPopper', displayOrder: 10, description: 'Birthday, anniversary and celebration decor at your home or venue' },
 ];
 
 // Names the original seed gave these domains; the version 1 names replace them only while an operator has not renamed them.
@@ -90,6 +92,19 @@ const AZ_LINES = [
       { code: 'mini_truck', name: 'Mini-truck with two helpers, up to 10 km in the city', minutes: 120, prices: one(1499) },
       { code: 'appliance_move', name: 'Move one appliance or furniture item', minutes: 90, prices: one(799) },
       { code: 'office_move', name: 'Small office shifting, up to 10 desks', minutes: 480, prices: one(9999) },
+    ] },
+  /* Events & Celebrations: each occasion is a sample package; partners price their own and add their own setups. */
+  { code: 'event_decoration', name: 'Event decoration', domainCode: 'events', icon: 'PartyPopper', thing: 'event', types: ONE,
+    packages: [
+      { code: 'birthday', name: 'Birthday decoration', minutes: 120, prices: one(2999) },
+      { code: 'anniversary', name: 'Anniversary decoration', minutes: 120, prices: one(3499) },
+      { code: 'baby_shower', name: 'Baby shower decoration', minutes: 150, prices: one(3999) },
+      { code: 'welcome_baby', name: 'Welcome baby decoration', minutes: 120, prices: one(2999) },
+      { code: 'housewarming', name: 'Housewarming decoration', minutes: 150, prices: one(3499) },
+      { code: 'romantic', name: 'Romantic surprise decoration', minutes: 90, prices: one(2499) },
+      { code: 'kids_party', name: 'Kids party decoration', minutes: 150, prices: one(3499) },
+      { code: 'engagement', name: 'Engagement decoration', minutes: 240, prices: one(7999) },
+      { code: 'corporate', name: 'Corporate event setup', minutes: 240, prices: one(9999) },
     ] },
   /* 1. Home & Daily Help */
   { code: 'daily_cleaning', name: 'Sweeping, mopping & dusting', domainCode: 'home_daily_help', icon: 'Sparkles', typeWord: 'Home size', thing: 'home', isPopular: true, types: HOME, inHome: true,
@@ -278,7 +293,7 @@ const AZ_LINES = [
     types: [{ code: 'washer', name: 'Washing machine' }, { code: 'chimney', name: 'Kitchen chimney' }, { code: 'geyser', name: 'Geyser' }, { code: 'tv', name: 'Television' }, { code: 'hob', name: 'Gas hob' }],
     packages: [{ code: 'install', name: 'Installation and demo', minutes: 60, prices: { washer: 499, chimney: 1299, geyser: 499, tv: 499, hob: 399 } }] },
 
-  /* 8. Other Local Services (pet care and events are built in) */
+  /* 8. Other Local Services (pet care is built in) */
   { code: 'home_tutor', name: 'Home tutors', domainCode: 'local_pros', icon: 'GraduationCap', typeWord: 'Class', thing: 'class', types: CLASSES, inHome: true, children: true,
     packages: [
       { code: 'trial', name: 'Trial class', minutes: 60, prices: same(CLASSES, 199) },
@@ -336,6 +351,7 @@ const lineSets = (lineCode, domainCode, label, docs, declarations, kinds = ['sho
 }));
 
 const AZ_REQUIREMENT_SETS = [
+  ...domainSets('events', 'Events & Celebrations', { declarations: ['I set up only what the customer booked and clear my materials after the event.', 'I photograph the finished setup before I leave.'] }),
   ...domainSets('moving', 'Moving & Shifting', {
     shopDocs: [{ code: 'vehicle_rc', label: 'Registration certificate of the truck', required: true }],
     individualDocs: [{ code: 'driving_licence', label: 'Driving licence', hint: 'For whoever drives the truck', required: true }],

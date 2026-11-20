@@ -43,6 +43,10 @@ test('only verified, live, priced storefronts covering the address are listed, s
 });
 
 test('a storefront menu shows only approved prices and links into the flow with that provider chosen', async () => {
+  const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
+  // Every service shows a photo: a job without one is hidden until the provider adds it.
+  expect((await svc.storefrontMenu({ kind: 'shop', id: String(shops[1]._id), vertical: 'pest_control' })).items).toEqual([]);
+  await ProviderCapability.updateMany({ shopId: shops[1]._id }, { $set: { photoKey: 'menu/pest.jpg' } });
   const menu = await svc.storefrontMenu({ kind: 'shop', id: String(shops[1]._id), vertical: 'pest_control' });
   expect(menu.items.map((i) => i.name)).toEqual(['Cockroach gel treatment', 'General pest control']);
   const general = menu.items.find((i) => i.repairCode === 'pescon_general');

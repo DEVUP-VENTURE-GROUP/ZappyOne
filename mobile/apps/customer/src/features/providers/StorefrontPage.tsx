@@ -36,26 +36,38 @@ function Avatar({ name, photo }: { name: string; photo: string | null }) {
   return <View style={[styles.avatar, styles.initials]}><Text variant="heading1" weight="extrabold" color={zappy[700]}>{initials}</Text></View>;
 }
 
+// One job on the shop's menu, like a dish on a food app: words on the left, the photo on the right with Book sitting on its edge (the website's MenuItem).
 function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void }) {
   const single = item.options.length === 1;
   const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
+  const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
+  const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
   return (
     <View style={styles.menuRow}>
-      <Pressable onPress={() => (single ? onBook(item.options[0]) : setOpen((o) => !o))} android_ripple={RIPPLE} accessibilityRole="button" style={styles.row}>
+      <View style={styles.dishRow}>
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{item.name}</Text>
-          <View style={styles.inline}>
-            <Text variant="bodySmall" weight="semibold">{single ? '' : 'from '}{rupees(item.fromPaise)}</Text>
-            {item.minutes ? <><Clock3 size={13} color={ink[500]} /><Text variant="bodySmall" color={ink[500]}>about {item.minutes} min</Text></> : null}
-            {item.quoted ? <Text variant="bodySmall" color={ink[500]}>Final price after a look</Text> : null}
-          </View>
-          {item.includes?.length ? <Text variant="caption" color={ink[500]}>Includes {item.includes.join(' · ')}</Text> : null}
+          <Text variant="body" weight="semibold">{single ? '' : 'from '}{rupees(item.fromPaise)}</Text>
+          {item.minutes ? <View style={styles.inline}><Clock3 size={13} color={ink[500]} /><Text variant="caption" color={ink[500]}>about {item.minutes} min</Text></View> : null}
+          {item.quoted ? <Text variant="caption" color={ink[500]}>Final price after a look</Text> : null}
+          {includes ? (
+            <Pressable onPress={() => setMore((m) => !m)} accessibilityRole="button" accessibilityLabel={more ? 'Show less' : 'Show what is included'}>
+              <Text variant="caption" color={ink[500]} numberOfLines={more ? undefined : 2}>{includes}</Text>
+            </Pressable>
+          ) : null}
         </View>
-        {item.photoUrl ? <Image source={{ uri: item.photoUrl }} style={styles.dish} /> : null}
-        {single
-          ? <View style={styles.book}><Text variant="bodySmall" weight="bold" color={zappy[700]}>Book</Text></View>
-          : <View style={styles.more}><Text variant="bodySmall" weight="semibold" color={ink[700]}>{item.options.length} options</Text><ChevronDown size={15} color={ink[700]} style={open ? styles.flip : undefined} /></View>}
-      </Pressable>
+        <View style={styles.dishBox}>
+          {item.photoUrl
+            ? <Image source={{ uri: item.photoUrl }} style={styles.dish} />
+            : <View style={[styles.dish, styles.dishEmpty]}><Image source={{ uri: webAsset('/branding/zappy-mark.webp') || undefined }} style={styles.mark} resizeMode="contain" /></View>}
+          <Pressable onPress={act} android_ripple={RIPPLE} accessibilityRole="button" accessibilityLabel={single ? `Book ${item.name}` : `${item.options.length} options for ${item.name}`} style={styles.bookOnPhoto}>
+            {single
+              ? <Text variant="body" weight="extrabold" color={zappy[700]}>BOOK</Text>
+              : <View style={styles.inline}><Text variant="bodySmall" weight="bold" color={zappy[700]}>{item.options.length} options</Text><ChevronDown size={14} color={zappy[700]} style={open ? styles.flip : undefined} /></View>}
+          </Pressable>
+        </View>
+      </View>
       {open && !single ? (
         <Appear style={styles.grid}>
           {item.options.map((o) => (
@@ -118,7 +130,15 @@ export function StorefrontPage() {
 
         <View style={styles.section}>
           <View style={styles.avatarWrap}><Avatar name={name} photo={pro?.photo ? webAsset(pro.photo) : null} /></View>
-          <Text variant="heading1" weight="extrabold">{name}</Text>
+          <View style={styles.titleRow}>
+            <Text variant="heading1" weight="extrabold" style={styles.flex}>{name}</Text>
+            {rating != null ? (
+              <View style={styles.ratingBox}>
+                <View style={styles.ratingBadge}><Text variant="body" weight="extrabold" color="#FFFFFF">{Number(rating).toFixed(1)}</Text><Star size={13} color="#FFFFFF" fill="#FFFFFF" /></View>
+                <Text variant="caption" color={ink[500]}>{reviewCount} {reviewCount === 1 ? 'rating' : 'ratings'}</Text>
+              </View>
+            ) : null}
+          </View>
           <Text variant="body" color={ink[500]}>
             {service?.name || 'Service'}{pro?.memberSince ? ` · on ZappyOne since ${monthYear(pro.memberSince)}` : ''}{shop?.address?.city ? ` · ${shop.address.city}` : ''}
           </Text>
@@ -204,8 +224,16 @@ const styles = StyleSheet.create({
   trust: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
   trustIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
   chips: { gap: spacing.sm },
-  menuRow: { paddingVertical: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: slate[300] },
-  dish: { width: 76, height: 76, borderRadius: radius.button, backgroundColor: slate[100] },
+  menuRow: { paddingVertical: spacing.lg, borderTopWidth: 1, borderTopColor: slate[200], borderStyle: 'dashed' },
+  dishRow: { flexDirection: 'row', gap: spacing.base },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  ratingBox: { alignItems: 'center', gap: 2 },
+  ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#15803D' },
+  dishBox: { width: 128, paddingBottom: spacing.base },
+  dish: { width: 128, height: 128, borderRadius: 18, backgroundColor: slate[100] },
+  dishEmpty: { alignItems: 'center', justifyContent: 'center', backgroundColor: zappy[50] },
+  mark: { width: 48, height: 48, opacity: 0.6 },
+  bookOnPhoto: { position: 'absolute', left: 12, right: 12, bottom: 0, alignItems: 'center', paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: zappy[200], backgroundColor: colors.surface, elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
   inline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },

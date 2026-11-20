@@ -18,8 +18,8 @@ export function MissingPhotosCard({ to = '/provider/services' }: { to?: string }
     <Pressable onPress={() => router.push(to as never)} accessibilityRole="button" style={styles.card}>
       <View style={styles.icon}><Camera size={17} color={accent[700]} /></View>
       <View style={styles.flex}>
-        <Text variant="bodySmall" weight="semibold">{data.count === 1 ? '1 job has no photo' : `${data.count} jobs have no photo`}</Text>
-        <Text variant="caption" color={ink[500]} numberOfLines={2}>Customers book what they can see. Add a photo to {names}.</Text>
+        <Text variant="bodySmall" weight="semibold">{data.count === 1 ? '1 job is hidden: no photo' : `${data.count} jobs are hidden: no photo`}</Text>
+        <Text variant="caption" color={ink[500]} numberOfLines={2}>Hidden from customers until it has a photo. Add one to {names}.</Text>
       </View>
       <ChevronRight size={18} color={slate[400]} />
     </Pressable>

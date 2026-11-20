@@ -48,6 +48,8 @@ const DOMAIN_FLOW = {
   beauty_care: { diagnosis: false, quote: false, photos: false, genderChoice: true },
   local_pros: { diagnosis: false, quote: false, photos: false },
   moving: { diagnosis: false },
+  // A setup is priced up front and photographed when finished.
+  events: { diagnosis: false, quote: false, photos: true },
 };
 const LINE_FLOW = {
   bike_wash: { diagnosis: false, quote: false },

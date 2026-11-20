@@ -15,33 +15,44 @@ const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthYear = (d) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
+// One job on the shop's menu, like a dish on a food app: words on the left, the photo on the right with Book sitting on its edge.
 function MenuItem({ item, onBook }) {
   const single = item.options.length === 1;
   const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
+  const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
+  const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
   return (
-    <li className="py-4">
-      <button type="button" onClick={() => (single ? onBook(item.options[0]) : setOpen((o) => !o))} aria-expanded={single ? undefined : open} className="flex w-full items-center gap-3 text-left">
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15.5px] font-bold text-ink-900">{item.name}</span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-ink-500">
-            <span className="font-semibold tabular-nums text-ink-900">{single ? '' : 'from '}{rupees(item.fromPaise)}</span>
-            {item.minutes && <span className="flex items-center gap-1"><Clock3 size={13} /> about {item.minutes} min</span>}
-            {item.quoted && <span>Final price after a look</span>}
-          </span>
-          {item.includes?.length > 0 && <span className="mt-1.5 block text-[12.5px] leading-snug text-ink-500">Includes {item.includes.join(' · ')}</span>}
-        </span>
-        {item.photoUrl && <img src={item.photoUrl} alt="" loading="lazy" className="h-20 w-20 shrink-0 rounded-btn object-cover sm:h-24 sm:w-24" />}
-        {single
-          ? <span className="shrink-0 rounded-btn border border-zappy-600 px-4 py-1.5 text-[14px] font-bold text-zappy-700">Book</span>
-          : <span className="flex shrink-0 items-center gap-1 rounded-btn border border-line px-3 py-1.5 text-[13.5px] font-semibold text-ink-700">{item.options.length} options <ChevronDown size={15} className={`transition-transform ${open ? 'rotate-180' : ''}`} /></span>}
-      </button>
+    <li className="border-b border-dashed border-line py-5 last:border-0">
+      <div className="flex gap-4">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[16.5px] font-bold leading-snug text-ink-900">{item.name}</h3>
+          <p className="mt-1 text-[15px] font-semibold tabular-nums text-ink-900">{single ? '' : 'from '}{rupees(item.fromPaise)}</p>
+          {item.minutes && <p className="mt-1 flex items-center gap-1 text-[13px] text-ink-500"><Clock3 size={13} /> about {item.minutes} min</p>}
+          {item.quoted && <p className="mt-1 text-[13px] text-ink-500">Final price after a look</p>}
+          {includes && (
+            <p className={`mt-1.5 text-[13.5px] leading-relaxed text-ink-500 ${more ? '' : 'line-clamp-2'}`}>
+              {includes}
+              {!more && includes.length > 70 && <button type="button" onClick={() => setMore(true)} className="ml-1 font-semibold text-ink-700">more</button>}
+            </p>
+          )}
+        </div>
+        <div className="relative w-32 shrink-0 pb-4 sm:w-36">
+          {item.photoUrl
+            ? <img src={item.photoUrl} alt="" loading="lazy" className="aspect-square w-full rounded-2xl object-cover" />
+            : <span className="grid aspect-square w-full place-items-center rounded-2xl bg-zappy-50"><img src="/branding/zappy-mark.webp" alt="" className="h-12 w-12 object-contain opacity-60" /></span>}
+          <button type="button" onClick={act} aria-expanded={single ? undefined : open}
+            className="absolute inset-x-3 bottom-0 rounded-xl border border-zappy-200 bg-white py-2 text-center text-[15px] font-extrabold uppercase tracking-wide text-zappy-700 shadow-sm active:scale-[0.97]">
+            {single ? 'Book' : <span className="inline-flex items-center gap-1 normal-case">{item.options.length} options <ChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} /></span>}
+          </button>
+        </div>
+      </div>
       <AnimatePresence initial={false}>
         {open && !single && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
               {item.options.map((o) => (
-                <button key={o.brandCode} type="button" onClick={() => onBook(o)}
-                  className="rounded-btn border border-line px-3 py-2.5 text-left hover:border-zappy-600">
+                <button key={o.brandCode} type="button" onClick={() => onBook(o)} className="rounded-btn border border-line px-3 py-2.5 text-left hover:border-zappy-600">
                   <span className="block text-[13px] text-ink-500">{o.typeName}</span>
                   <span className="block text-[15px] font-bold tabular-nums text-ink-900">{rupees(o.totalPaise)}</span>
                 </button>
@@ -122,7 +133,15 @@ export default function StorefrontPage() {
           <div className="relative z-10 -mt-12 flex items-end justify-between gap-3">
             <span className="rounded-[30px] bg-white p-1"><Avatar name={name} photo={photo} size={96} radius={26} /></span>
           </div>
-          <h1 className="mt-3 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900 [text-wrap:balance]">{name}</h1>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <h1 className="min-w-0 text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-ink-900 [text-wrap:balance]">{name}</h1>
+            {rating != null && (
+              <div className="shrink-0 text-center">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-green-700 px-2.5 py-1.5 text-[17px] font-extrabold tabular-nums text-white">{Number(rating).toFixed(1)}<Star size={14} className="fill-white text-white" /></span>
+                <span className="mt-1 block text-[11.5px] text-ink-500 underline decoration-dotted underline-offset-2">{reviewCount} {reviewCount === 1 ? 'rating' : 'ratings'}</span>
+              </div>
+            )}
+          </div>
           <p className="mt-0.5 text-[14px] text-ink-500">
             {service?.name || 'Service'}{pro?.memberSince ? ` · on ZappyOne since ${monthYear(pro.memberSince)}` : ''}{shop?.address?.city ? ` · ${shop.address.city}` : ''}
           </p>
@@ -210,7 +229,7 @@ export default function StorefrontPage() {
           {partsQuotedSeparately(vertical, services?.items) && <p className="mt-3 rounded-btn bg-sunken px-3 py-2.5 text-[13px] text-ink-700">{PARTS_NOTE.customer}</p>}
           {isLoading && <div className="mt-3 space-y-3 pb-4">{[0, 1, 2].map((k) => <div key={k} className="h-14 animate-pulse rounded-btn bg-sunken" />)}</div>}
           {!isLoading && !items.length && <p className="py-5 text-[14px] text-ink-500">{vertical ? 'No bookable prices for this service right now.' : 'This provider has no services you can book here yet.'}</p>}
-          <ul className="divide-y divide-line">
+          <ul>
             {items.map((item) => <MenuItem key={item.repairCode} item={item} onBook={(o) => nav(o.path)} />)}
           </ul>
         </section>

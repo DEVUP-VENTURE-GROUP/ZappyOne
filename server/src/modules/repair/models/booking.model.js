@@ -287,6 +287,16 @@ const repairBookingSchema = new mongoose.Schema(
       pincode: { type: String, default: '' },
     },
     scheduledAt: { type: Date, default: null, index: true },
+    // An event or celebration booking's own details (event decoration on the store engine); legacyEventBookingId marks one moved from the old events engine.
+    occasion: {
+      type: new mongoose.Schema({
+        guests: { type: Number, default: null, min: 0, max: 100000 },
+        timeSlot: { type: String, default: '', maxlength: 40 },
+        notes: { type: String, default: '', maxlength: 1000 },
+        legacyEventBookingId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
+      }, { _id: false }),
+      default: undefined,
+    },
     slotLabel: { type: String, default: '' },
 
     /* Money */
