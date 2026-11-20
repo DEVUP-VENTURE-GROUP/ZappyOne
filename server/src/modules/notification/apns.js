@@ -67,14 +67,18 @@ function post(env, deviceToken, headers, body, auth) {
 }
 
 // One APNs request: data rides in `body` (expo-notifications reads it there); job offers ring with zappy_ring.wav, break through Focus and expire with the offer.
-function buildRequest({ title, body, data = {}, offer = false, loud = offer, windowSec = 60 }) {
+function buildRequest({ title, body, data = {}, offer = false, loud = offer, windowSec = 60, imageUrl = null }) {
   const payload = {
     aps: {
       alert: { title: String(title || ''), body: String(body || '') },
       sound: loud ? 'zappy_ring.wav' : 'default',
       ...(loud && { 'interruption-level': 'time-sensitive' }),
+      // A job offer shows Accept and Decline right on the notification (ServicePro registers the JOB_OFFER category).
+      ...(offer && { category: 'JOB_OFFER' }),
+      // A picture: the app's notification service extension downloads it before the notification shows.
+      ...(imageUrl && { 'mutable-content': 1 }),
     },
-    body: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+    body: { ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])), ...(imageUrl && { imageUrl: String(imageUrl) }) },
   };
   const headers = {
     'apns-push-type': 'alert',
@@ -86,7 +90,7 @@ function buildRequest({ title, body, data = {}, offer = false, loud = offer, win
 }
 
 // Sends to raw APNs tokens for the recipient's app, retrying once on the other app or the sandbox; returns { ok, success, failure, stale } (stale = tokens to prune).
-async function sendApns({ tokens, kind, title, body, data, offer, loud, windowSec }) {
+async function sendApns({ tokens, kind, title, body, data, offer, loud, windowSec, imageUrl }) {
   const list = [...new Set((tokens || []).filter(isApnsToken))];
   if (!list.length) return { skipped: true, reason: 'no_tokens', success: 0, failure: 0, stale: [] };
   const cfg = keyConfig();
@@ -94,7 +98,7 @@ async function sendApns({ tokens, kind, title, body, data, offer, loud, windowSe
     logger.info({ tokens: list.length, title }, '[APNs] not configured - skipping iPhone push');
     return { skipped: true, reason: 'apns_not_configured', success: 0, failure: 0, stale: [] };
   }
-  const req = buildRequest({ title, body, data, offer, loud, windowSec });
+  const req = buildRequest({ title, body, data, offer, loud, windowSec, imageUrl });
   const auth = providerToken(cfg);
   let success = 0; let failure = 0; const stale = [];
   // A few hundred streams at a time, so a broadcast never opens thousands at once on one connection.

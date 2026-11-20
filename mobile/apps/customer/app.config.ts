@@ -17,11 +17,14 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'light',
   ios: {
     bundleIdentifier: 'com.zappyone.app',
+    entitlements: { 'com.apple.security.application-groups': ['group.com.zappyone.app'] },
     supportsTablet: false,
     // The Live Activity widget extension (targets/job-activity) needs the Apple team; set APPLE_TEAM_ID in the EAS environment to build it.
     ...(process.env.APPLE_TEAM_ID ? { appleTeamId: process.env.APPLE_TEAM_ID } : {}),
     infoPlist: {
       NSSupportsLiveActivities: true,
+      // The app group the Home Screen widget reads the current job from (packages/native/ios Widget).
+      ZappyAppGroup: 'group.com.zappyone.app',
       NSLocationWhenInUseUsageDescription: 'ZappyOne uses your location to find professionals near you and to track your booking.',
       NSCameraUsageDescription: 'ZappyOne uses the camera for photos of what needs fixing.',
       NSPhotoLibraryUsageDescription: 'ZappyOne uses your photos to show what needs fixing.',

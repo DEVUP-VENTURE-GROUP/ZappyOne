@@ -23,7 +23,14 @@ public class ZappyNativeModule: Module {
     // Android-only features answer "not here" on iPhone, so shared screens need no platform checks.
     Function("canFullScreen") { false }
     Function("openFullScreenSettings") {}
-    Function("enqueueUpload") { (_: String, _: String, _: String, _: String) -> Bool in false }
+    Function("enqueueUpload") { (id: String, fileUri: String, url: String, type: String) -> Bool in
+      BackgroundUpload.shared.enqueue(id: id, fileUri: fileUri, url: url, contentType: type)
+    }
+
+    // The Home Screen widget's current job (empty title clears it).
+    Function("setHomeWidget") { (title: String, line: String) in
+      HomeWidgetStore.set(title: title, line: line)
+    }
 
     Function("liveActivitiesEnabled") { () -> Bool in
       if #available(iOS 16.2, *) { return ActivityAuthorizationInfo().areActivitiesEnabled }

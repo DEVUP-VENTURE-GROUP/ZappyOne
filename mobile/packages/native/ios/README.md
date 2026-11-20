@@ -12,12 +12,19 @@ ios/
   Module/
     ZappyNativeModule.swift    the Expo module JavaScript calls (one entry point)
   LiveActivity/
-    JobActivityAttributes.swift   the Live Activity's shape, shared with the widget
+    JobActivityAttributes.swift   the Live Activity's shape, shared with the widgets
+  Upload/
+    BackgroundUpload.swift     a photo that failed on a weak signal uploads later (URLSession background)
+  Widget/
+    HomeWidgetStore.swift      what the Home Screen widget shows, in the app group
 ```
 
-New features get their own folder (for example `Upload/` for background photo upload, `Notifications/` for offer actions), and the module in `Module/` calls into them.
+Each app's extensions live in `apps/<app>/targets/` (added at build time by `@bacons/apple-targets`):
 
-The Lock Screen and Dynamic Island design lives in the customer app at `apps/customer/targets/job-activity/` (SwiftUI, added at build time by `@bacons/apple-targets`).
+- `job-activity/`: the Live Activity (Lock Screen, Dynamic Island) and the Home Screen widget, in SwiftUI.
+- `notification-service/`: downloads a push's picture (`imageUrl`) and shows it on the notification.
+
+New features get their own folder (for example `Upload/` for background photo upload, `Notifications/` for offer actions), and the module in `Module/` calls into them.
 
 ## How a Live Activity flows
 
@@ -33,14 +40,11 @@ The Lock Screen and Dynamic Island design lives in the customer app at `apps/cus
 
 ## To build it
 
-- Set `APPLE_TEAM_ID` in the EAS environment. Without it the extension target is left out and the rest of the app builds as before.
+- Set `APPLE_TEAM_ID` in the EAS environment. Without it the extension targets are left out and the rest of the app builds as before.
 - Set the APNs key on the server: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY`.
 - Live Activities need iOS 16.2 or later. The Dynamic Island shows on iPhone 14 Pro and later; other iPhones show the Lock Screen card.
 - This is native code: it ships only with a store build (1.1.0), never over the air.
 
 ## Not built yet
 
-- Accept and Decline buttons on job offer notifications (ServicePro).
-- The pro's active-job Live Activity.
-- Background photo upload (`enqueueUpload` returns false on iPhone).
-- Home Screen widgets, Siri and Shortcuts, pictures in notifications.
+- Siri and Shortcuts (open a booking or go online by voice). They need code in the app's own launch path; build and test it on a Mac before shipping.

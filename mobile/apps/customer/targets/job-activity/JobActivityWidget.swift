@@ -5,7 +5,10 @@ import WidgetKit
 
 @main
 struct JobActivityBundle: WidgetBundle {
-  var body: some Widget { JobActivityWidget() }
+  var body: some Widget {
+    JobActivityWidget()
+    HomeWidget()
+  }
 }
 
 struct JobActivityWidget: Widget {

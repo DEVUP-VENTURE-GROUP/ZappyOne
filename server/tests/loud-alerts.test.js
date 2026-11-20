@@ -18,3 +18,15 @@ test('an urgent iPhone alert rings and breaks through Focus but does not expire 
   expect(Number(req.headers['apns-expiration']) - Date.now() / 1000).toBeGreaterThan(3600);
   expect(JSON.parse(apns.buildRequest({ title: 't', body: 'b' }).body).aps.sound).toBe('default');
 });
+
+test('an iPhone job offer carries the JOB_OFFER category, so Accept and Decline show on it; other alerts do not', () => {
+  expect(JSON.parse(apns.buildRequest({ title: 'New job', body: 'Bike wash', data: { kind: 'repair', id: 'x' }, offer: true }).body).aps.category).toBe('JOB_OFFER');
+  expect(JSON.parse(apns.buildRequest({ title: 'Confirm', body: 'b', loud: true }).body).aps.category).toBeUndefined();
+});
+
+test('a push with a picture asks iPhone to fetch it (mutable-content) and carries its address; one without does not', () => {
+  const withPic = JSON.parse(apns.buildRequest({ title: 'Job done', body: 'See the photo', imageUrl: 'https://cdn.zappyone.com/done.jpg' }).body);
+  expect(withPic.aps['mutable-content']).toBe(1);
+  expect(withPic.body.imageUrl).toBe('https://cdn.zappyone.com/done.jpg');
+  expect(JSON.parse(apns.buildRequest({ title: 't', body: 'b' }).body).aps['mutable-content']).toBeUndefined();
+});

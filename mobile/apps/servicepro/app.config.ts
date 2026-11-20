@@ -24,17 +24,26 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'light',
   ios: {
     bundleIdentifier: 'com.zappyone.servicepro',
+    // The pro's Live Activity widget extension (targets/job-activity) needs the Apple team; set APPLE_TEAM_ID in the EAS environment to build it.
+    ...(process.env.APPLE_TEAM_ID ? { appleTeamId: process.env.APPLE_TEAM_ID } : {}),
     supportsTablet: false,
     infoPlist: {
       NSLocationWhenInUseUsageDescription: 'ServicePro uses your location to show nearby jobs and to share your trip with the customer.',
       NSLocationAlwaysAndWhenInUseUsageDescription: 'While you are online, ServicePro uses your location in the background and with the screen locked, to send you nearby jobs and to show the customer your trip on an active job. It stops when you go offline.',
       UIBackgroundModes: ['location'],
+      NSSupportsLiveActivities: true,
+      // The app group the Home Screen widget reads the current job from (packages/native/ios Widget).
+      ZappyAppGroup: 'group.com.zappyone.servicepro',
       NSCameraUsageDescription: 'ServicePro uses the camera for KYC documents and job photos.',
       NSPhotoLibraryUsageDescription: 'ServicePro uses your photos for KYC documents and job photos.',
       ITSAppUsesNonExemptEncryption: false,
     },
-    // Job offers are time-sensitive: they ring through Focus (server notification/apns sends interruption-level time-sensitive).
-    entitlements: { 'com.apple.developer.usernotifications.time-sensitive': true },
+    entitlements: {
+      // Job offers are time-sensitive: they ring through Focus (server notification/apns sends interruption-level time-sensitive).
+      'com.apple.developer.usernotifications.time-sensitive': true,
+      // Shared with the Home Screen widget (packages/native/ios Widget).
+      'com.apple.security.application-groups': ['group.com.zappyone.servicepro'],
+    },
   },
   android: {
     package: 'com.zappyone.servicepro',
@@ -50,6 +59,8 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    // Swift extension targets in targets/ (Live Activity); only with an Apple team, so other builds are unchanged.
+    ...(process.env.APPLE_TEAM_ID ? ['@bacons/apple-targets'] : []),
     'expo-dev-client',
     // No Face ID: nothing in the app asks for biometric unlock, so no Face ID description ships.
     ['expo-secure-store', { faceIDPermission: false }],

@@ -85,7 +85,7 @@ async function sendFcm({ tokens, title, body, data = {}, imageUrl, native = null
   const iphones = native ? [] : tokens.filter(apns.isApnsToken);
   if (iphones.length) {
     const [ios, rest] = await Promise.all([
-      apns.sendApns({ tokens: iphones, kind, title, body, data, offer: isOffer(data), loud: isLoud(data), windowSec: data.windowSec }),
+      apns.sendApns({ tokens: iphones, kind, title, body, data, offer: isOffer(data), loud: isLoud(data), windowSec: data.windowSec, imageUrl }),
       sendFcm({ tokens: tokens.filter((t) => !apns.isApnsToken(t)), title, body, data, imageUrl, native, kind }),
     ]);
     if (ios.stale?.length) require('../modules/notification/devices').prune(ios.stale).catch(() => {});
