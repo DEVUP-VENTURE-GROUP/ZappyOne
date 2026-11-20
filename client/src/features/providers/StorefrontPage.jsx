@@ -15,6 +15,23 @@ const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthYear = (d) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
+// A job's photos full screen, swiped one by one; a tap anywhere closes it.
+function PhotoViewer({ open, photos, title, onClose }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div className="fixed inset-0 z-50 flex flex-col bg-black/90" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-label={`${title} photos`} onClick={onClose}>
+          <p className="px-4 pt-[calc(env(safe-area-inset-top)+16px)] text-[15px] font-bold text-white">{title}</p>
+          <div className="no-scrollbar flex flex-1 snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4">
+            {photos.map((src) => <img key={src} src={src} alt="" className="max-h-[75vh] w-[88vw] max-w-xl shrink-0 snap-center rounded-2xl object-contain" />)}
+          </div>
+          <p className="pb-[calc(env(safe-area-inset-bottom)+20px)] text-center text-[13px] text-white/70">{photos.length > 1 ? 'Swipe to see each photo · tap to close' : 'Tap to close'}</p>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // One job on the shop's menu, like a dish on a food app: words on the left, the photo on the right with Book sitting on its edge.
 function MenuItem({ item, onBook }) {
   const single = item.options.length === 1;
@@ -54,17 +71,7 @@ function MenuItem({ item, onBook }) {
           </button>
         </div>
       </div>
-      <AnimatePresence>
-        {showing && (
-          <motion.div className="fixed inset-0 z-50 flex flex-col bg-black/90" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-label={`${item.name} photos`} onClick={() => setShowing(false)}>
-            <p className="px-4 pt-[calc(env(safe-area-inset-top)+16px)] text-[15px] font-bold text-white">{item.name}</p>
-            <div className="no-scrollbar flex flex-1 snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4">
-              {photos.map((src) => <img key={src} src={src} alt="" className="max-h-[75vh] w-[88vw] max-w-xl shrink-0 snap-center rounded-2xl object-contain" />)}
-            </div>
-            <p className="pb-[calc(env(safe-area-inset-bottom)+20px)] text-center text-[13px] text-white/70">{photos.length > 1 ? 'Swipe to see each photo · tap to close' : 'Tap to close'}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <PhotoViewer open={showing} photos={photos} title={item.name} onClose={() => setShowing(false)} />
       <AnimatePresence initial={false}>
         {open && !single && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">

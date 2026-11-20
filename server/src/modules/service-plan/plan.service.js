@@ -98,7 +98,7 @@ async function sellable(owner) {
   const { storefrontMenu } = require('../repair/services/storefront.service');
   const out = [];
   for (const l of lines) {
-    const menu = await storefrontMenu({ kind: owner.kind, id: String(owner.id), vertical: l.repairVertical });
+    const menu = await storefrontMenu({ kind: owner.kind, id: String(owner.id), vertical: l.repairVertical, all: true });
     if (menu?.items?.length) out.push({ vertical: l.repairVertical, name: l.name, items: menu.items.map((i) => ({ repairCode: i.repairCode, name: i.name, minutes: i.minutes, options: i.options.map((o) => ({ brandCode: o.brandCode, typeName: o.typeName, totalPaise: o.totalPaise })) })) });
   }
   return out;

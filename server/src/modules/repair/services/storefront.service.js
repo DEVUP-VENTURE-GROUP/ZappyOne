@@ -135,8 +135,16 @@ async function listStorefronts({ vertical, lat, lng, serviceMode = 'doorstep', s
   return { items: page, total: items.length };
 }
 
+// A job's photos for customers: the provider's own first, else the catalogue's; the cover first.
+function photosOf(cap, r) {
+  const photoKey = cap?.photoKey || r.photoKey || '';
+  if (cap?.photoKeys?.length) return { photoKey, gallery: cap.photoKeys };
+  return { photoKey, gallery: r.photoKeys?.length ? r.photoKeys : [photoKey].filter(Boolean) };
+}
+
 // One storefront's menu for one service: every job it has a bookable price for, per option (home size, vehicle…), with the link the booking flow opens.
-async function menuItems({ kind, id, vertical }) {
+// `all`: the provider's own tools (plans) see every job; customers see only jobs with a photo.
+async function menuItems({ kind, id, vertical, all = false }) {
   if (!['shop', 'worker'].includes(kind) || !mongoose.Types.ObjectId.isValid(id)) return null;
   const owner = kind === 'shop' ? { shopId: new mongoose.Types.ObjectId(id) } : { workerId: new mongoose.Types.ObjectId(id) };
   const [prices, caps] = await Promise.all([
@@ -160,8 +168,7 @@ async function menuItems({ kind, id, vertical }) {
 
   const items = await Promise.all(repairs.map(async (r) => {
     const cap = capOf.get(r.code);
-    const photoKey = cap?.photoKey || r.photoKey || '';
-    const gallery = cap?.photoKeys?.length ? cap.photoKeys : r.photoKeys?.length ? r.photoKeys : [photoKey].filter(Boolean);
+    const { photoKey, gallery } = photosOf(cap, r);
     const problem = problems.find((p) => p.candidateRepairCodes.includes(r.code));
     const rows = usable.filter((p) => p.repairCode === r.code);
     const options = brands.flatMap((b) => {
@@ -183,7 +190,7 @@ async function menuItems({ kind, id, vertical }) {
     };
   }));
   // A menu job with no photo is not shown to customers: every service shows at least one photo of the work.
-  const photoRule = await require('./provider-menu.service').isMenuService(vertical).catch(() => false);
+  const photoRule = !all && await require('./provider-menu.service').isMenuService(vertical).catch(() => false);
   return {
     items: items.filter((i) => i.options.length && (!photoRule || i.hasPhoto))
       .map(({ hasPhoto, ...i }) => i) // eslint-disable-line no-unused-vars
@@ -192,8 +199,8 @@ async function menuItems({ kind, id, vertical }) {
 }
 
 // The menu plus how this provider presents in the service: the name they registered for it and a photo of their work, for the storefront heading.
-async function storefrontMenu({ kind, id, vertical }) {
-  const menu = await menuItems({ kind, id, vertical });
+async function storefrontMenu({ kind, id, vertical, all = false }) {
+  const menu = await menuItems({ kind, id, vertical, all });
   if (!menu) return menu;
   const owner = kind === 'shop' ? { shopId: id } : { workerId: id };
   const face = (await serviceFace(vertical, [owner])).get(keyOf(owner)) || {};
