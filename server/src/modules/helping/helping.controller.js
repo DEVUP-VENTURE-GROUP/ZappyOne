@@ -372,6 +372,8 @@ async function advanceStatus(req, res, next) {
     task.transitionTo(req.body.status, {
       by: req.auth.sub, byRole: 'worker', note: req.body.note || '',
     });
+    // Saved only if nobody moved it since it was read: two taps at once move it once (the other gets a plain 409).
+    task.increment();
     await task.save();
     res.json({ task: task.toObject() });
   } catch (err) { next(err); }
@@ -476,6 +478,7 @@ async function completeTask(req, res, next) {
       }
     }
     task.transitionTo('COMPLETED', { by: req.auth.sub, byRole: 'worker' });
+    task.increment();
     await task.save();
 
     const settled = await taskService.settleTask({ taskId: task._id, actorId: req.auth.sub });

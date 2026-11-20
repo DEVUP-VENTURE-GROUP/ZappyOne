@@ -284,6 +284,10 @@ const petBookingSchema = new mongoose.Schema(
       rating: Number,
     },
 
+    // The owner's rating of the visit, once (pet.controller rateBooking); without these fields the database dropped every rating.
+    rating: { type: Number, min: 1, max: 5, default: null },
+    ratingComment: { type: String, default: '', maxlength: 500 },
+    ratedAt: { type: Date, default: null },
     categoryCode: { type: String, required: true, lowercase: true, index: true },
     serviceMode: { type: String, enum: SERVICE_MODES, required: true },
     pets: { type: [bookingPetSchema], default: [] },

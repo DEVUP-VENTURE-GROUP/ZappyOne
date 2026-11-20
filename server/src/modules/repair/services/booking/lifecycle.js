@@ -85,6 +85,8 @@ async function transition(bookingId, next, { actorRole, actorId, reason = '', me
 
   Object.assign(booking, timing);
 
+  // Saved only if nobody moved the job since it was read: two taps at once complete (and settle) it once, the second is told it changed.
+  booking.increment();
   await booking.save();
 
   // Stock accounting follows the state, so it cannot drift from reality.

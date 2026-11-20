@@ -90,8 +90,6 @@ test('no booking route crashes or shows code wording, whatever is sent', async (
     }
   }
   const uniq = [...new Set(found)];
-  console.log(`routes: ${routes.length}, findings: ${uniq.length}
-${uniq.slice(0, 200).join('
-')}`);
+  console.log(`routes: ${routes.length}, findings: ${uniq.length}`, uniq.slice(0, 200));
   expect(uniq).toEqual([]);
 });

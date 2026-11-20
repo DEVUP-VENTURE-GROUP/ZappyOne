@@ -18,6 +18,8 @@ function fromDatabase(err) {
     return { status: 400, code: 'VALIDATION_FAILED', message: first.message };
   }
   if (err.code === 11000) return { status: 409, code: 'ALREADY_EXISTS', message: 'This already exists.' };
+  // Two changes to the same job at once (a double tap): the second is told it moved on.
+  if (err.name === 'VersionError') return { status: 409, code: 'ALREADY_UPDATED', message: 'This job was just updated. Refresh to see where it is.' };
   return null;
 }
 

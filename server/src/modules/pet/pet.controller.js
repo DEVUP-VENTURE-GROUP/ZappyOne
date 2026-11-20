@@ -293,10 +293,12 @@ async function rateBooking(req, res, next) {
     }
     if (booking.ratedAt) return res.status(409).json({ error: 'Already rated', code: 'ALREADY_RATED' });
 
-    await PetBooking.updateOne(
+    const saved = await PetBooking.updateOne(
       { _id: req.params.id, ratedAt: null },
       { $set: { rating: req.body.rating, ratingComment: req.body.comment || '', ratedAt: new Date() } },
     );
+    // Two taps at once: only the one that saved counts toward the pro's average.
+    if (!saved.modifiedCount) return res.status(409).json({ error: 'Already rated', code: 'ALREADY_RATED' });
 
     const ratingService = require('../repair/services/rating.service');
     await ratingService.applyRepairRating({
@@ -480,6 +482,8 @@ async function advanceStatus(req, res, next) {
     await assertStartCode('pet', booking, req.body.status, req.body.code);
     require('../jobs/assignment').assertSomeoneTravels('pet', booking, req.body.status);
     booking.transitionTo(req.body.status, { by: req.auth.sub, byRole: req.auth.role, note: req.body.note || '' });
+    // Saved only if nobody moved it since it was read: two taps at once move it once (the other gets a plain 409).
+    booking.increment();
     await booking.save();
     res.json({ booking: booking.toObject() });
   } catch (err) { next(err); }
