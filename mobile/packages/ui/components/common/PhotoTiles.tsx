@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import { Camera, ImagePlus, X } from 'lucide-react-native';
-import { pickPhoto, uploadPhoto } from '@zappy/core/lib/upload';
+import { pickPhoto, pickPhotos, uploadPhoto } from '@zappy/core/lib/upload';
 import { Text } from '..';
 import { colors, ink, slate } from '../../theme/colors';
 import { radius } from '../../theme/radius';
@@ -18,14 +18,17 @@ export function PhotoTiles({ value = [], onChange, previews = {}, max = 6, folde
   const [busy, setBusy] = useState(false);
   const box = { width: size, height: size };
 
+  // The camera takes one; the gallery picks as many as there is room for, uploaded one after another.
   async function add(camera: boolean) {
     try {
-      const picked = await pickPhoto({ camera });
-      if (!picked) return;
+      const picked = camera ? [await pickPhoto({ camera: true })].filter(Boolean) as Awaited<ReturnType<typeof pickPhotos>> : await pickPhotos({ limit: max - value.length });
+      if (!picked.length) return;
       setBusy(true);
-      const key = await uploadPhoto(picked, folder);
-      setLocal((m) => ({ ...m, [key]: picked.uri }));
-      onChange((cur) => [...cur, key].slice(0, max));
+      for (const photo of picked) {
+        const key = await uploadPhoto(photo, folder);
+        setLocal((m) => ({ ...m, [key]: photo.uri }));
+        onChange((cur) => [...cur, key].slice(0, max));
+      }
     } catch (e) { toast.error((e as Error).message || 'That photo did not upload. Try again.'); }
     finally { setBusy(false); }
   }

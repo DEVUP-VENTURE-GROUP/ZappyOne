@@ -629,6 +629,7 @@ router.put('/provider/menu/item', ...providerOnly,
     includes: Joi.array().items(Joi.string().trim().max(60).allow('')).max(12).default([]),
     minutes: Joi.number().integer().min(5).max(1440).allow(null),
     photoKey: Joi.string().max(300).allow(''),
+    photoKeys: Joi.array().items(Joi.string().max(300)).max(6),
     prices: Joi.object().pattern(Joi.string().max(60), Joi.number().integer().min(0).max(100000000).allow(null)).default({}),
   })),
   wrap((req) => menuSvc.saveItem(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body, actorOf(req))));

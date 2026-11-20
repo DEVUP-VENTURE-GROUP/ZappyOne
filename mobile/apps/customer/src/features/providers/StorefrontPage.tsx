@@ -5,7 +5,7 @@
 import { PartsNote } from '@zappy/ui/components/common/PartsNote';
 import { to12h } from '@zappy/core/shared/opening';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Dimensions, Image, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,8 +22,9 @@ import { PlansNear } from '../plans/PlansNear';
 import { isNewPro } from '@zappy/core/shared/jobsDone';
 
 interface Option { brandCode: string; typeName: string; totalPaise: number; path: string }
-interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; includes?: string[]; photoUrl?: string | null }
+interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; includes?: string[]; photoUrl?: string | null; photoUrls?: string[] }
 interface Review { rating: number; text?: string; at?: string }
+const SCREEN_W = Dimensions.get('window').width;
 const rupees = (p: number) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const monthYear = (d: string) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 export const viaKey = (key: string) => `zappy:via:${key}`;
@@ -41,6 +42,8 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
   const single = item.options.length === 1;
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
+  const [showing, setShowing] = useState(false);
+  const photos: string[] = item.photoUrls?.length ? item.photoUrls : [item.photoUrl].filter(Boolean) as string[];
   const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
   const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
   return (
@@ -59,7 +62,12 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
         </View>
         <View style={styles.dishBox}>
           {item.photoUrl
-            ? <Image source={{ uri: item.photoUrl }} style={styles.dish} />
+            ? (
+              <Pressable onPress={() => setShowing(true)} accessibilityRole="button" accessibilityLabel={`See ${photos.length} photo${photos.length > 1 ? 's' : ''} of ${item.name}`}>
+                <Image source={{ uri: item.photoUrl }} style={styles.dish} />
+                {photos.length > 1 ? <View style={styles.count}><Text variant="caption" weight="bold" color="#FFFFFF">1/{photos.length}</Text></View> : null}
+              </Pressable>
+            )
             : <View style={[styles.dish, styles.dishEmpty]}><Image source={{ uri: webAsset('/branding/zappy-mark.webp') || undefined }} style={styles.mark} resizeMode="contain" /></View>}
           <Pressable onPress={act} android_ripple={RIPPLE} accessibilityRole="button" accessibilityLabel={single ? `Book ${item.name}` : `${item.options.length} options for ${item.name}`} style={styles.bookOnPhoto}>
             {single
@@ -68,6 +76,15 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
           </Pressable>
         </View>
       </View>
+      <Modal visible={showing} transparent animationType="fade" onRequestClose={() => setShowing(false)}>
+        <Pressable style={styles.viewer} onPress={() => setShowing(false)} accessibilityLabel="Close photos">
+          <Text variant="body" weight="bold" color="#FFFFFF" style={styles.viewerTitle}>{item.name}</Text>
+          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+            {photos.map((src) => <View key={src} style={[styles.slide, { width: SCREEN_W }]}><Image source={{ uri: src }} style={styles.full} resizeMode="contain" /></View>)}
+          </ScrollView>
+          <Text variant="caption" color="rgba(255,255,255,0.7)" style={styles.viewerHint}>{photos.length > 1 ? 'Swipe to see each photo · tap to close' : 'Tap to close'}</Text>
+        </Pressable>
+      </Modal>
       {open && !single ? (
         <Appear style={styles.grid}>
           {item.options.map((o) => (
@@ -226,6 +243,12 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm },
   menuRow: { paddingVertical: spacing.lg, borderTopWidth: 1, borderTopColor: slate[200], borderStyle: 'dashed' },
   dishRow: { flexDirection: 'row', gap: spacing.base },
+  count: { position: 'absolute', top: 8, right: 8, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.55)' },
+  viewer: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.92)' },
+  viewerTitle: { position: 'absolute', top: 56, left: spacing.base, right: spacing.base },
+  viewerHint: { position: 'absolute', bottom: 40, left: 0, right: 0, textAlign: 'center' },
+  slide: { alignItems: 'center', justifyContent: 'center' },
+  full: { width: '92%', height: '75%', borderRadius: 18 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   ratingBox: { alignItems: 'center', gap: 2 },
   ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#15803D' },

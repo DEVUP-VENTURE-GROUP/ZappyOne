@@ -20,6 +20,8 @@ function MenuItem({ item, onBook }) {
   const single = item.options.length === 1;
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
+  const [showing, setShowing] = useState(false);
+  const photos = item.photoUrls?.length ? item.photoUrls : [item.photoUrl].filter(Boolean);
   const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
   const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
   return (
@@ -39,7 +41,12 @@ function MenuItem({ item, onBook }) {
         </div>
         <div className="relative w-32 shrink-0 pb-4 sm:w-36">
           {item.photoUrl
-            ? <img src={item.photoUrl} alt="" loading="lazy" className="aspect-square w-full rounded-2xl object-cover" />
+            ? (
+              <button type="button" onClick={() => setShowing(true)} aria-label={`See ${photos.length} photo${photos.length > 1 ? 's' : ''} of ${item.name}`} className="relative block w-full">
+                <img src={item.photoUrl} alt="" loading="lazy" className="aspect-square w-full rounded-2xl object-cover" />
+                {photos.length > 1 && <span className="absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold tabular-nums text-white">1/{photos.length}</span>}
+              </button>
+            )
             : <span className="grid aspect-square w-full place-items-center rounded-2xl bg-zappy-50"><img src="/branding/zappy-mark.webp" alt="" className="h-12 w-12 object-contain opacity-60" /></span>}
           <button type="button" onClick={act} aria-expanded={single ? undefined : open}
             className="absolute inset-x-3 bottom-0 rounded-xl border border-zappy-200 bg-white py-2 text-center text-[15px] font-extrabold uppercase tracking-wide text-zappy-700 shadow-sm active:scale-[0.97]">
@@ -47,6 +54,17 @@ function MenuItem({ item, onBook }) {
           </button>
         </div>
       </div>
+      <AnimatePresence>
+        {showing && (
+          <motion.div className="fixed inset-0 z-50 flex flex-col bg-black/90" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="dialog" aria-label={`${item.name} photos`} onClick={() => setShowing(false)}>
+            <p className="px-4 pt-[calc(env(safe-area-inset-top)+16px)] text-[15px] font-bold text-white">{item.name}</p>
+            <div className="no-scrollbar flex flex-1 snap-x snap-mandatory items-center gap-3 overflow-x-auto px-4">
+              {photos.map((src) => <img key={src} src={src} alt="" className="max-h-[75vh] w-[88vw] max-w-xl shrink-0 snap-center rounded-2xl object-contain" />)}
+            </div>
+            <p className="pb-[calc(env(safe-area-inset-bottom)+20px)] text-center text-[13px] text-white/70">{photos.length > 1 ? 'Swipe to see each photo · tap to close' : 'Tap to close'}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence initial={false}>
         {open && !single && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">

@@ -46,6 +46,8 @@ const repairSchema = new mongoose.Schema(
     owner: { type: { _id: false, kind: { type: String, enum: ['shop', 'worker'] }, id: mongoose.Schema.Types.ObjectId }, default: null },
     includes: { type: [String], default: [] },
     photoKey: { type: String, default: '' },
+    // Up to six photos of the work; the first is the cover and is also photoKey (older readers keep working).
+    photoKeys: { type: [String], default: [] },
 
     /**
      * Where this repair is offered. Empty = everywhere.

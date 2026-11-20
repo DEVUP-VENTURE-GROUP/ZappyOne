@@ -32,8 +32,8 @@ async function menu(owner, vertical) {
   const [types, repairs, caps, prices, refs] = await Promise.all([
     Brand.find({ category: vertical, isActive: { $ne: false } }).select('code name sortOrder').sort({ sortOrder: 1, name: 1 }).lean(),
     Repair.find({ vertical, isActive: true, isArchived: false, isAddOn: { $ne: true }, $or: [{ owner: null }, { 'owner.id': owner.shopId || owner.workerId }] })
-      .select('code name description owner includes photoKey estimatedDurationMin displayOrder').sort({ displayOrder: 1, name: 1 }).lean(),
-    ProviderCapability.find({ ...filterOf(owner), vertical }).select('repairCode isActive includes photoKey estimatedDurationMin').lean(),
+      .select('code name description owner includes photoKey photoKeys estimatedDurationMin displayOrder').sort({ displayOrder: 1, name: 1 }).lean(),
+    ProviderCapability.find({ ...filterOf(owner), vertical }).select('repairCode isActive includes photoKey photoKeys estimatedDurationMin').lean(),
     ProviderPricing.find({ ...filterOf(owner), vertical, ...LIVE }).select('repairCode brandCode totalPaise').lean(),
     ZappyReferencePricing.find({ vertical, supersededAt: null, isActive: true }).select('repairCode brandCode recommendedPaise').lean(),
   ]);
@@ -46,12 +46,14 @@ async function menu(owner, vertical) {
     const suggestOf = (type) => (own ? null : refs.find((x) => x.repairCode === r.code && x.brandCode === type)?.recommendedPaise
       ?? refs.find((x) => x.repairCode === r.code && !x.brandCode)?.recommendedPaise ?? null);
     const photoKey = cap?.photoKey || r.photoKey || '';
+    const photoKeys = cap?.photoKeys?.length ? cap.photoKeys : r.photoKeys?.length ? r.photoKeys : [photoKey].filter(Boolean);
     return {
       repairCode: r.code, name: r.name, own,
       offered: !!cap?.isActive && types.some((t) => priceOf(t.code) != null),
       includes: cap?.includes?.length ? cap.includes : (r.includes || []),
       minutes: cap?.estimatedDurationMin || r.estimatedDurationMin || null,
       photoKey, photoUrl: photoKey ? await s3Service.signMedia(photoKey).catch(() => null) : null,
+      photoKeys, photoUrls: (await Promise.all(photoKeys.map((k) => s3Service.signMedia(k).catch(() => null)))).filter(Boolean),
       prices: Object.fromEntries(types.map((t) => [t.code, priceOf(t.code)])),
       suggested: Object.fromEntries(types.map((t) => [t.code, suggestOf(t.code)])),
     };
@@ -78,7 +80,7 @@ async function missingPhotos(owner) {
 }
 
 // A new job of the provider's own, inside the service, under its first heading.
-async function createOwnJob(owner, vertical, { name, minutes, includes, photoKey }) {
+async function createOwnJob(owner, vertical, { name, minutes, includes, photoKey, photoKeys = [] }) {
   if ((await Repair.countDocuments({ vertical, 'owner.id': owner.shopId || owner.workerId, isArchived: false })) >= MAX_OWN) {
     throw httpError(`You can add up to ${MAX_OWN} jobs of your own to one service.`, 409, 'MENU_FULL');
   }
@@ -93,7 +95,7 @@ async function createOwnJob(owner, vertical, { name, minutes, includes, photoKey
     code, name, vertical, pricingMode: 'fixed', minSkillLevel: 1, warrantyDays: 0,
     estimatedDurationMin: minutes, allowedServiceModes: sample?.allowedServiceModes?.length ? sample.allowedServiceModes : ['doorstep'],
     qaChecklistCodes: sample?.qaChecklistCodes || [], problemCodes: [problemCode],
-    owner: ownerRef(owner), includes, photoKey: photoKey || '',
+    owner: ownerRef(owner), includes, photoKey: photoKey || '', photoKeys,
   });
   await Problem.create({
     code: problemCode, name, vertical, categoryId: category._id, categoryCode: category.code,
@@ -120,8 +122,12 @@ async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
     if (!repair || (repair.owner && String(repair.owner.id) !== String(owner.shopId || owner.workerId))) throw httpError('That job is not on this service.', 404, 'UNKNOWN_JOB');
   }
   // A job offered to customers shows at least one photo of the work: kept when the app does not send it again.
-  const kept = repair ? (await ProviderCapability.findOne({ ...filterOf(owner), repairCode: repair.code }).select('photoKey').lean())?.photoKey || repair.photoKey || '' : '';
-  const photoKey = body.photoKey || kept;
+  // Up to six photos, the first the cover; photos already saved stay when the app sends none.
+  const keptCap = repair ? await ProviderCapability.findOne({ ...filterOf(owner), repairCode: repair.code }).select('photoKey photoKeys').lean() : null;
+  const kept = keptCap?.photoKeys?.length ? keptCap.photoKeys : [keptCap?.photoKey || repair?.photoKey].filter(Boolean);
+  const sent = Array.isArray(body.photoKeys) ? body.photoKeys.filter(Boolean).slice(0, 6) : [];
+  const photoKeys = sent.length ? sent : body.photoKey ? [body.photoKey] : kept;
+  const photoKey = photoKeys[0] || '';
   // Samples from the catalogue go on first; the home reminder then asks for their photos.
   const needPhoto = () => { if (priced.length && !photoKey && !sample) throw httpError('Add at least one photo of this job. Customers book what they can see.', 400, 'PHOTO_REQUIRED'); };
   if (body.repairCode) {
@@ -129,7 +135,7 @@ async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
       const name = String(body.name || repair.name).trim();
       if (name.length < 2) throw httpError('Name the job.', 400, 'NAME_REQUIRED');
       needPhoto();
-      await Repair.updateOne({ _id: repair._id }, { $set: { name, includes, photoKey, ...(minutes && { estimatedDurationMin: minutes }) } });
+      await Repair.updateOne({ _id: repair._id }, { $set: { name, includes, photoKey, photoKeys, ...(minutes && { estimatedDurationMin: minutes }) } });
       await Problem.updateOne({ vertical, code: `${repair.code}_req`, ownerKey: ownerKey(owner) }, { $set: { name } });
     }
   } else {
@@ -137,7 +143,7 @@ async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
     if (name.length < 2 || name.length > 80) throw httpError('Name the job in 2 to 80 letters.', 400, 'NAME_REQUIRED');
     if (!priced.length) throw httpError('Set a price for at least one option.', 400, 'PRICE_REQUIRED');
     needPhoto();
-    const code = await createOwnJob(owner, vertical, { name, minutes: minutes || 60, includes, photoKey });
+    const code = await createOwnJob(owner, vertical, { name, minutes: minutes || 60, includes, photoKey, photoKeys });
     repair = await Repair.findOne({ vertical, code }).lean();
   }
 
@@ -146,7 +152,7 @@ async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
     { ...filterOf(owner), repairCode: repair.code },
     {
       $set: {
-        vertical, isActive: priced.length > 0, includes, photoKey,
+        vertical, isActive: priced.length > 0, includes, photoKey, photoKeys,
         estimatedDurationMin: minutes, serviceModes: repair.allowedServiceModes, skillLevel: Math.max(1, repair.minSkillLevel || 1),
       },
       $setOnInsert: { ...filterOf(owner), repairCode: repair.code, verificationStatus: 'not_required' },

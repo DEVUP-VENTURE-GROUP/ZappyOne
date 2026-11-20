@@ -141,7 +141,7 @@ async function menuItems({ kind, id, vertical }) {
   const owner = kind === 'shop' ? { shopId: new mongoose.Types.ObjectId(id) } : { workerId: new mongoose.Types.ObjectId(id) };
   const [prices, caps] = await Promise.all([
     ProviderPricing.find({ ...owner, vertical, ...BOOKABLE }).select('repairCode brandCode modelCode totalPaise estimatedDurationMin warrantyDays qualityCode').lean(),
-    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode includes photoKey estimatedDurationMin').lean(),
+    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode includes photoKey photoKeys estimatedDurationMin').lean(),
   ]);
   const capOf = new Map(caps.map((c) => [c.repairCode, c]));
   const can = new Set(capOf.keys());
@@ -149,7 +149,7 @@ async function menuItems({ kind, id, vertical }) {
   if (!usable.length) return { items: [] };
   const codes = [...new Set(usable.map((p) => p.repairCode))];
   const [repairs, problems, brands] = await Promise.all([
-    Repair.find({ vertical, code: { $in: codes }, isActive: true }).select('code name description estimatedDurationMin pricingMode includes photoKey owner').lean(),
+    Repair.find({ vertical, code: { $in: codes }, isActive: true }).select('code name description estimatedDurationMin pricingMode includes photoKey photoKeys owner').lean(),
     Problem.find({ vertical, candidateRepairCodes: { $in: codes } }).select('code candidateRepairCodes displayOrder').lean(),
     Brand.find({ category: vertical }).select('code name sortOrder').sort({ sortOrder: 1 }).lean(),
   ]);
@@ -161,6 +161,7 @@ async function menuItems({ kind, id, vertical }) {
   const items = await Promise.all(repairs.map(async (r) => {
     const cap = capOf.get(r.code);
     const photoKey = cap?.photoKey || r.photoKey || '';
+    const gallery = cap?.photoKeys?.length ? cap.photoKeys : r.photoKeys?.length ? r.photoKeys : [photoKey].filter(Boolean);
     const problem = problems.find((p) => p.candidateRepairCodes.includes(r.code));
     const rows = usable.filter((p) => p.repairCode === r.code);
     const options = brands.flatMap((b) => {
@@ -175,6 +176,8 @@ async function menuItems({ kind, id, vertical }) {
       repairCode: r.code, name: r.name, description: r.description || '', own: !!r.owner,
       includes: cap?.includes?.length ? cap.includes : (r.includes || []),
       photoUrl: photoKey ? await s3Service.signMedia(photoKey).catch(() => null) : null,
+      // Every photo of the job, the cover first, for the storefront's gallery.
+      photoUrls: (await Promise.all(gallery.map((k) => s3Service.signMedia(k).catch(() => null)))).filter(Boolean),
       minutes: cap?.estimatedDurationMin || rows[0]?.estimatedDurationMin || r.estimatedDurationMin || null,
       quoted: r.pricingMode === 'diagnosis_required', options, fromPaise: options.length ? Math.min(...options.map((o) => o.totalPaise)) : null,
     };

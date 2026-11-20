@@ -27,6 +27,17 @@ export async function pickPhoto({ camera = true, front = false }: { camera?: boo
   return { uri: a.uri, mimeType: a.mimeType || 'image/jpeg', width: a.width, height: a.height };
 }
 
+// Several photos from the gallery in one go (up to `limit`); an empty list when cancelled.
+export async function pickPhotos({ limit = 6 }: { limit?: number } = {}): Promise<PickedPhoto[]> {
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) throw new Error('Allow photos to choose them.');
+  const res = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'], quality: 0.7, exif: false, allowsMultipleSelection: limit > 1, selectionLimit: Math.max(1, limit), orderedSelection: true,
+  });
+  if (res.canceled || !res.assets?.length) return [];
+  return res.assets.slice(0, limit).map((a) => ({ uri: a.uri, mimeType: a.mimeType || 'image/jpeg', width: a.width, height: a.height }));
+}
+
 // Native helpers, loaded only where the build has them: an older build keeps the plain upload instead of crashing.
 /* eslint-disable @typescript-eslint/no-require-imports */
 const native = (() => {

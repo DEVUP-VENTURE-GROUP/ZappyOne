@@ -152,3 +152,13 @@ test('a job offered to customers needs a photo; one already saved is kept; the s
   expect(missing.names).not.toContain('Balcony wash');
   expect(missing.count).toBeGreaterThan(0);
 });
+
+test('a job keeps up to six photos, the first the cover; saving without photos keeps them; the storefront gets the gallery', async () => {
+  const m = await menu.saveItem(own(shop), V, { name: 'Deep balcony clean', photoKeys: ['menu/a.jpg', 'menu/b.jpg', 'menu/c.jpg'], prices: { daicle_2bhk: 24900 } }, actor(shop));
+  const job = m.items.find((i) => i.name === 'Deep balcony clean');
+  expect(job).toMatchObject({ photoKey: 'menu/a.jpg', photoKeys: ['menu/a.jpg', 'menu/b.jpg', 'menu/c.jpg'] });
+  const again = await menu.saveItem(own(shop), V, { repairCode: job.repairCode, prices: { daicle_2bhk: 25900 } }, actor(shop));
+  expect(again.items.find((i) => i.repairCode === job.repairCode).photoKeys).toEqual(['menu/a.jpg', 'menu/b.jpg', 'menu/c.jpg']);
+  const front = await require('../src/modules/repair/services/storefront.service').storefrontMenu({ kind: 'shop', id: String(shop._id), vertical: V });
+  expect(front.items.find((i) => i.repairCode === job.repairCode).photoUrls).toHaveLength(3);
+});

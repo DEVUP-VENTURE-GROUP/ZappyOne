@@ -78,6 +78,8 @@ const capabilitySchema = new mongoose.Schema(
     // How this provider describes the job on their menu: what is included and a photo of their work.
     includes: { type: [String], default: [] },
     photoKey: { type: String, default: '' },
+    // Up to six photos of the work; the first is the cover and is also photoKey (older readers keep working).
+    photoKeys: { type: [String], default: [] },
 
     isActive: { type: Boolean, default: true, index: true },
   },

@@ -164,7 +164,7 @@ function CustomerPreview({ items, types }) {
 function ItemSheet({ vertical, types, item, suggestions, onClose }) {
   const isNew = !item.repairCode;
   const [name, setName] = useState(item.name || '');
-  const [photos, setPhotos] = useState(item.photoKey ? [item.photoKey] : []);
+  const [photos, setPhotos] = useState(item.photoKeys?.length ? item.photoKeys : item.photoKey ? [item.photoKey] : []);
   const [includes, setIncludes] = useState(item.includes || []);
   const [draft, setDraft] = useState('');
   const [minutes, setMinutes] = useState(item.minutes ? String(item.minutes) : '');
@@ -191,7 +191,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }) {
   async function submit() {
     try {
       await save({
-        vertical, repairCode: item.repairCode || null, name: name.trim(), includes, photoKey: photos[0] || '',
+        vertical, repairCode: item.repairCode || null, name: name.trim(), includes, photoKey: photos[0] || '', photoKeys: photos,
         minutes: Number(minutes) || null,
         prices: Object.fromEntries(types.map((t) => [t.code, Number(prices[t.code]) >= 1 ? Math.round(Number(prices[t.code]) * 100) : null])),
       }).unwrap();
@@ -223,7 +223,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }) {
           <div>
             <p className="text-[13px] font-semibold text-ink-700">Photo of your work</p>
             <p className="mb-2 text-[12px] text-ink-500">A real photo helps customers choose you.</p>
-            <PhotoTiles value={photos} onChange={setPhotos} previews={item.photoKey && item.photoUrl ? { [item.photoKey]: item.photoUrl } : {}} max={1} folder="menu" />
+            <PhotoTiles value={photos} onChange={setPhotos} previews={Object.fromEntries((item.photoKeys || []).map((k, i) => [k, item.photoUrls?.[i]]).filter(([, u]) => u))} max={6} folder="menu" />
           </div>
 
           <div>

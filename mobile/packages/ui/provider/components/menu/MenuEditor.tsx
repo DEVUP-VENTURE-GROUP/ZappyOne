@@ -19,7 +19,7 @@ import { PriceNotice } from '../PriceNotice';
 interface MenuType { code: string; name: string }
 interface MenuItem {
   repairCode: string; name: string; own: boolean; offered: boolean; includes: string[]; minutes: number | null;
-  photoKey: string; photoUrl: string | null; prices: Record<string, number | null>; suggested: Record<string, number | null>;
+  photoKey: string; photoUrl: string | null; photoKeys?: string[]; photoUrls?: string[]; prices: Record<string, number | null>; suggested: Record<string, number | null>;
 }
 interface Menu { types: MenuType[]; items: MenuItem[]; tips: string[] }
 
@@ -162,7 +162,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }: { vertical: 
   const isNew = !item.repairCode;
   const named = isNew || !!item.own;
   const [name, setName] = useState(item.name || '');
-  const [photos, setPhotos] = useState<string[]>(item.photoKey ? [item.photoKey] : []);
+  const [photos, setPhotos] = useState<string[]>(item.photoKeys?.length ? item.photoKeys : item.photoKey ? [item.photoKey] : []);
   const [includes, setIncludes] = useState<string[]>(item.includes || []);
   const [draft, setDraft] = useState('');
   const [minutes, setMinutes] = useState(item.minutes ? String(item.minutes) : '');
@@ -189,7 +189,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }: { vertical: 
   async function submit() {
     try {
       await save({
-        vertical, repairCode: item.repairCode || null, name: name.trim(), includes, photoKey: photos[0] || '', minutes: Number(minutes) || null,
+        vertical, repairCode: item.repairCode || null, name: name.trim(), includes, photoKey: photos[0] || '', photoKeys: photos, minutes: Number(minutes) || null,
         prices: Object.fromEntries(types.map((t) => [t.code, Number(prices[t.code]) >= 1 ? Math.round(Number(prices[t.code]) * 100) : null])),
       }).unwrap();
       toast.success(isNew ? 'Added to your menu' : 'Saved. Live now.');
@@ -217,7 +217,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }: { vertical: 
           ) : null}
           <View style={styles.gapXs}>
             <Text variant="caption" weight="semibold" color={ink[700]}>Photo of your work</Text>
-            <PhotoTiles value={photos} onChange={setPhotos} previews={item.photoKey && item.photoUrl ? { [item.photoKey]: item.photoUrl } : {}} max={1} folder="menu" />
+            <PhotoTiles value={photos} onChange={setPhotos} previews={Object.fromEntries((item.photoKeys || []).map((k: string, i: number) => [k, item.photoUrls?.[i]]).filter(([, u]) => u))} max={6} folder="menu" />
           </View>
           <View style={styles.gapXs}>
             <Text variant="caption" weight="semibold" color={ink[700]}>What's included</Text>
