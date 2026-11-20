@@ -1,5 +1,4 @@
 // Zomato-style browsing: storefronts verified and priced for a service near the customer, sorted the way they choose, and each storefront's menu linking into the booking flow with that provider chosen.
-const mongoose = require('mongoose');
 const { startMongo, stopMongo } = require('./helpers');
 
 jest.setTimeout(180000);
@@ -70,4 +69,14 @@ test('before a provider is chosen the price is the lowest a verified provider ne
   const { ProviderPricing } = require('../src/modules/repair/models/pricing.model');
   await ProviderPricing.updateMany({ shopId: shops[1]._id, repairCode: 'pescon_general' }, { $set: { approvalStatus: 'rejected' } });
   expect((await pricing.nearbyPriceMap(ctx, ['pescon_general'], { lat: LAT, lng: LNG })).get('pescon_general')).toBe(109900);
+});
+
+test('menu search near the customer shows a job only with a photo, the provider\'s own first', async () => {
+  const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
+  await ProviderCapability.updateMany({}, { $set: { photoKey: '' } });
+  expect((await svc.searchMenus({ q: 'pest control', lat: LAT, lng: LNG })).items).toEqual([]);
+  await ProviderCapability.updateMany({ shopId: shops[0]._id }, { $set: { photoKey: 'menu/own.jpg' } });
+  const found = await svc.searchMenus({ q: 'pest control', lat: LAT, lng: LNG });
+  expect(found.items.length).toBeGreaterThan(0);
+  expect(found.items.every((i) => i.provider.id === String(shops[0]._id))).toBe(true);
 });

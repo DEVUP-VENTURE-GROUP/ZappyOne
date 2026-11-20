@@ -63,3 +63,18 @@ test('the time slot becomes the start moment in India time', () => {
   expect(mig.startOf(new Date('2026-12-05T00:00:00Z'), '10:00 AM').toISOString()).toBe('2026-12-05T04:30:00.000Z');
   expect(mig.startOf(new Date('2026-12-05T00:00:00Z'), 'evening').toISOString()).toBe('2026-12-05T00:00:00.000Z');
 });
+
+test('a partner with no phone is skipped, one already a shop is linked, an online advance is flagged for settling by hand', async () => {
+  await EventPartner.create({ businessName: 'Google Only Decor', ownerName: 'Ravi', kyc: { status: 'pending' } });
+  const shop = await Shop.create({ businessName: 'Already A Shop', ownerName: 'Lata', phone: '9555500022', isActive: true });
+  const p = await EventPartner.create({ businessName: 'Lata Events', ownerName: 'Lata', phone: '9555500022', kyc: { status: 'approved' } });
+  const t = await EventTheme.create({ partnerId: p._id, categoryId: new mongoose.Types.ObjectId(), title: 'Gold anniversary wall', coverImage: 'event-photos/gold.jpg', startingPricePaise: 499900, status: 'approved' });
+  const paid = await EventBooking.create({ userId: new mongoose.Types.ObjectId(), themeId: t._id, partnerId: p._id, eventDate: new Date(), eventTimeSlot: '7:00 PM',
+    address: { line1: 'Gachibowli', lat: 17.44, lng: 78.35 }, pricing: { totalPaise: 499900, advancePaise: 100000, remainingPaise: 399900 },
+    advancePayment: { status: 'paid' }, status: 'completed' });
+  const out = await mig.migrate({ apply: true });
+  expect(out.skipped).toEqual(expect.arrayContaining([expect.objectContaining({ why: 'no phone to sign in with' })]));
+  expect(out.warnings).toEqual(expect.arrayContaining([expect.objectContaining({ booking: String(paid._id) })]));
+  expect(await Shop.countDocuments({ phone: '9555500022' })).toBe(1);
+  expect(await RepairBooking.findOne({ 'occasion.legacyEventBookingId': paid._id }).lean()).toMatchObject({ shopId: shop._id, status: 'COMPLETED' });
+});

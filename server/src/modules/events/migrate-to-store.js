@@ -1,6 +1,5 @@
 // Moves the old events engine onto the one store engine: each event partner becomes a shop on the Events line, each live setup a menu item, each booking a job.
 // Dry run by default (reports, writes nothing); apply: true writes. Safe to run again: partners match by phone, setups by name, bookings by their old id.
-const mongoose = require('mongoose');
 const logger = require('../../core/logger');
 
 const LINE = 'event_decoration';
@@ -36,6 +35,17 @@ function startOf(date, slot) {
   return Number.isNaN(ist.getTime()) ? d : ist;
 }
 
+// The shop an event partner becomes: same sign-in phone, business, KYC state and push tokens.
+function shopFields(p) {
+  const kyc = p.kyc || {};
+  return {
+    businessName: p.businessName, ownerName: p.ownerName || p.businessName, phone: p.phone, email: p.email || undefined,
+    isActive: p.isActive !== false && !p.isBlocked && !p.suspendedAt,
+    kyc: { status: KYC[kyc.status] || 'not_submitted', ownerIdUrl: kyc.aadharFront || kyc.panCard, selfieUrl: kyc.liveSelfie, selfieMetadata: kyc.liveSelfieMeta || undefined },
+    bio: p.bio || undefined, deviceTokens: p.deviceTokens || [], nativeTokens: p.nativeTokens || [],
+  };
+}
+
 async function partnerToShop(p, { apply, report }) {
   const { Shop, ProviderEnrolment } = models();
   let shop = p.phone ? await Shop.findOne({ phone: p.phone }).lean() : null;
@@ -43,12 +53,7 @@ async function partnerToShop(p, { apply, report }) {
   if (!shop) {
     report.shopsCreated += 1;
     if (apply) {
-      shop = (await Shop.create({
-        businessName: p.businessName, ownerName: p.ownerName || p.businessName, phone: p.phone, email: p.email || undefined,
-        isActive: p.isActive !== false && !p.isBlocked && !p.suspendedAt,
-        kyc: { status: KYC[p.kyc?.status] || 'not_submitted', ownerIdUrl: p.kyc?.aadharFront || p.kyc?.panCard, selfieUrl: p.kyc?.liveSelfie, selfieMetadata: p.kyc?.liveSelfieMeta || undefined },
-        bio: p.bio || undefined, deviceTokens: p.deviceTokens || [], nativeTokens: p.nativeTokens || [],
-      })).toObject();
+      shop = (await Shop.create(shopFields(p))).toObject();
     }
   } else report.shopsLinked += 1;
   if (apply && shop) {
@@ -79,6 +84,25 @@ async function themesToMenu(p, shop, { apply, report }) {
   return codeOf;
 }
 
+// The job an event booking becomes: same customer, venue, date and money; its own details kept on occasion.
+function jobFields(b, shop, codeOf) {
+  const status = STATUS[b.status] || 'PROVIDER_ASSIGNED';
+  const paid = b.remainingPayment?.status === 'paid' && b.advancePayment?.status === 'paid';
+  const a = b.address || {};
+  return {
+    reference: `EV${String(b._id).slice(-8).toUpperCase()}`, userId: b.userId, shopId: shop._id,
+    vertical: LINE, brandCode: TYPE, modelCode: TYPE, repairCode: codeOf.get(String(b.themeId)) || FALLBACK_JOB,
+    serviceMode: 'doorstep', status, paymentMethod: 'cash', paymentStatus: paid ? 'paid' : 'pending',
+    scheduledAt: startOf(b.eventDate, b.eventTimeSlot),
+    location: { type: 'Point', coordinates: [Number(a.lng), Number(a.lat)], address: [a.line1, a.city, a.pincode].filter(Boolean).join(', ') },
+    priceSnapshot: { subtotalPaise: b.pricing?.themePricePaise ?? b.pricing.totalPaise, totalPaise: b.pricing.totalPaise },
+    occasion: { guests: b.guestCount ?? null, timeSlot: b.eventTimeSlot || '', notes: b.notes || '', legacyEventBookingId: b._id },
+    completionPhotos: b.setupPhotos?.after || [],
+    ...(b.userRating ? { rating: b.userRating } : {}),
+    statusHistory: [{ status, at: b.updatedAt || new Date(), actorRole: 'system', reason: 'Moved from the events engine' }],
+  };
+}
+
 async function bookingsToJobs(p, shop, codeOf, { apply, report }) {
   const { EventBooking, RepairBooking } = models();
   const rows = await EventBooking.find({ partnerId: p._id }).lean();
@@ -90,19 +114,7 @@ async function bookingsToJobs(p, shop, codeOf, { apply, report }) {
     if (b.advancePayment?.status === 'paid') report.warnings.push({ booking: String(b._id), why: `advance of ${b.pricing?.advancePaise} paise was paid online: settle by hand` });
     if (!apply || !shop) continue;
     const status = STATUS[b.status] || 'PROVIDER_ASSIGNED';
-    await RepairBooking.create({
-      reference: `EV${String(b._id).slice(-8).toUpperCase()}`, userId: b.userId, shopId: shop._id,
-      vertical: LINE, brandCode: TYPE, modelCode: TYPE, repairCode: codeOf.get(String(b.themeId)) || FALLBACK_JOB,
-      serviceMode: 'doorstep', status, paymentMethod: 'cash',
-      paymentStatus: b.remainingPayment?.status === 'paid' && b.advancePayment?.status === 'paid' ? 'paid' : 'pending',
-      scheduledAt: startOf(b.eventDate, b.eventTimeSlot),
-      location: { type: 'Point', coordinates: [lng, lat], address: [b.address.line1, b.address.city, b.address.pincode].filter(Boolean).join(', ') },
-      priceSnapshot: { subtotalPaise: b.pricing?.themePricePaise ?? b.pricing.totalPaise, totalPaise: b.pricing.totalPaise },
-      occasion: { guests: b.guestCount ?? null, timeSlot: b.eventTimeSlot || '', notes: b.notes || '', legacyEventBookingId: b._id },
-      completionPhotos: b.setupPhotos?.after || [],
-      ...(b.userRating ? { rating: b.userRating } : {}),
-      statusHistory: [{ status, at: b.updatedAt || new Date(), actorRole: 'system', reason: 'Moved from the events engine' }],
-    });
+    await RepairBooking.create(jobFields(b, shop, codeOf));
   }
 }
 
@@ -120,20 +132,4 @@ async function migrate({ apply = false } = {}) {
   return report;
 }
 
-if (require.main === module) {
-  const path = require('path');
-  const fs = require('fs');
-  const root = path.resolve(__dirname, '../../../');
-  require('dotenv').config({ path: path.join(root, '.env') });
-  const overlay = path.join(root, `.env.${process.env.NODE_ENV || 'development'}`);
-  if (fs.existsSync(overlay)) require('dotenv').config({ path: overlay, override: true });
-  const apply = process.argv.includes('--apply');
-  if (apply && process.env.NODE_ENV === 'production' && !process.argv.includes('--yes-production')) { console.error('Refusing to write to production without --yes-production'); process.exit(1); }
-  mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 20000 })
-    .then(() => migrate({ apply }))
-    .then((r) => { console.log(JSON.stringify(r, null, 2)); return mongoose.disconnect(); })
-    .then(() => process.exit(0))
-    .catch((e) => { console.error('[events→store] failed:', e.message); process.exit(1); });
-}
-
-module.exports = { migrate, startOf, STATUS };
+module.exports = { migrate, startOf, STATUS, jobFields, shopFields };
