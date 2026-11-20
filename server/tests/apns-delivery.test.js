@@ -122,3 +122,16 @@ test('a job offer to a worker iPhone goes through APNs with the offer sound', as
   expect(seen[0].headers['apns-topic']).toBe('com.zappyone.servicepro');
   expect(seen[0].body.aps.sound).toBe('zappy_ring.wav');
 });
+
+test('a Live Activity update goes to the liveactivity topic with its state; dev builds retry on sandbox; dead tokens are stale', async () => {
+  const ok = await apns.sendLiveActivity({ token: OK, event: 'update', contentState: { stage: 'on_the_way', step: 2 } });
+  expect(ok).toEqual({ ok: true });
+  const sent = seen.at(-1);
+  expect(sent.headers).toMatchObject({ 'apns-push-type': 'liveactivity', 'apns-topic': 'com.zappyone.app.push-type.liveactivity', 'apns-priority': '5' });
+  expect(sent.body.aps).toMatchObject({ event: 'update', 'content-state': { stage: 'on_the_way', step: 2 } });
+  await apns.sendLiveActivity({ token: OK, event: 'end', contentState: { stage: 'done' }, dismissAfterSec: 60 });
+  expect(seen.at(-1).body.aps).toMatchObject({ event: 'end', 'dismissal-date': expect.any(Number) });
+  expect(await apns.sendLiveActivity({ token: DEV_BUILD, contentState: {} })).toEqual({ ok: true });
+  expect(await apns.sendLiveActivity({ token: DEAD, contentState: {} })).toMatchObject({ ok: false, stale: true });
+  expect(await apns.sendLiveActivity({ token: 'not-hex', contentState: {} })).toMatchObject({ ok: false, reason: 'bad_token' });
+});
