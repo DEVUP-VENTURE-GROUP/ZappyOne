@@ -3,7 +3,7 @@
 module.exports = {
   type: 'app-intent',
   name: 'ZappyShortcuts',
-  // Opening the app from a shortcut (OpenURLIntent) is iOS 18; older iPhones simply do not list these shortcuts.
+  // Opening the app from a shortcut (OpenURLIntent) is iOS 18; older iPhones simply do not list these shortcuts. apple-targets builds app-intent targets for 17.0 regardless, so ZappyShortcuts.swift marks the intents @available(iOS 18.0, *).
   deploymentTarget: '18.0',
   frameworks: ['AppIntents'],
 };

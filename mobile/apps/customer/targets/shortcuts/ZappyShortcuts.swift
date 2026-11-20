@@ -2,6 +2,8 @@
 import AppIntents
 import Foundation
 
+// OpenURLIntent is iOS 18; @bacons/apple-targets builds App Intents extensions for iOS 17.0 whatever expo-target.config.js says, so the availability lives here.
+@available(iOS 18.0, *)
 struct BookServiceIntent: AppIntent {
   static var title: LocalizedStringResource = "Book a service"
   static var description = IntentDescription("Open ZappyOne to book a home or vehicle service.")
@@ -11,6 +13,7 @@ struct BookServiceIntent: AppIntent {
   }
 }
 
+@available(iOS 18.0, *)
 struct MyBookingsIntent: AppIntent {
   static var title: LocalizedStringResource = "Show my bookings"
   static var description = IntentDescription("Open your ZappyOne bookings to track a job.")
@@ -20,6 +23,7 @@ struct MyBookingsIntent: AppIntent {
   }
 }
 
+@available(iOS 18.0, *)
 struct ZappyShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(intent: BookServiceIntent(), phrases: ["Book a service with \(.applicationName)", "Book on \(.applicationName)"],
