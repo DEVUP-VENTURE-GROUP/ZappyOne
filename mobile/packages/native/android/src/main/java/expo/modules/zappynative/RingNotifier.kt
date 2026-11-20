@@ -1,5 +1,6 @@
 package expo.modules.zappynative
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -75,6 +76,8 @@ object RingNotifier {
       .addAction(0, "Open job", open)
       .setFullScreenIntent(fullScreen, true)
       .build()
+      // Rings and vibrates again and again, like a phone call, until the pro opens it or the offer runs out (setTimeoutAfter).
+      .apply { flags = flags or Notification.FLAG_INSISTENT }
     try { NotificationManagerCompat.from(context).notify(notifId, n) } catch (_: SecurityException) { /* notifications are off for this app */ }
   }
 
