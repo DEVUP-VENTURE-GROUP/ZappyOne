@@ -80,3 +80,18 @@ test('menu search near the customer shows a job only with a photo, the provider\
   expect(found.items.length).toBeGreaterThan(0);
   expect(found.items.every((i) => i.provider.id === String(shops[0]._id))).toBe(true);
 });
+
+test('over HTTP: the storefront list and menu search answer, and a repeat is served the same', async () => {
+  const request = require('supertest');
+  const app = require('../src/app')();
+  const first = await request(app).get('/api/repair/storefronts').query({ vertical: 'pest_control', lat: LAT, lng: LNG });
+  expect(first.status).toBe(200);
+  const again = await request(app).get('/api/repair/storefronts').query({ vertical: 'pest_control', lat: LAT, lng: LNG });
+  expect(again.body.items.map((i) => i.id)).toEqual(first.body.items.map((i) => i.id));
+  const mongoose = require('mongoose');
+  const { signAccessToken } = require('../src/modules/auth/token.service');
+  const auth = { Authorization: `Bearer ${signAccessToken({ sub: String(new mongoose.Types.ObjectId()), role: 'user' })}` };
+  const search = await request(app).get('/api/repair/menu-search').set(auth).query({ q: 'pest control', lat: LAT, lng: LNG });
+  expect(search.status).toBe(200);
+  expect(Array.isArray(search.body.items)).toBe(true);
+});
