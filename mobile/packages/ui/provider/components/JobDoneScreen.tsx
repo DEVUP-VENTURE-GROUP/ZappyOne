@@ -7,6 +7,7 @@ import { useJobEarningsQuery } from '@zappy/core/api';
 import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '../../components';
 import { RateCustomerCard } from '../../components/worker/RateCustomerCard';
+import { Celebration } from '../../components/common/celebrationSlot';
 import { colors, ink, success } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
@@ -46,6 +47,7 @@ export function JobDoneScreen({ jobId, reference, onHome, onNext }: { jobId: str
           <Button label="Back to Home" variant="outline" onPress={onHome} fullWidth />
         </View>
       </ScrollView>
+      <Celebration />
     </Modal>
   );
 }

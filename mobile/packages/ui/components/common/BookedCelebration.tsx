@@ -5,6 +5,7 @@ import { Check } from 'lucide-react-native';
 import { Button, Text } from '..';
 import { colors, ink, slate, zappy } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
+import { Celebration } from './celebrationSlot';
 
 const HOLD_MS = 5000;
 const DOTS = Array.from({ length: 14 }, (_, i) => {
@@ -93,6 +94,7 @@ export function BookedCelebration({ title = 'Booking confirmed', lines = [], ref
           <View style={styles.track}><Animated.View style={[styles.fill, { width: bar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} /></View>
         </View>
       </View>
+      <Celebration />
     </Modal>
   );
 }

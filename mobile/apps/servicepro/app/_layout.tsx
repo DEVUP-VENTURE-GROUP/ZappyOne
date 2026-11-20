@@ -3,6 +3,8 @@ import '../global.css';
 import '../src/captain/backgroundLocation';
 import { setPayQrDrawer } from '@zappy/ui/components/common/payQrSlot';
 import { PayQr } from '../src/PayQr';
+import { setCelebration } from '@zappy/ui/components/common/celebrationSlot';
+import { Confetti } from '../src/Confetti';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
 import { AccountSetupGate } from '@zappy/ui/components/account/AccountSetupGate';
 import { WorkerFrame } from '@zappy/ui/provider/WorkerFrame';
@@ -12,6 +14,8 @@ import { CaptainMode } from '../src/captain/CaptainMode';
 
 // The collect card's scan-to-pay QR (shared payQrSlot).
 setPayQrDrawer(PayQr);
+// The confetti on big moments (shared celebrationSlot).
+setCelebration(Confetti);
 
 /** Shops and their technicians, and event partners, as on the web. */
 const ROLES = ['shop', 'worker', 'event_partner'] as const;

@@ -2,6 +2,11 @@ import '../global.css';
 import { AppRoot, AppStack } from '@zappy/ui/app/AppRoot';
 import { isPublic, resolveRoute } from '../routes';
 import { useReferralLink } from '../src/hooks/useReferralLink';
+import { setCelebration } from '@zappy/ui/components/common/celebrationSlot';
+import { Confetti } from '../src/Confetti';
+
+// The confetti on big moments (shared celebrationSlot).
+setCelebration(Confetti);
 
 function CustomerHooks() {
   useReferralLink();
