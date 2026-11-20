@@ -9,7 +9,7 @@ import { BookedCelebration } from '@zappy/ui/components/common/BookedCelebration
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BadgeIndianRupee, Clock, Headphones, MailPlus, Repeat2, ShieldCheck, UserPlus } from 'lucide-react-native';
 import { useAccountMeQuery, useJobOptionsQuery, useShareJobMutation } from '@zappy/core/api';
-import { useJobLiveActivity } from './useJobLiveActivity';
+import { useJobLiveActivity } from '@zappy/core/hooks/useJobLiveActivity';
 import { toast } from '@zappy/ui/components/Toast';
 import { errText } from '@zappy/ui/lib/feedback';
 import { useTrackingFeed } from '@zappy/core/hooks/useTrackingFeed';

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { CalendarCheck, Clock, ShieldCheck, Undo2, UserX } from 'lucide-react-native';
 import { useJobGiveBackQuery, useGiveBackJobMutation, useReportCustomerAbsentMutation, useConfirmJobSafeMutation, useAskJobMoreTimeMutation, useAnswerTimeCheckMutation } from '@zappy/core/api';
 import { minsUntil } from '@zappy/core/shared/jobFlows';
+import { useJobLiveActivity } from '@zappy/core/hooks/useJobLiveActivity';
 import { Button, Text } from '../components';
 import { toast } from '../components/Toast';
 import { JobCard } from '../components/jobs/JobCard';
@@ -121,6 +122,8 @@ export function GiveBackCard({ jobId, status }: { jobId: string; status: string 
   const [note, setNote] = useState('');
   const [now, setNow] = useState(Date.now());
   const { data, isFetching, refetch } = useJobGiveBackQuery({ id: jobId, reason: reason || 'other', status }, { skip: !jobId, pollingInterval: 60000 });
+  // The pro's iPhone card for this job starts here; the server keeps it current after (core useJobLiveActivity).
+  useJobLiveActivity({ id: jobId, title: data?.liveJob?.title || 'ZappyOne job', reference: data?.liveJob?.reference, terminal: false, state: data?.liveActivity ?? null });
   const [giveBack, { isLoading: giving }] = useGiveBackJobMutation();
   const [reportAbsent, { isLoading: reporting }] = useReportCustomerAbsentMutation();
   const absent = data?.customerAbsent;

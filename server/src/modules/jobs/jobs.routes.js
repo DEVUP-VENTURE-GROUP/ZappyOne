@@ -396,14 +396,17 @@ router.get('/:id/pay-qr', authenticate, requireRole('worker', 'shop'), async (re
   } catch (err) { next(err); }
 });
 // The customer's iPhone started a Live Activity for this job: its push token, so status changes update it.
-router.post('/:id/live-activity', authenticate, requireRole('user'),
+router.post('/:id/live-activity', authenticate, requireRole('user', 'worker', 'shop'),
   makeLimiter({ windowMs: 60_000, max: 10, prefix: 'liveact' }),
   validate(Joi.object({ token: Joi.string().hex().min(32).max(400).required() })),
   async (req, res, next) => {
     try {
-      const { kind, doc } = await jobFor(req, 'userId');
-      if (String(doc.userId) !== String(req.auth.sub)) return res.status(404).json({ error: 'Booking not found' });
-      res.json(await require('../notification/live-activity').register({ userId: req.auth.sub, kind, jobId: doc._id, token: req.body.token }));
+      const { kind, doc } = await jobFor(req, 'userId workerId shopId');
+      // The customer on their own booking, or the pro holding the job (their card is worded for ServicePro).
+      const pro = req.auth.role !== 'user';
+      const allowed = pro ? !!require('./give-back').holderOf(doc, actorOf(req)) : String(doc.userId) === String(req.auth.sub);
+      if (!allowed) return res.status(404).json({ error: 'Booking not found' });
+      res.json(await require('../notification/live-activity').register({ userId: doc.userId, kind, jobId: doc._id, token: req.body.token, app: pro ? 'servicepro' : 'customer' }));
     } catch (err) { next(err); }
   });
 
@@ -502,7 +505,11 @@ router.get('/:id/give-back',
       const [view, safety, moreTime, timeCheck] = await Promise.all([gb.providerView(kind, doc), require('./safety-check').viewFor(doc._id), mt.viewFor(doc._id), require('./time-check').providerView(doc._id)]);
       const quote = view.canGiveBack ? await gb.preview({ kind, id: req.params.id, actor, reason: req.query.reason || 'other' }) : null;
       const canAskMore = mt.canAsk(kind, doc.status) && (moreTime?.left ?? mt.MAX_PER_JOB) > 0;
-      res.json({ kind, ...view, quote, safety, timeCheck, moreTime: { ...(moreTime || {}), canAsk: canAskMore, minutes: mt.MINUTES, reasons: mt.REASONS } });
+      // The pro's iPhone card for this job, worded for ServicePro (notification/live-activity).
+      const ended = require('./kinds').KINDS[kind].ops?.terminal?.includes(doc.status);
+      const liveActivity = ended ? null : require('../notification/live-activity').stateFor(kind, doc, 'servicepro');
+      const liveJob = { title: String(doc.repairName || doc.title || doc.serviceType || doc.categoryCode || doc.vertical || 'ZappyOne job').replace(/_/g, ' '), reference: doc.reference || '' };
+      res.json({ kind, ...view, quote, safety, timeCheck, liveActivity, liveJob, moreTime: { ...(moreTime || {}), canAsk: canAskMore, minutes: mt.MINUTES, reasons: mt.REASONS } });
     } catch (err) { next(err); }
   });
 

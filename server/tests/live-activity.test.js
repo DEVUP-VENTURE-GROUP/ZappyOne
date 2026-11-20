@@ -60,3 +60,20 @@ test('over HTTP: only the booking customer registers a token', async () => {
   expect((await request(app).post(`/api/jobs/${b._id}/live-activity`).set(as(b.userId)).send({ token: 'xyz' })).status).toBe(400);
   expect((await request(app).post(`/api/jobs/${b._id}/live-activity`).set(as(b.userId)).send({ token: TOKEN })).status).toBe(200);
 });
+
+test('the pro\'s card is worded for ServicePro and goes to the ServicePro app; only the pro holding the job registers one', async () => {
+  expect(la.stateFor('repair', { status: 'ARRIVED' }, 'servicepro')).toMatchObject({ stage: 'arrived', headline: 'Ask for the start code' });
+  const b = await booking('WORKER_ACCEPTED');
+  const { signAccessToken } = require('../src/modules/auth/token.service');
+  const pro = { Authorization: `Bearer ${signAccessToken({ sub: String(b.workerId), role: 'worker' })}` };
+  const stranger = { Authorization: `Bearer ${signAccessToken({ sub: String(new mongoose.Types.ObjectId()), role: 'worker' })}` };
+  expect((await request(app).post(`/api/jobs/${b._id}/live-activity`).set(stranger).send({ token: 'cd'.repeat(40) })).status).toBe(404);
+  expect((await request(app).post(`/api/jobs/${b._id}/live-activity`).set(pro).send({ token: 'cd'.repeat(40) })).status).toBe(200);
+  const view = await request(app).get(`/api/jobs/${b._id}/give-back`).set(pro);
+  expect(view.body.liveActivity).toMatchObject({ stage: 'assigned', headline: 'Job accepted' });
+  expect(view.body.liveJob).toMatchObject({ reference: b.reference });
+  const spy = jest.spyOn(apns, 'sendLiveActivity').mockResolvedValue({ ok: true });
+  await la.onStatus('repair', { ...b.toObject(), status: 'ON_THE_WAY' });
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining({ bundle: 'com.zappyone.servicepro', contentState: expect.objectContaining({ headline: 'Head to the customer' }) }));
+  spy.mockRestore();
+});

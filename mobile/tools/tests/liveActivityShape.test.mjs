@@ -7,9 +7,11 @@ import { createRequire } from 'node:module';
 const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
 const moduleCopy = read('../../packages/native/ios/LiveActivity/JobActivityAttributes.swift');
 const widgetCopy = read('../../apps/customer/targets/job-activity/JobActivityAttributes.swift');
+const proCopy = read('../../apps/servicepro/targets/job-activity/JobActivityAttributes.swift');
 
-test('the app module and the widget define the same attributes', () => {
+test('the app module and the widgets in both apps define the same attributes', () => {
   assert.equal(widgetCopy, moduleCopy);
+  assert.equal(proCopy, moduleCopy);
 });
 
 test('the server sends exactly the fields Swift decodes', () => {

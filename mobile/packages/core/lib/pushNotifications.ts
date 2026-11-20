@@ -134,6 +134,18 @@ export async function ensurePushPermission(): Promise<PermissionOutcome> {
  * config in the build, no Play Services, a simulator with no APNs entitlement,
  * or no network. Push is an enhancement; the app must run without it.
  */
+// Accept and Decline on a job offer notification (iPhone; Android rings full-screen instead). Accept opens the app and takes the job; Decline only dismisses.
+export const OFFER_CATEGORY = 'JOB_OFFER';
+export async function registerOfferActions(): Promise<void> {
+  if (APP_ID !== 'servicepro') return;
+  try {
+    await Notifications.setNotificationCategoryAsync(OFFER_CATEGORY, [
+      { identifier: 'ACCEPT', buttonTitle: 'Accept', options: { opensAppToForeground: true } },
+      { identifier: 'DECLINE', buttonTitle: 'Decline', options: { opensAppToForeground: false, isDestructive: true } },
+    ]);
+  } catch { /* an older build without categories: the plain notification still opens the offer */ }
+}
+
 export async function getDeviceToken(): Promise<DeviceToken | null> {
   if (Platform.OS === 'web') return null;
   try {

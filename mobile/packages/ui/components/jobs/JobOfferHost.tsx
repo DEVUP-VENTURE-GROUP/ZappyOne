@@ -6,7 +6,7 @@
  * jobOffers logic, so the app and the web show the same offer.
  */
 import { useCheckInThen } from '../../provider/useCheckIn';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   useRepairProviderJobsQuery,
@@ -28,6 +28,7 @@ import type { ApiErr } from '../../lib/feedback';
 import { toast } from '../Toast';
 import { JobOfferAlert, type Offer } from './JobOfferAlert';
 import { errText } from '../../lib/feedback';
+import { onOfferAccept, takeOfferAccept } from '@zappy/core/lib/offerActions';
 
 export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?: string[] }) {
   const router = useRouter();
@@ -72,6 +73,12 @@ export function JobOfferHost({ kinds = ['repair', 'pet', 'helping'] }: { kinds?:
     refetchRepair?.();
     refetchPet?.();
   }, [refetchRepair, refetchPet]);
+
+  // Accept tapped on the offer's notification: the same accept as the button below, once the offer is on screen.
+  useEffect(() => {
+    if (offer && takeOfferAccept(offer.id)) void accept();
+    return onOfferAccept(() => { if (offer && takeOfferAccept(offer.id)) void accept(); });
+  }, [offer?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!offer) return null;
 

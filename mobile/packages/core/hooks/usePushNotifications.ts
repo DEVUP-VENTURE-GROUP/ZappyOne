@@ -37,8 +37,10 @@ import {
   ensurePushPermission,
   getDeviceToken,
   onPushTokenRotated,
+  registerOfferActions,
   type DeviceToken,
 } from '../lib/pushNotifications';
+import { requestOfferAccept } from '../lib/offerActions';
 import { createLogger } from '../lib/logger';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
@@ -143,7 +145,15 @@ export function usePushNotifications(resolve: RouteResolver): void {
 
   // ── Taps ─────────────────────────────────────────────────────────────────
   useEffect(() => {
+    void registerOfferActions();
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      // Decline on a job offer only dismisses it; the offer moves on to the next pro as it would have.
+      if (response.actionIdentifier === 'DECLINE') return;
+      if (response.actionIdentifier === 'ACCEPT') {
+        const data = (response.notification.request.content.data || {}) as Record<string, unknown>;
+        const id = data.id || data.bookingId || data.orderId;
+        if (id) requestOfferAccept(String(id));
+      }
       go(destinationFrom(response, resolve));
     });
     return () => sub.remove();

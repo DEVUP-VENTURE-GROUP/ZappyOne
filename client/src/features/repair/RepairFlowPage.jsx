@@ -173,19 +173,21 @@ function StepHeader({ steps, step, onBack, title, subtitle, skipped = new Set() 
           <ArrowLeft size={17} strokeWidth={2.5} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-bold text-zappy-600 uppercase tracking-wide">
-            Step {index + 1}{ahead > 0 ? '' : ', last step'}
+          <p className="text-[11px] font-bold text-zappy-600 uppercase tracking-wide tabular-nums">
+            Step {index + 1} of {shown.length}{ahead > 0 ? '' : ' · last step'}
           </p>
           <p className="font-bold text-[#0F172A] truncate">{title}</p>
           {subtitle && <p className="text-xs text-slate-400 truncate">{subtitle}</p>}
         </div>
       </div>
-      <div className="h-0.5 bg-slate-100">
-        <motion.div
-          className="h-full bg-zappy-600"
-          animate={{ width: `${((index + 1) / shown.length) * 100}%` }}
-          transition={{ duration: 0.25 }}
-        />
+      {/* One segment per screen: done, here, still to come. */}
+      <div className="max-w-lg lg:max-w-2xl mx-auto flex gap-1 px-4 pb-2.5" aria-hidden="true">
+        {shown.map((s, i) => (
+          <span key={s} className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100">
+            <motion.span className="block h-full rounded-full bg-zappy-600" initial={false}
+              animate={{ width: i < index ? '100%' : i === index ? '55%' : '0%' }} transition={{ duration: 0.3, ease: 'easeOut' }} />
+          </span>
+        ))}
       </div>
     </header>
   );
