@@ -1,6 +1,6 @@
 /**
  * The frame every booking step sits in: the header with "Step n", the title,
- * the device, a back arrow and a progress bar (numbered by the steps actually
+ * the device, a back arrow and a segmented progress bar (numbered by the steps actually
  * shown), and the scrolling body.
  */
 import type { ReactNode } from 'react';
@@ -25,12 +25,17 @@ export function StepHeader({ steps, step, skipped, title, subtitle, onBack }: {
       <View style={styles.row}>
         <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8} style={styles.back}><ArrowLeft size={17} color={ink[900]} /></Pressable>
         <View style={styles.flex}>
-          <Text variant="caption" weight="bold" color={zappy[600]}>STEP {index + 1}{last ? ', LAST STEP' : ''}</Text>
+          <Text variant="caption" weight="bold" color={zappy[600]}>STEP {index + 1} OF {shown.length}{last ? ' · LAST STEP' : ''}</Text>
           <Text variant="body" weight="bold" numberOfLines={1}>{title}</Text>
           {subtitle ? <Text variant="caption" color={ink[400]} numberOfLines={1}>{subtitle}</Text> : null}
         </View>
       </View>
-      <View style={styles.track}><View style={[styles.bar, { width: `${((index + 1) / Math.max(shown.length, 1)) * 100}%` }]} /></View>
+      {/* One segment per screen: done, here, still to come. */}
+      <View style={styles.segments} accessible={false}>
+        {shown.map((s, i) => (
+          <View key={s} style={styles.segment}><View style={[styles.segmentFill, { width: i < index ? '100%' : i === index ? '55%' : '0%' }]} /></View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -57,8 +62,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.base, paddingBottom: spacing.md },
   header: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: slate[100] },
   back: { width: 36, height: 36, borderRadius: radius.medium, alignItems: 'center', justifyContent: 'center', backgroundColor: slate[100] },
-  track: { height: 2, backgroundColor: slate[100] },
-  bar: { height: 2, backgroundColor: zappy[600] },
+  segments: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.base, paddingBottom: spacing.sm },
+  segment: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: slate[100] },
+  segmentFill: { height: '100%', borderRadius: 2, backgroundColor: zappy[600] },
   shell: { padding: spacing.base, gap: spacing.md },
   spinner: { paddingVertical: spacing.xxl },
 });

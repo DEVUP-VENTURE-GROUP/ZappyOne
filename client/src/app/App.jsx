@@ -45,7 +45,7 @@ const DisputesPage        = lazy(() => import('../features/support/DisputesPage'
 const SupportPage         = lazy(() => import('@shared/components/support/SupportPage'));
 const PaymentMethodsPage  = lazy(() => import('../features/account/PaymentMethodsPage'));
 const WorkerProfilePage     = lazy(() => import('../features/providers/WorkerProfilePage'));
-const EventsHomePage               = lazy(() => import('../features/events/EventsHomePage'));
+const EventsEntry                  = lazy(() => import('../features/events/EventsEntry'));
 const EventCategoryPage            = lazy(() => import('../features/events/EventCategoryPage'));
 const EventThemePage               = lazy(() => import('../features/events/EventThemePage'));
 const EventBookingPage             = lazy(() => import('../features/events/EventBookingPage'));
@@ -256,7 +256,7 @@ export default function App() {
         <Route path="/shops/:id" element={<ShopPublicProfilePage />} />
 
         {/* Event Commerce */}
-        <Route path="/events"                    element={<RequireAuth role="user"><EventsHomePage /></RequireAuth>} />
+        <Route path="/events"                    element={<RequireAuth role="user"><EventsEntry /></RequireAuth>} />
         <Route path="/events/browse"             element={<RequireAuth role="user"><EventCategoryPage /></RequireAuth>} />
         <Route path="/events/themes/:id"         element={<RequireAuth role="user"><EventThemePage /></RequireAuth>} />
         <Route path="/events/book/:id"           element={<RequireAuth role="user"><EventBookingPage /></RequireAuth>} />
