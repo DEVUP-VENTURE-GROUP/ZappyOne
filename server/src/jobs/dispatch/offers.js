@@ -74,6 +74,11 @@ async function offerToWorker(order, workerId, windowMs) {
       preferred:     true,
     },
   }));
+  // The socket reaches only an open app; a push reaches the pro with the app in the background or closed, like every other offer.
+  const picked = String(order.dispatch?.customerPreferredWorkerId || '') === String(workerId);
+  require('../index').notificationsQueue
+    .add('worker_offer', { workerId: String(workerId), orderId: String(order._id), picked })
+    .catch((err) => logger.warn({ err: err.message, orderId: String(order._id) }, '[DISPATCH] Preferred offer push enqueue failed'));
 
   const result = await waitForBatchWindow(String(order._id), [workerId], windowMs);
   return { accepted: !!result.acceptedBy };
