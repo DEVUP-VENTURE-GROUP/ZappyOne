@@ -4,11 +4,18 @@ ZappyOne's own iPhone code. It sits next to the Android module in `../android`, 
 
 ## What is here
 
-| File | What it does |
-| --- | --- |
-| `ZappyNativeModule.swift` | The Expo module: start, update and end a job's Live Activity, and send its push token to JavaScript |
-| `JobActivityAttributes.swift` | The Live Activity's shape, shared with the widget extension |
-| `ZappyNative.podspec` | Builds the module into the app |
+One folder per feature, so each piece of iPhone code has an obvious home:
+
+```
+ios/
+  ZappyNative.podspec          builds every .swift file below into the app
+  Module/
+    ZappyNativeModule.swift    the Expo module JavaScript calls (one entry point)
+  LiveActivity/
+    JobActivityAttributes.swift   the Live Activity's shape, shared with the widget
+```
+
+New features get their own folder (for example `Upload/` for background photo upload, `Notifications/` for offer actions), and the module in `Module/` calls into them.
 
 The Lock Screen and Dynamic Island design lives in the customer app at `apps/customer/targets/job-activity/` (SwiftUI, added at build time by `@bacons/apple-targets`).
 
@@ -20,7 +27,7 @@ The Lock Screen and Dynamic Island design lives in the customer app at `apps/cus
 
 ## Rules for changing it
 
-- The state's fields exist in three places: `JobActivityAttributes.swift` here, the copy in `apps/customer/targets/job-activity/`, and the server's `stateFor`. `mobile/tools/tests/liveActivityShape.test.mjs` fails if they differ. Run it with `node --test tools/tests/liveActivityShape.test.mjs` from `mobile/`.
+- The state's fields exist in three places: `LiveActivity/JobActivityAttributes.swift` here, the copy in `apps/customer/targets/job-activity/`, and the server's `stateFor`. `mobile/tools/tests/liveActivityShape.test.mjs` fails if they differ. Run it with `node --test tools/tests/liveActivityShape.test.mjs` from `mobile/`.
 - Use SF Symbols and ZappyOne colours in the widget. No emoji and no illustrations.
 - Update by status changes, not by every GPS point: Apple limits how often a Live Activity may be pushed.
 

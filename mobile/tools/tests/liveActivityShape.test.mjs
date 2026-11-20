@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
-const moduleCopy = read('../../packages/native/ios/JobActivityAttributes.swift');
+const moduleCopy = read('../../packages/native/ios/LiveActivity/JobActivityAttributes.swift');
 const widgetCopy = read('../../apps/customer/targets/job-activity/JobActivityAttributes.swift');
 
 test('the app module and the widget define the same attributes', () => {

@@ -1,4 +1,4 @@
-// ZappyOne's own iPhone code, called from JavaScript as `zappyNative` (../index.ts); the Android twin is ../android ZappyNativeModule.kt.
+// ZappyOne's own iPhone code, called from JavaScript as `zappyNative` (packages/native/index.ts); the Android twin is packages/native/android ZappyNativeModule.kt.
 import ExpoModulesCore
 #if canImport(ActivityKit)
 import ActivityKit
