@@ -55,11 +55,20 @@ router.get('/storefronts', require('../../middlewares/rateLimit').storefrontLimi
   vertical: Joi.string().max(40).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required(),
   sort: Joi.string().valid(...require('./services/storefront.service').SORTS).default('best'), serviceMode: Joi.string().valid('doorstep', 'workshop', 'roadside').default('doorstep'),
 }), 'query'), async (req, res, next) => {
-  try { res.json(await require('./services/storefront.service').listStorefronts(req.query)); } catch (err) { next(err); }
+  try {
+    // Many customers on the same spot see the same list: kept 30 s per service and ~100 m (Redis; computed again if Redis is down).
+    const q = req.query;
+    const key = `sf:${q.vertical}:${q.serviceMode}:${q.sort}:${Number(q.lat).toFixed(3)}:${Number(q.lng).toFixed(3)}`;
+    res.json(await require('../admin/lib/cached-analytics')(key, 30, () => require('./services/storefront.service').listStorefronts(q)));
+  } catch (err) { next(err); }
 });
 // One search across every menu near the customer (services/storefront searchMenus).
 router.get('/menu-search', authenticate, validate(Joi.object({ q: Joi.string().trim().min(2).max(60).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() }), 'query'), async (req, res, next) => {
-  try { res.json(await require('./services/storefront.service').searchMenus(req.query)); } catch (err) { next(err); }
+  try {
+    const q = req.query;
+    const key = `ms:${String(q.q).toLowerCase()}:${Number(q.lat).toFixed(3)}:${Number(q.lng).toFixed(3)}`;
+    res.json(await require('../admin/lib/cached-analytics')(key, 60, () => require('./services/storefront.service').searchMenus(q)));
+  } catch (err) { next(err); }
 });
 router.get('/storefronts/:kind/:id/menu', browseLimiter, optionalAuth, requireKnownVertical, validate(Joi.object({ vertical: Joi.string().max(40).required() }), 'query'), async (req, res, next) => {
   try {
