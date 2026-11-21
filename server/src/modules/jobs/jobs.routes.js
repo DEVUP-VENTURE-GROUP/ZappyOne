@@ -289,6 +289,8 @@ router.post('/busy',
 router.get('/arrival',
   authenticate,
   makeLimiter({ windowMs: 60_000, max: 30, prefix: 'jobarrival' }),
+  // The apps skip this without a service and a position (NearestArrival), so both are required here.
+  validate(Joi.object({ line: Joi.string().trim().max(60).required(), lat: Joi.number().min(-90).max(90).required(), lng: Joi.number().min(-180).max(180).required() }), 'query'),
   async (req, res, next) => {
     try {
       const lat = Number(req.query.lat); const lng = Number(req.query.lng);

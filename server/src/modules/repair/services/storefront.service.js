@@ -46,7 +46,8 @@ async function serviceFace(vertical, owners) {
   const { ProviderEnrolment } = require('../../onboarding/onboarding.model');
   const or = (k) => ({ $or: [{ shopId: { $in: owners.filter((o) => o.shopId).map((o) => o.shopId) } }, { workerId: { $in: owners.filter((o) => o.workerId).map((o) => o.workerId) } }], ...k });
   const [enrolments, caps] = await Promise.all([
-    line ? ProviderEnrolment.find(or({ lineCode: line.code, status: 'approved' })).select('shopId workerId fields').lean() : [],
+    // line() gives the line's code; without one, no enrolment's name is borrowed from another service.
+    line ? ProviderEnrolment.find(or({ lineCode: line, status: 'approved' })).select('shopId workerId fields').lean() : [],
     ProviderCapability.find(or({ vertical, isActive: true, photoKey: { $nin: ['', null] } })).select('shopId workerId photoKey').lean(),
   ]);
   const out = new Map();
@@ -199,7 +200,21 @@ async function menuItems({ kind, id, vertical, all = false }) {
 }
 
 // The menu plus how this provider presents in the service: the name they registered for it and a photo of their work, for the storefront heading.
+// Whether customers may see this provider's storefront at all: exists, not blocked or switched off, verified, approved for the service (closed or paused still shows, to book ahead).
+async function shownToCustomers(kind, id, vertical) {
+  if (!['shop', 'worker'].includes(kind) || !mongoose.Types.ObjectId.isValid(id)) return false;
+  const p = kind === 'shop'
+    ? await Shop.findById(id).select('isActive isBlocked kyc.status').lean()
+    : await Worker.findById(id).select('isActive isBlocked kyc.status').lean();
+  if (!p || p.isBlocked || p.isActive === false || p.kyc?.status !== 'approved') return false;
+  const lineCode = await require('../../jobs/kinds').KINDS.repair.line({ vertical });
+  if (!lineCode) return false;
+  const { ProviderEnrolment } = require('../../onboarding/onboarding.model');
+  return !!(await ProviderEnrolment.exists({ [kind === 'shop' ? 'shopId' : 'workerId']: id, lineCode, status: 'approved' }));
+}
+
 async function storefrontMenu({ kind, id, vertical, all = false }) {
+  if (!all && !(await shownToCustomers(kind, id, vertical))) return null;
   const menu = await menuItems({ kind, id, vertical, all });
   if (!menu) return menu;
   const owner = kind === 'shop' ? { shopId: id } : { workerId: id };

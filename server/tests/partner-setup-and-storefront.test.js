@@ -64,11 +64,11 @@ test('a shop listed under a service shows the business name it registered for th
   const { ProviderEnrolment } = require('../src/modules/onboarding/onboarding.model');
   const { ProviderCapability } = require('../src/modules/repair/models/capability.model');
   const Shop = require('../src/modules/shop/shop.model');
-  const shop = await Shop.create({ businessName: 'Zappy premium services', ownerName: 'Ali', phone: '9000000971' });
+  const shop = await Shop.create({ businessName: 'Zappy premium services', ownerName: 'Ali', phone: '9000000971', kyc: { status: 'approved' } });
   await ProviderEnrolment.create({ providerKind: 'shop', shopId: shop._id, domainCode: 'tutor', lineCode: 'dance_tutor_test', status: 'approved', fields: [{ code: 'business_name', value: 'Zappy dance School' }] });
   await ProviderCapability.create({ shopId: shop._id, vertical: 'dance_001', repairCode: 'dan_one', isActive: true, photoKey: 'menu/dance.jpg' });
   const kinds = require('../src/modules/jobs/kinds').KINDS;
-  const spy = jest.spyOn(kinds.repair, 'line').mockResolvedValue({ code: 'dance_tutor_test' });
+  const spy = jest.spyOn(kinds.repair, 'line').mockResolvedValue('dance_tutor_test');
   const menu = await require('../src/modules/repair/services/storefront.service').storefrontMenu({ kind: 'shop', id: String(shop._id), vertical: 'dance_001' });
   spy.mockRestore();
   expect(menu.serviceName).toBe('Zappy dance School');
