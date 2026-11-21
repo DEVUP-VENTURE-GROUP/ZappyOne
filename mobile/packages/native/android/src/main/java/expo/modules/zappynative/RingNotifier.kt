@@ -77,7 +77,8 @@ object RingNotifier {
       .setFullScreenIntent(fullScreen, true)
       .build()
       // Rings and vibrates again and again, like a phone call, until the pro opens it or the offer runs out (setTimeoutAfter).
-      .apply { flags = flags or Notification.FLAG_INSISTENT }
+      // `this.`: a bare `flags` here is the PendingIntent flags above, a val, and the build fails.
+      .apply { this.flags = this.flags or Notification.FLAG_INSISTENT }
     try { NotificationManagerCompat.from(context).notify(notifId, n) } catch (_: SecurityException) { /* notifications are off for this app */ }
   }
 
