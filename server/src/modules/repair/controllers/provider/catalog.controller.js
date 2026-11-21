@@ -24,7 +24,15 @@ async function listJobs(req, res, next) {
     // A finished job keeps its record, but not the customer's home address (jobs/privacy).
     const DONE = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
     const { areaOnly } = require('../../../jobs/privacy');
-    res.json({ bookings: bookings.map((b) => (DONE.includes(b.status) ? { ...b, location: areaOnly(b.location) } : b)) });
+    // The model's own name ("Geyser", "Galaxy S23"), so a job reads as the device and not as its catalog codes.
+    const DeviceModel = require('../../../service/device-model.model');
+    const codes = [...new Set(bookings.map((b) => b.modelCode).filter(Boolean))];
+    const names = codes.length ? await DeviceModel.find({ code: { $in: codes } }).select('code vertical name').lean() : [];
+    const nameOf = new Map(names.map((d) => [`${d.vertical}:${d.code}`, d.name]));
+    res.json({ bookings: bookings.map((b) => {
+      const row = { ...b, device: nameOf.get(`${b.vertical}:${b.modelCode}`) || null };
+      return DONE.includes(b.status) ? { ...row, location: areaOnly(b.location) } : row;
+    }) });
   } catch (err) { next(err); }
 }
 

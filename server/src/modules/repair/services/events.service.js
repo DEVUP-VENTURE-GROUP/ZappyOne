@@ -193,9 +193,13 @@ function announceOffer(booking, { to = null, windowSec = null } = {}) {
     broadcast: !!to,
   };
 
-  // With how providers have rated this customer (jobs/customer-rating).
-  require('../../jobs/customer-rating').summaryFor(booking.userId).catch(() => null).then((customer) => {
-    const out = { ...payload, customer };
+  // With how providers have rated this customer (jobs/customer-rating), and the device by its own name ("Television"), not its catalog codes.
+  const DeviceModel = require('../../service/device-model.model');
+  const named = booking.modelCode
+    ? DeviceModel.findOne({ vertical: booking.vertical, code: booking.modelCode }).select('name').lean().then((d) => d?.name || null).catch(() => null)
+    : Promise.resolve(null);
+  Promise.all([require('../../jobs/customer-rating').summaryFor(booking.userId).catch(() => null), named]).then(([customer, name]) => {
+    const out = { ...payload, ...(name && { device: name }), customer };
     if (to) { (to.kind === 'shop' ? emitToShop : emitToWorker)(to.id, 'repair.offer', out); return; }
     if (booking.workerId) emitToWorker(booking.workerId, 'repair.offer', out);
     if (booking.shopId) emitToShop(booking.shopId, 'repair.offer', out);
