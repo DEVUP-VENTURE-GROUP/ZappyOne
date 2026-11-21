@@ -79,7 +79,8 @@ router.patch(
   validate(Joi.object({
     documents: Joi.array().items(Joi.object({
       code: Joi.string().max(60).required(),
-      url: Joi.string().max(500).required(),
+      // Our own document upload (kyc folder); admin opens these, so never a web link or a path.
+      url: require('../user/upload-key').uploadKey(['kyc', 'kyc-docs']).required(),
       captureMethod: Joi.string().valid('live_camera', 'upload'),
       capturedAt: Joi.date(),
       lat: Joi.number().min(-90).max(90),
@@ -112,9 +113,10 @@ router.post(
     description: Joi.string().max(1000).allow('', null),
     packages: Joi.array().max(20).items(Joi.object({
       name: Joi.string().trim().min(2).max(80).required(), minutes: Joi.number().integer().min(5).max(1440).required(), pricePaise: Joi.number().integer().min(100).max(100000000).required(),
-      includes: Joi.array().items(Joi.string().trim().max(60)).max(8).default([]), photoKey: Joi.string().max(300).allow(''),
+      includes: Joi.array().items(Joi.string().trim().max(60)).max(8).default([]), photoKey: require('../user/upload-key').uploadKey(['line-requests', 'menu']).allow(''),
     })).default([]),
-    photos: Joi.array().items(Joi.string().max(300)).max(6).default([]),
+    // These become the service's public photos once approved (onboarding/line-open): our own uploads only.
+    photos: Joi.array().items(require('../user/upload-key').uploadKey(['line-requests', 'menu'])).max(6).default([]),
     serviceModes: Joi.array().items(Joi.string().valid('doorstep', 'workshop')).max(2).default([]),
     yearsExperience: Joi.number().integer().min(0).max(60).allow(null),
   })),

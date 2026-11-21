@@ -189,10 +189,12 @@ async function rateTask(req, res, next) {
       return res.status(409).json({ error: 'You have already rated this task', code: 'ALREADY_RATED' });
     }
 
-    await HelpingTask.updateOne(
+    const saved = await HelpingTask.updateOne(
       { _id: req.params.id, ratedAt: null },
       { $set: { rating: req.body.rating, ratingComment: req.body.comment || '', ratedAt: new Date() } },
     );
+    // Two taps at once: only the one that saved counts toward the helper's average and reviews.
+    if (!saved.modifiedCount) return res.status(409).json({ error: 'Already rated', code: 'ALREADY_RATED' });
 
     // Same rolling-average formula every provider's rating uses on this
     // platform — one truth about a provider's rating, not a second copy of it.

@@ -208,9 +208,9 @@ describe('submitting for review', () => {
       .set(auth(ctx.shopToken))
       .send({
         documents: [
-          { code: 'owner_id', url: 's3://kyc/owner.jpg' },
-          { code: 'shop_photo', url: 's3://kyc/shop.jpg' },
-          { code: 'selfie', url: 's3://kyc/selfie.jpg' },
+          { code: 'owner_id', url: 'kyc/owner.jpg' },
+          { code: 'shop_photo', url: 'kyc/shop.jpg' },
+          { code: 'selfie', url: 'kyc/selfie.jpg' },
         ],
         fields: [{ code: 'years_active', value: '6' }, { code: 'gst_number', value: 'NOT-A-GST' }],
         acceptedDeclarations: true,
@@ -302,10 +302,10 @@ describe('admin review', () => {
       .set(auth(ctx.shopToken))
       .send({
         documents: [
-          { code: 'owner_id', url: 's3://kyc/owner.jpg' },
-          { code: 'shop_photo', url: 's3://kyc/shop.jpg' },
-          { code: 'selfie', url: 's3://kyc/selfie.jpg' },
-          { code: 'workshop_photo', url: 's3://kyc/workshop.jpg' },
+          { code: 'owner_id', url: 'kyc/owner.jpg' },
+          { code: 'shop_photo', url: 'kyc/shop.jpg' },
+          { code: 'selfie', url: 'kyc/selfie.jpg' },
+          { code: 'workshop_photo', url: 'kyc/workshop.jpg' },
         ],
         fields: [{ code: 'years_active', value: '6' }],
         acceptedDeclarations: true,
@@ -339,8 +339,8 @@ describe('admin review', () => {
       .set(auth(ctx.workerToken))
       .send({
         documents: [
-          { code: 'aadhaar', url: 's3://kyc/aadhaar.jpg' },
-          { code: 'selfie', url: 's3://kyc/selfie.jpg' },
+          { code: 'aadhaar', url: 'kyc/aadhaar.jpg' },
+          { code: 'selfie', url: 'kyc/selfie.jpg' },
         ],
         fields: [{ code: 'experience_years', value: '3' }],
         acceptedDeclarations: true,
@@ -604,8 +604,8 @@ describe('verification is not asked for twice', () => {
     const shop = await Shop.findById(ctx.shopId).lean();
 
     expect(shop.kyc.status).toBe('approved');
-    expect(shop.kyc.shopPhotoUrl).toBe('s3://kyc/shop.jpg');
-    expect(shop.kyc.ownerIdUrl).toBe('s3://kyc/owner.jpg');
+    expect(shop.kyc.shopPhotoUrl).toBe('kyc/shop.jpg');
+    expect(shop.kyc.ownerIdUrl).toBe('kyc/owner.jpg');
     expect(shop.kyc.gstNumber).toBe('36ABCDE1234F1Z5');
   });
 
@@ -628,10 +628,10 @@ describe('verification is not asked for twice', () => {
       .set(auth(token))
       .send({
         documents: [
-          { code: 'aadhaar', url: 's3://kyc/live-aadhaar.jpg' },
+          { code: 'aadhaar', url: 'kyc/live-aadhaar.jpg' },
           {
             code: 'selfie',
-            url: 's3://kyc/live-selfie.jpg',
+            url: 'kyc/live-selfie.jpg',
             captureMethod: 'live_camera',
             capturedAt: new Date().toISOString(),
             lat: 17.44,
@@ -649,7 +649,7 @@ describe('verification is not asked for twice', () => {
 
     const after = await Worker.findById(worker._id).lean();
     expect(after.kyc.status).toBe('approved');
-    expect(after.kyc.selfieUrl).toBe('s3://kyc/live-selfie.jpg');
+    expect(after.kyc.selfieUrl).toBe('kyc/live-selfie.jpg');
     // The distinction a reviewer cares about: taken here and now, not uploaded.
     expect(after.kyc.selfieMetadata.captureMethod).toBe('live_camera');
     expect(after.kyc.selfieMetadata.lat).toBeCloseTo(17.44);

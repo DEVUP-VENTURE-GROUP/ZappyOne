@@ -80,6 +80,19 @@ async function requestPayout({ workerId, amountPaise, destination }) {
   }
   if (destination.method !== 'manual') destination = await savedDestination(workerId, destination);
 
+  // One request at a time per pro: taps that land together would otherwise each pass the in-progress check below.
+  const { redis } = require('../../config/redis');
+  const lockKey = `payout:request:${workerId}`;
+  const locked = await redis.set(lockKey, '1', 'PX', 15000, 'NX').catch(() => 'OK');
+  if (locked !== 'OK') throw Object.assign(new Error('A payout request is already in progress'), { status: 409, code: 'PAYOUT_IN_FLIGHT' });
+  try {
+    return await createRequest(workerId, amountPaise, destination);
+  } finally {
+    redis.del(lockKey).catch(() => {});
+  }
+}
+
+async function createRequest(workerId, amountPaise, destination) {
   // Check balance — must have at least this much available (positive balance only).
   // We don't reserve here; reservation happens on approve.
   const balance = await walletService.getBalance({ kind: 'worker', id: workerId });
@@ -117,7 +130,7 @@ async function requestPayout({ workerId, amountPaise, destination }) {
   await notificationService.notify({
     recipient: { kind: 'worker', id: workerId },
     type: 'wallet_credited', // reuse nearest type
-    title: '💸 Payout request submitted',
+    title: 'Withdrawal requested',
     body: `₹${amountPaise / 100} withdrawal is awaiting approval`,
     deepLink: '/wallet',
   }).catch(() => {});
@@ -196,7 +209,7 @@ async function rejectPayout({ payoutId, adminId, reason }) {
   await notificationService.notify({
     recipient: { kind: 'worker', id: payout.workerId },
     type: 'wallet_credited',
-    title: '❌ Payout rejected',
+    title: 'Withdrawal not approved',
     body: reason || 'Your payout request was declined. Contact support for details.',
     deepLink: '/wallet',
   }).catch(() => {});

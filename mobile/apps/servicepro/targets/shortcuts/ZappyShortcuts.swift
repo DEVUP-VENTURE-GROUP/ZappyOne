@@ -2,7 +2,6 @@
 import AppIntents
 import Foundation
 
-// OpenURLIntent is iOS 18; @bacons/apple-targets builds App Intents extensions for iOS 17.0 whatever expo-target.config.js says, so the availability lives here.
 @available(iOS 18.0, *)
 struct MyJobsIntent: AppIntent {
   static var title: LocalizedStringResource = "Show my jobs"
@@ -33,6 +32,6 @@ struct ZappyShortcuts: AppShortcutsProvider {
   }
 }
 
-// The extension's entry point: without an @main type the binary has no __swift5_entry and App Store Connect rejects the upload (ITMS 90896). Not gated to iOS 18: the extension itself runs on 17.
+// An App Intents extension needs a Swift entry point, or App Store Connect rejects the upload (error 90896).
 @main
 struct ZappyShortcutsExtension: AppIntentsExtension {}

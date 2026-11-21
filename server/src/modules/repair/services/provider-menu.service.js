@@ -127,6 +127,10 @@ async function saveItem(owner, vertical, body, actor, { sample = false } = {}) {
   const kept = keptCap?.photoKeys?.length ? keptCap.photoKeys : [keptCap?.photoKey || repair?.photoKey].filter(Boolean);
   const sent = Array.isArray(body.photoKeys) ? body.photoKeys.filter(Boolean).slice(0, 6) : [];
   const photoKeys = sent.length ? sent : body.photoKey ? [body.photoKey] : kept;
+  // A photo already on this job (or the catalogue's) stays as saved; a new one must be our own upload, never a link or a path.
+  const known = new Set([...kept, repair?.photoKey, ...(repair?.photoKeys || [])].filter(Boolean));
+  const { uploadKey } = require('../../user/upload-key');
+  if (photoKeys.some((k) => !known.has(k) && uploadKey().validate(k).error)) throw httpError('That photo did not upload properly. Add it again.', 400, 'BAD_PHOTO');
   const photoKey = photoKeys[0] || '';
   // Samples from the catalogue go on first; the home reminder then asks for their photos.
   const needPhoto = () => { if (priced.length && !photoKey && !sample) throw httpError('Add at least one photo of this job. Customers book what they can see.', 400, 'PHOTO_REQUIRED'); };
