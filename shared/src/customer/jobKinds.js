@@ -195,7 +195,7 @@ export const KINDS = {
         scheduledAt: b.scheduledAt || b.checkInAt, createdAt: b.createdAt,
         history: historyOf(b, petStage),
         price: {
-          lines: withCarried([['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Platform fee', p.platformFeePaise], ['Taxes', p.taxPaise]], b),
+          lines: withCarried([['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Service charge', p.platformFeePaise], ['Taxes', p.taxPaise]], b),
           totalPaise: plusCarried(p.totalPaise ?? null, b), method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           note: p.stayDiscountPaise > 0 ? `Includes a stay discount of ₹${Math.round(p.stayDiscountPaise / 100)}` : '',
         },
@@ -224,7 +224,7 @@ export const KINDS = {
         history: historyOf(t, helpingStage),
         // The service fee only; item money is the customer's own and shown on its own card.
         price: {
-          lines: withCarried([['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Platform fee', c.platformFeePaise], ['Taxes', c.taxPaise]], t),
+          lines: withCarried([['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Service charge', c.platformFeePaise], ['Taxes', c.taxPaise]], t),
           totalPaise: plusCarried(data.authorisation?.serviceChargePaise ?? c.serviceChargePaise ?? null, t),
           method: method(t.paymentMethod), paid: t.paymentStatus === 'paid',
           note: data.authorisation?.note || '',
@@ -253,7 +253,7 @@ export const KINDS = {
         scheduledAt: o.scheduledAt, createdAt: o.createdAt,
         history: [],
         price: {
-          lines: [['Service fee', paise(p.baseFee)], ['Distance', paise(p.distanceFee)], ['Platform & taxes', paise(p.platformFee)]],
+          lines: [['Service fee', paise(p.baseFee)], ['Distance', paise(p.distanceFee)], ['Service charge & taxes', paise(p.platformFee)]],
           totalPaise: p.total != null ? paise(p.total) : null,
           method: method(o.payment?.method) || 'UPI', paid: o.status === 'completed',
         },

@@ -34,10 +34,10 @@ test('lists every line; a saved config shows what pricing really charges', async
 
   const lines = await fees.list();
   expect(find(lines, 'repair', 'mobile')).toMatchObject({ platformFeePaise: 0, commissionPct: 10, configured: true });
-  expect(find(lines, 'repair', 'laptop')).toMatchObject({ platformFeePaise: 1000, commissionPct: 10, configured: false });
+  expect(find(lines, 'repair', 'laptop')).toMatchObject({ platformFeePaise: 500, commissionPct: 2, configured: false });
   expect(find(lines, 'pet', 'pet_grooming')).toMatchObject({ platformFeePaise: 500, commissionPct: 15 });
   expect(find(lines, 'helping', 'shopping')).toMatchObject({ platformFeePaise: 0, commissionPct: 12 });
-  expect(find(lines, 'event', 'event')).toMatchObject({ platformFeePaise: 1000, commissionPct: 10, maxCommissionPct: 50 });
+  expect(find(lines, 'event', 'event')).toMatchObject({ platformFeePaise: 500, commissionPct: 2, maxCommissionPct: 50 });
 });
 
 test('launch rule fills unset and placeholder values, keeps an operator choice', async () => {
@@ -46,13 +46,14 @@ test('launch rule fills unset and placeholder values, keeps an operator choice',
   await fees.applyLaunchDefaults();
 
   const lines = await fees.list();
-  expect(find(lines, 'repair', 'mobile')).toMatchObject({ platformFeePaise: 1000, commissionPct: 10 });
-  expect(find(lines, 'pet', 'pet_grooming')).toMatchObject({ platformFeePaise: 1000, commissionPct: 10 });
+  // 10% on mobile was set by an operator, so only the missing ₹5 is filled; the seeded 15% on pet becomes 2%, its ₹5 stays.
+  expect(find(lines, 'repair', 'mobile')).toMatchObject({ platformFeePaise: 500, commissionPct: 10 });
+  expect(find(lines, 'pet', 'pet_grooming')).toMatchObject({ platformFeePaise: 500, commissionPct: 2 });
   // 12% was a choice; only the missing fee is filled.
-  expect(find(lines, 'helping', 'shopping')).toMatchObject({ platformFeePaise: 1000, commissionPct: 12 });
+  expect(find(lines, 'helping', 'shopping')).toMatchObject({ platformFeePaise: 500, commissionPct: 12 });
   // Every rule of the category moves together, so no variant keeps the old deal.
   const rules = await PetPricingRule.find({ categoryCode: 'pet_grooming' }).lean();
-  expect(rules.every((r) => r.platformFeePaise === 1000 && r.commissionPct === 10)).toBe(true);
+  expect(rules.every((r) => r.platformFeePaise === 500 && r.commissionPct === 2)).toBe(true);
   // Running it again changes nothing.
   expect(await fees.applyLaunchDefaults({ dryRun: true })).toEqual([]);
 });

@@ -60,8 +60,8 @@ const repairConfigSchema = new mongoose.Schema(
      * Neither number appears anywhere in code — an operator changes the deal
      * from admin, with no deployment.
      */
-    commissionPct: { type: Number, default: 10, min: 0, max: 100 },
-    platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
+    commissionPct: { type: Number, default: 2, min: 0, max: 100 },
+    platformFeePaise: { type: Number, default: 500, min: 0 }, // ₹5 service charge, admin-set
     // Every job booked on ZappyOne gets at least this many days to ask for a redo, whatever the provider's own warranty; the reason to book here and not off the app.
     redoGuaranteeDays: { type: Number, default: 7, min: 0, max: 365 },
     /**

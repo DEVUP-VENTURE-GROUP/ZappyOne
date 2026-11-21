@@ -22,7 +22,7 @@ export function petExtraLines(q: PetQuote): [string, number][] {
   const lines = ([
     ['Add-ons', q.addonsPaise], ['Travel', q.travelPaise], ['Pickup', q.pickupPaise], ['Drop back', q.returnPaise],
     ['Special handling', q.specialHandlingPaise], ['Stay discount', -(q.stayDiscountPaise || 0)], ['Coupon', -(q.couponPaise || 0)],
-    ['Platform fee', q.platformFeePaise], ['Taxes', q.taxPaise],
+    ['Service charge', q.platformFeePaise], ['Taxes', q.taxPaise],
   ] as [string, number | undefined][]).filter(([, p]) => p) as [string, number][];
   const shown = q.lines.reduce((t, l) => t + (l.linePaise || 0), 0) + lines.reduce((t, [, p]) => t + p, 0);
   const gap = (q.totalPaise || 0) - shown;

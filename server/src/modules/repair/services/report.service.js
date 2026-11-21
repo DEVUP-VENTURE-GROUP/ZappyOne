@@ -230,7 +230,7 @@ function renderHtml(data) {
     <table><tbody>
       <tr><td>${escape(repair?.name || 'Service')}</td><td class="right">${rupees((price.subtotalPaise || 0) - (booking.addOns || []).reduce((s, a) => s + (a.totalPaise || 0), 0))}</td></tr>
       ${addOnRows}
-      ${price.platformFeePaise ? `<tr><td>Platform fee</td><td class="right">${rupees(price.platformFeePaise)}</td></tr>` : ''}
+      ${price.platformFeePaise ? `<tr><td>Service charge</td><td class="right">${rupees(price.platformFeePaise)}</td></tr>` : ''}
       ${price.taxPaise ? `<tr><td>Tax</td><td class="right">${rupees(price.taxPaise)}</td></tr>` : ''}
       ${price.discountPaise ? `<tr><td>Discount</td><td class="right">−${rupees(price.discountPaise)}</td></tr>` : ''}
     </tbody></table>

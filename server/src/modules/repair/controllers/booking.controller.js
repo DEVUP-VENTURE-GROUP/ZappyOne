@@ -20,7 +20,7 @@ const reportService = require('../services/report.service');
 
 async function createBooking(req, res, next) {
   try {
-    const { onSite, priceRequestId, surgeQuoteId, surgeBasePaise, tipPaise, ...body } = req.body;
+    const { onSite, priceRequestId, surgeQuoteId, surgeBasePaise, tipPaise, discountPaise: _ignored, ...body } = req.body;
     // The quote the customer saw ran out and a surge applies now: show it before booking (jobs/surge).
     await require('../../jobs/surge').precheck({ kind: 'repair', body: { ...body, surgeBasePaise }, userId: req.auth.sub, quoteId: surgeQuoteId });
     const { booking, replayed } = await bookingService.createBooking({

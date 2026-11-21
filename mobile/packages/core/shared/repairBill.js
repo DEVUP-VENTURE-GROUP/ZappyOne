@@ -43,8 +43,8 @@ export function billExtras(bill) {
 
 /** The one fee line's name, from what is in it. */
 export function feeLabel(b = {}) {
-  if ((b.pickupPaise || 0) + (b.returnPaise || 0) > 0) return 'Pickup, return & service fee';
-  return b.travelPaise > 0 ? 'Visit & service fee' : 'Service fee';
+  if ((b.pickupPaise || 0) + (b.returnPaise || 0) > 0) return 'Pickup, return & service charge';
+  return b.travelPaise > 0 ? 'Visit & service charge' : 'Service charge';
 }
 
 /** Nearby enough that the visit costs nothing: worth saying ("Free visit"). */

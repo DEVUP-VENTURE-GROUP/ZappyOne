@@ -128,6 +128,8 @@ test('a lead’s board: their group, the jobs they are on, and jobs nobody is on
 describe('partner commission', () => {
   const commission = require('../src/modules/shop/partner-commission');
   const settlement = require('../src/modules/payment/settlement');
+  // These cases check how a partner rate replaces the service's; they set 5% themselves rather than lean on the default.
+  beforeAll(() => require('../src/modules/pricing/services/config.service').updateActiveConfig({ partnerCommission: { shop: 5, agency: 5, company: 5, individual: 5, smallJobs: [] } }, null));
   const priced = (extra = {}) => heldPet({ pricing: { totalPaise: 50000, subtotalPaise: 45000, commissionPaise: 4000, commissionBasePaise: 40000, providerAmountPaise: 41000 }, ...extra });
 
   test('a partner’s rate replaces the service’s commission on the frozen base, and the provider amount moves with it', async () => {

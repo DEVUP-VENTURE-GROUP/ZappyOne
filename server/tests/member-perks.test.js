@@ -50,6 +50,6 @@ test('plans list only enforced benefits and say whether they can be bought', asy
   expect(r.status).toBe(200);
   expect(typeof r.body.purchasable).toBe('boolean');
   const premium = r.body.plans.find((p) => p.code === 'ZAPPY_PREMIUM');
-  expect(premium.benefits).toEqual(['No platform fee on any booking', 'No surge price, even when it is busy']);
+  expect(premium.benefits).toEqual(['No service charge on any booking', 'No surge price, even when it is busy']);
   expect(JSON.stringify(r.body.plans.map((p) => p.benefits))).not.toMatch(/priority/i);
 });

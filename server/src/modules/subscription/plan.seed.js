@@ -11,7 +11,7 @@ const DEFAULT_PLANS = [
   {
     code: 'ZAPPY_BASIC',
     name: 'Zappy Basic',
-    description: 'Enjoy zero platform fees on every booking.',
+    description: 'Enjoy no service charge on every booking.',
     audience: 'user',
     priceInPaise: 4900,       // ₹49
     durationDays: 30,
@@ -24,7 +24,7 @@ const DEFAULT_PLANS = [
   {
     code: 'ZAPPY_PREMIUM',
     name: 'Zappy Premium',
-    description: 'The best of Zappy - zero surge, zero platform fees, and priority workers.',
+    description: 'The best of Zappy - zero surge, no service charge, and priority workers.',
     audience: 'user',
     priceInPaise: 14900,      // ₹149
     durationDays: 30,

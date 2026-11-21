@@ -103,7 +103,7 @@ export default function GroupCheckout({ items, shown, location, serviceMode, sch
               <div className="card space-y-1.5">
                 <Row label={`${shown.length} items`} paise={chosen.totals.itemsPaise} />
                 {chosen.totals.discountPaise > 0 && <Row label="Multi-item discount" paise={-chosen.totals.discountPaise} green />}
-                {chosen.totals.journeyPaise + chosen.totals.platformFeePaise > 0 && <Row label="Visit & service fee (once)" paise={chosen.totals.journeyPaise + chosen.totals.platformFeePaise} />}
+                {chosen.totals.journeyPaise + chosen.totals.platformFeePaise > 0 && <Row label="Visit & service charge (once)" paise={chosen.totals.journeyPaise + chosen.totals.platformFeePaise} />}
                 {chosen.totals.taxPaise > 0 && <Row label="Taxes" paise={chosen.totals.taxPaise} />}
                 <div className="flex items-center justify-between border-t border-slate-100 pt-2">
                   <span className="text-sm font-bold">Total</span>

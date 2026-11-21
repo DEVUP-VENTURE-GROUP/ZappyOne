@@ -127,7 +127,7 @@ const quoteBody = Joi.object({
   specialHandling: Joi.boolean().default(false),
   waitingMinutes: Joi.number().integer().min(0).default(0),
   overtimeMinutes: Joi.number().integer().min(0).default(0),
-  couponPaise: Joi.number().integer().min(0).default(0),
+  // No coupon amount from the customer: discounts are only ever worked out on the server.
   packageCode: Joi.string().max(80).allow(null),
   // The provider whose own prices to quote; none means the cheapest one nearby.
   workerId: objectId.allow(null),
@@ -172,7 +172,6 @@ router.post('/bookings', authenticate, requireRole('user'),
     needsPickup: Joi.boolean().default(false),
     needsReturn: Joi.boolean().default(false),
     specialHandling: Joi.boolean().default(false),
-    couponPaise: Joi.number().integer().min(0).default(0),
     idempotencyKey: Joi.string().max(120).allow(null),
     // The surge quote the customer saw, and the price it was for (jobs/surge).
     surgeQuoteId: Joi.string().max(40).allow(null, ''),

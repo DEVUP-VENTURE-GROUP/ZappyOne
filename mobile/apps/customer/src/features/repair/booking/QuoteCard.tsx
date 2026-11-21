@@ -69,7 +69,7 @@ export function QuoteCard({ quote, onDecided }: { quote: Quote; onDecided: () =>
         ))}
         <View style={styles.sums}>
           <Row k="Subtotal" v={formatPaise(quote.subtotalPaise)} />
-          {quote.platformFeePaise ? <Row k="Platform fee" v={formatPaise(quote.platformFeePaise)} /> : null}
+          {quote.platformFeePaise ? <Row k="Service charge" v={formatPaise(quote.platformFeePaise)} /> : null}
           {quote.discountPaise ? <Row k="Discount" v={`− ${formatPaise(quote.discountPaise)}`} tone={success[700]} /> : null}
           {quote.taxPaise ? <Row k="Tax" v={formatPaise(quote.taxPaise)} /> : null}
           <View style={styles.row}><Text variant="body" weight="black">Total</Text><Text variant="body" weight="black">{formatPaise(quote.totalPaise)}</Text></View>

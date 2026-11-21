@@ -56,7 +56,7 @@ test('every service is priced from config at the listed fee', async () => {
   const q = await pricingService.quote({ serviceType: 'doctor_escort', pickupLocation: HOME, destination: CLINIC });
   expect(q.baseFeePaise).toBe(39900);
   expect(q.distanceFeePaise).toBe(0);
-  expect(q.serviceChargePaise).toBe(39900 + 1000);
+  expect(q.serviceChargePaise).toBe(39900 + 500);
   // Salaried staff: nothing of the fee is a per-job earning.
   expect(q.workerEarningPaise).toBe(0);
   expect(q.commissionPaise).toBe(39900);

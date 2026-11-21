@@ -58,7 +58,7 @@ function SubscribeSheet({ plan, onClose }) {
           {isFetching || !q ? <div className="h-12 animate-pulse rounded bg-slate-200" /> : (
             <dl className="space-y-1">
               <div className="flex justify-between"><dt className="text-slate-600">{plan.type === 'pack' ? 'Pack' : 'Plan, a month'}</dt><dd className="font-semibold">{rupees(q.monthlyPaise)}</dd></div>
-              <div className="flex justify-between"><dt className="text-slate-600">Platform fee{plan.type === 'pack' ? '' : ', a month'}</dt><dd className="font-semibold">{rupees(q.platformFeePaise)}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-600">Service charge{plan.type === 'pack' ? '' : ', a month'}</dt><dd className="font-semibold">{rupees(q.platformFeePaise)}</dd></div>
               <div className="flex justify-between border-t border-slate-200 pt-1 font-extrabold"><dt>Total{months > 1 ? ` for ${months} months` : ''}</dt><dd>{rupees(q.totalPaise)}</dd></div>
             </dl>
           )}

@@ -364,7 +364,7 @@ export default function ShoppingTaskPage() {
             <div className="space-y-1 text-sm">
               <Row label="Base fee" value={charge.baseFeePaise} />
               {charge.distanceFeePaise > 0 && <Row label="Distance" value={charge.distanceFeePaise} />}
-              {charge.platformFeePaise > 0 && <Row label="Platform fee" value={charge.platformFeePaise} />}
+              {charge.platformFeePaise > 0 && <Row label="Service charge" value={charge.platformFeePaise} />}
               {charge.taxPaise > 0 && <Row label="Tax" value={charge.taxPaise} />}
               <div className="flex justify-between font-bold pt-1 border-t border-zappy-100">
                 <span>ZappyOne service fee</span>

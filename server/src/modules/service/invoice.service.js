@@ -57,7 +57,7 @@ async function getInvoiceData(orderId) {
     ['Service', num(p.baseFee)],
     [num(p.distanceKm) != null ? `Distance (${p.distanceKm} km)` : 'Distance', num(p.distanceFee)],
     [num(p.etaMinutes) != null ? `Time (about ${p.etaMinutes} min)` : 'Time', num(p.timeFee)],
-    ['Platform fee', platformFee || null],
+    ['Service charge', platformFee || null],
     ['Tip', num(p.tipPaise) ? p.tipPaise / 100 : null],
     ['Discount', num(p.discountPaise) ? -p.discountPaise / 100 : null],
   ].filter(([, a]) => a != null && a !== 0).map(([label, amount]) => ({ label, amount }));
@@ -172,7 +172,7 @@ function renderHtml(data) {
 
   <div class="totals">
     ${data.tax > 0 ? `<div class="row"><span>Subtotal</span><span>${money(data.subtotal)}</span></div>
-    <div class="row"><span>GST (${(data.taxRate * 100).toFixed(0)}% on platform fee)</span><span>${money(data.tax)}</span></div>` : ''}
+    <div class="row"><span>GST (${(data.taxRate * 100).toFixed(0)}% on service charge)</span><span>${money(data.tax)}</span></div>` : ''}
     <div class="row grand"><span>Total</span><span>${money(data.total)}</span></div>
   </div>
 

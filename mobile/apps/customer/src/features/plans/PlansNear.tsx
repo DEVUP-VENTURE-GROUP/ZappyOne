@@ -56,7 +56,7 @@ function Subscribe({ plan, loc, onClose }: { plan: Plan; loc: Where; onClose: ()
           {isFetching || !q ? <Skeleton height={48} /> : (
             <>
               <View style={styles.line}><Text variant="bodySmall" color={ink[700]}>{plan.type === 'pack' ? 'Pack' : 'Plan, a month'}</Text><Text variant="bodySmall" weight="semibold">{rupees(q.monthlyPaise)}</Text></View>
-              <View style={styles.line}><Text variant="bodySmall" color={ink[700]}>Platform fee</Text><Text variant="bodySmall" weight="semibold">{rupees(q.platformFeePaise)}</Text></View>
+              <View style={styles.line}><Text variant="bodySmall" color={ink[700]}>Service charge</Text><Text variant="bodySmall" weight="semibold">{rupees(q.platformFeePaise)}</Text></View>
               <View style={[styles.line, styles.total]}><Text variant="bodySmall" weight="bold">Total{months > 1 ? ` for ${months} months` : ''}</Text><Text variant="bodySmall" weight="bold">{rupees(q.totalPaise)}</Text></View>
             </>
           )}

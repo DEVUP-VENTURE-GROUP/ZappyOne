@@ -22,7 +22,7 @@ export function HelpingCheckout({ charge, note, surgeQuote, surgePaise, tip, onT
   const t = useT();
   const lines = charge ? ([
     ['Service fee', charge.baseFeePaise], ['Distance', charge.distanceFeePaise], ['Extra stops', charge.multiStopFeePaise], ['Special handling', charge.specialHandlingPaise],
-    ['Platform fee', charge.platformFeePaise], ['Discount', -(charge.discountPaise || 0)], ['Taxes', charge.taxPaise],
+    ['Service charge', charge.platformFeePaise], ['Discount', -(charge.discountPaise || 0)], ['Taxes', charge.taxPaise],
   ] as [string, number | undefined][]).filter(([, p]) => p) as [string, number][] : [];
   return (
     <View style={styles.gap}>

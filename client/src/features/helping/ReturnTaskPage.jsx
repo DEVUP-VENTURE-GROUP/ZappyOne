@@ -260,7 +260,7 @@ export default function ReturnTaskPage() {
           <div className="rounded-2xl border-2 border-zappy-100 bg-zappy-50/50 p-4 space-y-1 text-sm">
             {[
               ['Service fee', charge.baseFeePaise], ['Distance', charge.distanceFeePaise], ['Extra stops', charge.multiStopFeePaise],
-              ['Special handling', charge.specialHandlingPaise], ['Platform fee', charge.platformFeePaise],
+              ['Special handling', charge.specialHandlingPaise], ['Service charge', charge.platformFeePaise],
               ['Discount', -(charge.discountPaise || 0)], ['Taxes', charge.taxPaise],
             ].filter(([, p]) => p).map(([label, p]) => (
               <div key={label} className="flex justify-between text-slate-500">

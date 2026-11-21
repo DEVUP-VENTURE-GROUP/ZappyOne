@@ -33,8 +33,8 @@ test('own-link bookings pay the own-link rate only in the partner\'s first month
   const old = await Shop.create({ businessName: 'Old Shop', ownerName: 'O', phone: '9000000304', isActive: true, partnerType: 'shop' });
   await Shop.collection.updateOne({ _id: old._id }, { $set: { createdAt: new Date(Date.now() - 400 * 86400000) } });
   expect(await commission.pctFor({ shopId: fresh._id, viaOwnLink: true })).toBe(0);
-  expect(await commission.pctFor({ shopId: fresh._id, viaOwnLink: false })).toBe(5);
-  expect(await commission.pctFor({ shopId: old._id, viaOwnLink: true })).toBe(5);
+  expect(await commission.pctFor({ shopId: fresh._id, viaOwnLink: false })).toBe(2);
+  expect(await commission.pctFor({ shopId: old._id, viaOwnLink: true })).toBe(2);
 });
 
 test('a review from an own-link booking is kept but never counts in the public rating', async () => {

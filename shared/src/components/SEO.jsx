@@ -122,7 +122,7 @@ export const PLANS_SCHEMA = [
     '@type': 'WebPage',
     name: 'ZappyOne Premium Plans - Surge Protection, Cashback & Priority Booking',
     url: `${BASE_URL}/plans`,
-    description: 'Upgrade to ZappyOne Premium for zero surge pricing, higher cashback, zero platform fees, and priority worker assignment.',
+    description: 'Upgrade to ZappyOne Premium for zero surge pricing, higher cashback, no service charge, and priority worker assignment.',
     inLanguage: 'en-IN',
   },
   {
@@ -131,8 +131,8 @@ export const PLANS_SCHEMA = [
     name: 'ZappyOne Subscription Plans',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'ZappyOne Free', description: 'Basic access to all ZappyOne services with standard pricing and 5% wallet cashback.' },
-      { '@type': 'ListItem', position: 2, name: 'ZappyOne Gold', description: 'Priority booking, higher cashback, reduced platform fees, surge cap protection.' },
-      { '@type': 'ListItem', position: 3, name: 'ZappyOne Platinum', description: 'No surge pricing ever, zero platform fees, maximum cashback, express dispatch.' },
+      { '@type': 'ListItem', position: 2, name: 'ZappyOne Gold', description: 'Priority booking, higher cashback, a lower service charge, surge cap protection.' },
+      { '@type': 'ListItem', position: 3, name: 'ZappyOne Platinum', description: 'No surge pricing ever, no service charge, maximum cashback, express dispatch.' },
     ],
   },
 ];

@@ -175,7 +175,7 @@ async function isWorkerPro(workerId) {
 // The perks a customer plan really applies at booking (jobs/member); anything not enforced is never listed.
 function benefitsOf(effects = {}) {
   const out = [];
-  if (effects.waivePlatformFee) out.push('No platform fee on any booking');
+  if (effects.waivePlatformFee) out.push('No service charge on any booking');
   if (typeof effects.surgeCap === 'number' && effects.surgeCap <= 1) out.push('No surge price, even when it is busy');
   return out;
 }

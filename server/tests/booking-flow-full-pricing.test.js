@@ -132,5 +132,5 @@ test('distance, platform fee, tax, late-night and a tip: one amount from quote t
   expect(f.totalPaise).toBe(quoted);
   expect(receipt.body.bill.totalPaise).toBe(quoted);
   expect(receipt.body.bill.lines.reduce((a, l) => a + l.paise, 0)).toBe(quoted);
-  expect(receipt.body.bill.lines.map((l) => l.label)).toEqual(expect.arrayContaining(['Taxes', 'Platform fee', 'Late-night fee']));
+  expect(receipt.body.bill.lines.map((l) => l.label)).toEqual(expect.arrayContaining(['Taxes', 'Service charge', 'Late-night fee']));
 });

@@ -114,7 +114,7 @@ export function GroupCheckout({ items, shown, location, serviceMode, scheduledAt
             <View style={flow.card}>
               <GroupLine label={`${shown.length} items`} paise={chosen.totals.itemsPaise} />
               {chosen.totals.discountPaise > 0 ? <GroupLine label="Multi-item discount" paise={-chosen.totals.discountPaise} green /> : null}
-              {chosen.totals.journeyPaise + chosen.totals.platformFeePaise > 0 ? <GroupLine label="Visit & service fee (once)" paise={chosen.totals.journeyPaise + chosen.totals.platformFeePaise} /> : null}
+              {chosen.totals.journeyPaise + chosen.totals.platformFeePaise > 0 ? <GroupLine label="Visit & service charge (once)" paise={chosen.totals.journeyPaise + chosen.totals.platformFeePaise} /> : null}
               {chosen.totals.taxPaise > 0 ? <GroupLine label="Taxes" paise={chosen.totals.taxPaise} /> : null}
               <View style={styles.total}><Text variant="bodySmall" weight="bold">Total</Text><Text variant="heading2" weight="black">{formatPaise(chosen.totals.totalPaise)}</Text></View>
               <Text variant="caption" color={ink[500]}>Pay in cash when the work is done. Each item keeps its own warranty and report.</Text>

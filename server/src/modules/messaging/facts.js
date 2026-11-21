@@ -18,16 +18,16 @@ function bill(kind, doc) {
   if (kind === 'repair') {
     const s = doc.priceSnapshot || {};
     const service = (s.subtotalPaise || 0);
-    lines = [['Service', service], ['Platform fee', s.platformFeePaise], ['Discount', -(s.discountPaise || 0)], ['Taxes', s.taxPaise]];
+    lines = [['Service', service], ['Service charge', s.platformFeePaise], ['Discount', -(s.discountPaise || 0)], ['Taxes', s.taxPaise]];
     if (s.inspectionCreditPaise) lines.push(['Inspection already paid', -s.inspectionCreditPaise]);
     total = s.totalPaise || 0;
   } else if (kind === 'pet') {
     const p = doc.pricing || {};
-    lines = [['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Platform fee', p.platformFeePaise], ['Taxes', p.taxPaise]];
+    lines = [['Services', p.servicesPaise], ['Add-ons', p.addonsPaise], ['Travel', p.travelPaise], ['Service charge', p.platformFeePaise], ['Taxes', p.taxPaise]];
     total = p.totalPaise || 0;
   } else if (kind === 'helping') {
     const c = doc.charge || {};
-    lines = [['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Platform fee', c.platformFeePaise], ['Taxes', c.taxPaise]];
+    lines = [['Service', c.baseFeePaise], ['Distance', c.distanceFeePaise], ['Waiting', c.waitingFeePaise], ['Extra stops', c.multiStopFeePaise], ['Service charge', c.platformFeePaise], ['Taxes', c.taxPaise]];
     total = c.serviceChargePaise || 0;
   }
   const boost = doc.boost?.paise || 0;

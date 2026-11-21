@@ -84,8 +84,8 @@ const pricingRuleSchema = new mongoose.Schema(
     monthlyThresholdNights: { type: Number, default: 30, min: 1 },
 
     /* Platform economics */
-    commissionPct: { type: Number, default: 10, min: 0, max: 100 },
-    platformFeePaise: { type: Number, default: 1000, min: 0 }, // ₹10, admin-set
+    commissionPct: { type: Number, default: 2, min: 0, max: 100 },
+    platformFeePaise: { type: Number, default: 500, min: 0 }, // ₹5 service charge, admin-set
     taxPct: { type: Number, default: 0, min: 0, max: 100 }, // GST on hold until registration; admin sets it in Economics
 
     /**

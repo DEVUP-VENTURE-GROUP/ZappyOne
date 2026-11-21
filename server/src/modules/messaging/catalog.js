@@ -26,7 +26,7 @@ const SAMPLE_JOB = {
   kind: 'repair', id: 'sample', reference: 'RP7K2Q9M', service: 'Display assembly replacement',
   at: 'Sat, 11 Oct, 4:30 pm', bookedAt: 'Fri, 10 Oct, 6:12 pm', address: 'Flat 302, Cyber Residency, Madhapur, Hyderabad',
   provider: { name: 'Ravi Kumar', rating: 4.8 },
-  lines: [['Service', '₹2,450'], ['Platform fee', '₹10'], ['Taxes', '₹0']], totalPaise: 246000, total: '₹2,460',
+  lines: [['Service', '₹2,450'], ['Service charge', '₹10'], ['Taxes', '₹0']], totalPaise: 246000, total: '₹2,460',
   paid: false, method: 'Cash', link: '/repair/bookings/sample', providerLink: '/worker/repair/sample',
 };
 const sampleJob = (over = {}) => ({ f: { ...SAMPLE_JOB, ...over }, name: 'Aarav' });

@@ -111,7 +111,7 @@ function QuoteCard({ quote, onDecided }) {
           </div>
           {quote.platformFeePaise > 0 && (
             <div className="flex justify-between text-xs text-slate-500">
-              <span>Platform fee</span><span>{rupees(quote.platformFeePaise)}</span>
+              <span>Service charge</span><span>{rupees(quote.platformFeePaise)}</span>
             </div>
           )}
           {quote.discountPaise > 0 && (

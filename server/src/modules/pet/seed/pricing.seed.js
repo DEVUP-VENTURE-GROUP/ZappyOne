@@ -50,8 +50,8 @@ function R(categoryCode, variantCode, species, fields) {
   return {
     categoryCode, variantCode, species, cityCode: null,
     sizeMultipliers: SIZE_MULTIPLIERS,
-    commissionPct: 10,
-    platformFeePaise: inr(10),
+    commissionPct: 2,
+    platformFeePaise: inr(5),
     taxPct: 0,
     isReferenceSeed: true,
     ...fields,

@@ -20,14 +20,14 @@ afterAll(stopMongo);
 test('the terms a new partner reads carry their type\'s live rate', async () => {
   const res = await request(app).get('/api/auth/shop/partner-terms?type=individual');
   expect(res.status).toBe(200);
-  expect(res.body).toMatchObject({ version: terms.VERSION, type: 'individual', ratePct: 5 });
+  expect(res.body).toMatchObject({ version: terms.VERSION, type: 'individual', ratePct: 2 });
   expect(res.body.points[0]).not.toMatch(/\d+%/);
 });
 
 test('accepting at sign-up records version, time and rate; an explicit no is refused', async () => {
   const { shop } = await authService.loginShopWithOtp({ phone: '9811100001', otp: '1234', businessName: 'Ramesh Electricals', ownerName: 'Ramesh', partnerType: 'individual', acceptTerms: true });
   expect(shop.partnerType).toBe('individual');
-  expect(shop.agreement).toMatchObject({ version: terms.VERSION, ratePct: 5 });
+  expect(shop.agreement).toMatchObject({ version: terms.VERSION, ratePct: 2 });
   await expect(authService.loginShopWithOtp({ phone: '9811100002', otp: '1234', businessName: 'X', ownerName: 'Y', acceptTerms: false }))
     .rejects.toMatchObject({ code: 'TERMS_REQUIRED' });
   expect(await Shop.exists({ phone: '9811100002' })).toBeNull();
@@ -41,5 +41,5 @@ test('an older app signs up without terms; the dashboard asks and accepting reco
   expect(before.body.current).toBe(false);
   await request(app).post('/api/shops/me/agreement').set('Authorization', `Bearer ${token}`).expect(200);
   const after = await request(app).get('/api/shops/me/agreement').set('Authorization', `Bearer ${token}`);
-  expect(after.body).toMatchObject({ current: true, agreement: { version: terms.VERSION, ratePct: 5 } });
+  expect(after.body).toMatchObject({ current: true, agreement: { version: terms.VERSION, ratePct: 2 } });
 });

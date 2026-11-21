@@ -18,7 +18,7 @@ const EventConfig = require('../events/event-config.model');
 const { VERTICAL_LABEL, HELPING_LABEL, PET_LABEL } = require('./bookings.source');
 
 const LINES = ['repair', 'pet', 'helping', 'event'];
-const DEFAULTS = { platformFeePaise: 1000, commissionPct: 10 }; // ₹10 and 10%: the launch rule
+const DEFAULTS = { platformFeePaise: 500, commissionPct: 2 }; // ₹5 service charge and 2%: the launch rule
 const MAX = { platformFeePaise: 100000, commissionPct: { repair: 100, pet: 100, helping: 100, event: 50 } };
 
 const row = (line, key, label, doc, commissionField = 'commissionPct') => ({
@@ -134,19 +134,18 @@ function pick(doc, commissionField = 'commissionPct') {
 }
 
 /**
- * Fill in the launch rule where a line has no fee or commission yet: ₹10 fee
- * and 10% commission. Values an operator has set are left alone, except the
- * placeholder numbers earlier seeds wrote (₹5 fee, 15% commission), which
- * were never a decision. Returns what changed.
+ * Fill in the launch rule where a line has no fee or commission yet: ₹5
+ * service charge and 2% commission. Values an operator has set are left alone,
+ * except the 15% commission earlier seeds wrote, which was never a decision.
+ * Returns what changed.
  */
 async function applyLaunchDefaults({ dryRun = false } = {}) {
-  const SEEDED_FEE = 500;
   const SEEDED_COMMISSION = 15;
   const changes = [];
   for (const r of await list()) {
     const patch = {};
     if (!r.configured) continue; // defaults already apply until a line is set up
-    if (!r.platformFeePaise || r.platformFeePaise === SEEDED_FEE) patch.platformFeePaise = DEFAULTS.platformFeePaise;
+    if (!r.platformFeePaise) patch.platformFeePaise = DEFAULTS.platformFeePaise;
     if (!r.commissionPct || r.commissionPct === SEEDED_COMMISSION) patch.commissionPct = DEFAULTS.commissionPct;
     if (!Object.keys(patch).length) continue;
     // Tax is never defaulted: a wrong rate is collected from customers and owed to the state.

@@ -64,7 +64,7 @@ const WORKFORCE_DEFAULTS = {
 
 // Percent taken from a partner's service money, by who holds the job; Economics → Partner commission.
 // smallJobs: a job up to uptoRupees pays at most pct, so a ₹99 job is not charged like a ₹999 one (the lower of this and the partner's rate).
-const PARTNER_COMMISSION_DEFAULTS = { shop: 5, agency: 5, company: 5, individual: 5, ownLinkPct: 0, ownLinkMonths: 6, smallJobs: [{ uptoRupees: 199, pct: 2 }, { uptoRupees: 499, pct: 3 }] };
+const PARTNER_COMMISSION_DEFAULTS = { shop: 2, agency: 2, company: 2, individual: 2, ownLinkPct: 0, ownLinkMonths: 6, smallJobs: [{ uptoRupees: 199, pct: 2 }, { uptoRupees: 499, pct: 3 }] };
 
 const FAST_ASSIGN_DEFAULTS = {
   enabled: true,

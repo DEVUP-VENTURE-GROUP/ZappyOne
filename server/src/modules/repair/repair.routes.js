@@ -239,7 +239,7 @@ router.post(
     location: locationSchema.required(),
     scheduledAt: Joi.date().allow(null),
     slotLabel: Joi.string().max(80).allow('', null),
-    discountPaise: Joi.number().integer().min(0).default(0),
+    // No discount from the customer: a discount is only ever worked out on the server (a group's later items, repair/services/group).
     // Cash until the gateway is live; the server still decides what is allowed.
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     // The provider's own-link code, when the customer arrived through it (shop/share-link).

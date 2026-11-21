@@ -289,7 +289,7 @@ async function announceQuote(booking, quote) {
   const lines = [
     ...(quote.basePaise > 0 ? [['Booked repair (already agreed)', rupees(quote.basePaise)]] : []),
     ...(quote.items || []).map((i) => [`${quote.basePaise > 0 ? '+ ' : ''}${i.label}${(i.quantity || 1) > 1 ? ` × ${i.quantity}` : ''}`, rupees(i.amountPaise ?? (i.unitPricePaise || 0) * (i.quantity || 1))]),
-    ...(quote.platformFeePaise ? [['Platform fee', rupees(quote.platformFeePaise)]] : []),
+    ...(quote.platformFeePaise ? [['Service charge', rupees(quote.platformFeePaise)]] : []),
     ...(quote.discountPaise ? [['Discount', `− ${rupees(quote.discountPaise)}`]] : []),
     ...(quote.taxPaise ? [['Taxes', rupees(quote.taxPaise)]] : []),
   ];

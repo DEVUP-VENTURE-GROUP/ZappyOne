@@ -27,7 +27,7 @@ const pricingConfigSchema = new mongoose.Schema(
     baseFeePaise: { type: Number, required: true, default: 4000 },     // ₹40
     perKmFeePaise: { type: Number, required: true, default: 1200 },    // ₹12 per km
     perMinFeePaise: { type: Number, required: true, default: 200 },    // ₹2 per min
-    platformFeePaise: { type: Number, required: true, default: 1000 }, // ₹10
+    platformFeePaise: { type: Number, required: true, default: 500 }, // ₹5 service charge
     minFarePaise: { type: Number, required: true, default: 6000 },     // ₹60
 
     serviceOverrides: { type: [serviceOverrideSchema], default: [] },
