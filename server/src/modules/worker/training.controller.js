@@ -56,28 +56,29 @@ async function submitQuiz(req, res, next) {
         message: `You scored ${score}%. You need ${mod.passingScore}% to pass. Review the material and try again.` });
     }
 
-    const worker = await Worker.findById(req.auth.sub).select('certifications skills wallet').lean();
-    const existing = (worker?.certifications || []).find(c => c.moduleId === String(mod._id));
-    const isFirstTime = !existing;
-    const improvedScore = existing && score > existing.score;
-
-    const updates = {};
-
+    const moduleId = String(mod._id);
+    // The first pass is claimed in one step, so two quick submissions never both count as first.
+    const first = await Worker.updateOne(
+      { _id: req.auth.sub, 'certifications.moduleId': { $ne: moduleId } },
+      { $push: { certifications: { moduleId, moduleName: mod.title, score, earnedAt: new Date() } }, ...(mod.unlockService && { $addToSet: { skills: mod.unlockService } }) },
+    );
+    const isFirstTime = first.modifiedCount === 1;
+    let improvedScore = false;
     if (isFirstTime) {
-      updates.$push = { certifications: { moduleId: String(mod._id), moduleName: mod.title, score, earnedAt: new Date() } };
-      if (mod.unlockService) updates.$addToSet = { skills: mod.unlockService };
-      // Only credit bonus on first pass
+      // Paid into the wallet ledger (what withdrawals read), once per module.
       if (mod.bonusRupees > 0) {
-        updates.$inc = { 'wallet.balance': mod.bonusRupees * 100, 'wallet.totalEarnings': mod.bonusRupees * 100 };
+        await require('../wallet/wallet.service').apply({
+          kind: 'worker', id: req.auth.sub, type: 'credit', amountPaise: Math.round(mod.bonusRupees * 100),
+          reason: require('../payment/transaction.model').REASONS.TRAINING_BONUS,
+          idempotencyKey: `training:${req.auth.sub}:${moduleId}`, description: `Training bonus: ${mod.title}`,
+        });
       }
-    } else if (improvedScore) {
-      // Update score but don't re-credit bonus
-      updates.$set = { 'certifications.$[elem].score': score };
-    }
-
-    if (Object.keys(updates).length > 0) {
-      const opts = improvedScore ? { arrayFilters: [{ 'elem.moduleId': String(mod._id) }] } : {};
-      await Worker.updateOne({ _id: req.auth.sub }, updates, opts);
+    } else {
+      const r = await Worker.updateOne(
+        { _id: req.auth.sub, certifications: { $elemMatch: { moduleId, score: { $lt: score } } } },
+        { $set: { 'certifications.$.score': score } },
+      );
+      improvedScore = r.modifiedCount === 1;
     }
 
     res.json({

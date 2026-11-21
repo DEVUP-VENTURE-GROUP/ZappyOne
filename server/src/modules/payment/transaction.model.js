@@ -26,6 +26,7 @@ const REASONS = {
   TIP: 'tip',                                 // a customer's thank-you, all of it the provider's
   REWARD_REDEEM: 'reward_redeem',             // reward points turned into wallet money
   REWARD_SCRATCH: 'reward_scratch',           // a scratch card's cashback
+  TRAINING_BONUS: 'training_bonus',           // a pro's one-time bonus for passing a training module (worker/training)
 
   // Debits (negative)
   ORDER_PAYMENT: 'order_payment',
