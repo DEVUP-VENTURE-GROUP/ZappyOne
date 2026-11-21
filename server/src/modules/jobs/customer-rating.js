@@ -71,11 +71,11 @@ async function rate({ kind, id, role, providerId, stars, tags = [], note = '' })
 
   // Running average on the customer (the same fields the first version's orders use).
   const User = require('../user/user.model');
-  const u = await User.findById(doc.userId).select('rating ratingCount name phone').lean();
+  const { averagePipeline } = require('../repair/services/rating.service');
+  const u = await User.findOneAndUpdate({ _id: doc.userId }, averagePipeline('rating', 'ratingCount', stars), { new: true }).select('rating ratingCount name phone').lean();
   if (u) {
-    const n = (u.ratingCount || 0) + 1;
-    const avg = ((u.ratingCount ? u.rating : 0) * (n - 1) + stars) / n;
-    await User.updateOne({ _id: doc.userId }, { $set: { rating: Math.round(avg * 100) / 100, ratingCount: n } });
+    const n = u.ratingCount;
+    const avg = u.rating;
     if (clean.includes('unsafe') || (n >= FLAG_AFTER && avg < FLAG_BELOW)) {
       await User.updateOne({ _id: doc.userId }, { $set: { 'flags.lowCustomerRating': true, 'flags.lowCustomerRatingAt': new Date() } }).catch(() => {});
       require('../messaging/send').send('ops.customer_flagged', {

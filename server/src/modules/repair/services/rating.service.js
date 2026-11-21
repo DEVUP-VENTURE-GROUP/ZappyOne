@@ -25,28 +25,20 @@ async function applyRepairRating({ workerId, shopId, rating }) {
 
   if (!target) return { updated: false, reason: 'no_provider' };
 
-  const doc = await target.model.findById(target.id).select('rating reviewCount completedJobs');
+  // Counted in one atomic step, so ratings landing together are never lost.
+  const doc = await target.model.findOneAndUpdate({ _id: target.id }, averagePipeline('rating', 'reviewCount', rating), { new: true }).select('rating reviewCount').lean();
   if (!doc) return { updated: false, reason: 'not_found' };
-
-  /**
-   * Count ratings, not jobs.
-   *
-   * The order flow divides by `completedJobs`, which quietly assumes every job
-   * gets rated — it does not, so an unrated job drags the average toward the
-   * next rating far harder than it should. `reviewCount` is the honest divisor
-   * because it counts exactly the opinions being averaged.
-   */
-  const previous = doc.reviewCount || 0;
-  const next = previous + 1;
-  const average = previous === 0
-    ? rating
-    : ((doc.rating || 0) * previous + rating) / next;
-
-  doc.rating = Number(average.toFixed(2));
-  doc.reviewCount = next;
-  await doc.save();
-
-  return { updated: true, rating: doc.rating, reviewCount: next };
+  return { updated: true, rating: doc.rating, reviewCount: doc.reviewCount };
 }
 
-module.exports = { applyRepairRating };
+// Running average over ratings (not jobs: an unrated job must not drag it), as one update pipeline.
+function averagePipeline(avgField, countField, stars) {
+  const count = { $ifNull: ['$' + countField, 0] };
+  const avg = { $ifNull: ['$' + avgField, 0] };
+  return [{ $set: {
+    [avgField]: { $round: [{ $divide: [{ $add: [{ $multiply: [avg, count] }, stars] }, { $add: [count, 1] }] }, 2] },
+    [countField]: { $add: [count, 1] },
+  } }];
+}
+
+module.exports = { applyRepairRating, averagePipeline };

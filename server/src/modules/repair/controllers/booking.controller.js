@@ -482,7 +482,7 @@ async function attachCompletionPhotos(req, res, next) {
 async function rateRepair(req, res, next) {
   try {
     const booking = await RepairBooking.findOne({ _id: req.params.id, userId: req.auth.sub })
-      .select('status ratedAt workerId shopId repairCode').lean();
+      .select('status ratedAt workerId shopId repairCode viaOwnLink').lean();
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     if (booking.status !== 'COMPLETED') {
@@ -495,10 +495,12 @@ async function rateRepair(req, res, next) {
       return res.status(409).json({ error: 'You have already rated this repair', code: 'ALREADY_RATED' });
     }
 
-    await RepairBooking.updateOne(
+    const saved = await RepairBooking.updateOne(
       { _id: req.params.id, ratedAt: null },
       { $set: { rating: req.body.rating, ratingComment: req.body.comment || '', ratedAt: new Date() } },
     );
+    // Two taps at once: only the one that saved counts toward the pro's average and reviews.
+    if (!saved.modifiedCount) return res.status(409).json({ error: 'You have already rated this repair', code: 'ALREADY_RATED' });
 
     // Feed the provider's running average, the same figure matching ranks on.
     // A customer the provider brought through their own link is not counted in the public rating.
