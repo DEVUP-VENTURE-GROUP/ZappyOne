@@ -219,29 +219,17 @@ async function updateLocation({ workerId, lng, lat, orderId, repairBookingId, jo
     if (trip) await broadcastTrip(trip, { workerId, lat, lng });
   }
 
-  // If worker is on a trip, broadcast location + ETA to the order room.
+  // Only the pro holding a live order reaches its room; any other order id is ignored (no faking a position onto someone else's tracking).
   if (orderId) {
-    await redis.publish(
-      'order:event',
-      JSON.stringify({
-        orderId: String(orderId),
-        event: 'worker.location',
-        payload: { lng, lat, at: Date.now() },
-      })
-    );
-
-    // ETA + arriving-soon trigger (non-blocking; needs order's userId)
-    const etaService = require('./eta.service');
-    Order.findById(orderId).select('userId status').lean().then((o) => {
-      if (!o || o.status !== 'on_the_way') return;
-      return etaService.computeAndBroadcast({
-        orderId: String(orderId),
-        workerId: String(workerId),
-        workerLat: lat,
-        workerLng: lng,
-        orderUserId: o.userId,
-      });
-    }).catch(() => {});
+    const o = await Order.findOne({ _id: orderId, workerId, status: { $nin: ['completed', 'cancelled', 'failed'] } }).select('userId status').lean();
+    if (o) {
+      await redis.publish('order:event', JSON.stringify({ orderId: String(orderId), event: 'worker.location', payload: { lng, lat, at: Date.now() } }));
+      if (o.status === 'on_the_way') {
+        require('./eta.service').computeAndBroadcast({
+          orderId: String(orderId), workerId: String(workerId), workerLat: lat, workerLng: lng, orderUserId: o.userId,
+        }).catch(() => {});
+      }
+    }
   }
   return { ok: true };
 }

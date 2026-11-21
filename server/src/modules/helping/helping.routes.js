@@ -170,7 +170,7 @@ router.post('/tasks/:id/items/:itemId/alternative',
     variant: Joi.string().max(100).allow('', null),
     quantity: Joi.number().integer().min(1).default(1),
     pricePaise: Joi.number().integer().min(0).required(),
-    photoKey: Joi.string().max(500).allow('', null),
+    photoKey: require('../user/upload-key').uploadKey().allow('', null),
     note: Joi.string().max(500).allow('', null),
   })),
   ctrl.proposeAlternative);

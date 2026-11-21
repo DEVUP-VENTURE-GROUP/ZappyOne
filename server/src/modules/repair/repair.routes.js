@@ -342,7 +342,7 @@ router.post(
   // Customers approve, reject and cancel through their own endpoints; only the provider side and admin move a job.
   requireRole('worker', 'shop', 'admin'),
   validate(Joi.object({
-    status: Joi.string().max(40).required(),
+    status: Joi.string().valid(...require('./models/booking.model').BOOKING_STATUSES).required(),
     reason: Joi.string().max(300).allow('', null),
     meta: Joi.object().unknown(true).allow(null),
   })),
@@ -407,7 +407,8 @@ router.post(
   authenticate,
   requireRole('worker', 'shop', 'admin'),
   validate(Joi.object({
-    photos: Joi.array().items(Joi.string().max(500)).max(5).required(),
+    // Only our own job-photo uploads (user/upload-key), never a web address or a path that climbs out.
+    photos: Joi.array().items(require('../user/upload-key').uploadKey(['order-proof', 'completion-photos'])).max(5).required(),
   })),
   ctrl.attachCompletionPhotos,
 );

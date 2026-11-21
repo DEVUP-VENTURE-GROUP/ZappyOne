@@ -1,5 +1,5 @@
 const { Repair } = require('../models/repair.model');
-const { RepairBooking, CANCELLABLE_FROM } = require('../models/booking.model');
+const { RepairBooking, CANCELLABLE_FROM, TERMINAL_STATUSES } = require('../models/booking.model');
 const s3Service = require('../../../core/storage/s3');
 const { RepairQuote } = require('../models/quote.model');
 const { DeviceInspection, QAInspection } = require('../models/custody.model');
@@ -458,6 +458,10 @@ async function attachCompletionPhotos(req, res, next) {
       || String(booking.shopId || '') === String(req.auth.sub);
     if (!mine && req.auth.role !== 'admin') {
       return res.status(403).json({ error: 'This is not your job' });
+    }
+    // Proof of the finished work cannot be swapped once the job has closed (only admin, for a dispute).
+    if (TERMINAL_STATUSES.includes(booking.status) && req.auth.role !== 'admin') {
+      return res.status(409).json({ error: 'This job is closed, so its photos can no longer be changed', code: 'JOB_CLOSED' });
     }
 
     await RepairBooking.updateOne(
