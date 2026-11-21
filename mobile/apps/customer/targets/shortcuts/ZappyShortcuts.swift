@@ -2,6 +2,7 @@
 import AppIntents
 import Foundation
 
+@available(iOS 18.0, *)
 struct BookServiceIntent: AppIntent {
   static var title: LocalizedStringResource = "Book a service"
   static var description = IntentDescription("Open ZappyOne to book a home or vehicle service.")
@@ -11,6 +12,7 @@ struct BookServiceIntent: AppIntent {
   }
 }
 
+@available(iOS 18.0, *)
 struct MyBookingsIntent: AppIntent {
   static var title: LocalizedStringResource = "Show my bookings"
   static var description = IntentDescription("Open your ZappyOne bookings to track a job.")
@@ -20,6 +22,7 @@ struct MyBookingsIntent: AppIntent {
   }
 }
 
+@available(iOS 18.0, *)
 struct ZappyShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(intent: BookServiceIntent(), phrases: ["Book a service with \(.applicationName)", "Book on \(.applicationName)"],
@@ -28,3 +31,7 @@ struct ZappyShortcuts: AppShortcutsProvider {
                 shortTitle: "My bookings", systemImageName: "list.bullet.rectangle")
   }
 }
+
+// An App Intents extension needs a Swift entry point, or App Store Connect rejects the upload (error 90896).
+@main
+struct ZappyShortcutsExtension: AppIntentsExtension {}
