@@ -121,6 +121,11 @@ test('a job offer to a worker iPhone goes through APNs with the offer sound', as
   expect(r).toMatchObject({ ok: true, success: 1 });
   expect(seen[0].headers['apns-topic']).toBe('com.zappyone.servicepro');
   expect(seen[0].body.aps.sound).toBe('zappy_ring.wav');
+  expect(seen[0].body.aps.alert.title).toBe('New job offer');
+  // The pro the customer chose at checkout is told so.
+  await processJob({ name: 'worker_offer', data: { workerId: String(workerId), orderId: String(orderId), picked: true } });
+  expect(seen.at(-1).body.aps.alert.title).toBe('A customer picked you');
+  expect(seen.at(-1).body.aps.category).toBe('JOB_OFFER');
 });
 
 test('a Live Activity update goes to the liveactivity topic with its state; dev builds retry on sandbox; dead tokens are stale', async () => {

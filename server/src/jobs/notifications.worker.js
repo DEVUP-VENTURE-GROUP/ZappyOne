@@ -238,7 +238,7 @@ const getTokens = ({ kind, id }) => require('../modules/notification/devices').t
 async function processJob(job) {
   /* Worker job offer push */
   if (job.name === 'worker_offer') {
-    const { workerId, orderId } = job.data;
+    const { workerId, orderId, picked } = job.data;
     const [worker, order] = await Promise.all([
       WorkerModel.findById(workerId).select('deviceTokens').lean(),
       Order.findById(orderId).select('service pricing pickupLocation').lean(),
@@ -249,7 +249,8 @@ async function processJob(job) {
     return sendFcm({
       kind: 'worker',
       tokens: worker.deviceTokens,
-      title: 'New job offer',
+      // A customer who chose this pro at checkout: say so, it is their booking to win.
+      title: picked ? 'A customer picked you' : 'New job offer',
       body: `${order.service.replace(/_/g, ' ')}, ₹${order.pricing.total}, ${order.pickupLocation.address?.slice(0, 60)}`,
       data: { type: 'new_job_request', orderId: String(orderId), channel: 'offers' },
     });

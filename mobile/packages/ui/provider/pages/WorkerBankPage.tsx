@@ -73,13 +73,14 @@ function AddMethodSheet({ onClose, start = 'bank' }: { onClose: () => void; star
         <>
           <FormField label="ACCOUNT HOLDER" placeholder="Name as per bank record" value={form.accountName} onChangeText={(v) => set('accountName', v)} error={errors.accountName} />
           <FormField label="ACCOUNT NUMBER" placeholder="0000 0000 0000" keyboardType="number-pad" value={form.accountNumber} onChangeText={(v) => set('accountNumber', v.replace(/\D/g, ''))} error={errors.accountNumber} />
-          <FormField label="IFSC CODE" placeholder="SBIN0001234" autoCapitalize="characters" maxLength={11} value={form.ifsc} onChangeText={(v) => set('ifsc', v.toUpperCase())} error={errors.ifsc} />
+          <FormField label="IFSC CODE" placeholder="SBIN0001234" autoCapitalize="characters" autoCorrect={false} spellCheck={false} maxLength={11} value={form.ifsc} onChangeText={(v) => set('ifsc', v.toUpperCase())} error={errors.ifsc} />
           <FormField label="BANK NAME" placeholder="e.g. State Bank" value={form.bankName} onChangeText={(v) => set('bankName', v)} />
           <FormField label="NICKNAME (OPTIONAL)" placeholder="e.g. Main salary account" value={form.label} onChangeText={(v) => set('label', v)} />
         </>
       ) : (
         <>
-          <FormField label="UPI ID" placeholder="username@bank" autoCapitalize="none" keyboardType="email-address" value={form.upiId} onChangeText={(v) => set('upiId', v.trim())} error={errors.upiId} />
+          {/* No autocorrect: iOS turned "saimobile@okaxis" into "Sai mobile@okaxis" and the ID failed the check. */}
+          <FormField label="UPI ID" placeholder="username@bank" autoCapitalize="none" autoCorrect={false} spellCheck={false} autoComplete="off" keyboardType="email-address" value={form.upiId} onChangeText={(v) => set('upiId', v.trim())} error={errors.upiId} />
           {upiName ? (
             <View style={styles.verified}>
               <CheckCircle2 size={16} color={success[600]} />
