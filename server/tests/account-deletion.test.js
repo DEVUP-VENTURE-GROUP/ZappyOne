@@ -65,10 +65,12 @@ test('refused while any job is still open, allowed once it is done', async () =>
 });
 
 test('a worker withdraws first; with nothing owed they leave matching', async () => {
-  const w = await Worker.create({ name: 'Kiran', phone: phone(), skills: ['mobile'], isOnline: true, wallet: { balance: 5000 } });
+  const w = await Worker.create({ name: 'Kiran', phone: phone(), skills: ['mobile'], isOnline: true });
+  const wallet = require('../src/modules/wallet/wallet.service');
+  await wallet.apply({ kind: 'worker', id: w._id, type: 'credit', amountPaise: 5000, reason: 'admin_adjustment_credit', idempotencyKey: `del-in:${w._id}`, description: 'earned' });
   await expect(del({ role: 'worker', id: w._id })).rejects.toMatchObject({ status: 409, code: 'WALLET_BALANCE' });
 
-  await Worker.updateOne({ _id: w._id }, { $set: { 'wallet.balance': 0 } });
+  await wallet.apply({ kind: 'worker', id: w._id, type: 'debit', amountPaise: 5000, reason: 'admin_adjustment_debit', idempotencyKey: `del-out:${w._id}`, description: 'withdrawn' });
   await del({ role: 'worker', id: w._id });
   const after = await Worker.findById(w._id).lean();
   expect(after).toMatchObject({ isBlocked: true, isOnline: false, name: 'Deleted account' });

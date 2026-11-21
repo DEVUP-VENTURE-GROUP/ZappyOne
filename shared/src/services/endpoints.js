@@ -1228,9 +1228,12 @@ export function endpoints(b, { adminApiPath }) {
     jobBill: b.query({ query: (id) => ({ url: `/jobs/${id}/receipt`, params: { view: 'json' } }) }),
     orderBill: b.query({ query: (id) => ({ url: `/orders/${id}/invoice`, params: { view: 'json' } }) }),
     // Every account type (account/account-deletion): refused while a job is open or money is in the wallet.
+    // What stands in the way of deleting (jobs, money, dues, a withdrawal) and the reasons to pick from (account/account-deletion).
+    deletionCheck: b.query({ query: () => '/account/me/deletion-check', keepUnusedDataFor: 0 }),
     deleteAccount: b.mutation({
-      query: () => ({ url: '/account/me', method: 'DELETE' }),
+      query: (body = {}) => ({ url: '/account/me', method: 'DELETE', body }),
     }),
+    adminAccountDeletions: b.query({ query: (params = {}) => ({ url: adminApiPath('/account-deletions'), params }) }),
 
     // --- Available Promos ---
     getAvailablePromos: b.query({

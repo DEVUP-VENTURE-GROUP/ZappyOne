@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboard, ShoppingBag, Users, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat, LayoutTemplate, Image as ImageIcon, Rows3, Eye } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, UserX, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat, LayoutTemplate, Image as ImageIcon, Rows3, Eye } from 'lucide-react';
 import { ADMIN_FLEET_VIEWS } from '@/features/fleet/views';
 import Hub from '../ui/Hub';
 
@@ -27,6 +27,7 @@ const P = {
   Customers: page(() => import('../features/customers/Customers')),
   Bookings: page(() => import('../features/bookings/Bookings')),
   Tickets: page(() => import('../features/support/Tickets')),
+  DeletedAccounts: page(() => import('../features/accounts/DeletedAccounts')),
   Disputes: page(() => import('../features/support/Disputes')),
   Reviews: page(() => import('../features/support/Reviews')),
   Promos: page(() => import('../features/marketing/Promos')),
@@ -150,6 +151,7 @@ export const NAV_GROUPS = [
   ] },
   { label: 'Customers', items: [
     { id: 'users', area: 'customers', label: 'Customers', icon: Users, Comp: P.Customers },
+    { id: 'deleted-accounts', area: 'customers', label: 'Deleted accounts', icon: UserX, Comp: P.DeletedAccounts },
     { id: 'bookings', area: 'bookings', label: 'Bookings', icon: ShoppingBag, Comp: P.Bookings },
     { id: 'helpdesk', area: 'support', label: 'Help desk', icon: HeadphonesIcon, Comp: HUBS.helpdesk },
     { id: 'promos', area: 'marketing', label: 'Promo codes', icon: Ticket, Comp: P.Promos },

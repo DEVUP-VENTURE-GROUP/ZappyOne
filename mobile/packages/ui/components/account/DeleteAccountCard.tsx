@@ -24,9 +24,9 @@ export function DeleteAccountCard() {
   const [deleteAccount, { isLoading }] = useDeleteAccountMutation();
   const [open, setOpen] = useState(false);
 
-  async function confirm() {
+  async function confirm(reason: string, note: string) {
     try {
-      await deleteAccount(undefined).unwrap();
+      await deleteAccount({ reason, note }).unwrap();
       setOpen(false);
       toast.success(t('security.deleted', 'Your account has been deleted'));
       await signOut();
@@ -36,7 +36,7 @@ export function DeleteAccountCard() {
   return (
     <View style={styles.card}>
       <View style={styles.head}><AlertTriangle size={16} color={danger[500]} /><Text variant="bodySmall" weight="semibold" color={danger[600]}>{t('security.dangerZone', 'Delete account')}</Text></View>
-      <Text variant="caption" color={ink[500]}>{t('security.dangerNote', 'This removes your sign-in, name, contact details, photo, saved addresses and payout details, and signs you out everywhere. Past bookings and payments are kept without your details, as the law requires. Finish any open job and withdraw your wallet first.')}</Text>
+      <Text variant="caption" color={ink[500]}>{t('security.dangerNote', 'This removes your sign-in, name, contact details, photo, saved addresses and payout details, and signs you out everywhere. Past bookings and payments are kept without your details, as the law requires. Finish any open job, withdraw your money and clear anything you owe first; we show what is left when you start.')}</Text>
       <Button label={t('security.deleteMine', 'Delete my account')} variant="outline" onPress={() => setOpen(true)} fullWidth />
       <DeleteAccountSheet visible={open} onClose={() => setOpen(false)} onConfirm={confirm} loading={isLoading} />
     </View>

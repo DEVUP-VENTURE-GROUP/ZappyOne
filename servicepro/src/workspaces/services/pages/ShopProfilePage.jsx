@@ -1,4 +1,5 @@
 import LoginSecurityCard from '@shared/components/account/LoginSecurityCard';
+import DeleteAccountSection from '@shared/components/account/DeleteAccountSection';
 import { withDefaultWeek } from '@shared/components/provider/weeklyHoursRules';
 import { useFocusField } from '@shared/hooks/useFocusField';
 import PageSkeleton from '@shared/components/common/Skeleton';
@@ -259,6 +260,7 @@ export default function ShopProfilePage() {
             {t('sp.pf.manageServices', 'Manage services & verification')}
           </button>
         </div>
+        <div className="pb-24"><DeleteAccountSection /></div>
       </div>
 
       <div className="fixed inset-x-0 z-30 bg-white border-t border-slate-100 safe-pb bottom-[var(--frame-bottom,0px)] left-[var(--frame-left,0px)]">

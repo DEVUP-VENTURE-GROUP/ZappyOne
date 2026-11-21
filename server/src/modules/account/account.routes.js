@@ -52,8 +52,13 @@ router.post('/doc-link', authenticate, onlyAccounts,
   });
 
 /** Delete this account (every app): refused while a job is open or money is still in the wallet. */
+// What stands in the way (open jobs, money to withdraw or owed, a withdrawal on its way) and the reasons to pick from, before confirming.
+router.get('/me/deletion-check', authenticate, onlyAccounts,
+  async (req, res, next) => { try { res.json(await require('./account-deletion').checkDeletion(self(req))); } catch (e) { next(e); } });
+// The reason is optional here so older apps that send none still delete; the apps ask for it.
 router.delete('/me', authenticate, onlyAccounts,
-  async (req, res, next) => { try { res.json(await require('./account-deletion').deleteAccount(self(req))); } catch (e) { next(e); } });
+  validate(Joi.object({ reason: Joi.string().max(40).allow(null, ''), note: Joi.string().max(500).allow(null, '') })),
+  async (req, res, next) => { try { res.json(await require('./account-deletion').deleteAccount({ ...self(req), reason: req.body?.reason || null, note: req.body?.note || '' })); } catch (e) { next(e); } });
 
 router.post('/photo', authenticate, onlyAccounts,
   validate(Joi.object({ key: Joi.string().trim().max(300).required() })),

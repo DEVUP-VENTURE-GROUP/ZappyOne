@@ -803,6 +803,8 @@ export const {
   useUpdateNotificationPrefsMutation,
   useGetSpendingQuery,
   useDeleteAccountMutation,
+  useDeletionCheckQuery,
+  useAdminAccountDeletionsQuery,
   useGetAvailablePromosQuery,
   useRescheduleOrderMutation,
   // Admin: Appeals

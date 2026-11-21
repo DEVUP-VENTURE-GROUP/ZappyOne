@@ -1,4 +1,5 @@
 import LoginSecurityCard from '../../components/account/LoginSecurityCard';
+import DeleteAccountSection from '../../components/account/DeleteAccountSection';
 import ProfilePhoto from '../../components/account/ProfilePhoto';
 import { useFocusField } from '../../hooks/useFocusField';
 import { useState } from 'react';
@@ -288,6 +289,7 @@ export default function WorkerEditProfilePage() {
           </div>
         ))}
 
+        <DeleteAccountSection />
       </div>
     </motion.div>
   );

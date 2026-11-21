@@ -187,6 +187,15 @@ router.get('/issues', validate(Joi.object({ state: Joi.string().valid('open', 'd
   try { res.json(await require('./booking-issues').listIssues(req.query)); } catch (err) { next(err); }
 });
 
+// Who deleted their account, why, and what they held or owed at the time (account/account-deletion).
+router.get('/account-deletions', validate(Joi.object({
+  role: Joi.string().valid('user', 'worker', 'shop', 'event_partner').allow(''),
+  reason: Joi.string().max(40).allow(''),
+  page: Joi.number().integer().min(1).max(1000).default(1),
+}), 'query'), async (req, res, next) => {
+  try { res.json(await require('../account/account-deletion').listDeletions({ role: req.query.role || null, reason: req.query.reason || null, page: req.query.page })); } catch (err) { next(err); }
+});
+
 router.get('/bookings/attention', async (req, res, next) => {
   try { res.json(await require('../jobs/ops.service').attention()); } catch (err) { next(err); }
 });
