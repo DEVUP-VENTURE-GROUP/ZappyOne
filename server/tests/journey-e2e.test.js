@@ -240,9 +240,9 @@ describe('the provider journey', () => {
       .patch(`/api/provider/onboarding/enrolments/${ctx.shopEnrolment}`).set(auth(ctx.shopToken))
       .send({
         documents: [
-          { code: 'owner_id', url: 's3://kyc/venkat-id.jpg' },
-          { code: 'shop_photo', url: 's3://kyc/balaji-front.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
-          { code: 'selfie', url: 's3://kyc/venkat-selfie.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
+          { code: 'owner_id', url: 'kyc/venkat-id.jpg' },
+          { code: 'shop_photo', url: 'kyc/balaji-front.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
+          { code: 'selfie', url: 'kyc/venkat-selfie.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
         ],
         fields: [{ code: 'years_active', value: '9' }],
         acceptedDeclarations: true,
@@ -305,7 +305,7 @@ describe('the admin queue', () => {
   it('14. does not ask the shop for the same papers twice', async () => {
     const shop = await Shop.findById(ctx.shopId).lean();
     expect(shop.kyc.status).toBe('approved');
-    expect(shop.kyc.shopPhotoUrl).toBe('s3://kyc/balaji-front.jpg');
+    expect(shop.kyc.shopPhotoUrl).toBe('kyc/balaji-front.jpg');
   });
 
   it('15. lists the shop for exactly what it was approved for', async () => {
@@ -319,8 +319,8 @@ describe('the admin queue', () => {
       .patch(`/api/provider/onboarding/enrolments/${ctx.techEnrolment}`).set(auth(ctx.techToken))
       .send({
         documents: [
-          { code: 'aadhaar', url: 's3://kyc/imran-aadhaar.jpg' },
-          { code: 'selfie', url: 's3://kyc/imran-selfie.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
+          { code: 'aadhaar', url: 'kyc/imran-aadhaar.jpg' },
+          { code: 'selfie', url: 'kyc/imran-selfie.jpg', captureMethod: 'live_camera', lat: HYD.lat, lng: HYD.lng },
         ],
         fields: [{ code: 'experience_years', value: '6' }],
         acceptedDeclarations: true,
