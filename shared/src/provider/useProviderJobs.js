@@ -57,7 +57,8 @@ const SOURCES = {
   repair: {
     mine: (d) => (d?.bookings || []).map((b) => ({
       kind: 'repair', id: b._id, to: `/worker/repair/${b._id}`,
-      title: [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Repair',
+      // The server names the model (repair provider/jobs `device`); codes are only the fallback for an older server.
+      title: b.device || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Repair',
       subtitle: b.location?.address || nameOf(b.vertical),
       at: b.scheduledAt || b.createdAt, ...stage('repair', b.status),
       workerId: b.workerId || null, valuePaise: b.priceSnapshot?.totalPaise || 0, rawStatus: b.status,

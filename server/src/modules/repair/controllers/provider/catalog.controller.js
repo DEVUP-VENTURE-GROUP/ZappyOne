@@ -25,12 +25,10 @@ async function listJobs(req, res, next) {
     const DONE = ['COMPLETED', 'CANCELLED', 'REJECTED', 'EXPIRED', 'FAILED', 'REFUNDED'];
     const { areaOnly } = require('../../../jobs/privacy');
     // The model's own name ("Geyser", "Galaxy S23"), so a job reads as the device and not as its catalog codes.
-    const DeviceModel = require('../../../service/device-model.model');
-    const codes = [...new Set(bookings.map((b) => b.modelCode).filter(Boolean))];
-    const names = codes.length ? await DeviceModel.find({ code: { $in: codes } }).select('code vertical name').lean() : [];
-    const nameOf = new Map(names.map((d) => [`${d.vertical}:${d.code}`, d.name]));
+    const { modelNames, keyOf } = require('../../../service/model-names');
+    const nameOf = await modelNames(bookings);
     res.json({ bookings: bookings.map((b) => {
-      const row = { ...b, device: nameOf.get(`${b.vertical}:${b.modelCode}`) || null };
+      const row = { ...b, device: nameOf.get(keyOf(b.vertical, b.modelCode)) || null };
       return DONE.includes(b.status) ? { ...row, location: areaOnly(b.location) } : row;
     }) });
   } catch (err) { next(err); }
