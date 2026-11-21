@@ -10,8 +10,9 @@ const config: ExpoConfig = {
   scheme: 'zappyone',
   // Phone apps only: no web bundle, so a browser hit on the dev server cannot fail a build.
   platforms: ['ios', 'android'],
-  // 1.1.0 is the Expo SDK 58 build. runtimeVersion follows this (policy appVersion), so no SDK 56 phone (1.0.x) gets this JS over the air, and this build never takes an SDK 56 update.
-  version: '1.1.0',
+  // 1.1.0 was the first Expo SDK 58 build; 1.2.0 adds the iOS extensions (Live Activity, rich push, Siri). runtimeVersion follows this (policy appVersion), so no SDK 56 phone (1.0.x) gets this JS over the air, and this build never takes an SDK 56 update.
+  // App Store Connect closes a version once it is approved: a new store build needs a higher version here.
+  version: '1.2.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'light',
