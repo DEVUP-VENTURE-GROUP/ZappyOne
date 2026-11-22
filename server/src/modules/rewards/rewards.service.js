@@ -117,14 +117,17 @@ async function redeemPoints({ userId, points }) {
   if (!Number.isInteger(points) || points <= 0) throw Object.assign(new Error('Invalid points amount.'), { status: 400 });
   if (points < cfg.minRedeemPoints) throw Object.assign(new Error(`Redeem at least ${cfg.minRedeemPoints} points.`), { status: 400 });
 
-  const acct = await RewardAccount.findOne({ userId }).lean();
-  if (!acct || acct.points < points) throw Object.assign(new Error('Not enough points.'), { status: 400 });
-
   const amountPaise = points * cfg.redeemPaisePerPoint;
-  const idem = `reward_redeem:${userId}:${Date.now()}`;
+  const idem = `reward_redeem:${userId}:${crypto.randomBytes(8).toString('hex')}`;
 
-  // Deduct points first (idempotent), then credit wallet.
-  await awardPoints({ userId, points: -points, reason: 'redeem', ref: idem, idempotencyKey: idem });
+  // Taken in one step that only succeeds with enough points, so taps landing together can never both redeem the same points.
+  const acct = await RewardAccount.findOneAndUpdate(
+    { userId, points: { $gte: points } },
+    { $inc: { points: -points, lifetimeRedeemed: points } },
+    { new: true },
+  );
+  if (!acct) throw Object.assign(new Error('Not enough points.'), { status: 400 });
+  await PointsLedger.create({ userId, delta: -points, balanceAfter: acct.points, reason: 'redeem', ref: idem, idempotencyKey: idem });
   try {
     await walletService.apply({
       kind: 'user', id: userId, type: 'credit', amountPaise,
@@ -132,7 +135,7 @@ async function redeemPoints({ userId, points }) {
       description: `Redeemed ${points} reward points`,
     });
   } catch (err) {
-    // Roll back the points if the wallet credit failed.
+    // The wallet credit failed: the points go back.
     await awardPoints({ userId, points, reason: 'redeem_rollback', ref: idem, idempotencyKey: `${idem}:rb` });
     throw err;
   }

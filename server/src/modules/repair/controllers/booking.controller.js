@@ -315,11 +315,12 @@ async function declineBooking(req, res, next) {
  * turned a provider's cancel button into a 404 on a booking sitting right in
  * front of them.
  */
+// A customer reaches their own booking, a pro or shop only the job they hold, admin any; anyone else gets nothing (no cancelling or releasing someone else's job).
 async function findCancellableBooking(req) {
-  const filter = req.auth.role === 'user'
-    ? { _id: req.params.id, userId: req.auth.sub }
-    : { _id: req.params.id };
-  return RepairBooking.findOne(filter).lean();
+  const { role, sub } = req.auth;
+  const owner = { user: 'userId', worker: 'workerId', shop: 'shopId' }[role];
+  if (!require('mongoose').isValidObjectId(req.params.id) || (!owner && role !== 'admin')) return null;
+  return RepairBooking.findOne({ _id: req.params.id, ...(owner && { [owner]: sub }) }).lean();
 }
 
 async function previewCancellation(req, res, next) {
