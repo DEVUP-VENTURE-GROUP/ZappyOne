@@ -19,10 +19,17 @@ async function seedCatalogAZ() {
     );
     if (r.upsertedCount) out.requirementSets += 1;
   }
+  const { Repair } = require('../repair/models/repair.model');
+  const { prefixOf } = require('../repair/package-lines.service');
   for (const def of AZ_LINES) {
     const existed = await ServiceLine.exists({ code: def.code });
-    await upsertPackageLine(def);
+    const line = await upsertPackageLine(def);
     if (!existed) out.lines += 1;
+    // What each job includes, only where nobody has written it yet.
+    const prefix = def.prefix || prefixOf(line.repairVertical);
+    for (const p of def.packages.filter((x) => x.includes?.length)) {
+      await Repair.updateOne({ vertical: line.repairVertical, code: `${prefix}_${p.code}`, $or: [{ includes: { $exists: false } }, { includes: { $size: 0 } }] }, { $set: { includes: p.includes } });
+    }
   }
   // Care agencies take family assistance too, not only individuals.
   await ServiceLine.updateMany({ domainCode: 'family_assist' }, { $addToSet: { providerKinds: 'shop' } });

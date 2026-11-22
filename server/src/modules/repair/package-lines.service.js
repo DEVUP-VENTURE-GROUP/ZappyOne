@@ -56,4 +56,4 @@ async function upsertPackageLine(def, { status = 'live' } = {}) {
   return line;
 }
 
-module.exports = { upsertPackageLine, check };
+module.exports = { upsertPackageLine, check, prefixOf };

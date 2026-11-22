@@ -369,4 +369,14 @@ const AZ_REQUIREMENT_SETS = [
   ...lineSets('salon_home', 'beauty_care', 'Salon at home', [PCC], [IN_HOME, 'I use sealed or sanitised tools for every customer.']),
 ];
 
+// Category catalogs: more jobs on the services above and new services, one file per category (onboarding/catalog).
+for (const cat of [require('./catalog/home-daily-help')]) {
+  for (const [code, extra] of Object.entries(cat.extend || {})) {
+    const def = AZ_LINES.find((l) => l.code === code);
+    if (!def) throw new Error(`catalog: no service "${code}" to extend`);
+    def.packages.push(...extra);
+  }
+  AZ_LINES.push(...cat.lines);
+}
+
 module.exports = { AZ_DOMAINS, AZ_LINES, AZ_REQUIREMENT_SETS, RENAMED_FROM };
