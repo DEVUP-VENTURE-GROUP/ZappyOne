@@ -18,6 +18,7 @@ import {
 import toast from 'react-hot-toast';
 import { SelfieMetaBadges } from './KycReview';
 import AskAgain from './AskAgain';
+import StoreSetup from './StoreSetup';
 import PartnerRateCard from '../money/economics/PartnerRateCard';
 import { useDebounced } from '@shared/hooks/useDebounced';
 import DataTable, { eachRow } from '@/ui/DataTable';
@@ -175,6 +176,7 @@ function KycDocViewer({ shopId, onClose }) {
 function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
   const [, setParams] = useSearchParams();
   const [showDocs, setShowDocs] = useState(false);
+  const [showStore, setShowStore] = useState(false);
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
@@ -214,6 +216,7 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
   return (
     <>
       {showDocs && <KycDocViewer shopId={shop._id} onClose={() => setShowDocs(false)} />}
+      {showStore && <StoreSetup kind="shop" id={shop._id} onClose={() => setShowStore(false)} />}
       <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-40 p-4" onClick={onClose}>
         <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
 
@@ -295,6 +298,18 @@ function ShopDetailPanel({ shop, onClose, onRefetch, reviewMode }) {
                 <p className="font-semibold text-slate-700">{shop.category || '-'}</p>
               </div>
             </div>
+
+            <button onClick={() => setShowStore(true)}
+              className="w-full flex items-center justify-between bg-zappy-50 hover:bg-zappy-100 rounded-xl px-4 py-3.5 transition">
+              <div className="flex items-center gap-3">
+                <Store size={16} className="text-zappy-600" />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-zappy-700">View store</p>
+                  <p className="text-[11px] text-zappy-500">Services, jobs and their prices</p>
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-zappy-400" />
+            </button>
 
             <PartnerRateCard kind="shop" id={shop._id} />
 

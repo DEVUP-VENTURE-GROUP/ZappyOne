@@ -198,6 +198,40 @@ async function removeItem(owner, vertical, repairCode) {
   return menu(owner, vertical);
 }
 
+// Admin tidies one job without touching its prices: name (their own jobs), what is included, minutes, which photos stay, hidden or shown.
+async function adminEditItem(owner, vertical, repairCode, changes) {
+  await assertMenuService(vertical);
+  const repair = await Repair.findOne({ vertical, code: repairCode, isActive: true, isArchived: false }).lean();
+  const mine = repair?.owner && String(repair.owner.id) === String(owner.shopId || owner.workerId);
+  if (!repair || (repair.owner && !mine)) throw httpError('That job is not on this service.', 404, 'UNKNOWN_JOB');
+  const cap = await ProviderCapability.findOne({ ...filterOf(owner), repairCode }).lean();
+  if (!cap) throw httpError('They have not added this job to their menu.', 404, 'NOT_ON_MENU');
+  const priced = await ProviderPricing.exists({ ...filterOf(owner), vertical, repairCode, ...LIVE });
+
+  const current = cap.photoKeys?.length ? cap.photoKeys : [cap.photoKey || repair.photoKey].filter(Boolean);
+  const photoKeys = Array.isArray(changes.keepPhotos) ? [...new Set(changes.keepPhotos)].filter((i) => i >= 0 && i < current.length).map((i) => current[i]) : current;
+  const isActive = changes.hidden == null ? cap.isActive : !changes.hidden;
+  if (isActive && !priced) throw httpError('This job has no price, so it cannot be shown. The partner sets prices.', 400, 'NO_PRICE');
+  if (isActive && !photoKeys.length) throw httpError('A job customers can book keeps at least one photo.', 400, 'PHOTO_REQUIRED');
+  const minutes = changes.minutes == null ? cap.estimatedDurationMin : changes.minutes;
+  const includes = changes.includes == null ? cap.includes : cleanIncludes(changes.includes);
+
+  const name = mine && changes.name != null ? String(changes.name).trim() : repair.name;
+  if (name.length < 2 || name.length > 80) throw httpError('Name the job in 2 to 80 letters.', 400, 'NAME_REQUIRED');
+
+  const set = { includes, photoKey: photoKeys[0] || '', photoKeys, estimatedDurationMin: minutes, isActive };
+  await ProviderCapability.updateOne({ _id: cap._id }, { $set: set });
+  if (mine) {
+    await Repair.updateOne({ _id: repair._id }, { $set: { name, includes, photoKey: set.photoKey, photoKeys, ...(minutes && { estimatedDurationMin: minutes }) } });
+    if (name !== repair.name) await Problem.updateOne({ vertical, code: `${repairCode}_req`, ownerKey: ownerKey(owner) }, { $set: { name } });
+  }
+  return {
+    name,
+    before: { name: repair.name, includes: cap.includes, minutes: cap.estimatedDurationMin, photos: current.length, shown: cap.isActive },
+    after: { name, includes, minutes, photos: photoKeys.length, shown: isActive },
+  };
+}
+
 // Every live price on this menu up or down by a percentage, rounded to the rupee.
 async function adjustAll(owner, vertical, pct, actor) {
   await assertMenuService(vertical);
@@ -229,4 +263,4 @@ const ownerFromAuth = (auth) => (auth.role === 'shop'
   ? { shopId: new mongoose.Types.ObjectId(auth.sub), workerId: null }
   : { shopId: null, workerId: new mongoose.Types.ObjectId(auth.sub) });
 
-module.exports = { isMenuService, menu, saveItem, removeItem, adjustAll, useSamples, ownerFromAuth, cleanIncludes, missingPhotos };
+module.exports = { isMenuService, menu, saveItem, adminEditItem, removeItem, adjustAll, useSamples, ownerFromAuth, cleanIncludes, missingPhotos };

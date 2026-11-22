@@ -10,6 +10,9 @@ const router = express.Router();
 router.get('/shops', ctrl.listShops);
 router.get('/shops/kyc/pending', ctrl.listKycPending);
 router.get('/shops/:id', ctrl.getShop);
+// What they sell and at what price, as customers would see it (admin/lib/store-setup).
+router.get('/shops/:id/store', require('../lib/store-setup').route('shop'));
+router.patch('/shops/:id/store/:vertical/items/:code', validate(require('../lib/store-setup').EDIT_BODY), require('../lib/store-setup').editRoute('shop'));
 router.get('/shops/:id/kyc/docs', ctrl.kycDocUrls);
 router.get('/shops/:id/kyc/stream/:docType', ctrl.kycStreamDoc);
 router.post('/shops/:id/kyc/approve', ctrl.approveKyc);

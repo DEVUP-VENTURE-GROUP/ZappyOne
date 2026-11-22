@@ -573,6 +573,8 @@ export const {
   useAdminClarifyShopKycMutation,
   useAdminBlockShopMutation,
   useAdminShopKycDocUrlsQuery,
+  useAdminProviderStoreQuery,
+  useAdminEditStoreItemMutation,
   // Repair vertical (admin)
   useAdminRepairListQuery,
   useAdminRepairCreateMutation,

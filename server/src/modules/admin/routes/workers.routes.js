@@ -56,6 +56,8 @@ router.get(
   ),
   earningsCtrl.getWorkerEarnings,
 );
+router.get('/workers/:id/store', require('../lib/store-setup').route('worker'));
+router.patch('/workers/:id/store/:vertical/items/:code', validate(require('../lib/store-setup').EDIT_BODY), require('../lib/store-setup').editRoute('worker'));
 router.get('/workers/:id/deductions', earningsCtrl.getWorkerDeductions);
 router.get('/workers/:id/incentives', earningsCtrl.getWorkerIncentives);
 router.get('/workers/:id/timeline', earningsCtrl.getWorkerTimeline);

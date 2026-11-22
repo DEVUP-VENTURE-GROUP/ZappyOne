@@ -1584,6 +1584,8 @@ export function endpoints(b, { adminApiPath }) {
       query: (id) => adminApiPath(`/shops/${id}/kyc/docs`),
       providesTags: (r, e, id) => [{ type: 'ShopKyc', id }],
     }),
+    adminProviderStore: b.query({ query: ({ kind, id }) => adminApiPath(`/${kind}s/${id}/store`), providesTags: ['ProviderMenu'] }),
+    adminEditStoreItem: b.mutation({ query: ({ kind, id, vertical, code, ...body }) => ({ url: adminApiPath(`/${kind}s/${id}/store/${vertical}/items/${code}`), method: 'PATCH', body }), invalidatesTags: ['ProviderMenu'] }),
 
     // Repair vertical (admin)
     // One generic pair of hooks serves every catalog resource — the resource

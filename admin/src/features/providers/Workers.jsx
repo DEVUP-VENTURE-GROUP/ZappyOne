@@ -44,7 +44,7 @@ import {
   Search, ShieldOff, ShieldCheck, Briefcase, X, Eye,
   FileText, Camera, Trash2, AlertTriangle, MapPin,
   Phone, Star, Loader2, ChevronRight, User,
-  CheckCircle2, XCircle, Clock, Wallet,
+  CheckCircle2, XCircle, Clock, Wallet, Store,
 } from 'lucide-react';
 import {
   SectionHeader, Pagination, StatusBadge, Card, Th, Td,
@@ -52,6 +52,7 @@ import {
 } from '../../ui/kit';
 import toast from 'react-hot-toast';
 import PartnerRateCard from '../money/economics/PartnerRateCard';
+import StoreSetup from './StoreSetup';
 
 /* Reverse geocoding (OpenStreetMap Nominatim — free, no key) */
 const geoCache = {};
@@ -352,6 +353,7 @@ function WorkerEarningsTab({ workerId }) {
 function WorkerDetailPanel({ worker, onClose, onRefetch }) {
   const [tab, setTab]           = useState('details');
   const [showDocs, setShowDocs] = useState(false);
+  const [showStore, setShowStore] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
 
@@ -392,6 +394,7 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
   return (
     <>
       {showDocs && <KycDocViewer workerId={worker._id} onClose={() => setShowDocs(false)} />}
+      {showStore && <StoreSetup kind="worker" id={worker._id} onClose={() => setShowStore(false)} />}
 
       <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-40 p-4" onClick={onClose}>
         <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -571,6 +574,19 @@ function WorkerDetailPanel({ worker, onClose, onRefetch }) {
                   <ChevronRight size={14} className="text-zappy-400" />
                 </button>
 
+                {!worker.shopId && (
+                  <button onClick={() => setShowStore(true)}
+                    className="w-full flex items-center justify-between bg-zappy-50 hover:bg-zappy-100 rounded-xl px-4 py-3.5 transition">
+                    <div className="flex items-center gap-3">
+                      <Store size={16} className="text-zappy-600" />
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-zappy-700">View store</p>
+                        <p className="text-[11px] text-zappy-500">Services, jobs and their prices</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-zappy-400" />
+                  </button>
+                )}
                 {!worker.shopId && <PartnerRateCard kind="worker" id={worker._id} />}
 
                 {/* Block/Unblock */}
