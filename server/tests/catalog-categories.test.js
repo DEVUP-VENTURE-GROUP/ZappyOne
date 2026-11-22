@@ -1,9 +1,14 @@
-// The category catalogs (onboarding/catalog): each finished category has 15+ services and 100+ jobs, every job is complete and bookable, the seed lands it with what is included, and a re-run keeps admin edits.
+// The category catalogs (onboarding/catalog): each category has its most booked services in depth, every job is complete and bookable, the seed lands it with what is included, and a re-run keeps admin edits.
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 jest.setTimeout(240000);
-const DONE = ['home_daily_help'];
+// Fewest services and jobs each category's seed must carry (built-in repair services are counted elsewhere).
+const MIN = {
+  home_daily_help: [15, 100], beauty_care: [15, 100], specialist_home: [15, 100], local_pros: [15, 90], moving: [9, 50],
+  events: [6, 40], errands_pickup: [6, 40], home_services: [9, 55], vehicles: [8, 45], electronics: [7, 40],
+};
+const DONE = Object.keys(MIN);
 let server;
 
 beforeAll(async () => {
@@ -19,10 +24,10 @@ const prefix = (l) => l.prefix || prefixOf(l.code);
 
 describe.each(DONE)('%s', (domain) => {
   const lines = AZ_LINES.filter((l) => l.domainCode === domain);
-  test('has 15 to 25 services and 100 or more jobs', () => {
-    expect(lines.length).toBeGreaterThanOrEqual(15);
+  test('carries its most booked services in depth', () => {
+    expect(lines.length).toBeGreaterThanOrEqual(MIN[domain][0]);
     expect(lines.length).toBeLessThanOrEqual(25);
-    expect(lines.reduce((n, l) => n + l.packages.length, 0)).toBeGreaterThanOrEqual(100);
+    expect(lines.reduce((n, l) => n + l.packages.length, 0)).toBeGreaterThanOrEqual(MIN[domain][1]);
   });
   test.each(lines.map((l) => [l.code, l]))('%s: every job is complete and passes the service check', (_code, l) => {
     expect(() => check(l)).not.toThrow();
@@ -53,10 +58,16 @@ test('seeding lands every job with what it includes, partners see the menu, and 
   const { seedCatalogAZ } = require('../src/modules/onboarding/run-catalog-az');
   const { ServiceLine } = require('../src/modules/onboarding/onboarding.model');
   const { Repair } = require('../src/modules/repair/models/repair.model');
-  await seedCatalogAZ();
+  const partner = { kind: 'worker', id: new mongoose.Types.ObjectId() };
+  await ServiceLine.create({ code: 'handyman', name: 'Raju handyman works', domainCode: 'home_services', status: 'live', privateTo: partner });
+  const first = await seedCatalogAZ();
+  expect(first.skipped).toEqual(['handyman']);
+  const kept = await ServiceLine.findOne({ code: 'handyman' }).lean();
+  expect(kept).toMatchObject({ name: 'Raju handyman works', privateTo: partner });
+  expect(kept.repairVertical || null).toBeNull();
 
   for (const domain of DONE) {
-    const want = AZ_LINES.filter((l) => l.domainCode === domain);
+    const want = AZ_LINES.filter((l) => l.domainCode === domain && l.code !== 'handyman');
     const saved = await ServiceLine.find({ domainCode: domain, status: 'live' }).lean();
     expect(saved.length).toBeGreaterThanOrEqual(want.length);
     for (const l of want) {

@@ -38,7 +38,7 @@ test('a new service is a real, priced catalog the booking engine reads', async (
   const { listProblems } = require('../src/modules/repair/controllers/catalog.controller');
   const DeviceModel = require('../src/modules/service/device-model.model');
   const { Repair } = require('../src/modules/repair/models/repair.model');
-  expect(await Repair.countDocuments({ vertical: 'roadside_help' })).toBe(3);
+  expect(await Repair.countDocuments({ vertical: 'roadside_help' })).toBe(AZ_LINES.find((l) => l.code === 'roadside_help').packages.length);
   expect((await Repair.findOne({ vertical: 'roadside_help' }).lean()).allowedServiceModes).toEqual(['roadside', 'doorstep']);
 
   const pest = AZ_LINES.find((l) => l.code === 'pest_control');

@@ -370,7 +370,7 @@ const AZ_REQUIREMENT_SETS = [
 ];
 
 // Category catalogs: more jobs on the services above and new services, one file per category (onboarding/catalog).
-for (const cat of [require('./catalog/home-daily-help')]) {
+for (const cat of ['home-daily-help', 'beauty-care', 'specialist-home', 'local-pros', 'moving', 'events', 'errands', 'home-services', 'vehicles', 'electronics'].map((f) => require(`./catalog/${f}`))) {
   for (const [code, extra] of Object.entries(cat.extend || {})) {
     const def = AZ_LINES.find((l) => l.code === code);
     if (!def) throw new Error(`catalog: no service "${code}" to extend`);
