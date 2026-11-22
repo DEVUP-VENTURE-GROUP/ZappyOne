@@ -78,6 +78,17 @@ function initSockets(httpServer) {
     // Join role-based personal room (restored on every reconnect automatically).
     socket.join(`${role}:${id}`);
 
+    // Only the pro holding an open order may put their position on its map; remembered a minute per order so each location tick costs no query.
+    const ownedOrders = new Map();
+    const holdsOrder = async (orderId) => {
+      const key = String(orderId);
+      const hit = ownedOrders.get(key);
+      if (hit && hit.at > Date.now() - 60000) return hit.ok;
+      const ok = !!(await Order.exists({ _id: key, workerId: id, status: { $nin: ['completed', 'cancelled', 'failed'] } }).catch(() => null));
+      ownedOrders.set(key, { ok, at: Date.now() });
+      return ok;
+    };
+
     // Multi-device eviction — done ONCE at connect time (not per location tick).
     // The most recent device wins; older worker sockets are disconnected so only
     // one device receives offers and writes location (anti credential-sharing).
@@ -246,7 +257,7 @@ function initSockets(httpServer) {
         }
       }
 
-      if (orderId && movedEnough) {
+      if (orderId && movedEnough && await holdsOrder(orderId)) {
         io.to(`order:${orderId}`).emit('worker.location', {
           lat, lng, at: Date.now(),
           hdg: (typeof hdg === 'number' && hdg >= 0 && hdg <= 360) ? hdg : null,

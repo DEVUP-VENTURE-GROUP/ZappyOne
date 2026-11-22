@@ -736,6 +736,8 @@ export function endpoints(b, { adminApiPath }) {
     adminNotificationHealth: b.query({
       query: () => adminApiPath('/notifications/health'),
     }),
+    // Push, email and maps, each tested live (server admin/lib/integrations).
+    adminIntegrations: b.query({ query: () => adminApiPath('/system/integrations'), keepUnusedDataFor: 0 }),
     adminNotificationStats: b.query({
       query: (days = 7) => adminApiPath(`/notifications/stats?days=${days}`),
     }),

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { LayoutDashboard, ShoppingBag, Users, UserX, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat, LayoutTemplate, Image as ImageIcon, Rows3, Eye } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, UserX, Plug, Briefcase, Wallet, Scale, CreditCard, Gift, FileText, Mail, FileCheck, Crown, Megaphone as Campaign, Ticket, Server, ToggleRight, Bell, HeadphonesIcon, Radio, Globe, Layers, Zap, Shield, PartyPopper, ShieldAlert, Map as MapIcon, AlertCircle, GraduationCap, Store, IndianRupee, BellRing, Activity, Coins, LineChart, Percent, MessageSquare as MessageSquareIcon, Star, Bug, Warehouse, Repeat, LayoutTemplate, Image as ImageIcon, Rows3, Eye } from 'lucide-react';
 import { ADMIN_FLEET_VIEWS } from '@/features/fleet/views';
 import Hub from '../ui/Hub';
 
@@ -65,6 +65,7 @@ const P = {
   HomepagePreview: page(() => import('../features/marketing/homepage/HomepagePreview')),
   Alerts: page(() => import('../features/system/Alerts')),
   Infrastructure: page(() => import('../features/system/Infrastructure')),
+  Integrations: page(() => import('../features/system/Integrations')),
   SignInCodes: page(() => import('../features/system/SignInCodes')),
   FeatureFlags: page(() => import('../features/system/FeatureFlags')),
   Messages: page(() => import('../features/system/Messages')),
@@ -135,6 +136,7 @@ const HUBS = {
   status: hub('System status', 'What needs attention now, and the health of the platform underneath', [
     { id: 'alerts', label: 'Alerts', icon: AlertCircle, Comp: P.Alerts },
     { id: 'infra', label: 'Infrastructure', icon: Server, Comp: P.Infrastructure },
+    { id: 'integrations', label: 'Integrations', icon: Plug, Comp: P.Integrations },
     { id: 'codes', label: 'Sign-in codes', icon: MessageSquareIcon, Comp: P.SignInCodes },
   ]),
 };

@@ -61,3 +61,19 @@ test('only the owner can share, never a finished job; a turned-off or unknown li
   expect((await request(app).get(`/api/jobs/shared/${token}`)).status).toBe(404);
   expect((await request(app).get('/api/jobs/shared/not-a-real-token-at-all')).status).toBe(404);
 });
+
+test('once the job has ended the link stops showing it (no address, no PIN), even inside its 48 hours', async () => {
+  const id = await booking();
+  const made = await request(app).post(`/api/jobs/${id}/share`).set(auth(owner));
+  const token = made.body.url.split('/t/')[1];
+  expect((await request(app).get(`/api/jobs/shared/${token}`)).status).toBe(200);
+  await PetBooking.collection.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { status: 'CLOSED' } });
+  const after = await request(app).get(`/api/jobs/shared/${token}`);
+  expect(after.status).toBe(410);
+  expect(after.body.code).toBe('SHARE_ENDED');
+  expect(JSON.stringify(after.body)).not.toMatch(/4821|Road 5/);
+});
+
+test.each([['too short', 'abc'], ['too long', 'x'.repeat(65)], ['made up', 'A'.repeat(24)]])('a %s token finds nothing', async (_name, token) => {
+  expect((await request(app).get(`/api/jobs/shared/${token}`)).status).toBe(404);
+});

@@ -45,6 +45,11 @@ router.post('/ops-alerts/:id/done', validate(Joi.object({ note: Joi.string().tri
 });
 
 
+// Push (Android, iPhone), email and maps, each checked with one live call (admin/lib/integrations).
+router.get('/system/integrations', async (req, res, next) => {
+  try { res.json(await require('../lib/integrations').checkAll()); } catch (err) { next(err); }
+});
+
 // FCM health check
 router.get('/notifications/health', async (req, res, next) => {
   try {

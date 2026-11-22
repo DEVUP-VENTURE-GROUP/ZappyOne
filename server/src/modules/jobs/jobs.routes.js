@@ -15,7 +15,7 @@ router.get('/shared/:token', shareLimiter, async (req, res, next) => {
   try {
     const share = await require('./share').resolve(req.params.token);
     if (!share) return res.status(404).json({ error: 'This link has expired or was turned off', code: 'SHARE_GONE' });
-    return require('./share').view(share, req, res, next);
+    return await require('./share').view(share, req, res, next);
   } catch (err) { return next(err); }
 });
 router.post('/:id/share', authenticate, requireRole('user'), async (req, res, next) => {

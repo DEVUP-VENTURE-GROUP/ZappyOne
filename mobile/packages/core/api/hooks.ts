@@ -88,6 +88,7 @@ export const useAdminRetryRefundMutation = h.useAdminRetryRefundMutation;
 export const useAdminMarkRefundedMutation = h.useAdminMarkRefundedMutation;
 export const useAdminReconcilePaymentMutation = h.useAdminReconcilePaymentMutation;
 export const useLazyAdminNotificationHealthQuery = h.useLazyAdminNotificationHealthQuery;
+export const useAdminIntegrationsQuery = h.useAdminIntegrationsQuery;
 export const useLazyAdminNotificationStatsQuery = h.useLazyAdminNotificationStatsQuery;
 export const useAdminSendNotificationMutation = h.useAdminSendNotificationMutation;
 export const useAdminBroadcastNotificationMutation = h.useAdminBroadcastNotificationMutation;

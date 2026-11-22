@@ -64,7 +64,13 @@ const VIEWS = {
 };
 
 // Runs the kind's own customer view as the owner, then scrubs it, so the link sees exactly the owner's screen minus money.
-function view(share, req, res, next) {
+async function view(share, req, res, next) {
+  // A finished job's link stops showing the home address and the trip, as finished jobs do everywhere (jobs/privacy).
+  const { findJob, KINDS } = require('./kinds');
+  const found = await findJob(String(share.jobId), 'status').catch(() => null);
+  if (!found || KINDS[found.kind]?.ops?.terminal?.includes(found.doc.status)) {
+    return res.status(410).json({ error: 'This booking has ended, so the link no longer shows it', code: 'SHARE_ENDED' });
+  }
   const fakeReq = { ...req, params: { id: String(share.jobId) }, auth: { sub: String(share.userId), role: 'user' }, query: {} };
   const out = {
     status(code) { res.status(code); return out; },

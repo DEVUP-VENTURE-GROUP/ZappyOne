@@ -72,3 +72,36 @@ test('someone else is refused', async () => {
   stranger.emit('order:subscribe', { orderId: bookingId });
   expect(await denied).toMatchObject({ reason: 'not_authorized' });
 });
+
+test('another pro cannot put a position on this booking\'s map by naming it', async () => {
+  const owner = await client(userId, 'user');
+  const subscribed = once(owner, 'order:subscribed');
+  owner.emit('order:subscribe', { orderId: bookingId });
+  await subscribed;
+  const intruder = await client(new mongoose.Types.ObjectId(), 'worker');
+  const fake = once(owner, 'worker.location', 2500).then(() => 'leaked', () => 'blocked');
+  intruder.emit('worker:location', { lat: 17.45, lng: 78.4, acc: 15, orderId: bookingId });
+  expect(await fake).toBe('blocked');
+});
+
+test('on a delivery order only the pro holding it reaches its map', async () => {
+  const Order = require('../src/modules/order/order.model');
+  const holder = new mongoose.Types.ObjectId();
+  const buyer = new mongoose.Types.ObjectId();
+  const { insertedId } = await Order.collection.insertOne({ userId: buyer, workerId: holder, status: 'on_the_way', createdAt: new Date(), updatedAt: new Date() });
+  const orderId = String(insertedId);
+  const watcher = await client(buyer, 'user');
+  const ok = once(watcher, 'order:subscribed');
+  watcher.emit('order:subscribe', { orderId });
+  await ok;
+
+  const intruder = await client(new mongoose.Types.ObjectId(), 'worker');
+  const leaked = once(watcher, 'worker.location', 2500).then(() => 'leaked', () => 'blocked');
+  intruder.emit('worker:location', { lat: 17.45, lng: 78.4, acc: 15, orderId });
+  expect(await leaked).toBe('blocked');
+
+  const pro = await client(holder, 'worker');
+  const seen = once(watcher, 'worker.location');
+  pro.emit('worker:location', { lat: 17.46, lng: 78.41, acc: 15, orderId });
+  expect(await seen).toMatchObject({ lat: 17.46, lng: 78.41 });
+});

@@ -229,6 +229,7 @@ export const {
   useAdminMarkRefundedMutation,
   useAdminReconcilePaymentMutation,
   useLazyAdminNotificationHealthQuery,
+  useAdminIntegrationsQuery,
   useLazyAdminNotificationStatsQuery,
   useAdminSendNotificationMutation,
   useAdminBroadcastNotificationMutation,
