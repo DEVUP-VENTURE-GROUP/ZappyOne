@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Check, ChevronRight, Plus } from 'lucide-react-native';
 import { useProviderServiceLinesQuery, useProviderEnrolMutation } from '@zappy/core/api';
-import { Button, LoadingState, Text } from '../../../components';
+import { Button, LoadingState, SearchBar, Text } from '../../../components';
+import { searchServices } from '@zappy/core/shared/serviceSearch';
 import { toast } from '../../../components/Toast';
 import { RIPPLE, errText } from '../../../lib/feedback';
 import { ink, slate, zappy } from '../../../theme/colors';
@@ -24,8 +25,10 @@ export function LineStep({ domain, onPick, onRequest }: { domain: Domain; onPick
   const [enrol] = useProviderEnrolMutation();
   const [picked, setPicked] = useState<string[]>([]);
   const [adding, setAdding] = useState(false);
+  const [q, setQ] = useState('');
   if (isLoading) return <LoadingState />;
   const lines: Line[] = data?.lines || [];
+  const shown: Line[] = searchServices(lines, q, picked);
   const toggle = (code: string) => setPicked((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
 
   async function addPicked() {
@@ -44,7 +47,11 @@ export function LineStep({ domain, onPick, onRequest }: { domain: Domain; onPick
   return (
     <View style={ob.shell}>
       <Text variant="caption" color={ink[500]}>Tick every service you do. You send your documents once.</Text>
-      {lines.map((l) => {
+      {lines.length > 5 ? <SearchBar value={q} onChangeText={setQ} placeholder="Search, e.g. sofa, bathroom, AC" /> : null}
+      {q && !shown.length ? (
+        <Text variant="bodySmall" color={ink[700]} style={styles.none}>No service matches "{q}". Tap "My service isn't listed" below to ask for it.</Text>
+      ) : null}
+      {shown.map((l) => {
         const live = l.status === 'live';
         const on = picked.includes(l.code);
         return (
@@ -77,6 +84,7 @@ const styles = StyleSheet.create({
   closed: { opacity: 0.7 },
   on: { borderColor: zappy[500], borderWidth: 2 },
   gapXs: { gap: 4 },
+  none: { backgroundColor: slate[50], borderRadius: radius.large, padding: 12 },
   soon: { alignSelf: 'flex-start', backgroundColor: slate[100], borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
   box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: slate[300], alignItems: 'center', justifyContent: 'center' },
   boxOn: { borderColor: zappy[600], backgroundColor: zappy[600] },

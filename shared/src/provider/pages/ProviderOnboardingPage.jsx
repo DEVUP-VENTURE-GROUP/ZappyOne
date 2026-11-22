@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ChevronRight, Loader2, Check, Clock, AlertTriangle, Upload,
-  ShieldCheck, Plus, X, Store, User, FileText, Ban, Camera, Home,
+  ShieldCheck, Plus, X, Store, User, FileText, Ban, Camera, Home, Search,
 } from 'lucide-react';
 import PhotoTiles from '../../components/common/PhotoTiles';
 import {
@@ -27,6 +27,7 @@ import { sendSigned } from '../../utils/sendSigned';
 import InstantIdCheck from '../InstantIdCheck';
 import { servicePhoto } from '../../components/home/problemArt';
 import { artFor } from '../../components/home/serviceArt';
+import { searchServices } from '../serviceSearch';
 
 /** A picture for a service or a kind of work: its upload, our photo, else its character. */
 const pictureOf = (code, domainCode, imageUrl) => imageUrl || (code && servicePhoto(code)) || artFor(code, domainCode)?.still || null;
@@ -246,9 +247,11 @@ function LineStep({ domain, onPick, onRequest }) {
   const [enrol] = useProviderEnrolMutation();
   const [picked, setPicked] = useState([]);
   const [adding, setAdding] = useState(false);
+  const [q, setQ] = useState('');
 
   if (isLoading) return <Spinner />;
   const lines = data?.lines || [];
+  const shown = searchServices(lines, q, picked);
   const toggle = (code) => setPicked((p) => (p.includes(code) ? p.filter((c) => c !== code) : [...p, code]));
 
   async function addPicked() {
@@ -266,7 +269,18 @@ function LineStep({ domain, onPick, onRequest }) {
   return (
     <Shell>
       <p className="-mt-1 text-[13px] text-slate-500">Tick every service you do. You send your documents once.</p>
-      {lines.map((l) => {
+      {lines.length > 5 && (
+        <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-zappy-600 focus-within:ring-2 focus-within:ring-zappy-100">
+          <Search size={16} className="shrink-0 text-slate-400" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search, e.g. sofa, bathroom, AC"
+            aria-label="Search services" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+          {q && <button type="button" onClick={() => setQ('')} aria-label="Clear search" className="text-slate-400 hover:text-slate-600"><X size={16} /></button>}
+        </label>
+      )}
+      {q && !shown.length && (
+        <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">No service matches "{q}". Tap "My service isn't listed" below to ask for it.</p>
+      )}
+      {shown.map((l) => {
         const live = l.status === 'live';
         const on = picked.includes(l.code);
         const go = () => (!live ? null : l.myStatus ? onPick(l) : toggle(l.code));
