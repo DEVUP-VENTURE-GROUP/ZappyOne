@@ -19,9 +19,19 @@ async function lowestPrices(vertical, owners) {
   const workerIds = owners.filter((o) => o.workerId).map((o) => new mongoose.Types.ObjectId(o.workerId));
   const rows = await ProviderPricing.aggregate([
     { $match: { vertical, ...BOOKABLE, $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds } }] } },
-    { $group: { _id: { s: '$shopId', w: '$workerId' }, fromPaise: { $min: '$totalPaise' }, jobs: { $addToSet: '$repairCode' } } },
+    { $group: { _id: { s: '$shopId', w: '$workerId', r: '$repairCode' }, totalPaise: { $min: '$totalPaise' } } },
   ]);
-  return new Map(rows.map((r) => [r._id.s ? `shop:${r._id.s}` : `worker:${r._id.w}`, { fromPaise: r.fromPaise, jobs: r.jobs.length }]));
+  // The "from" price is after each job's offer, and a provider with any live offer says so on its card.
+  const { offerMap, withOffer, keyOf: offerKey } = require('./offers');
+  const offers = await offerMap({ shopIds, workerIds, repairCodes: [...new Set(rows.map((r) => r._id.r))] });
+  const out = new Map();
+  for (const r of rows) {
+    const key = r._id.s ? `shop:${r._id.s}` : `worker:${r._id.w}`;
+    const priced = withOffer({ totalPaise: r.totalPaise }, offers.get(offerKey(r._id.s || r._id.w, r._id.r)));
+    const cur = out.get(key) || { fromPaise: Infinity, jobs: 0, offerLabel: null };
+    out.set(key, { fromPaise: Math.min(cur.fromPaise, priced.totalPaise), jobs: cur.jobs + 1, offerLabel: cur.offerLabel || priced.offerLabel || null });
+  }
+  return out;
 }
 
 // Best puts a provider who can arrive within the promise and keeps time first, then rating, then price; the customer can re-sort the same list.
@@ -150,7 +160,7 @@ async function menuItems({ kind, id, vertical, all = false }) {
   const owner = kind === 'shop' ? { shopId: new mongoose.Types.ObjectId(id) } : { workerId: new mongoose.Types.ObjectId(id) };
   const [prices, caps] = await Promise.all([
     ProviderPricing.find({ ...owner, vertical, ...BOOKABLE }).select('repairCode brandCode modelCode totalPaise estimatedDurationMin warrantyDays qualityCode').lean(),
-    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode includes photoKey photoKeys estimatedDurationMin').lean(),
+    ProviderCapability.find({ ...owner, isActive: true }).select('repairCode includes photoKey photoKeys estimatedDurationMin offer').lean(),
   ]);
   const capOf = new Map(caps.map((c) => [c.repairCode, c]));
   const can = new Set(capOf.keys());
@@ -177,7 +187,8 @@ async function menuItems({ kind, id, vertical, all = false }) {
       if (!row) return [];
       const model = row.modelCode || firstModel.get(b.code) || null;
       const q = new URLSearchParams({ brand: b.code, ...(model && { model }), ...(problem && { problem: problem.code }), provider: `${kind}:${id}` });
-      return [{ brandCode: b.code, typeName: b.name, totalPaise: row.totalPaise, warrantyDays: row.warrantyDays || 0, path: `${pathOf}?${q}` }];
+      const priced = require('./offers').withOffer(row, cap?.offer);
+      return [{ brandCode: b.code, typeName: b.name, totalPaise: priced.totalPaise, wasPaise: priced.offerWasPaise || null, warrantyDays: row.warrantyDays || 0, path: `${pathOf}?${q}` }];
     });
     return {
       hasPhoto: !!photoKey,
@@ -188,6 +199,7 @@ async function menuItems({ kind, id, vertical, all = false }) {
       photoUrls: (await Promise.all(gallery.map((k) => s3Service.signMedia(k).catch(() => null)))).filter(Boolean),
       minutes: cap?.estimatedDurationMin || rows[0]?.estimatedDurationMin || r.estimatedDurationMin || null,
       quoted: r.pricingMode === 'diagnosis_required', options, fromPaise: options.length ? Math.min(...options.map((o) => o.totalPaise)) : null,
+      offerLabel: options.some((o) => o.wasPaise) && require('./offers').isLive(cap?.offer) ? require('./offers').labelOf(cap.offer) : null,
     };
   }));
   // A menu job with no photo is not shown to customers: every service shows at least one photo of the work.
@@ -248,14 +260,16 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
     // Each provider's own photo for the job, else the catalogue's: a job with neither is not shown (every service shows a photo).
     const caps = await ProviderCapability.find({ repairCode: { $in: [...new Set(rows.map((r) => r.repairCode))] }, isActive: true,
       $or: [{ shopId: { $in: rows.map((r) => r.shopId).filter(Boolean) } }, { workerId: { $in: rows.map((r) => r.workerId).filter(Boolean) } }] })
-      .select('shopId workerId repairCode photoKey').lean();
+      .select('shopId workerId repairCode photoKey offer').lean();
     const capPhoto = new Map(caps.map((c) => [`${keyOf(c)}|${c.repairCode}`, c.photoKey || '']));
+    const capOffer = new Map(caps.map((c) => [`${keyOf(c)}|${c.repairCode}`, c.offer]));
     const best = new Map();
     for (const r of rows) {
       const k = `${keyOf(r)}|${r.repairCode}`;
-      if (!best.has(k) || r.totalPaise < best.get(k)) best.set(k, r.totalPaise);
+      const priced = require('./offers').withOffer(r, capOffer.get(k));
+      if (!best.has(k) || priced.totalPaise < best.get(k).totalPaise) best.set(k, priced);
     }
-    for (const [k, fromPaise] of best) {
+    for (const [k, { totalPaise: fromPaise, offerWasPaise, offerLabel }] of best) {
       const [provider, code] = k.split('|');
       const job = jobs.find((j) => j.code === code);
       const front = byKey.get(provider);
@@ -263,7 +277,7 @@ async function searchMenus({ q, lat, lng, limit = 12 }) {
       const photoKey = capPhoto.get(k) || job.photoKey || '';
       if (!photoKey) continue;
       out.push({
-        repairCode: code, name: job.name, vertical, fromPaise, photoKey,
+        repairCode: code, name: job.name, vertical, fromPaise, wasPaise: offerWasPaise || null, offerLabel: offerLabel || null, photoKey,
         provider: { kind: front.kind, id: front.id, name: front.name, rating: front.rating, imageUrl: front.imageUrl, arrivalMinutes: front.arrivalMinutes ?? null, openNow: front.openNow },
         path: `/storefront/${front.kind}/${front.id}?service=${vertical}`,
       });

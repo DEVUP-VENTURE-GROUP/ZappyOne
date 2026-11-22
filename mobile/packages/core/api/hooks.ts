@@ -665,6 +665,7 @@ export const useSavePetProviderRatesMutation = h.useSavePetProviderRatesMutation
 export const useProviderMenuQuery = h.useProviderMenuQuery;
 export const useSaveProviderMenuItemMutation = h.useSaveProviderMenuItemMutation;
 export const useRemoveProviderMenuItemMutation = h.useRemoveProviderMenuItemMutation;
+export const useSetProviderMenuOfferMutation = h.useSetProviderMenuOfferMutation;
 export const useAdjustProviderMenuMutation = h.useAdjustProviderMenuMutation;
 export const useStartMenuFromSamplesMutation = h.useStartMenuFromSamplesMutation;
 export const useBulkRepairProviderPricingMutation = h.useBulkRepairProviderPricingMutation;

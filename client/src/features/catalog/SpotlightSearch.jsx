@@ -119,7 +119,7 @@ function MenuHits({ items, onOpen }) {
                   {i.provider.arrivalMinutes != null && <span>· {i.provider.arrivalMinutes} min away</span>}
                 </span>
               </span>
-              <span className="shrink-0 text-[14px] font-bold tabular-nums text-slate-900">{inr(i.fromPaise)}</span>
+              <span className="shrink-0 text-right text-[14px] font-bold tabular-nums text-slate-900">{inr(i.fromPaise)}{i.wasPaise && <s className="block text-[11.5px] font-medium text-slate-400">{inr(i.wasPaise)}</s>}</span>
             </button>
           </li>
         ))}

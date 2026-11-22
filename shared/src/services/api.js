@@ -737,7 +737,7 @@ export const {
   useProviderInspectionFeeQuery, useSetProviderInspectionFeeMutation,
   usePetProviderRatesQuery, useSavePetProviderRatesMutation,
 
-  useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation, useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
+  useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation, useSetProviderMenuOfferMutation, useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
   useBulkRepairProviderPricingMutation,
   useAdjustRepairProviderPricingMutation,
   useLazyRepairProviderSuggestedPricingQuery,

@@ -147,6 +147,7 @@ function MenuTable({ svc, target }) {
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-800">{i.name}</p>
                     <p className="text-[11px] text-slate-500">{i.own ? 'Their own job' : 'ZappyOne sample'}{i.minutes ? ` · ${i.minutes} min` : ''}</p>
+                    {i.offer && <span className="mt-0.5 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">Offer: {i.offer.label}{i.offer.endsAt ? ` till ${new Date(i.offer.endsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}</span>}
                   </div>
                 </div>
               </td>

@@ -645,6 +645,17 @@ router.put('/provider/menu/item', ...providerOnly,
     prices: Joi.object().pattern(Joi.string().max(60), Joi.number().integer().min(0).max(100000000).allow(null)).default({}),
   })),
   wrap((req) => menuSvc.saveItem(menuSvc.ownerFromAuth(req.auth), req.body.vertical, req.body, actorOf(req))));
+// The partner's own offer on one job: % or whole-rupee paise off with an optional end date; null takes it off (repair/services/offers).
+router.put('/provider/menu/item/:code/offer', ...providerOnly,
+  validate(Joi.object({
+    vertical: menuVertical,
+    offer: Joi.object({ kind: Joi.string().valid('pct', 'flat').required(), value: Joi.number().integer().min(1).max(10000000).required(), endsAt: Joi.date().allow(null) }).allow(null).required(),
+  })),
+  wrap(async (req) => {
+    const owner = menuSvc.ownerFromAuth(req.auth);
+    await require('./services/offers').setOffer(owner, String(req.params.code).toLowerCase(), req.body.offer);
+    return menuSvc.menu(owner, req.body.vertical);
+  }));
 router.delete('/provider/menu/item/:code', ...providerOnly, validate(Joi.object({ vertical: menuVertical }), 'query'),
   wrap((req) => menuSvc.removeItem(menuSvc.ownerFromAuth(req.auth), req.query.vertical, String(req.params.code).toLowerCase())));
 router.post('/provider/menu/adjust', ...providerOnly, validate(Joi.object({ vertical: menuVertical, pct: Joi.number().min(-50).max(100).required() })),

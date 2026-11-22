@@ -2191,6 +2191,7 @@ export function endpoints(b, { adminApiPath }) {
     /** Offered jobs with no photo yet, for the home reminder (repair provider-menu missingPhotos). */
     providerMissingPhotos: b.query({ query: () => '/repair/provider/menu/missing-photos', providesTags: ['ProviderMenu'] }),
     saveProviderMenuItem: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/item', method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
+    setProviderMenuOffer: b.mutation({ query: ({ repairCode, ...body }) => ({ url: `/repair/provider/menu/item/${repairCode}/offer`, method: 'PUT', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     removeProviderMenuItem: b.mutation({ query: ({ vertical, repairCode }) => ({ url: `/repair/provider/menu/item/${repairCode}`, method: 'DELETE', params: { vertical } }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     adjustProviderMenu: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/adjust', method: 'POST', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),
     startMenuFromSamples: b.mutation({ query: (body) => ({ url: '/repair/provider/menu/samples', method: 'POST', body }), invalidatesTags: ['ProviderMenu', 'RepairProvider'] }),

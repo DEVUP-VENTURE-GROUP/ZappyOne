@@ -147,6 +147,8 @@ async function nearbyPriceMap(ctx, repairCodes, { lat, lng, pincode = null, city
     ...LIVE_PRICE, vertical: ctx.vertical, repairCode: { $in: repairCodes },
     $or: [{ shopId: { $in: shopIds } }, { workerId: { $in: workerIds } }],
   }).lean();
+  const { offerMap, withOffer, keyOf } = require('./offers');
+  const offers = await offerMap({ shopIds, workerIds, repairCodes });
   const groups = new Map();
   for (const r of rows) {
     const key = `${r.repairCode}|${r.shopId || r.workerId}`;
@@ -154,7 +156,8 @@ async function nearbyPriceMap(ctx, repairCodes, { lat, lng, pincode = null, city
   }
   for (const list of groups.values()) {
     const code = list[0].repairCode;
-    const row = pickMostSpecific(list, { ...ctx, repairCode: code });
+    const picked = pickMostSpecific(list, { ...ctx, repairCode: code });
+    const row = picked && withOffer(picked, offers.get(keyOf(picked.shopId || picked.workerId, code)));
     if (row && (!out.has(code) || row.totalPaise < out.get(code))) out.set(code, row.totalPaise);
   }
   return out;
@@ -263,12 +266,15 @@ async function resolveProviderPrice(ctx, { shopId = null, workerId = null } = {}
   const row = pickMostSpecific(rows, ctx);
   if (!row) return null;
 
-  return shapePrice(row);
+  return shapePrice(row, await require('./offers').offerFor({ shopId, workerId }, ctx.repairCode));
 }
 
 /** The shape every price resolver hands back, from one stored row. */
-function shapePrice(row) {
+function shapePrice(stored, offer = null) {
+  const row = require('./offers').withOffer(stored, offer);
   return {
+    offerWasPaise: row.offerWasPaise || null,
+    offerLabel: row.offerLabel || null,
     partPaise: row.partCostPaise,
     labourPaise: row.labourPaise,
     consumablesPaise: row.consumablesPaise,
@@ -318,6 +324,7 @@ async function resolveProviderPriceOptions(ctx, { shopId = null, workerId = null
   }).lean();
 
   if (!rows.length) return [];
+  const offer = await require('./offers').offerFor({ shopId, workerId }, ctx.repairCode);
 
   const graded = [...new Set(rows.filter((r) => r.qualityCode).map((r) => r.qualityCode))];
 
@@ -325,13 +332,13 @@ async function resolveProviderPriceOptions(ctx, { shopId = null, workerId = null
   // than invented as a grade the provider never claimed.
   if (!graded.length) {
     const row = pickMostSpecific(rows, { ...ctx, qualityCode: null });
-    return row ? [{ qualityCode: null, ...shapePrice(row) }] : [];
+    return row ? [{ qualityCode: null, ...shapePrice(row, offer) }] : [];
   }
 
   const options = [];
   for (const qualityCode of graded) {
     const row = pickMostSpecific(rows, { ...ctx, qualityCode });
-    if (row) options.push({ qualityCode, ...shapePrice(row) });
+    if (row) options.push({ qualityCode, ...shapePrice(row, offer) });
   }
 
   return options.sort((a, b) => a.totalPaise - b.totalPaise);
@@ -557,6 +564,8 @@ async function buildPriceSnapshot({
     subtotalPaise,
     totalPaise,
     currency: 'INR',
+    offerSavedPaise: providerPrice?.offerWasPaise ? providerPrice.offerWasPaise - providerPrice.totalPaise : 0,
+    offerLabel: providerPrice?.offerWasPaise ? providerPrice.offerLabel || '' : '',
     providerPricingId: providerPrice?.providerPricingId || null,
     providerPricingVersion: providerPrice?.version || null,
     referencePricingId: referencePrice?.referencePricingId || null,

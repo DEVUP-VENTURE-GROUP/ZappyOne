@@ -1,16 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Clock3, Eye, ImageIcon, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react-native';
+import { Clock3, Eye, ImageIcon, Pencil, Plus, Sparkles, Tag, Trash2, X } from 'lucide-react-native';
 import {
   useProviderMenuQuery, useSaveProviderMenuItemMutation, useRemoveProviderMenuItemMutation,
-  useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation,
+  useAdjustProviderMenuMutation, useStartMenuFromSamplesMutation, useSetProviderMenuOfferMutation,
 } from '@zappy/core/api';
+import { OFFER_CHOICES, END_CHOICES, sameOffer, offerBody, endsText } from '@zappy/core/shared/offerChoices';
 import { Button, ErrorState, LoadingState, Text } from '../../../components';
 import { toast } from '../../../components/Toast';
 import { PhotoTiles } from '../../../components/common/PhotoTiles';
 import { errText } from '../../../lib/feedback';
-import { colors, ink, slate, zappy } from '../../../theme/colors';
+import { colors, ink, slate, success, zappy } from '../../../theme/colors';
 import { radius } from '../../../theme/radius';
 import { spacing } from '../../../theme/spacing';
 import { StepShell } from '../setup/StepShell';
@@ -20,7 +21,9 @@ interface MenuType { code: string; name: string }
 interface MenuItem {
   repairCode: string; name: string; own: boolean; offered: boolean; includes: string[]; minutes: number | null;
   photoKey: string; photoUrl: string | null; photoKeys?: string[]; photoUrls?: string[]; prices: Record<string, number | null>; suggested: Record<string, number | null>;
+  offer?: Offer | null;
 }
+interface Offer { kind: 'pct' | 'flat'; value: number; endsAt: string | null; label: string; prices: Record<string, number | null> }
 interface Menu { types: MenuType[]; items: MenuItem[]; tips: string[] }
 
 const rupees = (p: number | null | undefined) => `₹${Math.round((p || 0) / 100).toLocaleString('en-IN')}`;
@@ -89,6 +92,7 @@ export function MenuEditor({ vertical, onBack, onNext, top = null }: { vertical:
             </View>
             <View style={[styles.flex, styles.gapXs]}>
               <Text variant="bodySmall" weight="bold" numberOfLines={2}>{item.name}{item.own ? '  · Your job' : ''}</Text>
+              {item.offer ? <View style={styles.offerBadge}><Text variant="caption" weight="bold" color={success[700]}>{item.offer.label}</Text></View> : null}
               <View style={styles.meta}>
                 {item.minutes ? <View style={styles.row}><Clock3 size={12} color={ink[500]} /><Text variant="caption" color={ink[500]}>{item.minutes} min</Text></View> : null}
                 <Text variant="caption" weight="semibold" color={ink[700]}>
@@ -258,6 +262,7 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }: { vertical: 
               ))}
             </View>
           </View>
+          {!isNew && item.offered && item.repairCode ? <OfferPicker vertical={vertical} item={item as MenuItem} types={types} /> : null}
         </ScrollView>
         <View style={styles.row}>
           {!isNew && item.offered ? <Button label="Remove" variant="dangerGhost" icon={<Trash2 size={15} color="#B42318" />} onPress={drop} loading={removing} /> : null}
@@ -268,8 +273,62 @@ function ItemSheet({ vertical, types, item, suggestions, onClose }: { vertical: 
   );
 }
 
+// One tap puts an offer on this job or takes it off (the websites' OfferPicker); the server sends back what customers will pay.
+function OfferPicker({ vertical, item, types }: { vertical: string; item: MenuItem; types: MenuType[] }) {
+  const [offer, setOffer] = useState<Offer | null>(item.offer || null);
+  const [days, setDays] = useState(item.offer?.endsAt ? -1 : 0);
+  const [save, { isLoading }] = useSetProviderMenuOfferMutation();
+  const first = types.find((t) => item.prices?.[t.code] != null);
+
+  async function choose(choice: { kind: string; value: number } | null, d = days) {
+    try {
+      const res = await save({ vertical, repairCode: item.repairCode, offer: offerBody(choice, d) }).unwrap();
+      setOffer(res.items.find((i: MenuItem) => i.repairCode === item.repairCode)?.offer || null);
+      toast.success(choice ? 'Offer is live' : 'Offer removed');
+    } catch (err) { toast.error(errText(err, 'Could not save the offer')); }
+  }
+
+  return (
+    <View style={styles.offerBox}>
+      <View style={styles.row}><Tag size={14} color={ink[700]} /><Text variant="bodySmall" weight="semibold">Offer (optional)</Text></View>
+      <Text variant="caption" color={ink[500]}>Customers see your offer price with your normal price crossed out. Stop it any time.</Text>
+      <View style={styles.wrap} accessibilityRole="radiogroup">
+        {OFFER_CHOICES.map((c: { label: string; offer: { kind: string; value: number } | null }) => {
+          const on = sameOffer(c.offer, offer);
+          return (
+            <Pressable key={c.label} onPress={() => choose(c.offer)} disabled={isLoading} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[styles.chip, on && styles.chipOn]}>
+              <Text variant="caption" weight="semibold" color={on ? '#fff' : ink[700]}>{c.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {offer ? (
+        <>
+          <View style={styles.wrap} accessibilityRole="radiogroup">
+            {END_CHOICES.map((e: { label: string; days: number }) => (
+              <Pressable key={e.days} onPress={() => { setDays(e.days); choose(offer, e.days); }} disabled={isLoading} accessibilityRole="radio" accessibilityState={{ checked: days === e.days }} style={[styles.chip, days === e.days && styles.chipDark]}>
+                <Text variant="caption" weight="semibold" color={days === e.days ? '#fff' : ink[500]}>{e.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {first && offer.prices?.[first.code] != null ? (
+            <Text variant="bodySmall" color={ink[700]}>
+              Customers pay <Text variant="bodySmall" weight="bold" color={success[700]}>{rupees(offer.prices[first.code])}</Text> instead of <Text variant="bodySmall" color={ink[500]} style={styles.struck}>{rupees(item.prices[first.code])}</Text>{types.length > 1 ? ` for ${first.name}` : ''} · {endsText(offer.endsAt)}
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  offerBox: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.medium, borderWidth: 1, borderColor: colors.border },
+  offerBadge: { alignSelf: 'flex-start', backgroundColor: success[50], borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
+  chipOn: { backgroundColor: success[600], borderColor: success[600] },
+  chipDark: { backgroundColor: ink[900], borderColor: ink[900] },
+  struck: { textDecorationLine: 'line-through' },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, alignItems: 'center' },
   gapXs: { gap: 4 },

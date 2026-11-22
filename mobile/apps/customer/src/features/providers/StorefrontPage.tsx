@@ -21,8 +21,8 @@ import { spacing } from '@zappy/ui/theme/spacing';
 import { PlansNear } from '../plans/PlansNear';
 import { isNewPro } from '@zappy/core/shared/jobsDone';
 
-interface Option { brandCode: string; typeName: string; totalPaise: number; path: string }
-interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; includes?: string[]; photoUrl?: string | null; photoUrls?: string[] }
+interface Option { brandCode: string; typeName: string; totalPaise: number; wasPaise?: number | null; path: string }
+interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; offerLabel?: string | null; includes?: string[]; photoUrl?: string | null; photoUrls?: string[] }
 interface Review { rating: number; text?: string; at?: string }
 const SCREEN_W = Dimensions.get('window').width;
 const rupees = (p: number) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
@@ -46,12 +46,17 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
   const photos: string[] = item.photoUrls?.length ? item.photoUrls : [item.photoUrl].filter(Boolean) as string[];
   const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
   const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
+  const cheapest = item.options.reduce<Option | null>((a, o) => (!a || o.totalPaise < a.totalPaise ? o : a), null);
   return (
     <View style={styles.menuRow}>
       <View style={styles.dishRow}>
         <View style={styles.flex}>
           <Text variant="body" weight="bold">{item.name}</Text>
-          <Text variant="body" weight="semibold">{single ? '' : 'from '}{rupees(item.fromPaise)}</Text>
+          <View style={styles.priceRow}>
+            <Text variant="body" weight="semibold">{single ? '' : 'from '}{rupees(item.fromPaise)}</Text>
+            {cheapest?.wasPaise ? <Text variant="caption" color={ink[500]} style={styles.struck}>{rupees(cheapest.wasPaise)}</Text> : null}
+            {item.offerLabel ? <View style={styles.offerBadge}><Text variant="caption" weight="bold" color={success[700]}>{item.offerLabel}</Text></View> : null}
+          </View>
           {item.minutes ? <View style={styles.inline}><Clock3 size={13} color={ink[500]} /><Text variant="caption" color={ink[500]}>about {item.minutes} min</Text></View> : null}
           {item.quoted ? <Text variant="caption" color={ink[500]}>Final price after a look</Text> : null}
           {includes ? (
@@ -90,7 +95,7 @@ function MenuItem({ item, onBook }: { item: Item; onBook: (o: Option) => void })
           {item.options.map((o) => (
             <Pressable key={o.brandCode} onPress={() => onBook(o)} android_ripple={RIPPLE} accessibilityRole="button" style={styles.option}>
               <Text variant="bodySmall" color={ink[500]}>{o.typeName}</Text>
-              <Text variant="body" weight="bold">{rupees(o.totalPaise)}</Text>
+              <Text variant="body" weight="bold">{rupees(o.totalPaise)}{o.wasPaise ? <Text variant="caption" color={ink[500]} style={styles.struck}>{`  ${rupees(o.wasPaise)}`}</Text> : null}</Text>
             </Pressable>
           ))}
         </Appear>
@@ -224,6 +229,9 @@ export function StorefrontPage() {
 }
 
 const styles = StyleSheet.create({
+  priceRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8 },
+  struck: { textDecorationLine: 'line-through' },
+  offerBadge: { backgroundColor: success[50], borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   page: { flex: 1, backgroundColor: colors.surface },
   band: { backgroundColor: zappy[700], overflow: 'hidden' },
   scrim: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.25)' },

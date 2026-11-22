@@ -80,6 +80,8 @@ const capabilitySchema = new mongoose.Schema(
     photoKey: { type: String, default: '' },
     // Up to six photos of the work; the first is the cover and is also photoKey (older readers keep working).
     photoKeys: { type: [String], default: [] },
+    // The partner's own offer on this job (repair/services/offers): % or whole-rupee paise off, optional end date.
+    offer: { type: new mongoose.Schema({ kind: { type: String, enum: ['pct', 'flat'] }, value: Number, endsAt: { type: Date, default: null } }, { _id: false }), default: null },
 
     isActive: { type: Boolean, default: true, index: true },
   },

@@ -59,7 +59,7 @@ function Card({ s, onOpen, index }) {
           {s.distanceKm != null && <span className="flex items-center gap-1"><MapPin size={13} /> {s.distanceKm < 1 ? `${Math.round(s.distanceKm * 1000)} m` : `${s.distanceKm.toFixed(1)} km`}</span>}
           {s.onTimeRate != null && <span className="flex items-center gap-1"><Clock3 size={13} /> {Math.round(s.onTimeRate * 100)}% on time</span>}
         </div>
-        <p className="mt-1.5 text-[13px] text-slate-600">{s.jobs} {s.jobs === 1 ? 'job' : 'jobs'} on the menu · from <span className="font-extrabold text-[#0F172A]">{rupees(s.fromPaise)}</span></p>
+        <p className="mt-1.5 text-[13px] text-slate-600">{s.jobs} {s.jobs === 1 ? 'job' : 'jobs'} on the menu · from <span className="font-extrabold text-[#0F172A]">{rupees(s.fromPaise)}</span>{s.offerLabel && <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[11.5px] font-bold text-emerald-700">Offers</span>}</p>
       </div>
     </motion.button>
   );

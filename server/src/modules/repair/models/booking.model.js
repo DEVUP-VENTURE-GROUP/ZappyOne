@@ -110,6 +110,9 @@ const priceSnapshotSchema = new mongoose.Schema(
     platformFeePaise: { type: Number, default: 0, min: 0 },
     taxPaise: { type: Number, default: 0, min: 0 },
     discountPaise: { type: Number, default: 0, min: 0 },
+    // The partner's offer already taken off the job price (repair/services/offers), for the bill's "you saved" line.
+    offerSavedPaise: { type: Number, default: 0, min: 0 },
+    offerLabel: { type: String, default: '' },
     commissionPaise: { type: Number, default: 0, min: 0 },
     // What commission is a share of; a partner's own rate is applied to it (shop/partner-commission).
     commissionBasePaise: { type: Number, default: null, min: 0 },

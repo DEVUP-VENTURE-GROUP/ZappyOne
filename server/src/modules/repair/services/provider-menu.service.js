@@ -33,7 +33,7 @@ async function menu(owner, vertical) {
     Brand.find({ category: vertical, isActive: { $ne: false } }).select('code name sortOrder').sort({ sortOrder: 1, name: 1 }).lean(),
     Repair.find({ vertical, isActive: true, isArchived: false, isAddOn: { $ne: true }, $or: [{ owner: null }, { 'owner.id': owner.shopId || owner.workerId }] })
       .select('code name description owner includes photoKey photoKeys estimatedDurationMin displayOrder').sort({ displayOrder: 1, name: 1 }).lean(),
-    ProviderCapability.find({ ...filterOf(owner), vertical }).select('repairCode isActive includes photoKey photoKeys estimatedDurationMin').lean(),
+    ProviderCapability.find({ ...filterOf(owner), vertical }).select('repairCode isActive includes photoKey photoKeys estimatedDurationMin offer').lean(),
     ProviderPricing.find({ ...filterOf(owner), vertical, ...LIVE }).select('repairCode brandCode totalPaise').lean(),
     ZappyReferencePricing.find({ vertical, supersededAt: null, isActive: true }).select('repairCode brandCode recommendedPaise').lean(),
   ]);
@@ -55,6 +55,12 @@ async function menu(owner, vertical) {
       photoKey, photoUrl: photoKey ? await s3Service.signMedia(photoKey).catch(() => null) : null,
       photoKeys, photoUrls: (await Promise.all(photoKeys.map((k) => s3Service.signMedia(k).catch(() => null)))).filter(Boolean),
       prices: Object.fromEntries(types.map((t) => [t.code, priceOf(t.code)])),
+      // Their offer as set (an ended one shows as none), so the editor and the customer agree.
+      offer: require('./offers').isLive(cap?.offer) ? {
+        kind: cap.offer.kind, value: cap.offer.value, endsAt: cap.offer.endsAt || null, label: require('./offers').labelOf(cap.offer),
+        // What customers pay for each option with the offer, worked out by the same rule as every booking.
+        prices: Object.fromEntries(types.map((t) => [t.code, priceOf(t.code) == null ? null : require('./offers').withOffer({ totalPaise: priceOf(t.code) }, cap.offer).totalPaise])),
+      } : null,
       suggested: Object.fromEntries(types.map((t) => [t.code, suggestOf(t.code)])),
     };
   }));

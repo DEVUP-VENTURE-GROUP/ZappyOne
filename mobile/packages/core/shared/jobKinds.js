@@ -175,7 +175,7 @@ export const KINDS = {
           lines: withCarried(repairLines(s, (data.quotes || []).filter((q) => q.status === 'approved').sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]), b),
           totalPaise: plusCarried(s.totalPaise ?? null, b), method: method(b.paymentMethod), paid: b.paymentStatus === 'paid',
           isEstimate: !!s.isEstimate,
-          note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : (t.warranty && s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : ''),
+          note: s.isEstimate ? 'This is an estimate. The final price is confirmed by a quote you approve.' : [t.warranty && s.warrantyDays > 0 ? `${s.warrantyDays}-day warranty` : '', s.offerSavedPaise > 0 ? `You saved ₹${Math.round(s.offerSavedPaise / 100)} with the ${t.pro}'s offer` : ''].filter(Boolean).join(' · '),
         },
         proofs: b.completionPhotos || [],
         trip: tripOf('repair', b),

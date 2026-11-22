@@ -41,12 +41,17 @@ function MenuItem({ item, onBook }) {
   const photos = item.photoUrls?.length ? item.photoUrls : [item.photoUrl].filter(Boolean);
   const act = () => (single ? onBook(item.options[0]) : setOpen((o) => !o));
   const includes = item.includes?.length ? `Includes ${item.includes.join(', ')}` : '';
+  const cheapest = item.options.reduce((a, o) => (!a || o.totalPaise < a.totalPaise ? o : a), null);
   return (
     <li className="border-b border-dashed border-line py-5 last:border-0">
       <div className="flex gap-4">
         <div className="min-w-0 flex-1">
           <h3 className="text-[16.5px] font-bold leading-snug text-ink-900">{item.name}</h3>
-          <p className="mt-1 text-[15px] font-semibold tabular-nums text-ink-900">{single ? '' : 'from '}{rupees(item.fromPaise)}</p>
+          <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-[15px] font-semibold tabular-nums text-ink-900">
+            <span>{single ? '' : 'from '}{rupees(item.fromPaise)}</span>
+            {cheapest?.wasPaise && <s className="text-[13px] font-medium text-ink-400">{rupees(cheapest.wasPaise)}</s>}
+            {item.offerLabel && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11.5px] font-bold text-emerald-700">{item.offerLabel}</span>}
+          </p>
           {item.minutes && <p className="mt-1 flex items-center gap-1 text-[13px] text-ink-500"><Clock3 size={13} /> about {item.minutes} min</p>}
           {item.quoted && <p className="mt-1 text-[13px] text-ink-500">Final price after a look</p>}
           {includes && (
@@ -79,7 +84,7 @@ function MenuItem({ item, onBook }) {
               {item.options.map((o) => (
                 <button key={o.brandCode} type="button" onClick={() => onBook(o)} className="rounded-btn border border-line px-3 py-2.5 text-left hover:border-zappy-600">
                   <span className="block text-[13px] text-ink-500">{o.typeName}</span>
-                  <span className="block text-[15px] font-bold tabular-nums text-ink-900">{rupees(o.totalPaise)}</span>
+                  <span className="block text-[15px] font-bold tabular-nums text-ink-900">{rupees(o.totalPaise)}{o.wasPaise && <s className="ml-1.5 text-[12px] font-medium text-ink-400">{rupees(o.wasPaise)}</s>}</span>
                 </button>
               ))}
             </div>
