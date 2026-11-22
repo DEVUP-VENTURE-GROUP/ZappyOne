@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./pet.controller');
 const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
 const { storefrontLimiter } = require('../../middlewares/rateLimit');
-const { validate } = require('../../middlewares/validate');
+const { validate, notPast } = require('../../middlewares/validate');
 const { SPECIES, PET_SIZES, RISK_LEVELS } = require('../service/pet-passport.model');
 
 /**
@@ -23,7 +23,8 @@ const objectId = Joi.string().hex().length(24);
 
 const locationSchema = Joi.object({
   type: Joi.string().valid('Point').default('Point'),
-  coordinates: Joi.array().items(Joi.number()).length(2).required(),
+  // [longitude, latitude], each within its real range, so an impossible spot is refused before the map index sees it.
+  coordinates: Joi.array().ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required()).length(2).required(),
   address: Joi.string().max(300).allow('', null),
 });
 
@@ -158,7 +159,8 @@ router.post('/bookings', authenticate, requireRole('user'),
     categoryCode: Joi.string().max(60).required(),
     serviceMode: Joi.string().max(40).required(),
     pets: Joi.array().items(petEntrySchema).min(1).max(6).required(),
-    scheduledAt: Joi.date().allow(null),
+    scheduledAt: notPast(),
+    // A date-only day (the website's date field reads as early morning), so same-day check-in must stay allowed.
     checkInAt: Joi.date().allow(null),
     checkOutAt: Joi.date().allow(null),
     serviceLocation: locationSchema.required(),

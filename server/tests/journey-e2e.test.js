@@ -753,7 +753,7 @@ describe('the customer journey', () => {
       });
 
     expect(res.body.replayed).toBe(true);
-    expect(await RepairBooking.countDocuments({ idempotencyKey: 'journey-booking-1' })).toBe(1);
+    expect(await RepairBooking.countDocuments({ idempotencyKey: { $regex: ':journey-booking-1$' } })).toBe(1);
   });
 
   it('46. holds that price even after the shop re-prices tomorrow', async () => {

@@ -26,7 +26,8 @@ async function createBooking(req, res, next) {
     const { booking, replayed } = await bookingService.createBooking({
       ...body,
       userId: req.auth.sub,
-      idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
+      // A key the customer's app sends is theirs alone: another customer's same key never returns this booking.
+      idempotencyKey: (req.get('Idempotency-Key') || req.body.idempotencyKey) ? `${req.auth.sub}:${req.get('Idempotency-Key') || req.body.idempotencyKey}` : null,
     });
     const saved = await require('../../jobs/on-site').saveOnSite(require('../models/booking.model').RepairBooking, booking._id, onSite, replayed);
     // An earlier unpaid cancellation fee rides on this booking (jobs/cancel-fee).

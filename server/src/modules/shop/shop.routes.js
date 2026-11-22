@@ -51,7 +51,7 @@ router.patch(
       text: Joi.string().max(300).required(),
       landmark: Joi.string().max(150).allow('', null).optional(),
       location: Joi.object({
-        coordinates: Joi.array().items(Joi.number()).length(2).required(),
+        coordinates: Joi.array().ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required()).length(2).required(),
       }).required(),
     }).optional(),
     hours: Joi.array().items(Joi.object({

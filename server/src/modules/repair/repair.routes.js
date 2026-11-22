@@ -4,7 +4,7 @@ const ctrl = require('./controllers');
 const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
 const { requireKnownVertical, isValid } = require('./vertical');
 const { SERVICE_MODES } = require('./service-modes');
-const { validate } = require('../../middlewares/validate');
+const { validate, notPast } = require('../../middlewares/validate');
 const { makeLimiter, ratingLimiter } = require('../../middlewares/rateLimit');
 
 /**
@@ -31,7 +31,8 @@ const router = express.Router();
 const objectId = Joi.string().pattern(/^[a-f0-9]{24}$/i);
 
 const locationSchema = Joi.object({
-  coordinates: Joi.array().items(Joi.number()).length(2).required(),
+  // [longitude, latitude], each within its real range, so an impossible spot is refused before the map index sees it.
+  coordinates: Joi.array().ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required()).length(2).required(),
   address: Joi.string().max(300).required(),
   landmark: Joi.string().max(150).allow('', null),
   flatNumber: Joi.string().max(60).allow('', null),
@@ -171,7 +172,7 @@ const groupBase = {
   items: Joi.array().items(groupItem).min(2).max(6).required(),
   serviceMode: Joi.string().valid(...SERVICE_MODES).default('doorstep'),
   location: locationSchema.required(),
-  scheduledAt: Joi.date().allow(null),
+  scheduledAt: notPast(),
 };
 router.post('/booking-groups/quote', authenticate, requireRole('user'), validate(Joi.object(groupBase)), async (req, res, next) => {
   try { res.json(await require('./services/group.service').quote(req.body)); } catch (err) { next(err); }
@@ -185,7 +186,8 @@ router.post('/booking-groups', authenticate, requireRole('user'), validate(Joi.o
   idempotencyKey: Joi.string().max(120).allow(null),
 })), async (req, res, next) => {
   try {
-    const out = await require('./services/group.service').create({ ...req.body, userId: req.auth.sub });
+    // A key the customer's app sends is theirs alone (as for single bookings).
+    const out = await require('./services/group.service').create({ ...req.body, userId: req.auth.sub, idempotencyKey: req.body.idempotencyKey ? `${req.auth.sub}:${req.body.idempotencyKey}` : null });
     res.status(out.replayed ? 200 : 201).json(out);
   } catch (err) { next(err); }
 });
@@ -237,7 +239,7 @@ router.post(
     // The provider list's signed quote distance (services/quote-lock).
     distanceToken: Joi.string().max(400).allow(null, ''),
     location: locationSchema.required(),
-    scheduledAt: Joi.date().allow(null),
+    scheduledAt: notPast(),
     slotLabel: Joi.string().max(80).allow('', null),
     // No discount from the customer: a discount is only ever worked out on the server (a group's later items, repair/services/group).
     // Cash until the gateway is live; the server still decides what is allowed.

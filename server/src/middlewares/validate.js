@@ -1,3 +1,4 @@
+const Joi = require('joi');
 /**
  * Request validation with messages people can act on.
  *
@@ -117,4 +118,7 @@ function validate(schema, source = 'body') {
   };
 }
 
-module.exports = { validate, humanize };
+// A booking time: now or later (5 minutes of slack for phone clocks and slow taps), never a time that has already gone.
+const notPast = () => Joi.date().allow(null).custom((v, h) => (v && v.getTime() < Date.now() - 5 * 60000 ? h.message('Choose a time that has not passed yet.') : v));
+
+module.exports = { validate, humanize, notPast };

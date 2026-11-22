@@ -3,7 +3,7 @@ const Joi = require('joi');
 const ctrl = require('./helping.controller');
 const { authenticate, optionalAuth, requireRole } = require('../../middlewares/auth');
 const { storefrontLimiter } = require('../../middlewares/rateLimit');
-const { validate } = require('../../middlewares/validate');
+const { validate, notPast } = require('../../middlewares/validate');
 const { SERVICE_TYPES, OFFERED_PAYMENT_MODELS } = require('./models/config.model');
 const { PROOF_KINDS, ITEM_STATUSES, RETURN_METHODS } = require('./models/task.model');
 
@@ -24,7 +24,8 @@ const objectId = Joi.string().hex().length(24);
 
 const locationSchema = Joi.object({
   type: Joi.string().valid('Point').default('Point'),
-  coordinates: Joi.array().items(Joi.number()).length(2).required(),
+  // [longitude, latitude], each within its real range, so an impossible spot is refused before the map index sees it.
+  coordinates: Joi.array().ordered(Joi.number().min(-180).max(180).required(), Joi.number().min(-90).max(90).required()).length(2).required(),
   address: Joi.string().max(300).allow('', null),
 });
 
@@ -100,7 +101,7 @@ router.post('/tasks',
     stops: Joi.array().items(stopSchema).max(5).default([]),
     items: Joi.array().items(itemSchema).max(30).default([]),
     returnDetail: returnDetailSchema.allow(null),
-    scheduledAt: Joi.date().allow(null),
+    scheduledAt: notPast(),
     paymentMethod: Joi.string().valid('cash', 'online').default('cash'),
     paymentModel: Joi.string().valid(...OFFERED_PAYMENT_MODELS).default('worker_advance'),
     specialHandling: Joi.boolean().default(false),

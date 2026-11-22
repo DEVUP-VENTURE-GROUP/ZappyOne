@@ -101,7 +101,8 @@ async function createTask(req, res, next) {
     const { task, replayed } = await taskService.createTask({
       ...body,
       userId: req.auth.sub,
-      idempotencyKey: req.get('Idempotency-Key') || req.body.idempotencyKey || null,
+      // A key the customer's app sends is theirs alone: another customer's same key never returns this task.
+      idempotencyKey: (req.get('Idempotency-Key') || req.body.idempotencyKey) ? `${req.auth.sub}:${req.get('Idempotency-Key') || req.body.idempotencyKey}` : null,
     });
     const saved = await require('../jobs/on-site').saveOnSite(require('./models/task.model').HelpingTask, task._id, onSite, replayed);
     if (!replayed) await require('../jobs/cancel-fee').attachCarried('helping', task._id, req.auth.sub);
