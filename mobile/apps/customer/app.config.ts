@@ -33,6 +33,8 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'com.zappyone.app',
+    // Firebase for Android push (native FCM tokens the server sends to); an EAS secret file, so it never sits in git.
+    ...(process.env.GOOGLE_SERVICES_JSON ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON } : {}),
     adaptiveIcon: {
       backgroundColor: '#FFFFFF',
       foregroundImage: './assets/images/adaptive-icon.png',
