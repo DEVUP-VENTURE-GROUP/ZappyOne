@@ -3,13 +3,15 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 type Native = {
-  canFullScreen(): boolean; openFullScreenSettings(): void; enqueueUpload(id: string, fileUri: string, url: string, type: string): boolean;
+  canFullScreen(): boolean; openFullScreenSettings(): void; isLowRam(): boolean; enqueueUpload(id: string, fileUri: string, url: string, type: string): boolean;
 };
 const native = requireOptionalNativeModule<Native>('ZappyNative');
 
 export const zappyNative = {
   available: !!native,
   canFullScreen: (): boolean => { try { return !!native?.canFullScreen(); } catch { return false; } },
+  // Older builds and iPhones without the check count as not low on memory.
+  isLowRam: (): boolean => { try { return !!native?.isLowRam?.(); } catch { return false; } },
   openFullScreenSettings: (): void => { try { native?.openFullScreenSettings(); } catch { /* settings screen missing on this phone */ } },
   // Android finishes the upload on its own (WorkManager), even with the app closed; false when this phone cannot.
   enqueueUpload: (id: string, fileUri: string, url: string, type: string): boolean => { try { return !!native?.enqueueUpload(id, fileUri, url, type); } catch { return false; } },

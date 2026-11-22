@@ -1,5 +1,6 @@
 package expo.modules.zappynative
 
+import android.app.ActivityManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
@@ -16,6 +17,14 @@ class ZappyNativeModule : Module() {
 
   override fun definition() = ModuleDefinition {
     Name("ZappyNative")
+
+    // A phone short on memory (Android's own low-RAM flag, or under 3 GB): the app skips heavy animations there.
+    Function("isLowRam") {
+      val am = context.getSystemService(ActivityManager::class.java)
+      val info = ActivityManager.MemoryInfo()
+      am.getMemoryInfo(info)
+      am.isLowRamDevice || info.totalMem < 3L * 1024 * 1024 * 1024
+    }
 
     Function("canFullScreen") {
       if (Build.VERSION.SDK_INT < 34) true

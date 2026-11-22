@@ -5,6 +5,7 @@
  * customers paid the shop.
  */
 import { useState } from 'react';
+import { RingPrompt } from '../components/RingPrompt';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -102,6 +103,7 @@ export function ShopWorkerHome() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        <RingPrompt />
         <View style={[styles.hero, onDuty && styles.heroOn]}>
           <View style={styles.flex}>
             <Text variant="heading3" weight="black">{onDuty ? 'On duty' : 'Off duty'}</Text>

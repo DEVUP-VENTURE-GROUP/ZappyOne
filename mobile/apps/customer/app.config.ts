@@ -1,4 +1,6 @@
 import type { ExpoConfig } from 'expo/config';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withOptionalPortrait = require('../../packages/core/config/optional-portrait');
 
 /**
  * ZappyOne. Store identity, permissions and native plugins.
@@ -41,7 +43,7 @@ const config: ExpoConfig = {
     },
     permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'CAMERA', 'POST_NOTIFICATIONS'],
     // Merged in by libraries but never used: overlays, and broad storage (photos use the system picker).
-    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.RECORD_AUDIO'],
+    blockedPermissions: ['android.permission.USE_FULL_SCREEN_INTENT', 'android.permission.SYSTEM_ALERT_WINDOW', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.RECORD_AUDIO'],
     config: { googleMaps: { apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY ?? '' } },
   },
   plugins: [
@@ -79,4 +81,4 @@ const config: ExpoConfig = {
   owner: 'devup-ventures-01',
 };
 
-export default config;
+export default withOptionalPortrait(config);

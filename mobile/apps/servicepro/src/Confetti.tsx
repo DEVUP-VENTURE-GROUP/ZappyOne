@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Dimensions, StyleSheet } from 'react-native';
 import { Canvas, Group, RoundedRect } from '@shopify/react-native-skia';
 import { Easing, useDerivedValue, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import { zappyNative } from '@zappy/native';
 
 const COLORS = ['#1F4FD8', '#3463DD', '#F59E0B', '#FBBF24', '#22C55E'];
 type Piece = { x: number; y0: number; w: number; h: number; color: string; speed: number; wobble: number; spin: number };
@@ -15,7 +16,9 @@ function Bit({ p, progress, fall }: { p: Piece; progress: SharedValue<number>; f
   return <Group transform={transform}><RoundedRect x={-p.w / 2} y={-p.h / 2} width={p.w} height={p.h} r={2} color={p.color} /></Group>;
 }
 
-export function Confetti({ count = 70 }: { count?: number }) {
+export function Confetti({ count: wanted = 70 }: { count?: number }) {
+  // Lighter on phones short on memory, so the celebration never stutters there.
+  const count = zappyNative.isLowRam() ? Math.min(wanted, 18) : wanted;
   const { width, height } = Dimensions.get('window');
   const progress = useSharedValue(0);
   const [still, setStill] = useState(true);

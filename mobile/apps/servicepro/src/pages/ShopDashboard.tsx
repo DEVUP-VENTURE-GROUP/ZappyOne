@@ -5,6 +5,7 @@
  * week), and what still blocks me (the setup band, only when real).
  */
 import { useState } from 'react';
+import { RingPrompt } from '../components/RingPrompt';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,6 +112,7 @@ export function ShopDashboard() {
       <ScrollView contentContainerStyle={styles.body} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <ShopHeader shop={shop} trade={workspace?.domains?.[0]?.name} live={!!liveNow} isOpen={isOpen}
           blocker={shop?.bookable?.reason || (kycStatus !== 'approved' ? 'Documents not approved yet' : !hasPin ? 'Pin your shop address' : !shop?.services?.length ? 'Add a service' : null)} />
+        <RingPrompt />
         <MissingPhotosCard to="/shop/work" />
         {askingNow > 0 ? (
           <Pressable onPress={() => go('/shop/price-requests')} accessibilityRole="button" style={styles.asking}>

@@ -1,5 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 import { withInfoPlist, type ConfigPlugin } from 'expo/config-plugins';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withOptionalPortrait = require('../../packages/core/config/optional-portrait');
 
 // expo-task-manager adds Background fetch on its own; ServicePro only runs location in the background, and Apple asks that no unused background mode be declared.
 const withoutBackgroundFetch: ConfigPlugin = (c) => withInfoPlist(c, (m) => {
@@ -97,4 +99,4 @@ const config: ExpoConfig = {
   owner: 'devup-ventures-01',
 };
 
-export default withoutBackgroundFetch(config);
+export default withOptionalPortrait(withoutBackgroundFetch(config));
