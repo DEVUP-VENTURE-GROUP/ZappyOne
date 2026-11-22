@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config';
+import { withAndroidManifest } from 'expo/config-plugins';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const withOptionalPortrait = require('../../packages/core/config/optional-portrait');
 
@@ -81,4 +82,4 @@ const config: ExpoConfig = {
   owner: 'devup-ventures-01',
 };
 
-export default withOptionalPortrait(config);
+export default withOptionalPortrait(config, withAndroidManifest);
