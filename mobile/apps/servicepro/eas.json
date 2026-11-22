@@ -41,7 +41,10 @@
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://api.zappyone.com"
       },
-      "node": "22.13.0"
+      "node": "22.13.0",
+      "android": {
+        "resourceClass": "large"
+      }
     }
   },
   "submit": {
