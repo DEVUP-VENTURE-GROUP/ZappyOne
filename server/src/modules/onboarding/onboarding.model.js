@@ -90,6 +90,8 @@ const serviceLineSchema = new mongoose.Schema(
     staffOnly: { type: Boolean, default: false },
     // ZappyOne staff do this service too, alongside partners: every staff member is approved for it (onboarding/staff-lines).
     staffDoes: { type: Boolean, default: false },
+    // A service opened from one partner's request is theirs alone until admin opens it to everyone.
+    privateTo: { type: new mongoose.Schema({ kind: { type: String, enum: ['shop', 'worker'], required: true }, id: { type: mongoose.Schema.Types.ObjectId, required: true } }, { _id: false }), default: null },
     // What its booking screen asks (helping engine), so a new service needs no app update; see shared/customer/helpModes.
     form: { type: mongoose.Schema.Types.Mixed, default: null },
     // Apps below this UI level (X-UI-Level header; old apps send none) cannot open it, so it is hidden there.

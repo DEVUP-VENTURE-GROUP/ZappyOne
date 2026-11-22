@@ -412,6 +412,7 @@ const lineRequests = {
       const line = await require('./line-open').openService(reqDoc, {
         code, name, domainCode, status, repairVertical, serviceImage, note: req.body.note || '', reviewerId: req.auth.sub,
         packages: req.body.packages, typeWord: req.body.typeWord, types: req.body.types, thing: req.body.thing,
+        forEveryone: req.body.forEveryone === true,
       });
 
       await auditService.fromRequest(
@@ -469,6 +470,13 @@ async function overview(req, res, next) {
           : null);
     const tally = {};
     for (const c of counts) (tally[c._id.line] ||= {})[c._id.status] = c.n;
+    // The partner a private service belongs to, by name, for the "only for" label.
+    const privateIds = (kind) => lineRows.filter((l) => l.privateTo?.kind === kind).map((l) => l.privateTo.id);
+    const [shopNames, workerNames] = await Promise.all([
+      require('../shop/shop.model').find({ _id: { $in: privateIds('shop') } }).select('businessName').lean(),
+      require('../worker/worker.model').find({ _id: { $in: privateIds('worker') } }).select('name').lean(),
+    ]);
+    const ownerName = new Map([...shopNames.map((s) => [String(s._id), s.businessName]), ...workerNames.map((w) => [String(w._id), w.name])]);
 
     // imageKey is what forms edit; imageUrl is signed for display and expires.
     const withKey = (rows) => rows.map((r) => ({ ...r, imageKey: r.imageUrl || '' }));
@@ -482,8 +490,9 @@ async function overview(req, res, next) {
         approved,
         pending: tally[l.code]?.pending_review || 0,
         console: consoleFor(l),
+        privateToName: l.privateTo ? ownerName.get(String(l.privateTo.id)) || 'one partner' : null,
         // Same rule the customer catalog applies (coverage.service.loadLiveLines).
-        liveForCustomers: l.status === 'live' && l.isActive !== false && !!l.customerPath && approved > 0,
+        liveForCustomers: l.status === 'live' && l.isActive !== false && !!l.customerPath && !l.privateTo && approved > 0,
       };
     });
     const domainsOut = domainsSigned.map((d) => {

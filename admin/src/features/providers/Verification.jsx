@@ -280,19 +280,19 @@ function Requests() {
 
   async function doApprove(row) {
     const f = form[row._id] || {};
-    if (!f.code || !(f.domainCode || row.domainCode)) {
-      return toast.error('A code and a domain are required to create the service');
-    }
+    if (!(f.domainCode || row.domainCode)) return toast.error('Pick the category this service belongs to');
+    const code = f.code || `${String(row.proposedName).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'service'}_${Math.random().toString(36).slice(2, 6)}`;
     try {
       await approve({
         id: row._id,
-        code: f.code,
+        code,
+        forEveryone: f.forEveryone === true,
         name: f.name || row.proposedName,
         domainCode: f.domainCode || row.domainCode,
         status: f.status || 'coming_soon',
         serviceImage: f.serviceImage ?? row.photoKeys?.[0] ?? '',
       }).unwrap();
-      toast.success(row.packages?.length ? 'Service opened with the proposed jobs; the provider can now get verified for it' : 'Service created');
+      toast.success(f.forEveryone ? 'Service opened for every partner' : 'Approved for this partner only');
       refetch();
     } catch (err) { toast.error(err?.data?.error || 'Failed'); }
   }
@@ -377,11 +377,16 @@ function Requests() {
                 {domains.map((d) => <option key={d.code} value={d.code}>{d.name}</option>)}
               </select>
               <input
-                placeholder="new code"
+                placeholder="code (optional)"
                 className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm w-40 outline-none focus:ring-2 focus:ring-blue-500"
                 value={form[row._id]?.code || ''}
                 onChange={(e) => setForm((f) => ({ ...f, [row._id]: { ...f[row._id], code: e.target.value } }))}
               />
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 py-1.5">
+                <input type="checkbox" className="accent-green-600" checked={form[row._id]?.forEveryone === true}
+                  onChange={(e) => setForm((f) => ({ ...f, [row._id]: { ...f[row._id], forEveryone: e.target.checked } }))} />
+                Show to every partner
+              </label>
               <button onClick={() => doApprove(row)}
                 className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold">
                 {row.packages?.length ? 'Open for booking' : 'Create service'}

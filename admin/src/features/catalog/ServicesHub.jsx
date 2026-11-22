@@ -110,6 +110,14 @@ function DomainsView({ domains, onOpen, onChanged }) {
 /* Level 2 — services in a domain */
 function DomainView({ domain, onBack, onOpen, onChanged }) {
   const [, setParams] = useSearchParams();
+  const [update] = useAdminOnboardingUpdateMutation();
+  async function openToEveryone(l) {
+    try {
+      await update({ resource: 'lines', id: l._id, privateTo: null }).unwrap();
+      toast.success(`${l.name} is now open to every partner`);
+      onChanged();
+    } catch (err) { toast.error(err?.data?.error || 'Could not save'); }
+  }
   const [editingDomain, setEditingDomain] = useState(false);
   const [editingLine, setEditingLine] = useState(null);
   return (
@@ -138,6 +146,12 @@ function DomainView({ domain, onBack, onOpen, onChanged }) {
                   <p className="font-semibold text-slate-900">{l.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${st.tone}`}>{st.text}</span>
+                    {l.privateToName && (
+                      <span className="flex items-center gap-2 text-[11px] font-bold text-violet-700">
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5">Only for {l.privateToName}</span>
+                        <button onClick={() => openToEveryone(l)} className="font-semibold text-zappy-700 hover:underline">Show to every partner</button>
+                      </span>
+                    )}
                     <Stat Icon={Users}>{l.approved} approved</Stat>
                     {l.pending > 0 && (
                       <button onClick={() => setParams({ tab: 'verification', v: 'queue' })} className="text-xs font-semibold text-amber-600 hover:underline">

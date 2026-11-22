@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { httpError } = require('../../core/errors');
 const { carryIdentity } = require('./identity');
 const {
@@ -40,8 +41,9 @@ async function listDomains() {
 // Staff-only services belong to ZappyOne staff only while own staff runs; in version 1 (switch off) verified partners take them.
 const staffOnlyApplies = () => require('../feature-flags/feature-flag.service').isEnabled('own_staff');
 
-async function listLines({ domainCode, providerKind = null, staff = false } = {}) {
+async function listLines({ domainCode, providerKind = null, staff = false, owner = null } = {}) {
   const filter = { isActive: true, isArchived: false, ...(staff || !(await staffOnlyApplies()) ? {} : { staffOnly: { $ne: true } }) };
+  filter.$or = owner?.id && mongoose.Types.ObjectId.isValid(owner.id) ? [{ privateTo: null }, { 'privateTo.id': new mongoose.Types.ObjectId(owner.id) }] : [{ privateTo: null }];
   if (domainCode) filter.domainCode = String(domainCode).toLowerCase();
   if (providerKind) filter.providerKinds = providerKind;
 
@@ -127,7 +129,7 @@ async function enrol({ owner, providerKind, lineCode }) {
   const line = await ServiceLine.findOne({
     code: String(lineCode).toLowerCase(), isActive: true, isArchived: false,
   }).lean();
-  if (!line) throw httpError('Unknown service line', 404, 'UNKNOWN_LINE');
+  if (!line || (line.privateTo && String(line.privateTo.id) !== String(owner.id))) throw httpError('Unknown service line', 404, 'UNKNOWN_LINE');
 
   if (line.status !== 'live') {
     throw httpError(
@@ -427,7 +429,8 @@ async function requestLine({ owner, providerKind, domainCode = '', proposedName,
 async function requestWarnings(r) {
   const out = [];
   const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const same = await ServiceLine.findOne({ name: new RegExp(`^\\s*${esc(String(r.proposedName).trim())}\\s*$`, 'i'), isActive: { $ne: false } }).select('code name').lean();
+  // Another partner's private service is not one this partner can join, so only shared services and their own count.
+  const same = await ServiceLine.findOne({ name: new RegExp(`^\\s*${esc(String(r.proposedName).trim())}\\s*$`, 'i'), isActive: { $ne: false }, $or: [{ privateTo: null }, ...(r.shopId || r.workerId ? [{ 'privateTo.id': r.shopId || r.workerId }] : [])] }).select('code name').lean();
   if (same) out.push({ code: 'DUPLICATE', blocking: true, message: `"${same.name}" already exists. Add yourself to it from Add a service instead; ZappyOne will check this one.` });
   if (!r.domainCode) out.push({ code: 'NO_GROUP', blocking: true, message: 'Pick which group it belongs to, so ZappyOne can place it.' });
   if (!r.packages?.length) out.push({ code: 'NO_JOBS', blocking: true, message: 'Add at least one job with its time and price to go live straight away; until then ZappyOne reviews it.' });

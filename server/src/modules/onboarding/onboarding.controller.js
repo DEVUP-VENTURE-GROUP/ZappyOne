@@ -37,6 +37,7 @@ async function listLines(req, res, next) {
       domainCode: req.query.domainCode,
       providerKind: owner.providerKind,
       staff,
+      owner,
     });
 
     // Pair each line with this provider's own state on it, so the picker can

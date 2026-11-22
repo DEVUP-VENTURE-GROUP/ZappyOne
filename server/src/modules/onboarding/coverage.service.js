@@ -25,7 +25,7 @@ const PET_MAX_RADIUS_KM = 50;
 async function loadOfferedLines() {
   const [domains, lines, approved] = await Promise.all([
     ServiceDomain.find({ isActive: true, isArchived: false }).sort({ displayOrder: 1, name: 1 }).lean(),
-    ServiceLine.find({ status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' } })
+    ServiceLine.find({ status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' }, privateTo: null })
       .sort({ displayOrder: 1, name: 1 }).lean(),
     ProviderEnrolment.distinct('lineCode', { status: 'approved' }),
   ]);
@@ -36,7 +36,7 @@ async function loadOfferedLines() {
 async function loadLiveLines() {
   const [domains, candidates, approved] = await Promise.all([
     ServiceDomain.find({ isActive: true, isArchived: false }).sort({ displayOrder: 1, name: 1 }).lean(),
-    ServiceLine.find({ status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' } })
+    ServiceLine.find({ status: 'live', isActive: true, isArchived: false, customerPath: { $ne: '' }, privateTo: null })
       .sort({ displayOrder: 1, name: 1 }).lean(),
     ProviderEnrolment.distinct('lineCode', { status: 'approved' }),
   ]);

@@ -32,7 +32,9 @@ async function carryRequestOver(reqDoc, line, offered, slug, { serviceImage } = 
 
 // Opens a requested service for real: the line (bookable at once when it comes with jobs), the requester's menu and enrolment, and the request marked approved.
 // Used by admin's approval and by a partner's own request going live directly (onboarding.service requestLine).
-async function openService(reqDoc, { code, name, domainCode, status = 'coming_soon', repairVertical = null, serviceImage, note = '', reviewerId = null, packages, typeWord, types, thing } = {}) {
+async function openService(reqDoc, { code, name, domainCode, status = 'coming_soon', repairVertical = null, serviceImage, note = '', reviewerId = null, packages, typeWord, types, thing, forEveryone = false } = {}) {
+  // Only a service this approval creates becomes the requester's own; an existing code is never made private.
+  const isNew = !(await ServiceLine.exists({ code: String(code).toLowerCase() }));
   // With packages (the provider's own, or admin's edit of them) the approval opens a bookable fixed-price line at once; without, a bare line as before.
   const offered = packages?.length ? packages : (reqDoc.packages || []);
   const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'job';
@@ -52,6 +54,9 @@ async function openService(reqDoc, { code, name, domainCode, status = 'coming_so
       repairVertical,
     });
 
+  if (isNew && !forEveryone) {
+    await ServiceLine.updateOne({ code: line.code }, { $set: { privateTo: reqDoc.shopId ? { kind: 'shop', id: reqDoc.shopId } : { kind: 'worker', id: reqDoc.workerId } } });
+  }
   if (offered.length) await carryRequestOver(reqDoc, line, offered, slug, { serviceImage });
   else if (serviceImage !== undefined) await ServiceLine.updateOne({ code: line.code }, { $set: { imageUrl: serviceImage } });
 
