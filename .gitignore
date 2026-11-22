@@ -29,3 +29,7 @@ deploy/certbot-www/
 
 # Checkpoint gate output (tools/checkpoint-gate)
 gate-report/
+
+# Apple push key and other server secrets: never in git
+*.p8
+server/secrets/
