@@ -26,7 +26,8 @@ const isConfigured = () => !!keyConfig();
 let cached = { token: null, at: 0 };
 function providerToken(cfg) {
   if (cached.token && Date.now() - cached.at < 40 * 60 * 1000) return cached.token;
-  cached = { token: jwt.sign({ iss: cfg.teamId, iat: Math.floor(Date.now() / 1000) }, cfg.key, { algorithm: 'ES256', header: { alg: 'ES256', kid: cfg.keyId }, noTimestamp: true }), at: Date.now() };
+  // jsonwebtoken adds `iat` itself; never pass noTimestamp, which deletes it, and Apple answers 403 InvalidProviderToken without it.
+  cached = { token: jwt.sign({ iss: cfg.teamId }, cfg.key, { algorithm: 'ES256', header: { alg: 'ES256', kid: cfg.keyId } }), at: Date.now() };
   return cached.token;
 }
 

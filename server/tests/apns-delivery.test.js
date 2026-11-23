@@ -78,6 +78,8 @@ test('a customer push reaches Apple signed with the team key, for the customer a
   expect(headers['apns-push-type']).toBe('alert');
   const claims = jwt.verify(headers.authorization.replace('bearer ', ''), publicKey, { algorithms: ['ES256'] });
   expect(claims.iss).toBe('TEAM123456');
+  // Apple rejects a provider token without iat (403 InvalidProviderToken).
+  expect(Math.abs(claims.iat - Date.now() / 1000)).toBeLessThan(60);
   expect(jwt.decode(headers.authorization.replace('bearer ', ''), { complete: true }).header.kid).toBe('KEY1234567');
   expect(body.body.deepLink).toBe('/orders/9');
 });
