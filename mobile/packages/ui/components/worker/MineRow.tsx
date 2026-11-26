@@ -11,7 +11,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { StagePill } from './DashboardUI';
 
-export interface MineJob { kind: string; id: string; to: string; title: string; subtitle?: string; status: string; attention?: boolean }
+export interface MineJob { kind: string; id: string; to: string; title: string; subtitle?: string; status: string; attention?: boolean; time?: string | null }
 
 /* A job in hand: what, where, which stage. */
 export function MineRow({ job, onPress, compact = false }: { job: MineJob; onPress: () => void; compact?: boolean }) {
@@ -20,7 +20,7 @@ export function MineRow({ job, onPress, compact = false }: { job: MineJob; onPre
       android_ripple={RIPPLE} style={[styles.mine, compact ? styles.mineCompact : styles.mineCard]}>
       <View style={styles.flex}>
         <Text variant="body" weight="semibold" numberOfLines={1} style={styles.capitalize}>{job.title}</Text>
-        {job.subtitle ? <Text variant="bodySmall" color={colors.textSecondary} numberOfLines={1} style={styles.capitalize}>{job.subtitle}</Text> : null}
+        {job.subtitle || job.time ? <Text variant="bodySmall" color={colors.textSecondary} numberOfLines={1} style={styles.capitalize}>{job.time ? <Text variant="bodySmall" weight="semibold" color={ink[700]}>{job.time}{job.subtitle ? ', ' : ''}</Text> : null}{job.subtitle}</Text> : null}
       </View>
       <StagePill label={job.status} attention={job.attention} />
       <ChevronRight size={16} color={ink[400]} />

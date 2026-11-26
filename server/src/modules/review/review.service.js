@@ -96,9 +96,12 @@ async function publicSummary({ workerId, shopId }, { limit = 12 } = {}) {
       service: r.serviceLabel,
       at: r.createdAt,
       by: maskName(r.userId?.name),
+      reply: replyOf(r),
     })),
   };
 }
+
+const replyOf = (r) => (r.reply?.text ? { text: r.reply.text, at: r.reply.at } : null);
 
 /** Which provider field a signed-in account's reviews are filed under. */
 const OWNER_KEY = { worker: 'workerId', shop: 'shopId', event_partner: 'partnerId' };
@@ -139,6 +142,7 @@ async function mine({ role, id }, { page = 1, limit = 20 } = {}) {
       hidden: r.status === 'hidden',
       excluded: r.excluded,
       reported: r.flagged,
+      reply: replyOf(r),
     })),
   };
 }
@@ -159,6 +163,21 @@ async function report({ role, id }, reviewId, reason) {
   return { reported: true };
 }
 
+/** The provider answers a review in public, once, and may change or take it back; contact details and abuse are refused, not hidden later. */
+async function reply({ role, id }, reviewId, text) {
+  const key = OWNER_KEY[role];
+  if (!key || !mongoose.isValidObjectId(reviewId)) throw Object.assign(new Error('Review not found'), { status: 404, code: 'NOT_FOUND' });
+  const words = String(text || '').trim();
+  if (words && autoFlag(words)) throw Object.assign(new Error('Keep phone numbers, emails and rude words out of your reply'), { status: 400, code: 'REPLY_NOT_ALLOWED' });
+  const r = await Review.findOneAndUpdate(
+    { _id: reviewId, [key]: oid(id) },
+    { $set: { reply: { text: words, at: words ? new Date() : null } } },
+    { new: true },
+  ).lean();
+  if (!r) throw Object.assign(new Error('Review not found'), { status: 404, code: 'NOT_FOUND' });
+  return { reply: replyOf(r) };
+}
+
 /** Admin queue: reported/auto-flagged first, or every review of a rating. */
 async function adminList({ flagged, rating, page = 1, limit = 30 } = {}) {
   const q = {};
@@ -175,7 +194,7 @@ async function adminList({ flagged, rating, page = 1, limit = 30 } = {}) {
       id: String(r._id), kind: r.kind, rating: r.rating, text: r.comment, service: r.serviceLabel, at: r.createdAt,
       customer: r.userId ? { name: r.userId.name, phone: r.userId.phone } : null,
       provider: r.shopId?.businessName || r.partnerId?.businessName || r.workerId?.name || null,
-      status: r.status, excluded: r.excluded, flagged: r.flagged, flagReason: r.flagReason, moderation: r.moderation,
+      status: r.status, excluded: r.excluded, flagged: r.flagged, flagReason: r.flagReason, moderation: r.moderation, reply: replyOf(r),
     })),
   };
 }
@@ -191,6 +210,7 @@ async function moderate(reviewId, { action, reason = '' }, adminId) {
   const set = {
     hide: { status: 'hidden' }, show: { status: 'visible' },
     exclude: { excluded: true }, include: { excluded: false }, dismiss: {},
+    remove_reply: { reply: { text: '', at: null } },
   }[action];
   if (!set) throw Object.assign(new Error('Unknown action'), { status: 400, code: 'BAD_ACTION' });
   Object.assign(r, set, { flagged: false, moderation: { by: adminId || null, at: new Date(), reason: String(reason).slice(0, 300) } });
@@ -201,4 +221,4 @@ async function moderate(reviewId, { action, reason = '' }, adminId) {
   return r.toObject();
 }
 
-module.exports = { recordReview, recomputeRating, publicSummary, maskName, autoFlag, mine, report, adminList, moderate, OWNER_KEY };
+module.exports = { recordReview, recomputeRating, publicSummary, maskName, autoFlag, mine, report, reply, adminList, moderate, OWNER_KEY };

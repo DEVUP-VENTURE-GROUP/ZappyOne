@@ -10,6 +10,7 @@ import BoostTips from './economics/BoostTips';
 import Surge from './economics/Surge';
 import Dispatch from './economics/Dispatch';
 import PartnerCommission from './economics/PartnerCommission';
+import PartnerReferral from './economics/PartnerReferral';
 import SmallJobs from './economics/SmallJobs';
 import Travel from './economics/Travel';
 import RunnerAccess from './economics/RunnerAccess';
@@ -222,7 +223,7 @@ export default function Economics() {
         ))}
       </div>
       {tab === 'fees' && <FeesTab />}
-      {tab === 'partners' && <PartnerCommission />}
+      {tab === 'partners' && <div className="space-y-4"><PartnerCommission /><PartnerReferral /></div>}
       {tab === 'smalljobs' && <SmallJobs />}
       {tab === 'travel' && <Travel />}
       {tab === 'runners' && <RunnerAccess />}

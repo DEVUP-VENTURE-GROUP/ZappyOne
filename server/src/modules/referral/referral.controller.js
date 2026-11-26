@@ -38,6 +38,10 @@ async function applyCode(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function getPartnerCard(req, res, next) {
+  try { res.json({ card: await require('./partner-referral').card({ kind: req.auth.role, id: req.auth.sub }) }); } catch (err) { next(err); }
+}
+
 async function getHistory(req, res, next) {
   try {
     const code = await ReferralCode.findOne({
@@ -64,4 +68,4 @@ async function getHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { getMyCode, applyCode, getHistory };
+module.exports = { getMyCode, applyCode, getHistory, getPartnerCard };

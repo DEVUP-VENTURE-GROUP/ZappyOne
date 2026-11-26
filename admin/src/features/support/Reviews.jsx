@@ -24,6 +24,7 @@ function Row({ r }) {
     ...(r.status === 'hidden' ? [['show', 'Show words']] : [['hide', 'Hide words']]),
     ...(r.excluded ? [['include', 'Count again']] : [['exclude', "Don't count"]]),
     ...(r.flagged ? [['dismiss', 'Keep as is']] : []),
+    ...(r.reply ? [['remove_reply', 'Remove reply']] : []),
   ];
 
   return (
@@ -40,6 +41,7 @@ function Row({ r }) {
             <b className="text-slate-700">{r.customer?.name || 'Customer'}</b> about <b className="text-slate-700">{r.provider || 'provider'}</b>
           </p>
           {r.text ? <p className="mt-2 text-sm text-slate-800">{r.text}</p> : <p className="mt-2 text-sm italic text-slate-400">Stars only, no words</p>}
+          {r.reply && <p className="mt-2 border-l-2 border-slate-200 pl-3 text-[13px] text-slate-600"><b className="text-slate-700">Reply:</b> {r.reply.text}</p>}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {r.flagged && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{r.flagReason || 'Flagged'}</span>}
             {r.status === 'hidden' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">Words hidden</span>}

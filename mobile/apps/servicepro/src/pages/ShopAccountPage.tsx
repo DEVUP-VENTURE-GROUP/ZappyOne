@@ -17,6 +17,7 @@ import { colors, danger, ink, slate, zappy } from '@zappy/ui/theme/colors';
 import { radius } from '@zappy/ui/theme/radius';
 import { spacing } from '@zappy/ui/theme/spacing';
 import { DeleteAccountCard } from '@zappy/ui/components/account/DeleteAccountCard';
+import { InvitePartnersCard } from '@zappy/ui/provider/components/InvitePartnersCard';
 import { LegalLinks } from '@zappy/ui/components/account/LegalLinks';
 
 const ICONS: Record<string, LucideIcon> = { MessageSquareQuote, KanbanSquare, Repeat, BarChart3, Wallet, Landmark, Star, ShieldCheck, Scale, PlusCircle, Headphones };
@@ -121,6 +122,7 @@ export function ShopAccountPage() {
           ); })}
         </View>
 
+        <InvitePartnersCard />
         <RingSetting />
         <BubbleSetting />
         <View style={styles.cardFlat}>

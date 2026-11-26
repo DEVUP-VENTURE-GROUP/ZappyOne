@@ -3,6 +3,7 @@ import { X, Star, BadgeCheck, Briefcase, CalendarDays, ThumbsUp, Loader2, Quote 
 import { useGetWorkerPublicProfileQuery } from '@shared/services/api';
 import { serviceLabel } from '@shared/constants/services';
 import { isNewPro } from '@shared/customer/jobsDone';
+import ReviewReply from './ReviewReply';
 
 function timeAgo(d) {
   if (!d) return '';
@@ -143,6 +144,7 @@ export default function WorkerProfileSheet({ workerId, open, onClose }) {
                           </div>
                           <p className="text-[13px] text-slate-700 leading-snug flex gap-1"><Quote size={12} className="text-slate-300 shrink-0 mt-0.5" />{r.text}</p>
                           {r.service && <p className="text-[10.5px] text-slate-400 mt-1.5 pl-4">{serviceLabel(r.service)}</p>}
+                          <ReviewReply reply={r.reply} name={w.name} />
                         </div>
                       ))}
                     </div>

@@ -5,6 +5,7 @@ import { useFocusField } from '@shared/hooks/useFocusField';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Loader2, Store, Landmark, Bell, Wallet, ShieldCheck, ChevronRight, Phone, Mail } from 'lucide-react';
+import InvitePartnersCard from '@shared/provider/components/InvitePartnersCard';
 import { useShopMeQuery, useUpdateShopMeMutation } from '@shared/services/api';
 
 /**
@@ -80,6 +81,7 @@ export default function ShopAccountPage() {
             </button>
           ))}
         </section>
+        <InvitePartnersCard />
       </div>
     </div>
   );

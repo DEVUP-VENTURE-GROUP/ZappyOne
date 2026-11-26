@@ -4,8 +4,8 @@
  */
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Flag, EyeOff, MessageSquare, Star } from 'lucide-react-native';
-import { useMyReviewsQuery, useReportReviewMutation } from '@zappy/core/api';
+import { Flag, EyeOff, MessageSquare, Reply, Star } from 'lucide-react-native';
+import { useMyReviewsQuery, useReportReviewMutation, useReplyToReviewMutation } from '@zappy/core/api';
 import { Button, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
@@ -21,7 +21,7 @@ function Stars({ value, size = 14 }: { value: number; size?: number }) {
   );
 }
 
-type Review = { id: string; rating: number; by: string; service?: string; at: string; text?: string; reported?: boolean; hidden?: boolean; excluded?: boolean };
+type Review = { id: string; rating: number; by: string; service?: string; at: string; text?: string; reported?: boolean; hidden?: boolean; excluded?: boolean; reply?: { text: string; at: string } | null };
 
 function ReportBox({ review, onDone }: { review: Review; onDone: () => void }) {
   const [reason, setReason] = useState('');
@@ -42,9 +42,30 @@ function ReportBox({ review, onDone }: { review: Review; onDone: () => void }) {
   );
 }
 
+function ReplyBox({ review, onDone }: { review: Review; onDone: () => void }) {
+  const [text, setText] = useState(review.reply?.text || '');
+  const [save, { isLoading }] = useReplyToReviewMutation();
+  async function send(words: string) {
+    try { await save({ id: review.id, text: words }).unwrap(); toast.success(words ? 'Reply posted. Customers see it under the review.' : 'Reply removed'); onDone(); }
+    catch (err) { toast.error(errText(err, 'That did not go through. Please try again.')); }
+  }
+  return (
+    <View style={styles.gap}>
+      <TextInput value={text} onChangeText={setText} maxLength={500} multiline placeholder="Thank the customer, or explain politely. Everyone can read this."
+        placeholderTextColor={ink[400]} style={styles.area} accessibilityLabel="Your reply" />
+      <View style={styles.wrap}>
+        <Button label={review.reply ? 'Save reply' : 'Post reply'} size="small" onPress={() => send(text.trim())} loading={isLoading} disabled={text.trim().length < 2} />
+        {review.reply ? <Button label="Remove" size="small" variant="outline" disabled={isLoading} onPress={() => send('')} /> : null}
+        <Button label="Cancel" size="small" variant="outline" onPress={onDone} />
+      </View>
+    </View>
+  );
+}
+
 export function ProviderReviewsPage() {
   const [page, setPage] = useState(1);
   const [reporting, setReporting] = useState<string | null>(null);
+  const [replying, setReplying] = useState<string | null>(null);
   const { data, isLoading, isError, refetch } = useMyReviewsQuery(page);
   const total: number = data?.reviewCount || 0;
   const reviews: Review[] = data?.reviews || [];
@@ -97,6 +118,18 @@ export function ProviderReviewsPage() {
                 {r.hidden ? <View style={styles.tag}><EyeOff size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>Not shown to customers</Text></View> : null}
                 {r.excluded ? <View style={styles.tag}><Text variant="caption" weight="semibold" color={ink[500]}>Not counted in your rating</Text></View> : null}
               </View>
+              {r.reply && replying !== r.id ? (
+                <View style={styles.replyBox}>
+                  <Text variant="caption" weight="semibold" color={ink[700]}>Your reply</Text>
+                  <Text variant="bodySmall">{r.reply.text}</Text>
+                </View>
+              ) : null}
+              {replying !== r.id && reporting !== r.id && !r.hidden ? (
+                <Pressable onPress={() => setReplying(r.id)} hitSlop={8} style={styles.row} accessibilityRole="button">
+                  <Reply size={13} color={colors.primary} /><Text variant="caption" weight="semibold" color={colors.primary}>{r.reply ? 'Edit reply' : 'Reply'}</Text>
+                </Pressable>
+              ) : null}
+              {replying === r.id ? <ReplyBox review={r} onDone={() => setReplying(null)} /> : null}
               {reporting === r.id ? <ReportBox review={r} onDone={() => setReporting(null)} /> : null}
             </View>
           )}
@@ -126,6 +159,7 @@ const styles = StyleSheet.create({
   summary: { flexDirection: 'row', gap: spacing.lg },
   bar: { flex: 1, height: 8, borderRadius: radius.pill, backgroundColor: slate[100], overflow: 'hidden' },
   barFill: { height: 8, backgroundColor: accent[500] },
+  replyBox: { backgroundColor: slate[100], borderRadius: radius.button, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: 2 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: slate[100], borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
   area: { minHeight: 64, borderWidth: 1, borderColor: colors.border, borderRadius: radius.button, padding: spacing.md, fontSize: 14, fontFamily: 'Figtree-Regular', color: ink[900], textAlignVertical: 'top', backgroundColor: colors.surface },
 });

@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Banknote, ChevronRight, Clock, PawPrint, UserX, Wrench } from 'lucide-react-native';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
+import { jobDays } from '@zappy/core/shared/jobDays';
 import { formatPaise } from '@zappy/core/shared/money';
 import { ErrorState, LoadingState, Text } from '@zappy/ui/components';
 import { StagePill } from '@zappy/ui/components/worker/DashboardUI';
@@ -18,7 +19,7 @@ import { spacing } from '@zappy/ui/theme/spacing';
 
 const KIND_ICON: Record<string, typeof Wrench> = { repair: Wrench, pet: PawPrint };
 
-interface Job { kind: string; id: string; to: string; title: string; status: string; attention?: boolean; valuePaise?: number; cashDue?: boolean; late?: boolean; workerId?: string | null }
+interface Job { time?: string | null; kind: string; id: string; to: string; title: string; status: string; attention?: boolean; valuePaise?: number; cashDue?: boolean; late?: boolean; workerId?: string | null }
 
 export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
   const router = useRouter();
@@ -42,8 +43,11 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
   for (const j of jobs) if (j.workerId) busy[j.workerId] = (busy[j.workerId] || 0) + 1;
 
   return (
-    <View style={styles.list}>
-      {jobs.map((j) => {
+    <View style={styles.days}>
+      {(jobDays(jobs) as { key: string; title: string; jobs: Job[] }[]).map((g) => (
+      <View key={g.key} style={styles.list}>
+      <Text variant="caption" weight="bold" color={ink[500]} style={styles.day}>{g.title}, {g.jobs.length}</Text>
+      {g.jobs.map((j) => {
         const Icon = KIND_ICON[j.kind] || Wrench;
         return (
           <View key={`${j.kind}:${j.id}`} style={styles.card}>
@@ -55,6 +59,7 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
                   <StagePill label={j.status} attention={j.attention} />
                 </View>
                 <View style={styles.meta}>
+                  {j.time ? <View style={styles.tag}><Clock size={10} color={ink[700]} /><Text variant="caption" weight="semibold" color={ink[700]}>{j.time}</Text></View> : null}
                   {j.valuePaise ? <Text variant="caption" weight="semibold">{formatPaise(j.valuePaise)}</Text> : null}
                   {j.cashDue ? <View style={styles.tag}><Banknote size={10} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>collect cash</Text></View> : null}
                   {j.late ? <View style={styles.tag}><Clock size={10} color={danger[600]} /><Text variant="caption" weight="semibold" color={danger[600]}>running late</Text></View> : null}
@@ -67,12 +72,16 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
           </View>
         );
       })}
+      </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  days: { gap: spacing.base },
   list: { gap: spacing.sm },
+  day: { textTransform: 'uppercase', letterSpacing: 0.5 },
   card: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.large, borderWidth: 1, borderColor: slate[200], backgroundColor: colors.surface },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   flex: { flex: 1, minWidth: 0, gap: 4 },

@@ -186,6 +186,8 @@ const pricingConfigSchema = new mongoose.Schema(
     boostDispatchWeight:  { type: Number, default: 1.5, min: 1.0, max: 10.0 },
 
     // Referral rewards
+    partnerReferralRewardPaise: { type: Number, default: 0, min: 0, max: 500000 },
+    partnerReferralJobs: { type: Number, default: 5, min: 1, max: 100 },
     referralReferrerBonusPaise: { type: Number, default: 15000 },  // ₹150 for referring
     referralRefereeBonusPaise: { type: Number, default: 5000 },    // ₹50 for new user
 

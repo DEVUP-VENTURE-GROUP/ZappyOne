@@ -207,6 +207,8 @@ function toView(doc) {
     boostOptions:         doc.boostOptions         ?? [10, 20, 30, 50, 100],
     boostDispatchWeight:  doc.boostDispatchWeight  ?? 1.5,
     // Referral
+    partnerReferralRewardPaise:   doc.partnerReferralRewardPaise   ?? 0,
+    partnerReferralJobs:          doc.partnerReferralJobs          ?? 5,
     referralReferrerBonusPaise:   doc.referralReferrerBonusPaise   ?? 15000,
     referralRefereeBonusPaise:    doc.referralRefereeBonusPaise    ?? 5000,
     // Earned wage

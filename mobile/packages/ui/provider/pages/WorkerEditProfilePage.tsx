@@ -43,6 +43,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { providerPath } from '../paths';
 import { DeleteAccountCard } from '../../components/account/DeleteAccountCard';
+import { InvitePartnersCard } from '../components/InvitePartnersCard';
 import { PARTNER_ONLY } from '@zappy/core/shared/partnerPages';
 import { STAFF_APP } from '../staffApp';
 import { LegalLinks } from '../../components/account/LegalLinks';
@@ -190,6 +191,7 @@ export function WorkerEditProfilePage() {
             </View>
           ))}
 
+          <InvitePartnersCard />
           <LegalLinks audience="provider" />
           <Button label="Sign out" variant="outline" icon={<LogOut size={16} color={danger[600]} />} onPress={signOut} fullWidth />
           <DeleteAccountCard />

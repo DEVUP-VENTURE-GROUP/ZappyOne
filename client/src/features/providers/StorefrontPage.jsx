@@ -9,6 +9,7 @@ import { useGetShopProfileQuery, useGetWorkerPublicProfileQuery, useRepairVertic
 import { useSafeBack } from '../../hooks/useBookingFlow';
 import Avatar from '../tracking/redesign/Avatar';
 import PlansNear from '../plans/PlansNear';
+import ReviewReply from './ReviewReply';
 import { isNewPro } from '@shared/customer/jobsDone';
 
 const rupees = (p) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
@@ -277,6 +278,7 @@ export default function StorefrontPage() {
                     {r.at && <span className="text-[12px] text-ink-400">{monthYear(r.at)}</span>}
                   </div>
                   <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-900">{r.text}</p>
+                  <ReviewReply reply={r.reply} name={name} />
                 </li>
               ))}
             </ul>

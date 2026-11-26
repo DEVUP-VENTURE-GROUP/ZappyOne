@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight, Loader2, MapPin, Banknote, ShieldCheck, Trendi
 import toast from 'react-hot-toast';
 import { formatPaise } from '../../utils/money';
 import { useProviderJobs } from '../useProviderJobs';
+import { jobDays } from '../jobDays';
 import DuesCard from '../DuesCard';
 import HotZonesCard from '../../components/worker/HotZonesCard';
 import { useGetWorkerMeQuery } from '../../services/api';
@@ -31,7 +32,7 @@ function MineRow({ job, onOpen }) {
     >
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-semibold capitalize text-navy">{job.title}</span>
-        <span className="block truncate text-[13px] capitalize text-slate-500">{job.subtitle}</span>
+        <span className="block truncate text-[13px] capitalize text-slate-500">{job.time ? <b className="font-semibold text-slate-700">{job.time}, </b> : null}{job.subtitle}</span>
       </span>
       <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${job.attention ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
         {job.status}
@@ -135,7 +136,12 @@ export default function WorkBoardPage({ kinds }) {
           <section className="space-y-2.5">
             <h2 className="text-[14px] font-semibold text-slate-600">Your jobs{mine.length ? `, ${mine.length}` : ''}</h2>
             {mine.length
-              ? mine.map((j) => <MineRow key={`${j.kind}-${j.id}`} job={j} onOpen={() => nav(j.to)} />)
+              ? jobDays(mine).map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <h3 className="pt-1 text-[12px] font-bold uppercase tracking-wide text-slate-500">{g.title}</h3>
+                  {g.jobs.map((j) => <MineRow key={`${j.kind}-${j.id}`} job={j} onOpen={() => nav(j.to)} />)}
+                </div>
+              ))
               : <p className="rounded-xl bg-white px-4 py-5 text-[14px] text-slate-500 ring-1 ring-slate-200/80">Nothing in hand right now.</p>}
           </section>
         )}

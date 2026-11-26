@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, BadgeCheck, BadgeIndianRupee, ChevronDown, Clock3, Share2, ShieldCheck, Star, ThumbsUp } from 'lucide-react-native';
 import { useGetShopProfileQuery, useGetWorkerPublicProfileQuery, useRepairVerticalsQuery, useStorefrontMenuQuery } from '@zappy/core/api';
 import { loadGeoLocation, type CachedLocation } from '@zappy/core/lib/geoCache';
-import { Appear, Chip, Skeleton, Text } from '@zappy/ui/components';
+import { Appear, Chip, ReviewReply, Skeleton, Text } from '@zappy/ui/components';
 import { RIPPLE } from '@zappy/ui/lib/feedback';
 import { webAsset } from '@zappy/ui/lib/media';
 import { colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
@@ -23,7 +23,7 @@ import { isNewPro } from '@zappy/core/shared/jobsDone';
 
 interface Option { brandCode: string; typeName: string; totalPaise: number; wasPaise?: number | null; path: string }
 interface Item { repairCode: string; name: string; minutes: number | null; quoted: boolean; options: Option[]; fromPaise: number; offerLabel?: string | null; includes?: string[]; photoUrl?: string | null; photoUrls?: string[] }
-interface Review { rating: number; text?: string; at?: string }
+interface Review { rating: number; text?: string; at?: string; reply?: { text: string } | null }
 const SCREEN_W = Dimensions.get('window').width;
 const rupees = (p: number) => `₹${Math.round(p / 100).toLocaleString('en-IN')}`;
 const monthYear = (d: string) => new Date(d).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
@@ -217,6 +217,7 @@ export function StorefrontPage() {
                   {r.at ? <Text variant="caption" color={ink[400]}>{monthYear(r.at)}</Text> : null}
                 </View>
                 <Text variant="body">{r.text}</Text>
+                <ReviewReply reply={r.reply} name={name} />
               </View>
             ))}
           </View>

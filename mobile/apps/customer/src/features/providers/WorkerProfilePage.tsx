@@ -8,7 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BadgeCheck, Briefcase, CalendarDays, MessageSquareQuote, ShieldCheck, Star, type LucideIcon } from 'lucide-react-native';
 import { useGetWorkerPublicProfileQuery } from '@zappy/core/api';
-import { Avatar, Button, LoadingState, ScreenHeader, Text } from '@zappy/ui/components';
+import { Avatar, Button, LoadingState, ReviewReply, ScreenHeader, Text } from '@zappy/ui/components';
 import { ShareBar } from '@zappy/ui/components/common/ShareBar';
 import { useT } from '@zappy/ui/lib/i18n';
 import { accent, colors, ink, slate, success, zappy } from '@zappy/ui/theme/colors';
@@ -39,7 +39,7 @@ function Fact({ Icon, label, value }: { Icon: LucideIcon; label: string; value: 
   );
 }
 
-interface Review { id?: string; by?: string; at?: string; rating: number; service?: string; text: string }
+interface Review { id?: string; by?: string; at?: string; rating: number; service?: string; text: string; reply?: { text: string } | null }
 
 export function WorkerProfilePage() {
   const { workerId } = useLocalSearchParams<{ workerId: string }>();
@@ -98,6 +98,7 @@ export function WorkerProfilePage() {
               <View style={styles.between}><Text variant="bodySmall" weight="semibold">{r.by || t('worker.customer', 'Customer')}</Text><Text variant="caption" color={ink[400]}>{ago(r.at)}</Text></View>
               <View style={styles.inline}><Stars value={r.rating} size={12} />{r.service ? <Text variant="caption" color={ink[500]} style={styles.cap}>{r.service}</Text> : null}</View>
               <Text variant="bodySmall" color={ink[700]}>{r.text}</Text>
+              <ReviewReply reply={r.reply} name={name} />
             </View>
           )) : (
             <View style={styles.noReviews}><MessageSquareQuote size={18} color={ink[500]} /><Text variant="bodySmall" color={ink[500]} style={styles.flex}>{t('worker.noReviews', 'No written reviews yet. Reviews appear here after customers rate a finished job.')}</Text></View>

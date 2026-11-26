@@ -4,6 +4,7 @@ import {
   Wrench, PawPrint, ChevronRight, Clock, Banknote, UserX,
 } from 'lucide-react';
 import { useProviderJobs } from '@shared/provider/useProviderJobs';
+import { jobDays } from '@shared/provider/jobDays';
 import AssignTechnician from '@shared/provider/components/AssignTechnician';
 import { formatPaise } from '@shared/utils/money';
 import { useT } from '@shared/i18n/I18nProvider';
@@ -42,8 +43,11 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
   for (const j of jobs) if (j.workerId) busy[j.workerId] = (busy[j.workerId] || 0) + 1;
 
   return (
-    <div className="space-y-2">
-      {jobs.map((j) => {
+    <div className="space-y-4">
+      {jobDays(jobs).map((g) => (
+      <section key={g.key} className="space-y-2">
+      <h3 className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{g.title}, {g.jobs.length}</h3>
+      {g.jobs.map((j) => {
         const Icon = KIND_ICON[j.kind] || Wrench;
         return (
           <div key={`${j.kind}:${j.id}`} className="rounded-2xl border border-slate-200 bg-white p-3.5">
@@ -59,6 +63,7 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
                   </span>
                 </span>
                 <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                  {j.time && <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-700"><Clock size={10} /> {j.time}</span>}
                   {j.valuePaise > 0 && <span className="text-[11px] font-semibold text-[#0F172A]">{formatPaise(j.valuePaise)}</span>}
                   {j.cashDue && (
                     <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700"><Banknote size={10} /> {t('sp.jobs.cash', 'collect cash')}</span>
@@ -76,6 +81,8 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
           </div>
         );
       })}
+      </section>
+      ))}
     </div>
   );
 }

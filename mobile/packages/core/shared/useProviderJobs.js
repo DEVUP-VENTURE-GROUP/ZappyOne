@@ -65,7 +65,7 @@ const SOURCES = {
       // The server names the model (repair provider/jobs `device`); codes are only the fallback for an older server.
       title: b.device || [b.brandCode, b.modelCode].filter(Boolean).join(' ').replace(/-/g, ' ') || 'Repair',
       subtitle: b.location?.address || nameOf(b.vertical),
-      at: b.scheduledAt || b.createdAt, ...stage('repair', b.status),
+      at: b.scheduledAt || b.createdAt, scheduledAt: b.scheduledAt || null, ...stage('repair', b.status),
       workerId: b.workerId || null, valuePaise: b.priceSnapshot?.totalPaise || 0, rawStatus: b.status,
       cashDue: b.paymentMethod === 'cash' && b.paymentStatus !== 'paid',
       late: !!b.stageDeadlineAt && new Date(b.stageDeadlineAt) < new Date(),
@@ -75,7 +75,7 @@ const SOURCES = {
     mine: (d) => (d?.bookings || []).map((b) => ({
       kind: 'pet', id: b._id, to: `/worker/pet/${b._id}`,
       title: (b.pets || []).map((p) => p.snapshot?.name).filter(Boolean).join(', ') || b.reference,
-      subtitle: nameOf(b.categoryCode), at: b.scheduledAt || b.checkInAt || b.createdAt, ...stage('pet', b.status),
+      subtitle: nameOf(b.categoryCode), at: b.scheduledAt || b.checkInAt || b.createdAt, scheduledAt: b.scheduledAt || b.checkInAt || null, ...stage('pet', b.status),
       workerId: b.workerId || null, valuePaise: b.pricing?.totalPaise || b.pricing?.providerAmountPaise || 0, rawStatus: b.status,
       cashDue: b.paymentMethod === 'cash' && b.paymentStatus !== 'paid',
     })),
@@ -90,7 +90,7 @@ const SOURCES = {
     mine: (d) => (d?.tasks || []).map((t) => ({
       kind: 'helping', id: t._id, to: `/worker/helping/${t._id}`,
       title: t.title || t.reference, subtitle: t.pickupLocation?.address || '',
-      at: t.scheduledAt || t.createdAt, ...stage('helping', t.status),
+      at: t.scheduledAt || t.createdAt, scheduledAt: t.scheduledAt || null, ...stage('helping', t.status),
     })),
     open: (d) => (d?.tasks || []).map((t) => ({
       kind: 'helping', id: t._id, service: nameOf(t.serviceType),

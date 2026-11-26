@@ -53,6 +53,7 @@ export type {
 // The barrel path is unchanged, so existing imports keep working.
 export { ScreenHeader } from './ScreenHeader';
 export { HelpCallButton } from './common/HelpCallButton';
+export { ReviewReply } from './common/ReviewReply';
 export type { ScreenHeaderProps } from './ScreenHeader';
 
 export { HScrollRail } from './HScrollRail';

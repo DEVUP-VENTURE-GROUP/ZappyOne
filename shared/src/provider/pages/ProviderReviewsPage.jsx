@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Flag, Loader2, EyeOff, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Star, Flag, Loader2, EyeOff, MessageSquare, Reply } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useMyReviewsQuery, useReportReviewMutation } from '../../services/api';
+import { useMyReviewsQuery, useReportReviewMutation, useReplyToReviewMutation } from '../../services/api';
 
 /**
  * A provider's own reviews: the rating customers see, the star spread and
@@ -48,10 +48,36 @@ function ReportBox({ review, onDone }) {
   );
 }
 
+function ReplyBox({ review, onDone }) {
+  const [text, setText] = useState(review.reply?.text || '');
+  const [save, { isLoading }] = useReplyToReviewMutation();
+  async function send(words) {
+    try {
+      await save({ id: review.id, text: words }).unwrap();
+      toast.success(words ? 'Reply posted. Customers see it under the review.' : 'Reply removed');
+      onDone();
+    } catch (err) { toast.error(err?.data?.error || 'That did not go through. Please try again.'); }
+  }
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); send(text.trim()); }} className="mt-3 space-y-2">
+      <textarea rows={2} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} className="input w-full resize-none py-2"
+        placeholder="Thank the customer, or explain politely. Everyone can read this." aria-label="Your reply" />
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={isLoading || text.trim().length < 2} className="btn-primary min-h-[38px] px-4 text-[13px]">
+          {isLoading && <Loader2 size={14} className="animate-spin" />} {review.reply ? 'Save reply' : 'Post reply'}
+        </button>
+        {review.reply && <button type="button" disabled={isLoading} onClick={() => send('')} className="btn-outline min-h-[38px] px-4 text-[13px]">Remove</button>}
+        <button type="button" onClick={onDone} className="btn-outline min-h-[38px] px-4 text-[13px]">Cancel</button>
+      </div>
+    </form>
+  );
+}
+
 export default function ProviderReviewsPage({ back = '/worker', embedded = false }) {
   const nav = useNavigate();
   const [page, setPage] = useState(1);
   const [reporting, setReporting] = useState(null);
+  const [replying, setReplying] = useState(null);
   const { data, isLoading, isError, refetch } = useMyReviewsQuery(page);
   const total = data?.reviewCount || 0;
 
@@ -127,6 +153,18 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
                       {r.hidden && <span className="flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500"><EyeOff size={11} /> Not shown to customers</span>}
                       {r.excluded && <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500">Not counted in your rating</span>}
                     </div>
+                    {r.reply && replying !== r.id && (
+                      <div className="mt-3 rounded-btn bg-sunken px-3 py-2">
+                        <p className="text-[12px] font-semibold text-ink-700">Your reply</p>
+                        <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-900">{r.reply.text}</p>
+                      </div>
+                    )}
+                    {replying !== r.id && reporting !== r.id && !r.hidden && (
+                      <button type="button" onClick={() => setReplying(r.id)} className="mt-2 flex items-center gap-1 text-[12.5px] font-semibold text-zappy-700 hover:text-zappy-800">
+                        <Reply size={13} /> {r.reply ? 'Edit reply' : 'Reply'}
+                      </button>
+                    )}
+                    {replying === r.id && <ReplyBox review={r} onDone={() => setReplying(null)} />}
                     {reporting === r.id && <ReportBox review={r} onDone={() => setReporting(null)} />}
                   </li>
                 ))}

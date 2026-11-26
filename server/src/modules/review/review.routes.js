@@ -18,4 +18,10 @@ router.post('/:id/report', authenticate,
     try { res.json(await svc.report(self(req), req.params.id, req.body.reason)); } catch (e) { next(e); }
   });
 
+router.put('/:id/reply', authenticate,
+  validate(Joi.object({ text: Joi.string().trim().allow('').max(500).required() })),
+  async (req, res, next) => {
+    try { res.json(await svc.reply(self(req), req.params.id, req.body.text)); } catch (e) { next(e); }
+  });
+
 module.exports = router;

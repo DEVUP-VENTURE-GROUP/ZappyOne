@@ -174,6 +174,8 @@ export function endpoints(b, { adminApiPath }) {
     adminUpdateMessageSettings: b.mutation({ query: (body) => ({ url: adminApiPath('/messages/settings'), method: 'PUT', body }), invalidatesTags: ['Content'] }),
     /** Admin: Economics → Boost & tips. */
     adminBoostTips: b.query({ query: () => adminApiPath('/economics/boost-tips'), providesTags: ['PricingCfg'] }),
+    adminPartnerReferral: b.query({ query: () => adminApiPath('/economics/partner-referral'), providesTags: ['PricingCfg'] }),
+    adminUpdatePartnerReferral: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/partner-referral'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminUpdateBoostTips: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/boost-tips'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
     adminDispatch: b.query({ query: () => adminApiPath('/economics/dispatch'), providesTags: ['PricingCfg'] }),
     adminUpdateDispatch: b.mutation({ query: (body) => ({ url: adminApiPath('/economics/dispatch'), method: 'PUT', body }), invalidatesTags: ['PricingCfg'] }),
@@ -218,6 +220,7 @@ export function endpoints(b, { adminApiPath }) {
     markReleaseSeen: b.mutation({ query: (release) => ({ url: '/account/release-seen', method: 'POST', body: { release } }), invalidatesTags: ['Account'] }),
     // A provider's own reviews, and reporting one for moderation.
     myReviews: b.query({ query: (page = 1) => ({ url: '/reviews/mine', params: { page } }), providesTags: ['Reviews'] }),
+    replyToReview: b.mutation({ query: ({ id, text }) => ({ url: `/reviews/${id}/reply`, method: 'PUT', body: { text } }), invalidatesTags: ['Reviews'] }),
     reportReview: b.mutation({ query: ({ id, reason }) => ({ url: `/reviews/${id}/report`, method: 'POST', body: { reason } }), invalidatesTags: ['Reviews'] }),
     // Admin review moderation.
     adminReviews: b.query({ query: (params = {}) => ({ url: adminApiPath('/reviews'), params }), providesTags: ['Reviews'] }),
@@ -1206,6 +1209,7 @@ export function endpoints(b, { adminApiPath }) {
       providesTags: ['Referral'],
     }),
     // A friend's code from their link, applied once after a new customer signs in (server checks it is a new account).
+    partnerReferral: b.query({ query: () => '/referrals/partner', providesTags: ['Referral'] }),
     applyReferral: b.mutation({ query: (code) => ({ url: '/referrals/apply', method: 'POST', body: { code } }), invalidatesTags: ['Referral'] }),
     getReferralHistory: b.query({
       query: () => '/referrals/history',

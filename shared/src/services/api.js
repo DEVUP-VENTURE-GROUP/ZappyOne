@@ -349,6 +349,7 @@ export const {
   useGetReferralCodeQuery,
   useGetReferralHistoryQuery,
   useApplyReferralMutation,
+  usePartnerReferralQuery,
   // Worker public profile + leaderboard
   useGetWorkerPublicProfileQuery,
   // Diagnosis flow
@@ -444,6 +445,8 @@ export const {
   useAdminSendTestMessageMutation,
   useAdminUpdateMessageSettingsMutation,
   useAdminUpdateBoostTipsMutation,
+  useAdminPartnerReferralQuery,
+  useAdminUpdatePartnerReferralMutation,
   useAdminDispatchQuery,
   useAdminUpdateDispatchMutation,
   useAdminPartnerCommissionQuery,
@@ -486,6 +489,7 @@ export const {
   useSkipAccountPhotoMutation,
   useMarkReleaseSeenMutation,
   useReportReviewMutation,
+  useReplyToReviewMutation,
   useAdminReviewsQuery,
   useAdminModerateReviewMutation,
   useSetAccountNameMutation,

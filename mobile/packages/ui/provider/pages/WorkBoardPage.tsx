@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight, ShieldCheck, Briefcase } from 'lucide-react-native';
 import { useGetWorkerMeQuery } from '@zappy/core/api';
 import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
+import { jobDays } from '@zappy/core/shared/jobDays';
 import { useAppSelector } from '@zappy/core/store/hooks';
 import { ScreenHeader, SkeletonList, Text } from '../../components';
 import { toast } from '../../components/Toast';
@@ -22,7 +23,7 @@ import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
 import { errText } from '../../lib/feedback';
 
-type Row = { type: 'head'; key: string; title: string } | { type: 'mine'; key: string; job: MineJob }
+type Row = { type: 'head'; key: string; title: string } | { type: 'day'; key: string; title: string } | { type: 'mine'; key: string; job: MineJob }
   | { type: 'open'; key: string; job: OpenJob } | { type: 'note'; key: string; text: string } | { type: 'verify'; key: string; kinds: string[] };
 
 export function WorkBoardPage({ kinds }: { kinds: string[] }) {
@@ -48,7 +49,10 @@ export function WorkBoardPage({ kinds }: { kinds: string[] }) {
 
   const rows: Row[] = [
     { type: 'head', key: 'h-mine', title: `Your jobs${mine.length ? `, ${mine.length}` : ''}` },
-    ...(mine.length ? mine.map((j: MineJob) => ({ type: 'mine' as const, key: `m-${j.kind}-${j.id}`, job: j })) : [{ type: 'note' as const, key: 'n-mine', text: 'Nothing in hand right now.' }]),
+    ...(mine.length ? (jobDays(mine) as { key: string; title: string; jobs: MineJob[] }[]).flatMap((g) => [
+      { type: 'day' as const, key: `d-${g.key}`, title: g.title },
+      ...g.jobs.map((j) => ({ type: 'mine' as const, key: `m-${j.kind}-${j.id}`, job: j })),
+    ]) : [{ type: 'note' as const, key: 'n-mine', text: 'Nothing in hand right now.' }]),
     { type: 'head', key: 'h-open', title: `Open near you${open.length ? `, ${open.length}` : ''}` },
     ...open.map((j: OpenJob) => ({ type: 'open' as const, key: `o-${j.kind}-${j.id}`, job: j })),
     ...(!open.length && !notApproved.length ? [{ type: 'note' as const, key: 'n-open', text: 'No open jobs near you. New ones appear here, and you’ll get an alert.' }] : []),
@@ -75,6 +79,7 @@ export function WorkBoardPage({ kinds }: { kinds: string[] }) {
           renderItem={({ item }) => {
             switch (item.type) {
               case 'head': return <Text variant="bodySmall" weight="semibold" color={ink[700]} style={styles.head}>{item.title}</Text>;
+              case 'day': return <Text variant="caption" weight="bold" color={ink[500]} style={styles.day}>{item.title}</Text>;
               case 'mine': return <MineRow job={item.job} onPress={() => router.push(item.job.to as never)} />;
               case 'open': return <OpenJobCard job={item.job} busy={taking} onTake={() => onTake(item.job)} />;
               case 'note': return (
@@ -106,6 +111,7 @@ const styles = StyleSheet.create({
   list: { padding: spacing.base, paddingBottom: spacing.xxxl },
   headerCards: { gap: spacing.base, marginBottom: spacing.base },
   head: { marginTop: spacing.md },
+  day: { textTransform: 'uppercase', letterSpacing: 0.5, marginTop: spacing.xs },
   sep: { height: spacing.sm },
   note: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.medium, borderWidth: 1, borderColor: colors.border, padding: spacing.base },
 });

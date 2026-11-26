@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, MessageSquareQuote, ShieldCheck, Star, UserRound } from 'lucide-react';
 import { useGetOrderQuery, useGetWorkerPublicProfileQuery } from '@shared/services/api';
 import { isNewPro } from '@shared/customer/jobsDone';
+import ReviewReply from './ReviewReply';
 
 /**
  * A provider's public profile: who they are, what ZappyOne has verified them
@@ -138,6 +139,7 @@ export default function WorkerProfilePage() {
                         <span className="flex items-center gap-0.5 text-[15px] tabular-nums text-green-700"><Star size={15} className="fill-current" />{r.rating}</span>
                       </div>
                       {r.text && <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-ink-500">{r.text}</p>}
+                      <ReviewReply reply={r.reply} name={name} />
                     </div>
                   </li>
                 ))}

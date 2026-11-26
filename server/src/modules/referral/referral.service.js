@@ -73,8 +73,19 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
     throw Object.assign(new Error('Cannot refer yourself'), { status: 400, code: 'REFERRAL_SELF' });
   }
 
+  // Partners join on a partner's code only, and only while partner rewards are switched on in Economics.
+  const partner = require('./partner-referral');
+  const forPartner = partner.PARTNER_KINDS.includes(referee.kind);
+  if (forPartner && (!partner.PARTNER_KINDS.includes(codeDoc.owner.kind) || !(await partner.isPartner(referee.kind, referee.id)))) {
+    throw Object.assign(new Error('Use a code from another ZappyOne partner'), { status: 400, code: 'REFERRAL_NOT_PARTNER' });
+  }
+  const partnerTerms = forPartner ? await partner.settings() : null;
+  if (forPartner && !partnerTerms.rewardPaise) {
+    throw Object.assign(new Error('Partner referrals are not on right now'), { status: 400, code: 'REFERRAL_OFF' });
+  }
+
   // A referral is for a new account: one older than NEW_ACCOUNT_DAYS cannot claim the signup bonus later.
-  const Model = referee.kind === 'worker' ? require('../worker/worker.model') : require('../user/user.model');
+  const Model = { worker: () => require('../worker/worker.model'), shop: () => require('../shop/shop.model'), user: () => require('../user/user.model') }[referee.kind]();
   const account = await Model.findById(referee.id).select('createdAt').lean();
   if (!account || Date.now() - new Date(account.createdAt).getTime() > NEW_ACCOUNT_DAYS * 86400000) {
     throw Object.assign(new Error('A referral code can only be used on a new account'), { status: 400, code: 'REFERRAL_NOT_NEW' });
@@ -84,10 +95,12 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
   const MAX_REFERRALS_PER_REFERRER = 20;         // hard cap per referrer per month
 
   // 1. Same IP or device already claimed a referral bonus recently — block farming
-  if (refereeIp || refereeDeviceId) {
+  // Partners often sign up on the shop's wifi, and their reward needs real finished jobs, so only the device counts for them.
+  const ipCheck = forPartner ? null : refereeIp;
+  if (ipCheck || refereeDeviceId) {
     const recentByDevice = await ReferralUse.findOne({
       $or: [
-        ...(refereeIp ? [{ refereeIp }] : []),
+        ...(ipCheck ? [{ refereeIp: ipCheck }] : []),
         ...(refereeDeviceId ? [{ refereeDeviceId }] : []),
       ],
       createdAt: { $gte: new Date(Date.now() - REFERRAL_WINDOW_MS) },
@@ -115,7 +128,7 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
       referrer: codeDoc.owner,
       referee,
       status: 'signup',
-      refereeSignupBonusPaise: REFEREE_BONUS_PAISE,
+      refereeSignupBonusPaise: forPartner ? partnerTerms.rewardPaise : REFEREE_BONUS_PAISE,
       refereeIp,
       refereeDeviceId,
     });
@@ -139,6 +152,8 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
   await use.save();
 
   await ReferralCode.updateOne({ _id: codeDoc._id }, { $inc: { totalUses: 1 } });
+
+  if (forPartner) return use;
 
   // Notify referee of the PENDING bonus — tells them what they'll earn on first order
   await notificationService.notify({

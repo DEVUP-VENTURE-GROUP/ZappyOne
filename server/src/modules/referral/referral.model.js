@@ -16,7 +16,7 @@ const referralCodeSchema = new mongoose.Schema(
   {
     code: { type: String, required: true, unique: true, uppercase: true, index: true },
     owner: {
-      kind: { type: String, enum: ['user', 'worker'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'shop'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     },
     isActive: { type: Boolean, default: true },
@@ -32,11 +32,11 @@ const referralUseSchema = new mongoose.Schema(
   {
     code: { type: String, required: true, index: true },
     referrer: {
-      kind: { type: String, enum: ['user', 'worker'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'shop'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
     },
     referee: {
-      kind: { type: String, enum: ['user', 'worker'], required: true },
+      kind: { type: String, enum: ['user', 'worker', 'shop'], required: true },
       id: { type: mongoose.Schema.Types.ObjectId, required: true },
     },
 

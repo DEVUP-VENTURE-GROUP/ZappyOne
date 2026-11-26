@@ -41,6 +41,10 @@ const reviewSchema = new mongoose.Schema(
     /** Raised by the provider or by an automatic check; cleared when an admin decides. */
     flagged: { type: Boolean, default: false, index: true },
     flagReason: { type: String, default: '' },
+    reply: {
+      text: { type: String, default: '', maxlength: 500 },
+      at: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

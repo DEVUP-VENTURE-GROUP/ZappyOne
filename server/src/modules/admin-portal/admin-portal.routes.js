@@ -262,7 +262,7 @@ router.get('/reviews', async (req, res, next) => {
 
 router.patch('/reviews/:id',
   validate(Joi.object({
-    action: Joi.string().valid('hide', 'show', 'exclude', 'include', 'dismiss').required(),
+    action: Joi.string().valid('hide', 'show', 'exclude', 'include', 'dismiss', 'remove_reply').required(),
     reason: Joi.string().trim().max(300).allow(''),
   })),
   async (req, res, next) => {
@@ -319,6 +319,31 @@ router.put('/economics/boost-tips',
       await require('../pricing/services/config.service').updateActiveConfig(req.body, req.auth.sub);
       const after = await bt.settings();
       await auditService.fromRequest(req, 'economics.boost_tips', { kind: 'system', id: null }, before, after);
+      res.json({ settings: after });
+    } catch (err) { next(err); }
+  });
+
+/* Economics → Partners: what a partner and the partner they bring each get, after that partner's first jobs (referral/partner-referral) */
+
+router.get('/economics/partner-referral', async (req, res, next) => {
+  try { res.json({ settings: await require('../referral/partner-referral').settings() }); } catch (err) { next(err); }
+});
+
+router.put('/economics/partner-referral',
+  validate(Joi.object({
+    rewardPaise: Joi.number().integer().min(0).max(500000),
+    jobs: Joi.number().integer().min(1).max(100),
+  }).min(1)),
+  async (req, res, next) => {
+    try {
+      const pr = require('../referral/partner-referral');
+      const before = await pr.settings();
+      const patch = {};
+      if (req.body.rewardPaise !== undefined) patch.partnerReferralRewardPaise = req.body.rewardPaise;
+      if (req.body.jobs !== undefined) patch.partnerReferralJobs = req.body.jobs;
+      await require('../pricing/services/config.service').updateActiveConfig(patch, req.auth.sub);
+      const after = await pr.settings();
+      await auditService.fromRequest(req, 'economics.partner_referral', { kind: 'system', id: null }, before, after);
       res.json({ settings: after });
     } catch (err) { next(err); }
   });
