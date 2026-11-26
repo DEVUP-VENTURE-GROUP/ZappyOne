@@ -1,7 +1,8 @@
 // ServicePro module 2, the profile gate: every field of every account kind, empty, short, wrong and valid, decides the same list on web and app.
 const { RULES } = require('../src/modules/onboarding/profile-check');
 
-const missingOf = (role, doc) => RULES[role](doc).filter(([, , done]) => !done).map(([key]) => key);
+const missingOf = (role, doc) => RULES[role](doc).filter(([, , done, , optional]) => !done && !optional).map(([key]) => key);
+const upiDone = (role, doc) => RULES[role](doc).find(([key]) => key === 'upi')?.[2];
 
 const SHOP = {
   businessName: 'Ravi Electricals', ownerName: 'Ravi', email: 'ravi@example.com',
@@ -78,16 +79,17 @@ describe('identity documents: only sent or approved count', () => {
 
 describe('UPI ID: the shape customers can pay', () => {
   test.each(['ravi@okaxis', 'ravi.kumar@ybl', 'r_k-9@paytm', '9876543210@upi', 'ab@sbi', '  ravi@okicici  '])('%s is accepted', (upiId) => {
-    expect(missingOf('shop', { ...SHOP, savedUpiIds: [{ upiId }] })).toEqual([]);
+    expect(upiDone('shop', { ...SHOP, savedUpiIds: [{ upiId }] })).toBe(true);
   });
   test.each(['', 'ravi', '@okaxis', 'ravi@', 'ravi@1bank', 'ra vi@okaxis', 'ravi@@okaxis', 'r@x', 'ravi@ok axis', 'ravi#@okaxis'])('%j is refused', (upiId) => {
-    expect(missingOf('shop', { ...SHOP, savedUpiIds: [{ upiId }] })).toEqual(['upi']);
+    expect(upiDone('shop', { ...SHOP, savedUpiIds: [{ upiId }] })).toBe(false);
   });
   test('one good ID among bad ones is enough', () => {
-    expect(missingOf('shop', { ...SHOP, savedUpiIds: [{ upiId: 'bad' }, { upiId: 'ravi@okaxis' }] })).toEqual([]);
+    expect(upiDone('shop', { ...SHOP, savedUpiIds: [{ upiId: 'bad' }, { upiId: 'ravi@okaxis' }] })).toBe(true);
   });
   test.each([[undefined], [null], [[]], [[{}]], [[{ upiId: null }]]])('no usable ID %j', (savedUpiIds) => {
-    expect(missingOf('shop', { ...SHOP, savedUpiIds })).toEqual(['upi']);
+    expect(upiDone('shop', { ...SHOP, savedUpiIds })).toBe(false);
+    expect(missingOf('shop', { ...SHOP, savedUpiIds })).toEqual([]);
   });
 });
 
@@ -100,14 +102,16 @@ describe('event partner fields', () => {
   });
 });
 
-describe('worker: who must add a UPI ID', () => {
+describe('worker: who is asked for a UPI ID (optional, never blocks)', () => {
   test.each([
-    ['independent, no UPI', {}, ['upi']],
-    ['a shop technician, no UPI', { shopId: 'x' }, []],
-    ['ZappyOne staff, no UPI', { employment: { type: 'staff' } }, []],
-    ['a contractor, no UPI', { employment: { type: 'contract' } }, ['upi']],
-  ])('%s', (_name, extra, missing) => {
-    expect(missingOf('worker', { ...WORKER, savedUpiIds: [], ...extra })).toEqual(missing);
+    ['independent, no UPI', {}, true],
+    ['a shop technician, no UPI', { shopId: 'x' }, false],
+    ['ZappyOne staff, no UPI', { employment: { type: 'staff' } }, false],
+    ['a contractor, no UPI', { employment: { type: 'contract' } }, true],
+  ])('%s', (_name, extra, asked) => {
+    const doc = { ...WORKER, savedUpiIds: [], ...extra };
+    expect(RULES.worker(doc).some(([key]) => key === 'upi')).toBe(asked);
+    expect(missingOf('worker', doc)).toEqual([]);
   });
   test.each([['name', 'S', 'name'], ['name', '', 'name'], ['profilePhotoKey', '', 'photo'], ['profilePhotoKey', undefined, 'photo']])('%s = %j', (field, v, key) => {
     expect(missingOf('worker', { ...WORKER, [field]: v })).toEqual([key]);
@@ -115,7 +119,7 @@ describe('worker: who must add a UPI ID', () => {
 });
 
 describe('an empty or missing record lists every step and never throws', () => {
-  test.each([['shop', 10], ['event_partner', 7], ['worker', 4]])('%s', (role, n) => {
+  test.each([['shop', 9], ['event_partner', 7], ['worker', 3]])('%s', (role, n) => {
     expect(missingOf(role, {})).toHaveLength(n);
   });
 });

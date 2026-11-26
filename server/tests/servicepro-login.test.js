@@ -1,4 +1,4 @@
-// ServicePro's one sign-in: the code is checked once, a number with one account opens it, several are offered with a short ticket, none starts sign-up as a business or an event partner; tickets cannot be forged or reused across purposes.
+// ServicePro's one sign-in: the code is checked once, a number with one account opens it, several are offered with a short ticket, none starts sign-up as a store (event decorators too); tickets cannot be forged or reused across purposes.
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const { startMongo, stopMongo } = require('./helpers');
@@ -49,11 +49,14 @@ test('a number with several accounts is offered them, then opens the one picked 
   expect((await sp('login').send({ ticket: first.body.ticket, role: 'event_partner' })).body.code).toBe('NO_SUCH_ACCOUNT');
 });
 
-test('event partners sign up and sign in through the same door', async () => {
+test('an event decorator signs up as a store, even from an older app, and an old event-partner account is not offered', async () => {
+  const EventPartner = require('../src/modules/events/event-partner.model');
+  await EventPartner.create({ businessName: 'Old Bloom', ownerName: 'Ravi', phone: '9822200003' });
   const first = await sp('login').send({ phone: '9822200003', otp: '1234' });
+  expect(first.body).toMatchObject({ needsRegistration: true, accounts: [] });
   const reg = await sp('register').send({ ticket: first.body.ticket, kind: 'events', businessName: 'Bloom Decor', ownerName: 'Ravi', acceptTerms: true });
-  expect(reg.body).toMatchObject({ role: 'event_partner', account: { businessName: 'Bloom Decor' } });
-  expect((await sp('login').send({ phone: '9822200003', otp: '1234' })).body.role).toBe('event_partner');
+  expect(reg.body).toMatchObject({ role: 'shop', account: { businessName: 'Bloom Decor' } });
+  expect((await sp('login').send({ phone: '9822200003', otp: '1234' })).body.role).toBe('shop');
 });
 
 test('forged, expired or other-purpose tickets and wrong codes are refused; other apps cannot use this door', async () => {
@@ -74,15 +77,13 @@ test('the dashboard opens only once every required detail is filled, per kind of
   const shop = await Shop.findOne({ phone: '9822200001' });
   const before = await profileStatus('shop', shop._id);
   expect(before.complete).toBe(false);
-  expect(before.missing.map((m) => m.key)).toEqual(['email', 'address', 'photo', 'hours', 'bio', 'years', 'kyc', 'upi']);
+  expect(before.missing.map((m) => m.key)).toEqual(['email', 'address', 'photo', 'hours', 'bio', 'years', 'kyc']);
+  expect(before.items.find((i) => i.key === 'upi')).toMatchObject({ done: false, optional: true });
   expect(before.missing.find((m) => m.key === 'kyc').path).toBe('/shop/kyc');
   await Shop.updateOne({ _id: shop._id }, { $set: {
     email: 'asha@example.com', address: { text: 'Flat 2, Kondapur', location: { type: 'Point', coordinates: [78.36, 17.46] } }, coverImageUrl: 'shop/a.jpg',
     hours: [{ day: 1, opensAt: '09:00', closesAt: '19:00' }], bio: 'Bridal makeup and salon services at home since 2018.', yearsActive: 7, 'kyc.status': 'pending_review',
-    savedUpiIds: [{ upiId: 'asha@okaxis', isDefault: true }],
   } });
+  // No UPI ID yet: the dashboard still opens; customers are offered cash until one is added.
   expect(await profileStatus('shop', shop._id)).toMatchObject({ complete: true, missing: [] });
-  const EventPartner = require('../src/modules/events/event-partner.model');
-  const partner = await EventPartner.findOne({ phone: '9822200003' });
-  expect((await profileStatus('event_partner', partner._id)).missing.map((m) => m.key)).toEqual(['cities', 'photo', 'bio', 'years', 'kyc']);
 });

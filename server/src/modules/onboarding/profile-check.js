@@ -1,6 +1,6 @@
 // What a ServicePro partner must fill in before their dashboard opens: one rule per kind of account, decided here so every app shows the same list. Each missing item says where in ServicePro it is filled.
 const SUBMITTED = (s) => !!s && s !== 'not_submitted' && s !== 'rejected';
-// Customers pay partners directly (jobs/pay-direct): without a valid UPI ID they can only pay cash.
+// Customers pay partners directly (jobs/pay-direct): without a valid UPI ID they can only pay cash, so it is asked for but never blocks the dashboard.
 const hasUpi = (p) => (p.savedUpiIds || []).some((u) => /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$/.test(String(u.upiId || '').trim()));
 const filled = (v, min = 1) => typeof v === 'string' ? v.trim().length >= min : v != null && v !== '';
 
@@ -15,7 +15,7 @@ const RULES = {
     ['bio', 'About your work (30 letters or more)', filled(p.bio, 30), '/shop/profile'],
     ['years', 'Years in this work', Number.isFinite(p.yearsActive) && p.yearsActive >= 0, '/shop/profile'],
     ['kyc', 'Identity documents sent for verification', SUBMITTED(p.kyc?.status), '/shop/kyc'],
-    ['upi', 'UPI ID where customers pay you', hasUpi(p), '/shop/bank'],
+    ['upi', 'UPI ID where customers pay you (optional)', hasUpi(p), '/shop/bank', true],
   ],
   event_partner: (p) => [
     ['businessName', 'Business name', filled(p.businessName, 2), '/partner/profile'],
@@ -31,7 +31,7 @@ const RULES = {
     ['photo', 'Your photo', filled(p.profilePhotoKey), '/worker/profile'],
     ['kyc', 'Identity documents sent for verification', SUBMITTED(p.kyc?.status), '/worker/kyc'],
     // Independent pros are paid by the customer; a shop's technician (paid through the shop) and ZappyOne staff are not.
-    ...(p.shopId || p.employment?.type === 'staff' ? [] : [['upi', 'UPI ID where customers pay you', hasUpi(p), '/worker/bank']]),
+    ...(p.shopId || p.employment?.type === 'staff' ? [] : [['upi', 'UPI ID where customers pay you (optional)', hasUpi(p), '/worker/bank', true]]),
   ],
 };
 
@@ -46,10 +46,10 @@ async function profileStatus(role, id) {
   if (!RULES[role]) return { complete: true, missing: [], total: 0 };
   const doc = await Model.findById(id).select(FIELDS[role]).lean();
   const items = RULES[role](doc || {});
-  // Every step in order with its state, so the gate can show what is done as well as what is left; `missing` stays for older apps.
-  const all = items.map(([key, label, done, path]) => ({ key, label, path, done: !!done }));
-  const missing = all.filter((i) => !i.done).map(({ key, label, path }) => ({ key, label, path }));
-  return { complete: missing.length === 0, missing, items: all, total: items.length };
+  // Every step in order with its state, so the gate can show what is done as well as what is left; `missing` stays for older apps. Optional steps never block or count.
+  const all = items.map(([key, label, done, path, optional = false]) => ({ key, label, path, done: !!done, optional }));
+  const missing = all.filter((i) => !i.done && !i.optional).map(({ key, label, path }) => ({ key, label, path }));
+  return { complete: missing.length === 0, missing, items: all, total: all.filter((i) => !i.optional).length };
 }
 
 // A shop's road from sign-up to taking work, so the home can say what is done, what waits on ZappyOne and what to do next. Each step reads the same records the matching gate reads.
