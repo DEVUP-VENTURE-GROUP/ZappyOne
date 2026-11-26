@@ -42,6 +42,8 @@ async function approveKyc(req, res, next) {
   try {
     const before = await Shop.findById(req.params.id).select('kyc').lean();
     if (!before) return res.status(404).json({ error: 'Shop not found' });
+    const gaps = await require('../../onboarding/identity').identityGaps('shop', req.params.id);
+    if (gaps.length) return res.status(409).json({ error: `Cannot verify: no ${gaps.join(' or ')} on file. Ask them to send their documents first.`, code: 'DOCUMENTS_MISSING', missing: gaps });
 
     const shop = await Shop.findByIdAndUpdate(
       req.params.id,

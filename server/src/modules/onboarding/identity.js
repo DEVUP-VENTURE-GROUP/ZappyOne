@@ -146,4 +146,13 @@ async function carryShop(enrolment) {
   return added;
 }
 
-module.exports = { IDENTITY_CODES, SHOP_CODES, identityOnFile, shopOnFile, carryIdentity };
+// What must be on file before anyone is marked verified: a photo ID and a selfie. Empty means nothing is missing.
+async function identityGaps(kind, id) {
+  const docs = kind === 'shop' ? (await shopOnFile(id)).docs : await identityOnFile(id);
+  const gaps = [];
+  if (!['aadhaar', 'pan', 'owner_id'].some((c) => docs.has(c))) gaps.push('a photo ID (Aadhaar or PAN)');
+  if (!docs.has('selfie')) gaps.push('a selfie');
+  return gaps;
+}
+
+module.exports = { IDENTITY_CODES, SHOP_CODES, identityOnFile, shopOnFile, carryIdentity, identityGaps };

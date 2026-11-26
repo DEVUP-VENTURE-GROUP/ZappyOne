@@ -100,6 +100,8 @@ async function approveKyc(req, res, next) {
   try {
     const before = await Worker.findById(req.params.id).select('kyc').lean();
     if (!before) return res.status(404).json({ error: 'Worker not found' });
+    const gaps = await require('../../onboarding/identity').identityGaps('worker', req.params.id);
+    if (gaps.length) return res.status(409).json({ error: `Cannot verify: no ${gaps.join(' or ')} on file. Ask them to send their documents first.`, code: 'DOCUMENTS_MISSING', missing: gaps });
     const worker = await Worker.findByIdAndUpdate(
       req.params.id,
       {
