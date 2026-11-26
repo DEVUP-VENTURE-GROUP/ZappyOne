@@ -3,12 +3,14 @@ import toast from 'react-hot-toast';
 import { Copy, Gift, Loader2, Share2 } from 'lucide-react';
 import { usePartnerReferralQuery, useApplyReferralMutation } from '../../services/api';
 import { formatPaise } from '../../utils/money';
+import { useServiceProTl } from '../../i18n/I18nProvider';
 
 // Invite another partner with your code; hidden until a reward is set in Admin → Economics → Partners.
 export default function InvitePartnersCard() {
   const { data } = usePartnerReferralQuery();
   const [apply, { isLoading }] = useApplyReferralMutation();
   const [code, setCode] = useState('');
+  const tl = useServiceProTl();
   const c = data?.card;
   if (!c?.on) return null;
 
@@ -32,8 +34,8 @@ export default function InvitePartnersCard() {
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zappy-50 text-zappy-700"><Gift size={18} /></span>
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold text-slate-900">Invite partners, earn {formatPaise(c.rewardPaise)}</h2>
-          <p className="mt-0.5 text-[13px] text-slate-500">When a partner you invite finishes {c.jobs} jobs, you both get {formatPaise(c.rewardPaise)} in your earnings.</p>
+          <h2 className="text-[15px] font-bold text-slate-900">{tl('Invite partners, earn {amount}', { amount: formatPaise(c.rewardPaise) })}</h2>
+          <p className="mt-0.5 text-[13px] text-slate-500">{tl('When a partner you invite finishes {jobs} jobs, you both get {amount} in your earnings.', { jobs: c.jobs, amount: formatPaise(c.rewardPaise) })}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -42,7 +44,7 @@ export default function InvitePartnersCard() {
           <Copy size={15} className="text-slate-400" />
         </button>
         <button type="button" onClick={share} className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-zappy-600 px-4 text-sm font-bold text-white hover:bg-zappy-700">
-          <Share2 size={15} /> Invite
+          <Share2 size={15} /> {tl('Invite')}
         </button>
       </div>
       {c.invited > 0 && (
@@ -51,10 +53,10 @@ export default function InvitePartnersCard() {
       {c.joinedWithCode === 'signup' && <p className="rounded-lg bg-slate-50 px-3 py-2 text-[12.5px] text-slate-600">You joined with a partner's code. Finish {c.jobs} jobs to get your {formatPaise(c.rewardPaise)}.</p>}
       {c.canEnterCode && (
         <form onSubmit={enter} className="flex gap-2 border-t border-slate-100 pt-3">
-          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={16} placeholder="Got a partner's code?" aria-label="A partner's invite code"
+          <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={16} placeholder={tl("Got a partner's code?")} aria-label="A partner's invite code"
             className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-slate-200 px-3 text-sm uppercase outline-none focus:ring-2 focus:ring-zappy-100" />
           <button type="submit" disabled={isLoading || code.trim().length < 4} className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-800 disabled:opacity-40">
-            {isLoading && <Loader2 size={14} className="animate-spin" />} Apply
+            {isLoading && <Loader2 size={14} className="animate-spin" />} {tl('Apply')}
           </button>
         </form>
       )}

@@ -17,6 +17,11 @@ async function onStatus(kind, doc, status) {
   const claimed = await k.model().collection.updateOne({ _id: doc._id, jobCountedAt: { $exists: false } }, { $set: { jobCountedAt: new Date() } });
   if (!claimed.modifiedCount) return false;
   await Promise.all(earners(doc).map(([who, id]) => MODELS[who]().updateOne({ _id: id }, { $inc: { completedJobs: 1 } })));
+  // The customer's first finished job of any kind settles their referral (referral.service).
+  if (doc.userId) {
+    await require('../referral/referral.service').onRefereeFirstOrder({ refereeKind: 'user', refereeId: doc.userId, orderId: doc._id, jobKind: kind })
+      .catch((e) => require('../../core/logger').error({ err: e.message, kind, id: String(doc._id) }, '[job-count] customer referral not settled'));
+  }
   for (const [who, id] of earners(doc)) {
     await require('../referral/partner-referral').onJobDone(who, id)
       .catch((e) => require('../../core/logger').error({ err: e.message, who, id: String(id) }, '[job-count] partner referral not settled'));

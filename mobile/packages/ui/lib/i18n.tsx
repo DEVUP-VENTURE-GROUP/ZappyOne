@@ -5,7 +5,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LANGUAGES, translations } from '@zappy/core/shared/translations';
+import { LANGUAGES, translations, labelKey, fillIn } from '@zappy/core/shared/translations';
 
 const STORAGE_KEY = 'zappyLang';
 type T = (key: string, fallback?: string) => string;
@@ -31,3 +31,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
 export const useI18n = () => useContext(I18nCtx);
 export const useT = () => useContext(I18nCtx).t;
+// A label looked up by its English words, with values filled in: tl('Earn {amount}', { amount }).
+export function useTl() {
+  const t = useT();
+  return useCallback((text: string, vars?: Record<string, string | number>) => fillIn(t(labelKey(text), text), vars) as string, [t]);
+}

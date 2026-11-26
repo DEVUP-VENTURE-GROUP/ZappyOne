@@ -9,6 +9,7 @@ import { useMyReviewsQuery, useReportReviewMutation, useReplyToReviewMutation } 
 import { Button, EmptyState, ErrorState, LoadingState, ScreenHeader, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
+import { useTl } from '../../lib/i18n';
 import { colors, ink, slate, accent } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -24,39 +25,41 @@ function Stars({ value, size = 14 }: { value: number; size?: number }) {
 type Review = { id: string; rating: number; by: string; service?: string; at: string; text?: string; reported?: boolean; hidden?: boolean; excluded?: boolean; reply?: { text: string; at: string } | null };
 
 function ReportBox({ review, onDone }: { review: Review; onDone: () => void }) {
+  const tl = useTl();
   const [reason, setReason] = useState('');
   const [report, { isLoading }] = useReportReviewMutation();
   async function send() {
-    try { await report({ id: review.id, reason: reason.trim() }).unwrap(); toast.success('Sent for review. We will look at it and let you know.'); onDone(); }
+    try { await report({ id: review.id, reason: reason.trim() }).unwrap(); toast.success(tl('Sent for review. We will look at it and let you know.')); onDone(); }
     catch (err) { toast.error(errText(err, 'That did not go through. Please try again.')); }
   }
   return (
     <View style={styles.gap}>
-      <TextInput value={reason} onChangeText={setReason} maxLength={300} multiline placeholder="What is wrong with this review? For example: I did not do this job."
+      <TextInput value={reason} onChangeText={setReason} maxLength={300} multiline placeholder={tl('What is wrong with this review? For example: I did not do this job.')}
         placeholderTextColor={ink[400]} style={styles.area} accessibilityLabel="Why you are reporting this review" />
       <View style={styles.row}>
-        <Button label="Send" size="small" onPress={send} loading={isLoading} disabled={reason.trim().length < 5} />
-        <Button label="Cancel" size="small" variant="outline" onPress={onDone} />
+        <Button label={tl('Send')} size="small" onPress={send} loading={isLoading} disabled={reason.trim().length < 5} />
+        <Button label={tl('Cancel')} size="small" variant="outline" onPress={onDone} />
       </View>
     </View>
   );
 }
 
 function ReplyBox({ review, onDone }: { review: Review; onDone: () => void }) {
+  const tl = useTl();
   const [text, setText] = useState(review.reply?.text || '');
   const [save, { isLoading }] = useReplyToReviewMutation();
   async function send(words: string) {
-    try { await save({ id: review.id, text: words }).unwrap(); toast.success(words ? 'Reply posted. Customers see it under the review.' : 'Reply removed'); onDone(); }
+    try { await save({ id: review.id, text: words }).unwrap(); toast.success(words ? tl('Reply posted. Customers see it under the review.') : tl('Reply removed')); onDone(); }
     catch (err) { toast.error(errText(err, 'That did not go through. Please try again.')); }
   }
   return (
     <View style={styles.gap}>
-      <TextInput value={text} onChangeText={setText} maxLength={500} multiline placeholder="Thank the customer, or explain politely. Everyone can read this."
+      <TextInput value={text} onChangeText={setText} maxLength={500} multiline placeholder={tl('Thank the customer, or explain politely. Everyone can read this.')}
         placeholderTextColor={ink[400]} style={styles.area} accessibilityLabel="Your reply" />
       <View style={styles.wrap}>
-        <Button label={review.reply ? 'Save reply' : 'Post reply'} size="small" onPress={() => send(text.trim())} loading={isLoading} disabled={text.trim().length < 2} />
-        {review.reply ? <Button label="Remove" size="small" variant="outline" disabled={isLoading} onPress={() => send('')} /> : null}
-        <Button label="Cancel" size="small" variant="outline" onPress={onDone} />
+        <Button label={review.reply ? tl('Save reply') : tl('Post reply')} size="small" onPress={() => send(text.trim())} loading={isLoading} disabled={text.trim().length < 2} />
+        {review.reply ? <Button label={tl('Remove')} size="small" variant="outline" disabled={isLoading} onPress={() => send('')} /> : null}
+        <Button label={tl('Cancel')} size="small" variant="outline" onPress={onDone} />
       </View>
     </View>
   );
@@ -66,14 +69,15 @@ export function ProviderReviewsPage() {
   const [page, setPage] = useState(1);
   const [reporting, setReporting] = useState<string | null>(null);
   const [replying, setReplying] = useState<string | null>(null);
+  const tl = useTl();
   const { data, isLoading, isError, refetch } = useMyReviewsQuery(page);
   const total: number = data?.reviewCount || 0;
   const reviews: Review[] = data?.reviews || [];
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="My reviews" safeArea />
-      {isLoading ? <LoadingState /> : isError ? <ErrorState message="Your reviews did not load." onRetry={refetch} /> : (
+      <ScreenHeader title={tl('My reviews')} safeArea />
+      {isLoading ? <LoadingState /> : isError ? <ErrorState message={tl('Your reviews did not load.')} onRetry={refetch} /> : (
         <FlatList
           data={reviews}
           keyExtractor={(r) => r.id}
@@ -100,7 +104,7 @@ export function ProviderReviewsPage() {
               </View>
             </View>
           }
-          ListEmptyComponent={<EmptyState title="No reviews yet" message="Customers can rate you after each finished job. Their reviews show here." icon={<MessageSquare size={24} color={ink[400]} />} />}
+          ListEmptyComponent={<EmptyState title={tl('No reviews yet')} message={tl('Customers can rate you after each finished job. Their reviews show here.')} icon={<MessageSquare size={24} color={ink[400]} />} />}
           renderItem={({ item: r }) => (
             <View style={styles.card}>
               <View style={styles.between}>
@@ -109,24 +113,24 @@ export function ProviderReviewsPage() {
                   <Text variant="caption" color={ink[500]}>{r.by}{r.service ? `, ${r.service}` : ''}, {new Date(r.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
                 </View>
                 {!r.reported && reporting !== r.id ? (
-                  <Pressable onPress={() => setReporting(r.id)} hitSlop={8} style={styles.row}><Flag size={13} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>Report</Text></Pressable>
+                  <Pressable onPress={() => setReporting(r.id)} hitSlop={8} style={styles.row}><Flag size={13} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>{tl('Report')}</Text></Pressable>
                 ) : null}
               </View>
               {r.text ? <Text variant="bodySmall">{r.text}</Text> : null}
               <View style={styles.wrap}>
-                {r.reported ? <View style={[styles.tag, { backgroundColor: accent[50] }]}><Text variant="caption" weight="semibold" color={accent[700]}>Reported, being looked at</Text></View> : null}
-                {r.hidden ? <View style={styles.tag}><EyeOff size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>Not shown to customers</Text></View> : null}
-                {r.excluded ? <View style={styles.tag}><Text variant="caption" weight="semibold" color={ink[500]}>Not counted in your rating</Text></View> : null}
+                {r.reported ? <View style={[styles.tag, { backgroundColor: accent[50] }]}><Text variant="caption" weight="semibold" color={accent[700]}>{tl('Reported, being looked at')}</Text></View> : null}
+                {r.hidden ? <View style={styles.tag}><EyeOff size={11} color={ink[500]} /><Text variant="caption" weight="semibold" color={ink[500]}>{tl('Not shown to customers')}</Text></View> : null}
+                {r.excluded ? <View style={styles.tag}><Text variant="caption" weight="semibold" color={ink[500]}>{tl('Not counted in your rating')}</Text></View> : null}
               </View>
               {r.reply && replying !== r.id ? (
                 <View style={styles.replyBox}>
-                  <Text variant="caption" weight="semibold" color={ink[700]}>Your reply</Text>
+                  <Text variant="caption" weight="semibold" color={ink[700]}>{tl('Your reply')}</Text>
                   <Text variant="bodySmall">{r.reply.text}</Text>
                 </View>
               ) : null}
               {replying !== r.id && reporting !== r.id && !r.hidden ? (
                 <Pressable onPress={() => setReplying(r.id)} hitSlop={8} style={styles.row} accessibilityRole="button">
-                  <Reply size={13} color={colors.primary} /><Text variant="caption" weight="semibold" color={colors.primary}>{r.reply ? 'Edit reply' : 'Reply'}</Text>
+                  <Reply size={13} color={colors.primary} /><Text variant="caption" weight="semibold" color={colors.primary}>{r.reply ? tl('Edit reply') : tl('Reply')}</Text>
                 </Pressable>
               ) : null}
               {replying === r.id ? <ReplyBox review={r} onDone={() => setReplying(null)} /> : null}
@@ -135,9 +139,9 @@ export function ProviderReviewsPage() {
           )}
           ListFooterComponent={data?.pages > 1 ? (
             <View style={[styles.between, { marginTop: spacing.md }]}>
-              <Button label="Newer" size="small" variant="outline" disabled={page <= 1} onPress={() => setPage((p) => p - 1)} />
+              <Button label={tl('Newer')} size="small" variant="outline" disabled={page <= 1} onPress={() => setPage((p) => p - 1)} />
               <Text variant="caption" color={ink[500]}>Page {page} of {data.pages}</Text>
-              <Button label="Older" size="small" variant="outline" disabled={page >= data.pages} onPress={() => setPage((p) => p + 1)} />
+              <Button label={tl('Older')} size="small" variant="outline" disabled={page >= data.pages} onPress={() => setPage((p) => p + 1)} />
             </View>
           ) : undefined}
         />

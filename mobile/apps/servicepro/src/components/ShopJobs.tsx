@@ -10,6 +10,7 @@ import { useProviderJobs } from '@zappy/core/shared/useProviderJobs';
 import { jobDays } from '@zappy/core/shared/jobDays';
 import { formatPaise } from '@zappy/core/shared/money';
 import { ErrorState, LoadingState, Text } from '@zappy/ui/components';
+import { useTl } from '@zappy/ui/lib/i18n';
 import { StagePill } from '@zappy/ui/components/worker/DashboardUI';
 import { AssignTechnician } from '@zappy/ui/provider/components/AssignTechnician';
 import { providerPath } from '@zappy/ui/provider/paths';
@@ -25,6 +26,7 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
   const router = useRouter();
   const { mine, isLoading, refetch, isError } = useProviderJobs({ kinds });
   const jobs = mine as Job[];
+  const tl = useTl();
 
   if (isError) return <ErrorState title="This did not load" message="Check your internet and try again." onRetry={refetch} />;
   if (isLoading) return <LoadingState />;
@@ -32,7 +34,7 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
     return (
       <View style={styles.empty}>
         <Wrench size={20} color={slate[300]} />
-        <Text variant="bodySmall" weight="bold" color={ink[700]}>No open jobs</Text>
+        <Text variant="bodySmall" weight="bold" color={ink[700]}>{tl('No open jobs')}</Text>
         <Text variant="caption" color={ink[500]} style={styles.center}>Jobs appear here, and ring, the moment a customer books your shop.</Text>
       </View>
     );
@@ -46,7 +48,7 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
     <View style={styles.days}>
       {(jobDays(jobs) as { key: string; title: string; jobs: Job[] }[]).map((g) => (
       <View key={g.key} style={styles.list}>
-      <Text variant="caption" weight="bold" color={ink[500]} style={styles.day}>{g.title}, {g.jobs.length}</Text>
+      <Text variant="caption" weight="bold" color={ink[500]} style={styles.day}>{tl(g.title)}, {g.jobs.length}</Text>
       {g.jobs.map((j) => {
         const Icon = KIND_ICON[j.kind] || Wrench;
         return (
@@ -61,9 +63,9 @@ export function ShopJobs({ kinds = ['repair', 'pet'] }: { kinds?: string[] }) {
                 <View style={styles.meta}>
                   {j.time ? <View style={styles.tag}><Clock size={10} color={ink[700]} /><Text variant="caption" weight="semibold" color={ink[700]}>{j.time}</Text></View> : null}
                   {j.valuePaise ? <Text variant="caption" weight="semibold">{formatPaise(j.valuePaise)}</Text> : null}
-                  {j.cashDue ? <View style={styles.tag}><Banknote size={10} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>collect cash</Text></View> : null}
-                  {j.late ? <View style={styles.tag}><Clock size={10} color={danger[600]} /><Text variant="caption" weight="semibold" color={danger[600]}>running late</Text></View> : null}
-                  {!j.workerId ? <View style={styles.tag}><UserX size={10} color={accent[700]} /><Text variant="caption" weight="semibold" color={accent[700]}>nobody on it</Text></View> : null}
+                  {j.cashDue ? <View style={styles.tag}><Banknote size={10} color={success[700]} /><Text variant="caption" weight="semibold" color={success[700]}>{tl('collect cash')}</Text></View> : null}
+                  {j.late ? <View style={styles.tag}><Clock size={10} color={danger[600]} /><Text variant="caption" weight="semibold" color={danger[600]}>{tl('running late')}</Text></View> : null}
+                  {!j.workerId ? <View style={styles.tag}><UserX size={10} color={accent[700]} /><Text variant="caption" weight="semibold" color={accent[700]}>{tl('nobody on it')}</Text></View> : null}
                 </View>
               </View>
               <ChevronRight size={16} color={slate[300]} />

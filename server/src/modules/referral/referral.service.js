@@ -174,22 +174,19 @@ async function applyAtSignup({ code, referee, refereeIp, refereeDeviceId }) {
  *   2. The referrer's reward
  * Idempotent — if already rewarded, returns silently.
  */
-async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
+async function onRefereeFirstOrder({ refereeKind, refereeId, orderId, jobKind = null }) {
   // Switched off: rewards wait (the use stays at 'signup') and are granted on a later order once back on.
   if (!(await require('../feature-flags/feature-flag.service').isEnabled('referrals'))) return null;
-  const use = await ReferralUse.findOne({
-    'referee.kind': refereeKind,
-    'referee.id': refereeId,
-    status: 'signup',
-  });
+  // Claimed in one step, so two jobs finishing together pay once.
+  const now = new Date();
+  const use = await ReferralUse.findOneAndUpdate(
+    { 'referee.kind': refereeKind, 'referee.id': refereeId, status: 'signup' },
+    { $set: { status: 'rewarded', referrerRewardPaise: REFERRER_REWARD_PAISE, referrerRewardGivenAt: now, refereeBonusGivenAt: now, ...(jobKind ? {} : { qualifyingOrderId: orderId }) } },
+    { new: true },
+  );
   if (!use) return null; // Not referred, or already rewarded
-
-  use.status = 'rewarded';
-  use.referrerRewardPaise = REFERRER_REWARD_PAISE;
-  use.referrerRewardGivenAt = new Date();
-  use.refereeBonusGivenAt = new Date();
-  use.qualifyingOrderId = orderId;
-  await use.save();
+  // A job of any kind qualifies; only an old-style order is linked as the order.
+  const refs = jobKind ? {} : { orderId };
 
   // Credit referee their deferred signup bonus (now that they've proved intent)
   await walletService.apply({
@@ -200,7 +197,7 @@ async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
     reason: Transaction.REASONS.REFERRAL_REWARD,
     idempotencyKey: `referral:referee:${use._id}`,
     description: `Welcome bonus - you completed your first order via referral ${use.code}`,
-    refs: { orderId },
+    refs,
   });
 
   await notificationService.notify({
@@ -220,7 +217,7 @@ async function onRefereeFirstOrder({ refereeKind, refereeId, orderId }) {
     reason: Transaction.REASONS.REFERRAL_REWARD,
     idempotencyKey: `referral:referrer:${use._id}`,
     description: 'Referral reward - your friend just completed their first order!',
-    refs: { orderId },
+    refs,
   });
 
   await ReferralCode.updateOne(

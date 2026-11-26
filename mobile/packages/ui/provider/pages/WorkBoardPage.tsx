@@ -22,6 +22,7 @@ import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { DuesCard } from '../DuesCard';
 import { errText } from '../../lib/feedback';
+import { useTl } from '../../lib/i18n';
 
 type Row = { type: 'head'; key: string; title: string } | { type: 'day'; key: string; title: string } | { type: 'mine'; key: string; job: MineJob }
   | { type: 'open'; key: string; job: OpenJob } | { type: 'note'; key: string; text: string } | { type: 'verify'; key: string; kinds: string[] };
@@ -33,35 +34,36 @@ export function WorkBoardPage({ kinds }: { kinds: string[] }) {
   const isWorker = useAppSelector((s) => s.auth.role) === 'worker';
   const { data: me } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
   const [refreshing, setRefreshing] = useState(false);
+  const tl = useTl();
 
   async function onTake(job: OpenJob) {
     try {
       const to = await take(job);
-      toast.success('It’s yours');
+      toast.success(tl('It’s yours'));
       router.push(to as never);
     } catch (err) {
       const e = err as { data?: { code?: string; error?: string } };
-      if (e?.data?.code === 'ALREADY_CLAIMED') { toast.error('Someone else took it first'); refetch(); }
-      else if (e?.data?.code === 'NOT_APPROVED_FOR_SERVICE') toast.error('Get verified for this service first');
-      else toast.error(errText(e, 'Could not take this job'));
+      if (e?.data?.code === 'ALREADY_CLAIMED') { toast.error(tl('Someone else took it first')); refetch(); }
+      else if (e?.data?.code === 'NOT_APPROVED_FOR_SERVICE') toast.error(tl('Get verified for this service first'));
+      else toast.error(errText(e, tl('Could not take this job')));
     }
   }
 
   const rows: Row[] = [
-    { type: 'head', key: 'h-mine', title: `Your jobs${mine.length ? `, ${mine.length}` : ''}` },
+    { type: 'head', key: 'h-mine', title: `${tl('Your jobs')}${mine.length ? `, ${mine.length}` : ''}` },
     ...(mine.length ? (jobDays(mine) as { key: string; title: string; jobs: MineJob[] }[]).flatMap((g) => [
-      { type: 'day' as const, key: `d-${g.key}`, title: g.title },
+      { type: 'day' as const, key: `d-${g.key}`, title: tl(g.title) },
       ...g.jobs.map((j) => ({ type: 'mine' as const, key: `m-${j.kind}-${j.id}`, job: j })),
-    ]) : [{ type: 'note' as const, key: 'n-mine', text: 'Nothing in hand right now.' }]),
-    { type: 'head', key: 'h-open', title: `Open near you${open.length ? `, ${open.length}` : ''}` },
+    ]) : [{ type: 'note' as const, key: 'n-mine', text: tl('Nothing in hand right now.') }]),
+    { type: 'head', key: 'h-open', title: `${tl('Open near you')}${open.length ? `, ${open.length}` : ''}` },
     ...open.map((j: OpenJob) => ({ type: 'open' as const, key: `o-${j.kind}-${j.id}`, job: j })),
-    ...(!open.length && !notApproved.length ? [{ type: 'note' as const, key: 'n-open', text: 'No open jobs near you. New ones appear here, and you’ll get an alert.' }] : []),
+    ...(!open.length && !notApproved.length ? [{ type: 'note' as const, key: 'n-open', text: tl('No open jobs near you. New ones appear here, and you’ll get an alert.') }] : []),
     ...(notApproved.length ? [{ type: 'verify' as const, key: 'v', kinds: notApproved }] : []),
   ];
 
   return (
     <View style={styles.page}>
-      <ScreenHeader title="Work" safeArea />
+      <ScreenHeader title={tl('Work')} safeArea />
       {isLoading ? (
         <View style={styles.pad}><SkeletonList count={4} /></View>
       ) : (

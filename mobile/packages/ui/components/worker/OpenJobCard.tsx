@@ -11,6 +11,7 @@ import { colors, ink, success, accent } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
 import { STAFF_APP } from '../../provider/staffApp';
+import { useTl } from '../../lib/i18n';
 
 export interface OpenJob {
   kind: string; id: string; service: string; title: string; where?: string; to?: string;
@@ -21,6 +22,7 @@ export const when = (at?: string | null) => (at ? new Date(at).toLocaleString('e
 
 /* Open work: what it pays and how far, before they commit. */
 export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolean; onTake: () => void }) {
+  const tl = useTl();
   const boost = !STAFF_APP && (job.boostPaise ?? 0) > 0;
   return (
     <View style={[styles.open, boost ? styles.openBoost : null]}>
@@ -38,7 +40,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
         {STAFF_APP ? null : (
           <View style={styles.right}>
             <Text variant="heading3" weight="bold" color={success[700]}>{formatPaise(job.earningPaise)}</Text>
-            <Text variant="caption" color={colors.textSecondary}>you earn</Text>
+            <Text variant="caption" color={colors.textSecondary}>{tl('you earn')}</Text>
             {boost ? <Text variant="caption" weight="semibold" color={accent[700]}>incl. +{formatPaise(job.boostPaise)} extra</Text> : null}
           </View>
         )}
@@ -62,7 +64,7 @@ export function OpenJobCard({ job, busy, onTake }: { job: OpenJob; busy?: boolea
       ) : null}
       <Pressable onPress={onTake} disabled={busy} accessibilityRole="button" accessibilityLabel={STAFF_APP ? 'Take this job' : `Take this job, ${formatPaise(job.earningPaise)}`}
         android_ripple={RIPPLE} style={[styles.take, busy && styles.dim]}>
-        <Text variant="button" color={colors.textInverse}>Take this job</Text>
+        <Text variant="button" color={colors.textInverse}>{tl('Take this job')}</Text>
       </Pressable>
     </View>
   );

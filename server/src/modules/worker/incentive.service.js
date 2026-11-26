@@ -50,7 +50,8 @@ async function getMilestones() {
 }
 
 async function setMilestones(milestones) {
-  await redis.set(MILESTONE_KEY, JSON.stringify(milestones), 'EX', 86400);
+  // Kept until an admin changes it; an expiry quietly put the defaults back a day later.
+  await redis.set(MILESTONE_KEY, JSON.stringify(milestones));
   return milestones;
 }
 

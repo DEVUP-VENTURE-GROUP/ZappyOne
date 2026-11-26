@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { translations, LANGUAGES } from './translations';
+import { translations, LANGUAGES, labelKey, fillIn } from './translations';
 
 const I18nCtx = createContext(null);
 const STORAGE_KEY = 'zappyLang';
@@ -41,6 +41,12 @@ export function useI18n() {
 
 export function useT() {
   return useI18n().t;
+}
+
+// A Service Pro label looked up by its English words, with values filled in: tl('Earn {amount}', { amount }).
+export function useServiceProTl() {
+  const t = useServiceProT();
+  return useCallback((text, vars) => fillIn(t(labelKey(text), text), vars), [t]);
 }
 
 /** Translates only inside Service Pro; every other app keeps its text exactly as it was. */

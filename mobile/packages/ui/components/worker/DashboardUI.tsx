@@ -10,6 +10,7 @@ import { RIPPLE } from '../../lib/feedback';
 import { colors, zappy, ink, slate, success, accent, danger } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
+import { useTl } from '../../lib/i18n';
 
 /** "₹1,299" from whole rupees. */
 export const inr = (rupees: number) => `₹${Math.round(Number(rupees) || 0).toLocaleString('en-IN')}`;
@@ -77,9 +78,10 @@ export const StatTile = memo(function StatTile({ Icon, tone = 'blue', label, val
 
 /** A job's stage, amber when it needs them now. */
 export function StagePill({ label, attention }: { label: string; attention?: boolean }) {
+  const tl = useTl();
   return (
     <View style={[styles.pill, { backgroundColor: attention ? accent[100] : slate[100] }]}>
-      <Text variant="caption" weight="semibold" color={attention ? accent[700] : ink[700]} numberOfLines={1}>{label}</Text>
+      <Text variant="caption" weight="semibold" color={attention ? accent[700] : ink[700]} numberOfLines={1}>{tl(label)}</Text>
     </View>
   );
 }

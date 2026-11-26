@@ -6,6 +6,7 @@ import { formatPaise } from '@zappy/core/shared/money';
 import { Button, Text } from '../../components';
 import { toast } from '../../components/Toast';
 import { errText } from '../../lib/feedback';
+import { useTl } from '../../lib/i18n';
 import { colors, ink, slate, zappy } from '../../theme/colors';
 import { radius } from '../../theme/radius';
 import { spacing } from '../../theme/spacing';
@@ -17,6 +18,7 @@ export function InvitePartnersCard() {
   const { data } = usePartnerReferralQuery(undefined);
   const [apply, { isLoading }] = useApplyReferralMutation();
   const [code, setCode] = useState('');
+  const tl = useTl();
   const c: Card | undefined = data?.card;
   if (!c?.on) return null;
 
@@ -30,21 +32,21 @@ export function InvitePartnersCard() {
       <View style={styles.row}>
         <View style={styles.icon}><Gift size={18} color={zappy[700]} /></View>
         <View style={styles.flex}>
-          <Text variant="body" weight="bold">Invite partners, earn {formatPaise(c.rewardPaise)}</Text>
-          <Text variant="caption" color={ink[500]}>When a partner you invite finishes {c.jobs} jobs, you both get {formatPaise(c.rewardPaise)} in your earnings.</Text>
+          <Text variant="body" weight="bold">{tl('Invite partners, earn {amount}', { amount: formatPaise(c.rewardPaise) })}</Text>
+          <Text variant="caption" color={ink[500]}>{tl('When a partner you invite finishes {jobs} jobs, you both get {amount} in your earnings.', { jobs: c.jobs, amount: formatPaise(c.rewardPaise) })}</Text>
         </View>
       </View>
       <View style={styles.row}>
         <View style={styles.code}><Text variant="body" weight="bold" selectable style={styles.mono}>{c.code}</Text></View>
-        <Button label="Invite" size="small" icon={<Share2 size={15} color="#fff" />} onPress={() => { Share.share({ message: c.shareText }).catch(() => {}); }} />
+        <Button label={tl('Invite')} size="small" icon={<Share2 size={15} color="#fff" />} onPress={() => { Share.share({ message: c.shareText }).catch(() => {}); }} />
       </View>
       {c.invited > 0 ? <Text variant="caption" color={ink[700]}>{c.invited} invited, {c.rewarded} finished, {formatPaise(c.earnedPaise)} earned</Text> : null}
       {c.joinedWithCode === 'signup' ? <Text variant="caption" color={ink[700]} style={styles.note}>You joined with a partner's code. Finish {c.jobs} jobs to get your {formatPaise(c.rewardPaise)}.</Text> : null}
       {c.canEnterCode ? (
         <View style={[styles.row, styles.rule]}>
-          <TextInput value={code} onChangeText={(v) => setCode(v.toUpperCase())} maxLength={16} autoCapitalize="characters" placeholder="Got a partner's code?"
+          <TextInput value={code} onChangeText={(v) => setCode(v.toUpperCase())} maxLength={16} autoCapitalize="characters" placeholder={tl("Got a partner's code?")}
             placeholderTextColor={ink[400]} style={styles.input} accessibilityLabel="A partner's invite code" />
-          <Button label="Apply" size="small" variant="outline" loading={isLoading} disabled={code.trim().length < 4} onPress={enter} />
+          <Button label={tl('Apply')} size="small" variant="outline" loading={isLoading} disabled={code.trim().length < 4} onPress={enter} />
         </View>
       ) : null}
     </View>

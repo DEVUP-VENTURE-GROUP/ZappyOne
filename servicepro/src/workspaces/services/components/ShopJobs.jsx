@@ -7,7 +7,7 @@ import { useProviderJobs } from '@shared/provider/useProviderJobs';
 import { jobDays } from '@shared/provider/jobDays';
 import AssignTechnician from '@shared/provider/components/AssignTechnician';
 import { formatPaise } from '@shared/utils/money';
-import { useT } from '@shared/i18n/I18nProvider';
+import { useT, useServiceProTl } from '@shared/i18n/I18nProvider';
 
 /**
  * The shop's open work — every kind it takes — and who is doing each job.
@@ -22,6 +22,7 @@ const KIND_ICON = { repair: Wrench, pet: PawPrint };
 export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
   const nav = useNavigate();
   const t = useT();
+  const tl = useServiceProTl();
   const { mine: jobs, isLoading, refetch } = useProviderJobs({ kinds });
 
   if (isLoading) {
@@ -46,7 +47,7 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
     <div className="space-y-4">
       {jobDays(jobs).map((g) => (
       <section key={g.key} className="space-y-2">
-      <h3 className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{g.title}, {g.jobs.length}</h3>
+      <h3 className="text-[12px] font-bold uppercase tracking-wide text-slate-500">{tl(g.title)}, {g.jobs.length}</h3>
       {g.jobs.map((j) => {
         const Icon = KIND_ICON[j.kind] || Wrench;
         return (
@@ -59,7 +60,7 @@ export default function ShopJobs({ kinds = ['repair', 'pet'] }) {
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                     j.attention ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}
                   >
-                    {j.status}
+                    {tl(j.status)}
                   </span>
                 </span>
                 <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">

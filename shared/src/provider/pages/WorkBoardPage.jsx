@@ -10,6 +10,7 @@ import { useGetWorkerMeQuery } from '../../services/api';
 import { useSelector } from 'react-redux';
 import { selectRole } from '../../modules/auth/authSlice';
 import { STAFF_PORTAL } from '../staffPortal';
+import { useServiceProTl } from '../../i18n/I18nProvider';
 
 /**
  * Work — everything a provider holds, and everything open near them that
@@ -24,6 +25,7 @@ import { STAFF_PORTAL } from '../staffPortal';
 const when = (at) => (at ? new Date(at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : null);
 
 function MineRow({ job, onOpen }) {
+  const tl = useServiceProTl();
   return (
     <button
       type="button"
@@ -35,7 +37,7 @@ function MineRow({ job, onOpen }) {
         <span className="block truncate text-[13px] capitalize text-slate-500">{job.time ? <b className="font-semibold text-slate-700">{job.time}, </b> : null}{job.subtitle}</span>
       </span>
       <span className={`shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${job.attention ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
-        {job.status}
+        {tl(job.status)}
       </span>
       <ChevronRight size={16} className="shrink-0 text-slate-400" />
     </button>
@@ -43,6 +45,7 @@ function MineRow({ job, onOpen }) {
 }
 
 function OpenCard({ job, busy, onTake }) {
+  const tl = useServiceProTl();
   return (
     <article className={`flex flex-col gap-3 overflow-hidden rounded-xl bg-white p-4 ${job.boostPaise > 0 ? 'ring-2 ring-amber-300 shadow-[0_6px_20px_-8px_rgba(245,158,11,0.45)]' : 'ring-1 ring-slate-200/80'}`}>
       {job.boostPaise > 0 && !STAFF_PORTAL && (
@@ -57,7 +60,7 @@ function OpenCard({ job, busy, onTake }) {
         </div>
         {!STAFF_PORTAL && <div className="shrink-0 text-right">
           <p className="text-[17px] font-bold tabular-nums text-emerald-700">{formatPaise(job.earningPaise)}</p>
-          <p className="text-[11px] text-slate-500">you earn</p>
+          <p className="text-[11px] text-slate-500">{tl('you earn')}</p>
           {/* The customer added this for a faster match; it is all theirs, and included above. */}
           {job.boostPaise > 0 && <p className="mt-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">incl. +{formatPaise(job.boostPaise)} extra</p>}
         </div>}
@@ -89,7 +92,7 @@ function OpenCard({ job, busy, onTake }) {
         disabled={busy}
         className="rounded-lg bg-zappy-600 py-2.5 text-[14px] font-semibold text-white transition hover:bg-zappy-700 disabled:opacity-50"
       >
-        Take this job
+        {tl('Take this job')}
       </button>
     </article>
   );
@@ -101,16 +104,17 @@ export default function WorkBoardPage({ kinds }) {
   // A worker's own position for the surge zones card; a shop owner has none.
   const isWorker = useSelector(selectRole) === 'worker';
   const { data: me } = useGetWorkerMeQuery(undefined, { skip: !isWorker });
+  const tl = useServiceProTl();
 
   async function onTake(job) {
     try {
       const to = await take(job);
-      toast.success('It’s yours');
+      toast.success(tl('It’s yours'));
       nav(to);
     } catch (err) {
-      if (err?.data?.code === 'ALREADY_CLAIMED') { toast.error('Someone else took it first'); refetch(); }
-      else if (err?.data?.code === 'NOT_APPROVED_FOR_SERVICE') toast.error('Get verified for this service first');
-      else toast.error(err?.data?.error || 'Could not take this job');
+      if (err?.data?.code === 'ALREADY_CLAIMED') { toast.error(tl('Someone else took it first')); refetch(); }
+      else if (err?.data?.code === 'NOT_APPROVED_FOR_SERVICE') toast.error(tl('Get verified for this service first'));
+      else toast.error(err?.data?.error || tl('Could not take this job'));
     }
   }
 
@@ -121,7 +125,7 @@ export default function WorkBoardPage({ kinds }) {
           <button type="button" onClick={() => nav('/worker')} aria-label="Back" className="-ml-1 rounded-lg p-1.5 hover:bg-slate-100">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-[18px] font-bold text-navy">Work</h1>
+          <h1 className="text-[18px] font-bold text-navy">{tl('Work')}</h1>
         </div>
       </header>
 
@@ -134,21 +138,21 @@ export default function WorkBoardPage({ kinds }) {
 
         {!isLoading && (
           <section className="space-y-2.5">
-            <h2 className="text-[14px] font-semibold text-slate-600">Your jobs{mine.length ? `, ${mine.length}` : ''}</h2>
+            <h2 className="text-[14px] font-semibold text-slate-600">{tl('Your jobs')}{mine.length ? `, ${mine.length}` : ''}</h2>
             {mine.length
               ? jobDays(mine).map((g) => (
                 <div key={g.key} className="space-y-2">
-                  <h3 className="pt-1 text-[12px] font-bold uppercase tracking-wide text-slate-500">{g.title}</h3>
+                  <h3 className="pt-1 text-[12px] font-bold uppercase tracking-wide text-slate-500">{tl(g.title)}</h3>
                   {g.jobs.map((j) => <MineRow key={`${j.kind}-${j.id}`} job={j} onOpen={() => nav(j.to)} />)}
                 </div>
               ))
-              : <p className="rounded-xl bg-white px-4 py-5 text-[14px] text-slate-500 ring-1 ring-slate-200/80">Nothing in hand right now.</p>}
+              : <p className="rounded-xl bg-white px-4 py-5 text-[14px] text-slate-500 ring-1 ring-slate-200/80">{tl('Nothing in hand right now.')}</p>}
           </section>
         )}
 
         {!isLoading && open !== null && (
           <section className="space-y-2.5">
-            <h2 className="text-[14px] font-semibold text-slate-600">Open near you{open.length ? `, ${open.length}` : ''}</h2>
+            <h2 className="text-[14px] font-semibold text-slate-600">{tl('Open near you')}{open.length ? `, ${open.length}` : ''}</h2>
             {open.length > 0 && (
               <div className="grid gap-3 sm:grid-cols-2">
                 {open.map((j) => <OpenCard key={`${j.kind}-${j.id}`} job={j} busy={taking} onTake={() => onTake(j)} />)}
@@ -156,7 +160,7 @@ export default function WorkBoardPage({ kinds }) {
             )}
             {!open.length && !notApproved.length && (
               <p className="rounded-xl bg-white px-4 py-5 text-[14px] text-slate-500 ring-1 ring-slate-200/80">
-                No open jobs near you. New ones appear here, and you’ll get an alert.
+                {tl('No open jobs near you. New ones appear here, and you’ll get an alert.')}
               </p>
             )}
             {notApproved.length > 0 && (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Flag, Loader2, EyeOff, MessageSquare, Reply } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useMyReviewsQuery, useReportReviewMutation, useReplyToReviewMutation } from '../../services/api';
+import { useServiceProTl } from '../../i18n/I18nProvider';
 
 /**
  * A provider's own reviews: the rating customers see, the star spread and
@@ -24,50 +25,52 @@ function Stars({ value, size = 14 }) {
 }
 
 function ReportBox({ review, onDone }) {
+  const tl = useServiceProTl();
   const [reason, setReason] = useState('');
   const [report, { isLoading }] = useReportReviewMutation();
   async function send(e) {
     e.preventDefault();
     try {
       await report({ id: review.id, reason: reason.trim() }).unwrap();
-      toast.success('Sent for review. We will look at it and let you know.');
+      toast.success(tl('Sent for review. We will look at it and let you know.'));
       onDone();
     } catch (err) { toast.error(err?.data?.error || 'That did not go through. Please try again.'); }
   }
   return (
     <form onSubmit={send} className="mt-3 space-y-2">
       <textarea rows={2} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} className="input w-full resize-none py-2"
-        placeholder="What is wrong with this review? For example: I did not do this job." aria-label="Why you are reporting this review" />
+        placeholder={tl('What is wrong with this review? For example: I did not do this job.')} aria-label="Why you are reporting this review" />
       <div className="flex gap-2">
         <button type="submit" disabled={isLoading || reason.trim().length < 5} className="btn-primary min-h-[38px] px-4 text-[13px]">
-          {isLoading && <Loader2 size={14} className="animate-spin" />} Send
+          {isLoading && <Loader2 size={14} className="animate-spin" />} {tl('Send')}
         </button>
-        <button type="button" onClick={onDone} className="btn-outline min-h-[38px] px-4 text-[13px]">Cancel</button>
+        <button type="button" onClick={onDone} className="btn-outline min-h-[38px] px-4 text-[13px]">{tl('Cancel')}</button>
       </div>
     </form>
   );
 }
 
 function ReplyBox({ review, onDone }) {
+  const tl = useServiceProTl();
   const [text, setText] = useState(review.reply?.text || '');
   const [save, { isLoading }] = useReplyToReviewMutation();
   async function send(words) {
     try {
       await save({ id: review.id, text: words }).unwrap();
-      toast.success(words ? 'Reply posted. Customers see it under the review.' : 'Reply removed');
+      toast.success(words ? tl('Reply posted. Customers see it under the review.') : tl('Reply removed'));
       onDone();
     } catch (err) { toast.error(err?.data?.error || 'That did not go through. Please try again.'); }
   }
   return (
     <form onSubmit={(e) => { e.preventDefault(); send(text.trim()); }} className="mt-3 space-y-2">
       <textarea rows={2} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} className="input w-full resize-none py-2"
-        placeholder="Thank the customer, or explain politely. Everyone can read this." aria-label="Your reply" />
+        placeholder={tl('Thank the customer, or explain politely. Everyone can read this.')} aria-label="Your reply" />
       <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={isLoading || text.trim().length < 2} className="btn-primary min-h-[38px] px-4 text-[13px]">
-          {isLoading && <Loader2 size={14} className="animate-spin" />} {review.reply ? 'Save reply' : 'Post reply'}
+          {isLoading && <Loader2 size={14} className="animate-spin" />} {review.reply ? tl('Save reply') : tl('Post reply')}
         </button>
-        {review.reply && <button type="button" disabled={isLoading} onClick={() => send('')} className="btn-outline min-h-[38px] px-4 text-[13px]">Remove</button>}
-        <button type="button" onClick={onDone} className="btn-outline min-h-[38px] px-4 text-[13px]">Cancel</button>
+        {review.reply && <button type="button" disabled={isLoading} onClick={() => send('')} className="btn-outline min-h-[38px] px-4 text-[13px]">{tl('Remove')}</button>}
+        <button type="button" onClick={onDone} className="btn-outline min-h-[38px] px-4 text-[13px]">{tl('Cancel')}</button>
       </div>
     </form>
   );
@@ -78,17 +81,18 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
   const [page, setPage] = useState(1);
   const [reporting, setReporting] = useState(null);
   const [replying, setReplying] = useState(null);
+  const tl = useServiceProTl();
   const { data, isLoading, isError, refetch } = useMyReviewsQuery(page);
   const total = data?.reviewCount || 0;
 
   return (
     <div className={embedded ? '' : 'min-h-screen bg-canvas'}>
-      {embedded ? <h1 className="mx-auto max-w-2xl px-4 pt-5 text-[20px] font-bold text-ink-900">My reviews</h1> : <header className="sticky top-0 z-20 border-b border-line bg-white">
+      {embedded ? <h1 className="mx-auto max-w-2xl px-4 pt-5 text-[20px] font-bold text-ink-900">{tl('My reviews')}</h1> : <header className="sticky top-0 z-20 border-b border-line bg-white">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button type="button" onClick={() => nav(back)} aria-label="Back" className="flex h-10 w-10 items-center justify-center rounded-btn bg-sunken text-ink-700 hover:bg-line">
             <ArrowLeft size={18} />
           </button>
-          <h1 className="text-[17px] font-bold text-ink-900">My reviews</h1>
+          <h1 className="text-[17px] font-bold text-ink-900">{tl('My reviews')}</h1>
         </div>
       </header>}
 
@@ -97,8 +101,8 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
           <div className="flex justify-center py-16"><Loader2 className="animate-spin text-zappy-600" /></div>
         ) : isError ? (
           <div className="rounded-card border border-line bg-white p-6 text-center">
-            <p className="text-[14px] text-ink-500">Your reviews did not load.</p>
-            <button type="button" onClick={refetch} className="btn-outline mt-3 min-h-[38px] px-4 text-[13px]">Try again</button>
+            <p className="text-[14px] text-ink-500">{tl('Your reviews did not load.')}</p>
+            <button type="button" onClick={refetch} className="btn-outline mt-3 min-h-[38px] px-4 text-[13px]">{tl('Try again')}</button>
           </div>
         ) : (
           <>
@@ -127,8 +131,8 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
             {!data.reviews.length ? (
               <div className="rounded-card border border-line bg-white p-8 text-center">
                 <MessageSquare className="mx-auto text-ink-400" size={24} />
-                <p className="mt-2 text-[15px] font-semibold text-ink-900">No reviews yet</p>
-                <p className="mt-1 text-[13px] text-ink-500">Customers can rate you after each finished job. Their reviews show here.</p>
+                <p className="mt-2 text-[15px] font-semibold text-ink-900">{tl('No reviews yet')}</p>
+                <p className="mt-1 text-[13px] text-ink-500">{tl('Customers can rate you after each finished job. Their reviews show here.')}</p>
               </div>
             ) : (
               <ul className="space-y-3">
@@ -143,25 +147,25 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
                       </div>
                       {!r.reported && reporting !== r.id && (
                         <button type="button" onClick={() => setReporting(r.id)} className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-ink-500 hover:text-ink-900">
-                          <Flag size={13} /> Report
+                          <Flag size={13} /> {tl('Report')}
                         </button>
                       )}
                     </div>
                     {r.text && <p className="mt-2 text-[14px] leading-relaxed text-ink-900">{r.text}</p>}
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {r.reported && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Reported, being looked at</span>}
-                      {r.hidden && <span className="flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500"><EyeOff size={11} /> Not shown to customers</span>}
-                      {r.excluded && <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500">Not counted in your rating</span>}
+                      {r.reported && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{tl('Reported, being looked at')}</span>}
+                      {r.hidden && <span className="flex items-center gap-1 rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500"><EyeOff size={11} /> {tl('Not shown to customers')}</span>}
+                      {r.excluded && <span className="rounded-full bg-sunken px-2 py-0.5 text-[11px] font-semibold text-ink-500">{tl('Not counted in your rating')}</span>}
                     </div>
                     {r.reply && replying !== r.id && (
                       <div className="mt-3 rounded-btn bg-sunken px-3 py-2">
-                        <p className="text-[12px] font-semibold text-ink-700">Your reply</p>
+                        <p className="text-[12px] font-semibold text-ink-700">{tl('Your reply')}</p>
                         <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-900">{r.reply.text}</p>
                       </div>
                     )}
                     {replying !== r.id && reporting !== r.id && !r.hidden && (
                       <button type="button" onClick={() => setReplying(r.id)} className="mt-2 flex items-center gap-1 text-[12.5px] font-semibold text-zappy-700 hover:text-zappy-800">
-                        <Reply size={13} /> {r.reply ? 'Edit reply' : 'Reply'}
+                        <Reply size={13} /> {r.reply ? tl('Edit reply') : tl('Reply')}
                       </button>
                     )}
                     {replying === r.id && <ReplyBox review={r} onDone={() => setReplying(null)} />}
@@ -173,9 +177,9 @@ export default function ProviderReviewsPage({ back = '/worker', embedded = false
 
             {data.pages > 1 && (
               <div className="flex items-center justify-between">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="btn-outline min-h-[38px] px-4 text-[13px]">Newer</button>
+                <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="btn-outline min-h-[38px] px-4 text-[13px]">{tl('Newer')}</button>
                 <span className="text-[12px] text-ink-500 tabular-nums">Page {page} of {data.pages}</span>
-                <button type="button" disabled={page >= data.pages} onClick={() => setPage((p) => p + 1)} className="btn-outline min-h-[38px] px-4 text-[13px]">Older</button>
+                <button type="button" disabled={page >= data.pages} onClick={() => setPage((p) => p + 1)} className="btn-outline min-h-[38px] px-4 text-[13px]">{tl('Older')}</button>
               </div>
             )}
           </>
