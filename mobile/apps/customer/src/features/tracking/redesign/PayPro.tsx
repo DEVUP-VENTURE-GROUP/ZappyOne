@@ -26,7 +26,7 @@ export function PayPro({ jobId, payTo, onClaimed }: { jobId: string; payTo: PayT
   const link = to.upiId ? upiLink({ upiId: to.upiId, name: to.name, amountPaise, reference }) : null;
 
   async function say(m: 'upi' | 'cash') {
-    try { toast.success((await claim({ id: jobId, method: m, ...(m === 'upi' && { utr }) }).unwrap()).message); setChanging(false); onClaimed(); }
+    try { toast.success((await claim({ id: jobId, method: m, ...(m === 'upi' && utr && { utr }) }).unwrap()).message); setChanging(false); onClaimed(); }
     catch (err) { toast.error(errText(err, 'Could not send that. Try again.')); }
   }
 
@@ -75,11 +75,11 @@ export function PayPro({ jobId, payTo, onClaimed }: { jobId: string; payTo: PayT
                 <Text variant="bodySmall" color={ink[500]}>UPI ID</Text>
                 <Text variant="body" selectable numberOfLines={1} style={styles.flex}>{to.upiId}</Text>
               </View>
-              <Text variant="bodySmall" weight="semibold">UPI reference (12 digits)</Text>
+              <Text variant="bodySmall" weight="semibold">UPI reference (12 digits) <Text variant="bodySmall" color={ink[500]}>optional</Text></Text>
               <TextInput value={utr} onChangeText={(t) => setUtr(cleanUpiRef(t))} keyboardType="number-pad" maxLength={12} placeholder="e.g. 431298765012"
-                placeholderTextColor={ink[400]} style={styles.input} accessibilityLabel="UPI reference, 12 digits" />
-              <Text variant="caption" color={ink[500]}>In your UPI app, open this payment. The 12-digit UPI ref or UTR number is on the receipt.</Text>
-              <Button label={`I've paid ${amount}`} variant="outline" size="large" loading={isLoading} disabled={!isUpiRef(utr)} onPress={() => say('upi')} fullWidth />
+                placeholderTextColor={ink[400]} style={styles.input} accessibilityLabel="UPI reference, 12 digits, optional" />
+              <Text variant="caption" color={ink[500]}>Adding it helps your pro find the payment faster. It is on the receipt in your UPI app.</Text>
+              <Button label={`I've paid ${amount}`} variant="outline" size="large" loading={isLoading} disabled={utr.length > 0 && !isUpiRef(utr)} onPress={() => say('upi')} fullWidth />
             </View>
           ) : null}
           {method === 'cash' ? <Button label={`I'm paying ${amount} in cash`} size="large" loading={isLoading} onPress={() => say('cash')} fullWidth style={styles.mt} /> : null}

@@ -83,13 +83,15 @@ test('already paid, or the pro said not received: no reminder, never auto-receiv
   expect((await PetBooking.findById(paid.id).lean()).payClaim.autoReceivedAt).toBeInstanceOf(Date);
 });
 
-test('"I paid by UPI" needs the 12-digit reference, and one reference pays one job', async () => {
+test('"I paid by UPI": the reference is optional, a wrong one is refused, and one reference pays one job', async () => {
   const cust = { Authorization: `Bearer ${sign({ sub: String(owner), role: 'user' })}` };
   const one = await job(0, { payClaim: undefined });
   const two = await job(0, { payClaim: undefined });
   await PetBooking.collection.updateMany({ _id: { $in: [one.id, two.id] } }, { $unset: { payClaim: 1 } });
-  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi' })).body.code).toBe('UPI_REF_REQUIRED');
-  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '12345' })).body.code).toBe('UPI_REF_REQUIRED');
+  expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '12345' })).body.code).toBe('UPI_REF_BAD');
+  expect((await request(app).post(`/api/jobs/${two.id}/pay-claim`).set(cust).send({ method: 'upi' })).status).toBe(200);
+  expect((await PetBooking.findById(two.id).lean()).payClaim).toMatchObject({ method: 'upi' });
+  expect((await PetBooking.findById(two.id).lean()).payClaim.utr).toBeUndefined();
   expect((await request(app).post(`/api/jobs/${one.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '4312 9876 5012' })).status).toBe(200);
   expect((await PetBooking.findById(one.id).lean()).payClaim.utr).toBe('431298765012');
   expect((await request(app).post(`/api/jobs/${two.id}/pay-claim`).set(cust).send({ method: 'upi', utr: '431298765012' })).body.code).toBe('UPI_REF_USED');

@@ -27,7 +27,7 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
   }, [method, link, phone]);
 
   async function say(m) {
-    try { toast.success((await claim({ id: jobId, method: m, ...(m === 'upi' && { utr }) }).unwrap()).message); setChanging(false); onClaimed?.(); }
+    try { toast.success((await claim({ id: jobId, method: m, ...(m === 'upi' && utr && { utr }) }).unwrap()).message); setChanging(false); onClaimed?.(); }
     catch (err) { toast.error(err?.data?.error || 'Could not send that. Try again.'); }
   }
   async function copy() {
@@ -78,12 +78,12 @@ export default function PayPro({ jobId, payTo, onClaimed }) {
                 <button type="button" onClick={copy} className="flex items-center gap-1 text-[13.5px] font-bold text-zappy-700"><Copy size={14} /> Copy</button>
               </div>
               <label className="block">
-                <span className="text-[13px] font-semibold text-ink-700">UPI reference (12 digits)</span>
+                <span className="text-[13px] font-semibold text-ink-700">UPI reference (12 digits) <span className="font-normal text-ink-500">optional</span></span>
                 <input inputMode="numeric" autoComplete="off" value={utr} onChange={(e) => setUtr(cleanUpiRef(e.target.value))} placeholder="e.g. 431298765012"
                   className="input mt-1 w-full tabular-nums tracking-wider" aria-describedby="utr-hint" />
-                <span id="utr-hint" className="mt-1 block text-[12px] text-ink-500">In your UPI app, open this payment. The 12-digit UPI ref or UTR number is on the receipt.</span>
+                <span id="utr-hint" className="mt-1 block text-[12px] text-ink-500">Adding it helps your pro find the payment faster. It is on the receipt in your UPI app.</span>
               </label>
-              <button type="button" onClick={() => say('upi')} disabled={isLoading || !isUpiRef(utr)} className={`${phone ? 'btn-outline' : 'btn-primary'} h-12 w-full disabled:opacity-50`}>
+              <button type="button" onClick={() => say('upi')} disabled={isLoading || (utr.length > 0 && !isUpiRef(utr))} className={`${phone ? 'btn-outline' : 'btn-primary'} h-12 w-full disabled:opacity-50`}>
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Check size={17} />} I've paid {amount}
               </button>
             </div>

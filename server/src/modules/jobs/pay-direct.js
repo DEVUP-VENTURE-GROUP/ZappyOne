@@ -55,7 +55,7 @@ async function helpLine() {
   return s.supportPhone ? { phone: s.supportPhone, afterMinutes: cfg.payConfirmRemindMinutes ?? 5 } : null;
 }
 
-// "I've paid": recorded and the pro is told to check and tap Received. UPI needs its reference, which the pro checks against their app.
+// "I've paid": recorded and the pro is told to check and tap Received. The UPI reference is optional; without it the pro must confirm, it is never counted as received on its own.
 async function claim({ id, userId, method, utr = null }) {
   const { findJob, KINDS } = require('./kinds');
   const found = await findJob(id, '_id');
@@ -68,7 +68,7 @@ async function claim({ id, userId, method, utr = null }) {
   if (!v) throw fail(409, 'NOT_DUE', 'There is nothing to pay on this booking right now.');
   if (!v.methods.includes(method)) throw fail(400, 'BAD_METHOD', 'Your pro has not added a UPI ID. Pay in cash.');
   const ref = method === 'upi' ? String(utr || '').replace(/\s+/g, '') : null;
-  if (method === 'upi' && !UPI_REF.test(ref)) throw fail(400, 'UPI_REF_REQUIRED', 'Enter the 12-digit UPI reference from your UPI app (it is on the payment receipt).');
+  if (ref && !UPI_REF.test(ref)) throw fail(400, 'UPI_REF_BAD', 'A UPI reference has 12 digits. Check it on the payment receipt, or leave it empty.');
   // One payment pays one job.
   if (ref) {
     for (const k of Object.keys(DUE_AT)) {
@@ -88,7 +88,7 @@ async function claim({ id, userId, method, utr = null }) {
     await events.push(provider, {
       title: method === 'upi' ? `Customer paid ${rupees} by UPI` : `Customer is paying ${rupees} in cash`,
       body: method === 'upi'
-        ? `${doc.reference || 'A booking'}: check your UPI app for ${rupees} (ref ${ref}), then tap Received.`
+        ? `${doc.reference || 'A booking'}: check your UPI app for ${rupees}${ref ? ` (ref ${ref})` : ''}, then tap Received.`
         : `${doc.reference || 'A booking'}: take ${rupees} in cash, then tap Received.`,
       deepLink: KINDS[kind].providerLink(String(doc._id)), data: { ...payload, key: 'provider.pay_claim' },
     }).catch(() => {});
@@ -172,7 +172,7 @@ async function sweepClaims({ now = Date.now(), limit = 50 } = {}) {
       const won = await Model.updateOne({ _id: doc._id, 'payClaim.at': c.at, 'payClaim.remindedAt': c.remindedAt ?? null, 'payClaim.remindedAgainAt': c.remindedAgainAt ?? null, 'payClaim.autoReceivedAt': null }, { $set: set });
       if (!won.modifiedCount || step === 'closed') continue;
       const rupees = `₹${Math.round((c.amountPaise || 0) / 100).toLocaleString('en-IN')}`;
-      const by = c.method === 'upi' ? `UPI (ref ${c.utr})` : 'cash';
+      const by = c.method === 'upi' ? (c.utr ? `UPI (ref ${c.utr})` : 'UPI') : 'cash';
       const payload = { kind, id: String(doc._id), status: doc.status, at: new Date(now).toISOString() };
       const provider = providerOf(doc);
       const holders = [provider, doc.shopId && doc.workerId ? { kind: 'shop', id: doc.shopId } : null].filter(Boolean);
