@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CircleCheck, CircleDashed } from 'lucide-react';
 import { selectAuth } from '@shared/modules/auth/authSlice';
 import { useProviderProfileStatusQuery } from '@shared/services/api';
+import PageSkeleton from '@shared/components/common/Skeleton';
+import LoadFailed from '@shared/components/common/LoadFailed';
 
 // Pages a partner can always open, so they can fill in what is missing and still manage their account.
 export const ALWAYS = ['/shop/profile', '/shop/kyc', '/shop/account', '/shop/bank', '/worker/bank', '/shop/notifications', '/worker/notifications', '/worker/profile', '/worker/kyc', '/partner/profile', '/verify-email', '/shop/support', '/worker/support', '/partner/support'];
@@ -14,8 +16,11 @@ export default function ProfileGate({ children }) {
   const { accessToken, role } = useSelector(selectAuth);
   const t = useT();
   const { pathname } = useLocation();
-  const { data } = useProviderProfileStatusQuery(undefined, { skip: !accessToken, refetchOnMountOrArgChange: 30 });
-  if (!data || data.complete || ALWAYS.some((p) => pathname.startsWith(p))) return children;
+  const { data, isError, refetch } = useProviderProfileStatusQuery(undefined, { skip: !accessToken, refetchOnMountOrArgChange: 30 });
+  if (!accessToken || data?.complete || ALWAYS.some((p) => pathname.startsWith(p))) return children;
+  // Never opens the dashboard before the check says so: a slow or failed check waits or offers a retry.
+  if (!data && isError) return <LoadFailed what="Your profile check" onRetry={refetch} />;
+  if (!data) return <PageSkeleton kind="form" label="Checking your profile" />;
   const done = data.total - data.missing.length;
   // Every step with its state (older servers sent only what was missing).
   const steps = data.items || data.missing.map((m) => ({ ...m, done: false }));
