@@ -623,6 +623,49 @@ async function customers({ days = 30, now = Date.now() } = {}) {
   return result;
 }
 
+// Money ZappyOne earns outside the booking price, per India day, from the ledger.
+const STREAMS = ['commissionPaise', 'platformFeePaise', 'surgePaise', 'cancellationPaise', 'penaltyPaise', 'errandPassPaise', 'subscriptionPaise'];
+async function ledgerStreams(from, to) {
+  const Transaction = require('../payment/transaction.model');
+  const R = Transaction.REASONS;
+  const range = { $gte: new Date(from), $lt: new Date(to) };
+  const day = { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Asia/Kolkata' } };
+  const stream = { $switch: { branches: [
+    { case: { $eq: ['$reason', R.SURGE_REVENUE] }, then: 'surgePaise' },
+    { case: { $eq: ['$reason', R.SUBSCRIPTION_REVENUE] }, then: 'subscriptionPaise' },
+    { case: { $in: ['$reason', [R.RUNNER_ACCESS_FEE, R.RUNNER_ACCESS_REFUND]] }, then: 'errandPassPaise' },
+  ], default: 'penaltyPaise' } };
+  // Signs differ by rail (platform credit, wallet debit, shop dues row), so each stream says which way counts.
+  const signed = { $switch: { branches: [
+    { case: { $eq: ['$reason', R.RUNNER_ACCESS_REFUND] }, then: { $multiply: [-1, { $abs: '$amountPaise' }] } },
+    { case: { $in: ['$reason', [R.SURGE_REVENUE, R.SUBSCRIPTION_REVENUE]] }, then: '$amountPaise' },
+  ], default: { $abs: '$amountPaise' } } };
+  const CancellationFeeRecord = require('../order/cancellation-shield.model');
+  const [ledger, fees, shield] = await Promise.all([
+    Transaction.aggregate([
+      { $match: { createdAt: range, status: 'succeeded', $or: [
+        { reason: { $in: [R.SURGE_REVENUE, R.SUBSCRIPTION_REVENUE] }, 'owner.kind': 'platform', amountPaise: { $gt: 0 } },
+        { reason: { $in: [R.RUNNER_ACCESS_FEE, R.RUNNER_ACCESS_REFUND] }, 'owner.kind': 'worker' },
+        { reason: R.PROVIDER_PENALTY },
+        { reason: R.ADMIN_ADJUSTMENT_DEBIT, idempotencyKey: /^giveback:/ },
+      ] } },
+      { $group: { _id: { day, stream }, paise: { $sum: signed } } },
+    ]),
+    CancellationFeeRecord.aggregate([
+      { $match: { collectedAt: range, feePaise: { $gt: 0 }, collectionStatus: { $in: ['collected_wallet', 'collected_refund', 'collected_next_order'] } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$collectedAt', timezone: 'Asia/Kolkata' } }, paise: { $sum: '$feePaise' } } },
+    ]),
+    require('../order/shield.service').getConfig().catch(() => ({ splitPlatformPct: 15 })),
+  ]);
+  const out = new Map();
+  const at = (d) => out.get(d) || out.set(d, {}).get(d);
+  ledger.forEach((r) => { const x = at(r._id.day); x[r._id.stream] = (x[r._id.stream] || 0) + r.paise; });
+  // Cancellation fees go to the provider shield fund; ZappyOne keeps only its split.
+  const keep = (Number(shield?.splitPlatformPct) || 0) / 100;
+  fees.forEach((r) => { at(r._id).cancellationPaise = Math.round(r.paise * keep); });
+  return { byDay: out, cancelKeepPct: Math.round(keep * 100) };
+}
+
 /**
  * Money: what makes us money? Booked value against what we earn (commission
  * and platform fee separately), what providers earned, take rate, per service,
@@ -635,32 +678,38 @@ async function money({ days = 30, now = Date.now() } = {}) {
   if (cache.has(key)) return cache.get(key);
   const start = istDayStart(now) - (days - 1) * DAY;
   const prevStart = start - (now - start);
-  const [rows, prevRows] = await Promise.all([bookingsIn(start, now), bookingsIn(prevStart, start)]);
+  const [rows, prevRows, ledger] = await Promise.all([bookingsIn(start, now), bookingsIn(prevStart, start), ledgerStreams(prevStart, now)]);
   const done = rows.filter((r) => r.statusBucket === 'completed');
   const prevDone = prevRows.filter((r) => r.statusBucket === 'completed');
 
   const sum = (list, f) => list.reduce((s, r) => s + (f(r) || 0), 0);
-  const fig = (list) => {
+  const extraOf = (from, to) => {
+    const x = { surgePaise: 0, cancellationPaise: 0, penaltyPaise: 0, errandPassPaise: 0, subscriptionPaise: 0 };
+    for (let t = from; t < to; t += DAY) Object.entries(ledger.byDay.get(istDate(t)) || {}).forEach(([k, v]) => { x[k] += v; });
+    return x;
+  };
+  const fig = (list, extra = null) => {
     const gmv = sum(list, (r) => r.totalPaise);
     const commission = sum(list, (r) => r.commissionPaise);
     const fee = sum(list, (r) => r.platformFeePaise);
+    const more = extra ? Object.values(extra).reduce((a, b) => a + b, 0) : 0;
     return {
-      gmvPaise: gmv, commissionPaise: commission, platformFeePaise: fee, takePaise: commission + fee,
+      gmvPaise: gmv, commissionPaise: commission, platformFeePaise: fee, ...(extra || {}), takePaise: commission + fee + more,
       providerPaise: sum(list, (r) => r.providerEarningPaise), jobs: list.length,
       aovPaise: list.length ? Math.round(gmv / list.length) : 0,
       takeRate: gmv ? Math.round(((commission + fee) / gmv) * 1000) / 10 : null,
     };
   };
-  const cur = fig(done);
-  const prev = fig(prevDone);
-  const delta = Object.fromEntries(['gmvPaise', 'takePaise', 'commissionPaise', 'platformFeePaise', 'aovPaise'].map((k) => [k, change(cur[k], prev[k])]));
+  const cur = fig(done, extraOf(start, now + 1));
+  const prev = fig(prevDone, extraOf(prevStart, start));
+  const delta = Object.fromEntries([...STREAMS, 'gmvPaise', 'takePaise', 'aovPaise'].map((k) => [k, change(cur[k], prev[k])]));
 
   const daily = [];
   const shift = start - prevStart;
   for (let t = start; t <= now; t += DAY) {
-    const d = fig(done.filter((r) => r.at >= t && r.at < t + DAY));
-    const p = fig(prevDone.filter((r) => r.at >= t - shift && r.at < t - shift + DAY));
-    daily.push({ date: istDate(t), takePaise: d.takePaise, gmvPaise: d.gmvPaise, prevTakePaise: p.takePaise });
+    const d = fig(done.filter((r) => r.at >= t && r.at < t + DAY), extraOf(t, t + 1));
+    const p = fig(prevDone.filter((r) => r.at >= t - shift && r.at < t - shift + DAY), extraOf(t - shift, t - shift + 1));
+    daily.push({ date: istDate(t), ...Object.fromEntries(STREAMS.map((k) => [k, d[k]])), takePaise: d.takePaise, gmvPaise: d.gmvPaise, jobs: d.jobs, prevTakePaise: p.takePaise });
   }
   const byService = [...groupBy(done, (r) => r.serviceKey)].map(([k, list]) => ({ key: k, label: list[0].service, ...fig(list) }))
     .sort((a, b) => b.takePaise - a.takePaise);
@@ -679,7 +728,7 @@ async function money({ days = 30, now = Date.now() } = {}) {
   const cash = byMethod.find((m) => m.key === 'cash');
   if (cash && cur.jobs >= 5 && cash.jobs / cur.jobs > 0.7) findings.push({ tone: 'warn', text: `${Math.round((cash.jobs / cur.jobs) * 100)}% of jobs are paid in cash. Commission on those is collected from providers later.` });
 
-  const result = { range: { days, from: new Date(start), to: new Date(now) }, current: cur, previous: prev, delta, daily, byService, byArea, byMethod, findings };
+  const result = { range: { days, from: new Date(start), to: new Date(now) }, current: cur, previous: prev, delta, daily, byService, byArea, byMethod, findings, cancelKeepPct: ledger.cancelKeepPct };
   cache.set(key, result);
   return result;
 }

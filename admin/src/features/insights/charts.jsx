@@ -263,3 +263,73 @@ export function Panel({ title, note, children, className = '' }) {
     </section>
   );
 }
+
+/** Daily bars split by source, so each day shows what made it up. Hover shows the parts; a click picks the day. */
+export function StackedDays({ days = [], parts = [], format = count, selected = null, onSelect, height = 240 }) {
+  const ref = useRef(null);
+  const [hover, setHover] = useState(null);
+  const w = 720; const h = height; const pad = { l: 8, r: 8, t: 14, b: 26 };
+  const n = days.length;
+  const total = (d) => parts.reduce((s, p) => s + Math.max(0, d[p.key] || 0), 0);
+  const max = Math.max(1, ...days.map(total));
+  const x = (i) => pad.l + ((i + 0.5) / n) * (w - pad.l - pad.r);
+  const bw = Math.max(4, Math.min(34, ((w - pad.l - pad.r) / n) * 0.56));
+  const y = (v) => h - pad.b - (v / max) * (h - pad.t - pad.b);
+  const step = Math.ceil(n / 7);
+  const empty = !days.some((d) => total(d) > 0);
+  const at = (e) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return null;
+    const i = Math.floor(((e.clientX - r.left) / r.width) * n);
+    return i >= 0 && i < n ? i : null;
+  };
+  const tip = hover != null ? days[hover] : null;
+
+  return (
+    <div className="relative">
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-slate-500">
+        {parts.map((p) => <span key={p.key} className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.color }} />{p.label}</span>)}
+      </div>
+      {empty ? (
+        <div className="flex items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-400" style={{ height }}>Nothing earned in this period yet</div>
+      ) : (
+        <svg ref={ref} viewBox={`0 0 ${w} ${h}`} className="w-full cursor-pointer" style={{ height }} preserveAspectRatio="none"
+          onMouseMove={(e) => setHover(at(e))} onMouseLeave={() => setHover(null)} onClick={(e) => { const i = at(e); if (i != null) onSelect?.(days[i].date); }}
+          role="img" aria-label="What we earned per day, by source">
+          {[0.25, 0.5, 0.75, 1].map((f) => (
+            <line key={f} x1={pad.l} x2={w - pad.r} y1={y(max * f)} y2={y(max * f)} stroke="#EEF1F6" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          ))}
+          {days.map((d, i) => {
+            let base = 0;
+            const dim = (hover != null && hover !== i) || (selected && selected !== d.date && hover == null);
+            return (
+              <g key={d.date} opacity={dim ? 0.45 : 1}>
+                {parts.map((p) => {
+                  const v = Math.max(0, d[p.key] || 0);
+                  if (!v) return null;
+                  const top = y(base + v); const bottom = y(base);
+                  base += v;
+                  return <rect key={p.key} x={x(i) - bw / 2} y={top} width={bw} height={Math.max(0, bottom - top)} fill={p.color} />;
+                })}
+                {selected === d.date && <rect x={x(i) - bw / 2 - 2} y={pad.t - 4} width={bw + 4} height={h - pad.b - pad.t + 4} fill="none" stroke="#0F172A" strokeWidth="1.2" rx="3" vectorEffect="non-scaling-stroke" />}
+              </g>
+            );
+          })}
+          {days.map((d, i) => (i % step === 0 || i === n - 1) && (
+            <text key={`t-${d.date}`} x={x(i)} y={h - 8} textAnchor="middle" fontSize="11" fill="#94A3B8">{shortDay(d.date)}</text>
+          ))}
+        </svg>
+      )}
+      {tip && !empty && (
+        <div className="pointer-events-none absolute top-8 z-10 min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] shadow-lg"
+          style={{ left: `clamp(0px, calc(${((hover + 0.5) / n) * 100}% - 90px), calc(100% - 190px))` }}>
+          <p className="font-semibold text-slate-800">{shortDay(tip.date)}</p>
+          {parts.filter((p) => tip[p.key]).map((p) => (
+            <p key={p.key} className="mt-0.5 flex justify-between gap-3 text-slate-600"><span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: p.color }} />{p.label}</span><span className="tabular-nums">{format(tip[p.key])}</span></p>
+          ))}
+          <p className="mt-1 flex justify-between gap-3 border-t border-slate-100 pt-1 font-semibold text-slate-900"><span>Total</span><span className="tabular-nums">{format(total(tip))}</span></p>
+        </div>
+      )}
+    </div>
+  );
+}
